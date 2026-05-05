@@ -11,7 +11,7 @@ class ordersModel extends Model
     protected $table = "orders";
 
         protected $fillable = [
-        'order_id', // Add this line
+        'order_id',
         'stockId',
         'orderName',
         'cName',
@@ -20,15 +20,18 @@ class ordersModel extends Model
         'pQuantity',
         'productPrice',
         'totalPrice',
+        'return_amount',
         'credit',
         'transactionType',
         'paid',
         'served_by',
         'coupons',
         'discount',
-        'served_by',
+        'discount_increase',
+        'offered_items',
+        'offer_parent_product',
         'status',
-        'account'
-        
+        'account',
+        'saleDate'
     ];
 }

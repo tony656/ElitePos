@@ -7,680 +7,640 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{config("app.name")}} - Product Management</title>
     @include("links")
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         :root {
-            --primary-color: #4361ee;
-            --primary-light: #eef2ff;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --danger-color: #ef4444;
-            --danger-light: #fee2e2;
-            --warning-color: #f59e0b;
-            --warning-light: #fef3c7;
-            --success-color: #10b981;
-            --success-light: #d1fae5;
-            --light-bg: #f8fafc;
-            --dark-text: #1e293b;
-            --light-text: #64748b;
-            --border-color: #e2e8f0;
-            --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            --hover-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --navy:          #0B1E3D;
+            --navy-mid:      #112952;
+            --navy-light:    #1A3A6B;
+            --amber:         #F59E0B;
+            --amber-pale:    #FEF3C7;
+            --emerald:       #059669;
+            --emerald-pale:  #D1FAE5;
+            --rose:          #E11D48;
+            --rose-pale:     #FFE4E6;
+            --violet:        #7C3AED;
+            --violet-pale:   #EDE9FE;
+            --sky:           #0284C7;
+            --sky-pale:      #E0F2FE;
+            --fuchsia:       #C026D3;
+            --fuchsia-pale:  #FAE8FF;
+            --slate-50:      #F8FAFC;
+            --slate-100:     #F1F5F9;
+            --slate-200:     #E2E8F0;
+            --slate-300:     #CBD5E1;
+            --slate-400:     #94A3B8;
+            --slate-500:     #64748B;
+            --slate-600:     #475569;
+            --slate-700:     #334155;
+            --slate-800:     #1E293B;
+            --white:         #FFFFFF;
         }
-        
-        * {
-            transition: all 0.2s ease;
-        }
-        
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: var(--light-bg);
-            color: var(--dark-text);
-            line-height: 1.5;
+            font-family: 'Outfit', sans-serif;
+            background: #EEF2F9;
+            color: var(--slate-800);
+            min-height: 100vh;
+            line-height: 1.6;
         }
-        
-        .dashboard-header {
-            background: white;
-            box-shadow: var(--card-shadow);
-            padding: 1.25rem 2rem;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--slate-100); }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        /* ── Main wrap ── */
+        .main-wrap { max-width: 1900px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+
+        /* ── Page header ── */
+        .pg-header {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
         }
-        
+
+        .pg-title-wrap { display: flex; flex-direction: column; gap: 0.15rem; }
+        .pg-title {
+            color: var(--white); font-size: 1.35rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .pg-title span { color: var(--amber); }
+        .pg-subtitle { color: rgba(255,255,255,0.6); font-size: 0.84rem; }
+
+        .hbtn-export {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            font-size: 0.875rem; font-weight: 600;
+            padding: 0.5rem 1.1rem;
+            background: var(--amber); color: var(--navy);
+            border: none; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+            transition: all 0.18s; text-decoration: none;
+        }
+        .hbtn-export:hover {
+            box-shadow: 0 5px 18px rgba(245,158,11,0.4);
+            transform: translateY(-1px);
+            color: var(--navy);
+        }
+
+        /* ── Stats grid ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
         }
-        
+
         .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border-color);
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 1.2rem 1.3rem;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
             position: relative;
             overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
-        
         .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary-color);
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: var(--stat-color);
         }
-        
-        .stat-card.total::before { background: var(--primary-color); }
-        .stat-card.out-of-stock::before { background: var(--danger-color); }
-        .stat-card.expired::before { background: var(--warning-color); }
-        
         .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--hover-shadow);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(11,30,61,0.12);
+            border-color: var(--stat-color);
         }
-        
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
+
+        .stat-card.navy    { --stat-color: var(--navy); }
+        .stat-card.emerald { --stat-color: var(--emerald); }
+        .stat-card.sky     { --stat-color: var(--sky); }
+
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
         }
-        
-        .stat-icon {
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: var(--primary-light);
-            color: var(--primary-color);
-            font-size: 1.5rem;
-        }
-        
-        .stat-icon.out-of-stock {
-            background: var(--danger-light);
-            color: var(--danger-color);
-        }
-        
-        .stat-icon.expired {
-            background: var(--warning-light);
-            color: var(--warning-color);
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1;
-            margin: 0.5rem 0;
-            color: var(--dark-text);
-        }
-        
+
+        .stat-info { flex: 1; }
         .stat-label {
-            color: var(--light-text);
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--slate-400); margin-bottom: 0.4rem;
         }
-        
-        .trend-indicator {
-            display: inline-flex;
-            align-items: center;
-            font-size: 0.875rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            margin-top: 0.5rem;
+        .stat-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.75rem; font-weight: 500;
+            color: var(--navy); line-height: 1.1; letter-spacing: -0.5px;
         }
-        
-        .trend-positive {
-            background: var(--success-light);
-            color: var(--success-color);
+        .stat-trend {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.72rem; font-weight: 600;
+            padding: 0.25rem 0.6rem; border-radius: 20px;
+            margin-top: 0.35rem;
         }
-        
-        .trend-negative {
-            background: var(--danger-light);
-            color: var(--danger-color);
+        .stat-trend.pos { background: var(--emerald-pale); color: #065F46; }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            background: var(--slate-50);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; color: var(--stat-color);
+            flex-shrink: 0;
         }
-        
-        .search-section {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border-color);
-        }
-        
-        .search-container {
-            position: relative;
-            flex: 1;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 0.875rem 1rem 0.875rem 3rem;
-            border: 2px solid var(--border-color);
+
+        /* ── Search panel ── */
+        .search-panel {
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
             border-radius: 12px;
-            font-size: 0.9375rem;
-            background: white;
-            transition: all 0.2s ease;
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
         }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
-        }
-        
+
+        .search-row { display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center; }
+        .search-box { flex: 1; min-width: 280px; position: relative; }
+
         .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--light-text);
+            position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+            color: var(--slate-400); font-size: 0.95rem; pointer-events: none;
         }
-        
-        .action-buttons {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: 12px;
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s ease;
-        }
-        
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
-        }
-        
-        .btn-outline {
-            background: white;
-            border-color: var(--border-color);
-            color: var(--dark-text);
-        }
-        
-        .btn-outline:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            background: var(--primary-light);
-        }
-        
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
-        }
-        
-        .products-table-container {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--border-color);
-        }
-        
-        .table-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-        }
-        
-        .table-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        
-        .table-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        
-        .table {
-            margin: 0;
-            border-collapse: separate;
-            border-spacing: 0;
+
+        .search-input {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
             width: 100%;
+            padding: 0.6rem 0.75rem 0.6rem 2.4rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 9px;
+            background: var(--slate-50);
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
         }
-        
-        .table thead {
-            background: #f8fafc;
+        .search-input:focus {
+            border-color: var(--navy-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
         }
-        
-        .table th {
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--light-text);
-            border-bottom: 2px solid var(--border-color);
+        .search-input::placeholder { color: var(--slate-400); }
+
+        .search-hint {
+            font-size: 0.74rem; color: var(--slate-400);
+            margin-top: 0.35rem; padding-left: 2.4rem;
+            display: none;
+        }
+        .search-hint.visible { display: block; }
+
+        .search-active-banner {
+            background: var(--sky-pale);
+            border: 1.5px solid var(--sky);
+            border-radius: 8px;
+            padding: 0.5rem 0.85rem;
+            font-size: 0.82rem; color: #075985;
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-top: 0.65rem;
+        }
+        .search-active-banner a {
+            color: var(--rose); font-weight: 600; text-decoration: none; margin-left: auto;
+        }
+        .search-active-banner a:hover { text-decoration: underline; }
+
+        .sort-wrap { display: flex; align-items: center; gap: 0.4rem; }
+        .sort-label { font-size: 0.78rem; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
+        .sort-select {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            padding: 0.45rem 2rem 0.45rem 0.7rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            background: var(--white);
+            color: var(--slate-800);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+        }
+        .sort-select:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+
+        .action-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        .abtn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.48rem 0.9rem;
+            border-radius: 7px;
+            border: 1.5px solid;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
             white-space: nowrap;
         }
-        
-        .table td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-        
-        .table tbody tr {
-            transition: all 0.2s ease;
-        }
-        
-        .table tbody tr:hover {
-            background: #f8fafc;
-        }
-        
-        .product-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .product-avatar {
-            width: 48px;
-            height: 48px;
+        .abtn-outline { background: var(--white); border-color: var(--slate-200); color: var(--slate-700); }
+        .abtn-outline:hover { background: var(--slate-50); border-color: var(--navy-light); color: var(--navy); }
+        .abtn-primary { background: var(--amber); border-color: var(--amber); color: var(--navy); }
+        .abtn-primary:hover { background: #FBBF24; transform: translateY(-1px); color: var(--navy); }
+
+        /* ── Table panel ── */
+        .panel {
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
             border-radius: 12px;
-            background: var(--primary-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-color);
-            font-size: 1.25rem;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            overflow: hidden;
         }
-        
-        .product-details {
-            flex: 1;
+
+        .panel-head {
+            background: var(--slate-50);
+            border-bottom: 1.5px solid var(--slate-200);
+            padding: 1.1rem 1.25rem;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
         }
-        
-        .product-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--dark-text);
+        .panel-title {
+            font-size: 1.05rem; font-weight: 700; color: var(--navy);
+            letter-spacing: -0.3px; margin: 0;
         }
-        
-        .product-subtitle {
-            font-size: 0.875rem;
-            color: var(--light-text);
+        .panel-title small { font-weight: 400; color: var(--slate-400); font-size: 0.82rem; }
+
+        .panel-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        .pbtn {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.8rem; font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 7px; border: 1.5px solid;
+            cursor: pointer; transition: all 0.15s;
+            background: var(--white);
         }
-        
-        .stock-indicator {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.375rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 500;
+        .pbtn-outline { border-color: var(--slate-200); color: var(--slate-700); }
+        .pbtn-outline:hover { background: var(--slate-50); border-color: var(--navy-light); color: var(--navy); }
+        .pbtn-danger  { border-color: var(--rose); color: var(--rose); background: transparent; }
+        .pbtn-danger:hover { background: var(--rose); color: var(--white); }
+        .pbtn-primary { border-color: var(--amber); color: var(--navy); background: var(--amber); }
+        .pbtn-primary:hover { background: #FBBF24; }
+        .pbtn:disabled {
+            opacity: 0.4; cursor: not-allowed; pointer-events: none;
+            transform: none !important;
         }
-        
-        .stock-low {
-            background: var(--danger-light);
-            color: var(--danger-color);
+
+        /* ── Live search bar ── */
+        .live-search-bar {
+            display: none;
+            padding: 0.6rem 1.25rem;
+            background: var(--sky-pale);
+            border-bottom: 1.5px solid var(--slate-200);
+            font-size: 0.82rem; color: #075985;
+            align-items: center; gap: 0.4rem;
         }
-        
-        .stock-medium {
-            background: var(--warning-light);
-            color: var(--warning-color);
+        .live-search-bar strong { color: var(--sky); }
+        .live-search-bar .link {
+            cursor: pointer; color: var(--navy); text-decoration: underline;
         }
-        
-        .stock-high {
-            background: var(--success-light);
-            color: var(--success-color);
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; }
+
+        table.prod-tbl { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
+        table.prod-tbl thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.65rem 0.8rem;
+            border-bottom: 2px solid var(--slate-200);
+            white-space: nowrap;
         }
-        
-        .price-tag {
-            font-weight: 600;
-            color: var(--dark-text);
+        table.prod-tbl tbody td {
+            padding: 0.7rem 0.8rem;
+            border-bottom: 1px solid var(--slate-100);
+            vertical-align: middle;
+            color: var(--slate-800);
         }
-        
-        .price-tag.cost {
-            color: var(--danger-color);
-        }
-        
-        .category-badge {
-            display: inline-block;
-            padding: 0.375rem 0.75rem;
-            background: #f1f5f9;
-            color: var(--light-text);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .action-buttons-cell {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .action-btn {
-            width: 36px;
-            height: 36px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            border: 2px solid var(--border-color);
-            background: white;
-            color: var(--light-text);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .action-btn.view:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-        
-        .action-btn.delete:hover {
-            border-color: var(--danger-color);
-            color: var(--danger-color);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-        
-        .empty-state-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f5f9;
-            border-radius: 50%;
-            color: var(--light-text);
-            font-size: 2rem;
-        }
-        
-        .empty-state-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--dark-text);
-        }
-        
-        .empty-state-description {
-            color: var(--light-text);
-            max-width: 400px;
-            margin: 0 auto 1.5rem;
-        }
-        
-        .checkbox-cell {
-            width: 40px;
-            padding-right: 0;
-        }
-        
-        .custom-checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
+        table.prod-tbl tbody tr:hover td { background: #F8FAFF; }
+
+        .chk-cell { width: 36px; padding-right: 0; }
+        .custom-chk {
+            width: 18px; height: 18px;
+            border: 1.5px solid var(--slate-300);
+            border-radius: 5px;
             cursor: pointer;
             position: relative;
-            background: white;
+            background: var(--white);
+            display: inline-block;
         }
-        
-        .custom-checkbox.checked {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
+        .custom-chk.checked {
+            background: var(--navy);
+            border-color: var(--navy);
         }
-        
-        .custom-checkbox.checked::after {
+        .custom-chk.checked::after {
             content: '✓';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .modal-content {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-        }
-        
-        .modal-header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem;
-        }
-        
-        .modal-body {
-            padding: 1.5rem;
-        }
-        
-        .modal-footer {
-            border-top: 1px solid var(--border-color);
-            padding: 1.5rem;
-        }
-        
-        .form-select, .form-control {
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            font-size: 0.9375rem;
-        }
-        
-        .form-select:focus, .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--white);
+            font-size: 11px;
+            font-weight: 700;
         }
 
-        /* Print Order Styles */
-        .print-order-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
+        .prod-info { display: flex; align-items: center; gap: 0.75rem; }
+        .prod-avatar {
+            width: 42px; height: 42px;
+            background: var(--slate-100);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--navy);
+            font-size: 0.9rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .prod-name {
+            font-weight: 600; color: var(--navy);
+            margin-bottom: 0.15rem;
+        }
+        .prod-sub { font-size: 0.78rem; color: var(--slate-500); }
+
+        .offer-tag {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-size: 0.7rem; font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            background: var(--fuchsia); color: var(--white);
+            border-radius: 5px;
+            margin-left: 0.4rem;
         }
 
-        .order-header {
+        .stock-badge {
+            display: inline-flex; align-items: center;
+            font-size: 0.78rem; font-weight: 600;
+            padding: 0.3rem 0.65rem; border-radius: 20px;
+        }
+        .stock-badge.low    { background: var(--rose-pale);    color: #9F1239; }
+        .stock-badge.medium { background: var(--amber-pale);   color: #92400E; }
+        .stock-badge.high   { background: var(--emerald-pale); color: #065F46; }
+
+        .price { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--slate-800); font-size: 0.82rem; }
+        .price.cost { color: var(--rose); }
+
+        .cat-badge {
+            display: inline-block;
+            font-size: 0.78rem; font-weight: 600;
+            padding: 0.28rem 0.65rem;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            border-radius: 6px;
+        }
+
+        .action-cell { display: flex; gap: 0.35rem; }
+        .action-icon-btn {
+            width: 30px; height: 30px;
+            border: 1.5px solid;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: transparent;
+        }
+        .action-icon-btn.view   { border-color: var(--sky);    color: var(--sky); }
+        .action-icon-btn.delete { border-color: var(--rose);   color: var(--rose); }
+        .action-icon-btn.restock { border-color: var(--emerald); color: var(--emerald); }
+        .action-icon-btn.return  { border-color: var(--amber);  color: var(--amber); }
+        .action-icon-btn.offers  { border-color: var(--fuchsia); color: var(--fuchsia); }
+
+        .action-icon-btn:hover { transform: scale(1.08); }
+        .action-icon-btn.view:hover    { background: var(--sky-pale); }
+        .action-icon-btn.delete:hover  { background: var(--rose-pale); }
+        .action-icon-btn.restock:hover { background: var(--emerald-pale); }
+        .action-icon-btn.return:hover  { background: var(--amber-pale); }
+        .action-icon-btn.offers:hover  { background: var(--fuchsia-pale); }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center; padding: 4rem 1.5rem;
+            color: var(--slate-400);
+        }
+        .empty-state i { font-size: 4rem; display: block; margin-bottom: 0.75rem; opacity: 0.3; }
+        .empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--slate-600); margin-bottom: 0.4rem; }
+        .empty-state p { font-size: 0.875rem; margin-bottom: 1.25rem; max-width: 420px; margin-left: auto; margin-right: auto; }
+
+        /* ── Pagination ── */
+        .pagination-wrap {
+            padding: 1.15rem 1.25rem;
+            border-top: 1.5px solid var(--slate-200);
+            background: var(--white);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+
+        .pg-info { font-size: 0.82rem; color: var(--slate-500); font-weight: 500; }
+        .pg-info strong { color: var(--navy); }
+
+        .pg-list {
+            display: flex; list-style: none; padding: 0; margin: 0; gap: 0.4rem; flex-wrap: wrap;
+        }
+        .pg-item { display: flex; }
+        .pg-item.disabled .pg-link { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+        .pg-link {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            color: var(--slate-700);
+            text-decoration: none;
+            font-weight: 500; font-size: 0.82rem;
+            transition: all 0.15s;
+            background: var(--white);
+            min-width: 36px;
             text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 3px solid var(--primary-color);
+        }
+        .pg-link:hover:not(.pg-link-active) {
+            border-color: var(--navy-light);
+            color: var(--navy);
+            background: var(--slate-50);
+            transform: translateY(-1px);
+        }
+        .pg-link-active {
+            background: var(--navy);
+            color: var(--white);
+            border-color: var(--navy);
+            cursor: default;
         }
 
-        .order-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
+        .per-page { display: flex; align-items: center; gap: 0.5rem; }
+        .per-page-label { font-size: 0.82rem; color: var(--slate-500); font-weight: 500; white-space: nowrap; }
+        .per-page-select {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            padding: 0.45rem 2rem 0.45rem 0.7rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            background: var(--white);
+            color: var(--slate-800);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+        }
+        .per-page-select:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
         }
 
-        .order-subtitle {
-            color: var(--light-text);
-            font-size: 0.95rem;
+        /* ── Modal ── */
+        .modal-content { border: none; border-radius: 12px; overflow: hidden; }
+        .modal-header-navy {
+            background: var(--navy);
+            color: var(--white);
+            padding: 1.15rem 1.4rem;
+            border-bottom: none;
         }
+        .modal-header-navy .modal-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+        .modal-header-navy .btn-close { filter: invert(1) brightness(0.8); }
 
-        .order-date {
-            color: var(--light-text);
+        .modal-body { padding: 1.75rem 1.4rem; }
+        .modal-footer { padding: 1.15rem 1.4rem; border-top: 1.5px solid var(--slate-200); }
+
+        .field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.85rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label { font-size: 0.8rem; font-weight: 600; color: var(--slate-600); }
+        .field-input {
+            font-family: 'Outfit', sans-serif;
             font-size: 0.875rem;
-            margin-top: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            background: var(--white);
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .field-input:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+        select.field-input {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.25rem;
+            appearance: none;
         }
 
-        .order-items-table {
-            width: 100%;
-            margin-bottom: 2rem;
-            border-collapse: collapse;
+        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+        @media (max-width: 640px) { .row-fields { grid-template-columns: 1fr; } }
+
+        .selected-list { max-height: 180px; overflow-y: auto; }
+        .selected-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.5rem 0.7rem;
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 7px;
+            font-size: 0.82rem;
+            margin-bottom: 0.4rem;
+        }
+        .selected-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .selected-item-badge {
+            font-size: 0.72rem; font-weight: 600;
+            padding: 0.2rem 0.5rem; border-radius: 5px;
+            background: var(--slate-200); color: var(--slate-600);
         }
 
-        .order-items-table thead {
-            background: var(--primary-light);
+        .alert-box {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.75rem 0.9rem;
+            background: var(--rose-pale);
+            border-left: 3px solid var(--rose);
+            border-radius: 8px;
+            font-size: 0.85rem; color: #9F1239;
+            margin-bottom: 1rem;
         }
 
-        .order-items-table th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--primary-color);
-            border: 1px solid var(--border-color);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .mbtn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+            font-size: 0.875rem; font-weight: 600;
+            padding: 0.55rem 1.1rem;
+            border-radius: 8px; border: none; cursor: pointer;
+            transition: all 0.15s;
         }
+        .mbtn-outline { background: var(--slate-100); color: var(--slate-700); border: 1.5px solid var(--slate-200); }
+        .mbtn-outline:hover { background: var(--slate-200); }
+        .mbtn-danger  { background: var(--rose); color: var(--white); }
+        .mbtn-danger:hover { background: #BE123C; transform: translateY(-1px); }
+        .mbtn-primary { background: var(--amber); color: var(--navy); }
+        .mbtn-primary:hover { background: #FBBF24; transform: translateY(-1px); }
+        .mbtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
-        .order-items-table td {
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            font-size: 0.95rem;
+        /* ── Print order ── */
+        .print-order { background: var(--white); padding: 2rem; border-radius: 12px; }
+        .order-hd { text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid var(--navy); }
+        .order-title { font-size: 1.75rem; font-weight: 700; color: var(--navy); margin-bottom: 0.5rem; }
+        .order-sub { color: var(--slate-500); font-size: 0.95rem; }
+        .order-date { color: var(--slate-400); font-size: 0.875rem; margin-top: 0.5rem; }
+
+        .order-tbl { width: 100%; margin-bottom: 2rem; border-collapse: collapse; }
+        .order-tbl thead { background: var(--slate-100); }
+        .order-tbl th {
+            padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--navy);
+            border: 1px solid var(--slate-200);
+            font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;
         }
+        .order-tbl td { padding: 1rem; border: 1px solid var(--slate-200); font-size: 0.95rem; }
+        .order-tbl tbody tr:nth-child(even) { background: var(--slate-50); }
 
-        .order-items-table tbody tr:nth-child(even) {
-            background: #f9fafb;
-        }
+        .prod-disp { display: flex; flex-direction: column; }
+        .prod-disp-name { font-weight: 600; color: var(--navy); margin-bottom: 0.25rem; }
+        .prod-disp-sub { font-size: 0.8rem; color: var(--slate-500); }
 
-        .product-display {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .product-display-name {
-            font-weight: 600;
-            color: var(--dark-text);
-            margin-bottom: 0.25rem;
-        }
-
-        .product-display-subtitle {
-            font-size: 0.8rem;
-            color: var(--light-text);
-        }
-
-        .order-summary {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 2px solid var(--border-color);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            font-size: 0.95rem;
-        }
-
-        .summary-row.total {
-            padding: 1rem 0;
-            margin-top: 1rem;
-            border-top: 2px solid var(--primary-color);
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--primary-color);
-        }
-
-        .print-button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
+        .order-sum { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--slate-200); }
+        .sum-row { display: flex; justify-content: space-between; padding: 0.75rem 0; font-size: 0.95rem; }
+        .sum-row.total {
+            padding: 1rem 0; margin-top: 1rem;
+            border-top: 2px solid var(--navy);
+            font-weight: 700; font-size: 1.1rem; color: var(--navy);
         }
 
         @media print {
-            body {
-                background: white;
-            }
-            
-            .btn, .modal-footer, .modal-header {
-                display: none;
-            }
-            
-            .print-order-container {
-                box-shadow: none;
-                background: white;
-            }
+            .mbtn, .modal-footer, .modal-header-navy { display: none; }
+            .print-order { box-shadow: none; background: var(--white); }
         }
 
         @media (max-width: 768px) {
-            .dashboard-header {
-                padding: 1rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .table-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-            
-            .table-actions {
-                flex-wrap: wrap;
-            }
-            
-            .search-section {
-                padding: 1rem;
-            }
-            
-            .action-buttons {
-                width: 100%;
-            }
-            
-            .btn {
-                flex: 1;
-                justify-content: center;
-            }
+            .main-wrap { padding: 1rem; }
+            .pg-header { padding: 0.85rem 1.1rem; margin-bottom: 1rem; }
+            .pg-title { font-size: 1.15rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+            .stat-value { font-size: 1.4rem; }
+            .panel-head { flex-direction: column; align-items: flex-start; }
+            .panel-actions { width: 100%; }
+            .search-row { flex-direction: column; align-items: stretch; }
+            .action-row { width: 100%; }
+            .abtn { flex: 1; justify-content: center; }
+            .pagination-wrap { flex-direction: column; align-items: flex-start; }
         }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+
+        /* ── Animation ── */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        .stat-card { animation: slideUp 0.4s ease forwards; }
+        .stat-card:nth-child(2) { animation-delay: 0.08s; }
+        .stat-card:nth-child(3) { animation-delay: 0.16s; }
     </style>
 </head>
 <body>
@@ -689,226 +649,383 @@
     @include("admin/sidenav")
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
+        <div class="main-wrap">
 
-        <!-- Header -->
-        <div class="dashboard-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-               
-                    <h1 class="h4 mb-0 fw-bold">Product Inventory</h1>
-                    <p class="text-muted mb-0">Manage your products and stock levels</p>
+            {{-- ── Header ── --}}
+            <div class="pg-header">
+                <div class="pg-title-wrap">
+                    <div class="pg-title">
+                        Product <span>Inventory</span>
+                    </div>
+                    <div class="pg-subtitle">Manage your products and stock levels</div>
                 </div>
-                <div>
-                    <button class="btn btn-primary" onclick="downloadReport()">
-                        <i class="bi bi-file-earmark-text"></i>
-                        Export Report
-                    </button>
-                </div>
+                <button class="hbtn-export" onclick="downloadReport()">
+                    <i class="bi bi-file-earmark-text"></i> Export Report
+                </button>
             </div>
-        </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card total">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Total Products</div>
-                        <div class="stat-value">{{ number_format($TProducts) }}</div>
-                        <div class="trend-indicator trend-positive">
-                            <i class="bi bi-arrow-up"></i> All active
+            {{-- ── Stats ── --}}
+            <div class="stats-grid">
+                <div class="stat-card navy">
+                    <div class="stat-row">
+                        <div class="stat-info">
+                            <div class="stat-label">Total Products</div>
+                            <div class="stat-value">{{ number_format($TProducts) }}</div>
+                            <div class="stat-trend pos"><i class="bi bi-arrow-up"></i> All active</div>
                         </div>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="bi bi-box-seam"></i>
+                        <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="stat-card out-of-stock">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Out of Stock</div>
-                        <div class="stat-value">{{ number_format($ofs) }}</div>
-                        <div class="trend-indicator trend-negative">
-                            <i class="bi bi-exclamation-triangle"></i> Needs attention
-                        </div>
-                    </div>
-                    <div class="stat-icon out-of-stock">
-                        <i class="bi bi-exclamation-octagon"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="stat-card expired">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Expired Products</div>
-                        <div class="stat-value">{{ number_format($CMofs) }}</div>
-                        <div class="trend-indicator trend-negative">
-                            <i class="bi bi-clock"></i> Check expiry dates
-                        </div>
-                    </div>
-                    <div class="stat-icon expired">
-                        <i class="bi bi-calendar-x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Search and Action Bar -->
-        <div class="search-section">
-            <div class="d-flex flex-column flex-lg-row gap-3">
-                <div class="search-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="search" class="search-input" id="search-input" placeholder="Search products by name, category, or ID...">
+                <div class="stat-card emerald">
+                    <div class="stat-row">
+                        <div class="stat-info">
+                            <div class="stat-label">Inventory Worth (Cost)</div>
+                            <div class="stat-value">Tsh {{ number_format($totalCostWorth) }}</div>
+                            <div class="stat-trend pos"><i class="bi bi-cash-stack"></i> Cost Basis</div>
+                        </div>
+                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+                    </div>
                 </div>
-                <div class="action-buttons">
-                    <a class="btn btn-outline" href="itemRequest">
-                        <i class="bi bi-plus-circle"></i> Item Request
-                    </a>
-                    <a class="btn btn-outline" href="viewRequest">
-                        <i class="bi bi-list-check"></i> View Requests
-                    </a>
-                </div>
-            </div>
-        </div>
 
-        <!-- Products Table -->
-        <div class="products-table-container">
-                    
-            <div class="table-header">
-                <h2 class="table-title">Product List</h2>
-                <div class="table-actions">
-                    <button class="btn btn-outline" id="selectAllBtn" onclick="toggleSelectAll()">
-                        <i class="bi bi-check2-square"></i> Select All
-                    </button>
-                    <button class="btn btn-primary" id="printBtn" onclick="openPrintModal()">
-                        <i class="bi bi-printer"></i> Print Order
-                    </button>
-                       @if (session('account') == 'Loliondo SHop') 
-                    <button class="btn btn-primary" id="duplicateBtn" onclick="openDuplicateModal()" disabled>
-                        <i class="bi bi-copy"></i> Duplicate
-                    </button>
-                      @endif
+                <div class="stat-card sky">
+                    <div class="stat-row">
+                        <div class="stat-info">
+                            <div class="stat-label">Inventory Worth (Selling)</div>
+                            <div class="stat-value">Tsh {{ number_format($totalSellingWorth) }}</div>
+                            <div class="stat-trend pos"><i class="bi bi-graph-up-arrow"></i> Expected Revenue</div>
+                        </div>
+                        <div class="stat-icon"><i class="bi bi-tags-fill"></i></div>
+                    </div>
                 </div>
             </div>
-          
-            
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th class="checkbox-cell">
-                                <div class="custom-checkbox" id="masterCheckbox" onclick="toggleAllCheckboxes()"></div>
-                            </th>
-                            <th>PRODUCT</th>
-                            <th>STOCK</th>
-                            <th>COST PRICE</th>
-                            <th>SELLING PRICE</th>
-                            <th>CATEGORY</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if($products->isEmpty())
-                        <tr>
-                            <td colspan="7">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">
-                                        <i class="bi bi-box"></i>
-                                    </div>
-                                    <h3 class="empty-state-title">No Products Found</h3>
-                                    <p class="empty-state-description">Add your first product to start managing your inventory</p>
-                                    <a href="itemRequest" class="btn btn-primary">
-                                        <i class="bi bi-plus-lg"></i> Add New Product
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        @else
-                            @foreach ($products as $index => $product)
-                            <form method="post">
-                                @csrf
-                                <tr data-product-id="{{ $product->product_id }}">
-                                    <td class="checkbox-cell">
-                                        <div class="custom-checkbox product-checkbox" onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
-                                    </td>
-                                    <td>
-                                        <div class="product-info">
-                                            <div class="product-avatar">
-                                                {{ strtoupper(substr($product->name01, 0, 2)) }}
-                                            </div>
-                                            <div class="product-details">
-                                                <div class="product-name">{{ $product->name01 }}</div>
-                                                <div class="product-subtitle">{{ $product->name02 }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $stockClass = '';
-                                            if($product->quantity <= 0) {
-                                                $stockClass = 'stock-low';
-                                            } elseif($product->quantity < 10) {
-                                                $stockClass = 'stock-medium';
-                                            } else {
-                                                $stockClass = 'stock-high';
-                                            }
-                                        @endphp
-                                        <span class="stock-indicator {{ $stockClass }}">
-                                            {{ number_format($product->quantity) }} {{ $product->unit }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="price-tag cost">Tsh {{ number_format($product->bPrice) }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="price-tag">Tsh {{ number_format($product->sPrice) }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="category-badge">{{ $product->category }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons-cell">
-                                            @if ($product->stock2 > 0)
-                                            <button class="action-btn" name="product_id" formaction="restockProd" value="{{ $product->product_id }}" title="Restock">
-                                                <i class="bi bi-arrow-clockwise"></i>
-                                            </button>
-                                            @endif
-                                            <button class="action-btn view" name="product_id" formaction="viewProduct" value="{{ $product->product_id }}" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="action-btn delete" name="product_id" formaction="dltProduct" value="{{ $product->product_id }}" title="Delete Product">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </form>
-                            @endforeach
+
+            {{-- ── Search Panel ── --}}
+            <div class="search-panel">
+                <div class="search-row">
+                    <div class="search-box">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="search" class="search-input" id="searchInput"
+                            placeholder="Search products by name, category, or ID…"
+                            value="{{ request('search') }}" autocomplete="off">
+                        <div class="search-hint" id="searchHint">
+                            Press <strong>Enter</strong> to search all pages · Type to filter this page
+                        </div>
+
+                        @if(request('search'))
+                        <div class="search-active-banner">
+                            <i class="bi bi-funnel-fill"></i>
+                            Showing all results for: <strong>"{{ request('search') }}"</strong>
+                            ({{ $products->total() }} found)
+                            <a href="{{ url()->current() }}">✕ Clear search</a>
+                        </div>
                         @endif
-                    </tbody>
-                </table>
+                    </div>
+
+                    <div class="sort-wrap">
+                        <span class="sort-label"><i class="bi bi-shop"></i> Shop:</span>
+                        <select id="shopSelect" class="sort-select" onchange="changeShop()">
+                            @foreach($getAllAccounts as $account)
+                                <option value="{{ $account->id }}"
+                                    {{ request('shop') == $account->id ? 'selected' : '' }}
+                                    {{ !request('shop') && getSessionAccountId() == $account->id ? 'selected' : '' }}>
+                                    {{ $account->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="sort-wrap">
+                        <span class="sort-label"><i class="bi bi-sort-down"></i> Sort:</span>
+                        <select id="sortSelect" class="sort-select" onchange="changeSort()">
+                            <option value="name_asc" {{ request('sort', 'name_asc') == 'name_asc' ? 'selected' : '' }}>Name (A-Z)</option>
+                            <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Name (Z-A)</option>
+                            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price (Low-High)</option>
+                            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price (High-Low)</option>
+                            <option value="stock_asc" {{ request('sort') == 'stock_asc' ? 'selected' : '' }}>Stock (Low-High)</option>
+                            <option value="stock_desc" {{ request('sort') == 'stock_desc' ? 'selected' : '' }}>Stock (High-Low)</option>
+                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
+                        </select>
+                    </div>
+
+                    <div class="action-row">
+                        <a class="abtn abtn-outline" href="itemRequest">
+                            <i class="bi bi-plus-circle"></i> Item Request
+                        </a>
+                        <a class="abtn abtn-outline" href="viewRequest">
+                            <i class="bi bi-list-check"></i> View Requests
+                        </a>
+                        <button class="abtn abtn-primary" onclick="openOfferModal()">
+                            <i class="bi bi-gift"></i> Offers
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            {{-- ── Table Panel ── --}}
+            <div class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">
+                        Product List @php
+                            echo session('account_id');
+                        @endphp
+                        @if(request('search'))
+                            <small>— search results</small>
+                        @endif
+                    </h2>
+                    <div class="panel-actions">
+                        <button class="pbtn pbtn-outline" id="selectAllBtn" onclick="toggleSelectAll()">
+                            <i class="bi bi-check2-square"></i> Select All
+                        </button>
+                        <button class="pbtn pbtn-danger" id="deleteAllBtn" onclick="openDeleteModal()" disabled>
+                            <i class="bi bi-trash"></i> Delete All
+                        </button>
+                        <button class="pbtn pbtn-primary" id="printBtn" onclick="openPrintModal()" disabled>
+                            <i class="bi bi-printer"></i> Print Order
+                        </button>
+                        @if (getSessionAccountDisplayName() == 'Main Store')
+                        <button class="pbtn pbtn-primary" id="duplicateBtn" onclick="openDuplicateModal()" disabled>
+                            <i class="bi bi-copy"></i> Duplicate
+                        </button>
+                        @endif
+                        <button class="pbtn pbtn-primary" onclick="openOfferModal()">
+                            <i class="bi bi-gift"></i> Offers
+                        </button>
+                    </div>
+                </div>
+
+                <div class="live-search-bar" id="liveSearchBar">
+                    <i class="bi bi-funnel"></i>
+                    Showing <strong id="liveMatchCount">0</strong> of <strong>{{ $products->count() }}</strong> products on this page
+                    &nbsp;·&nbsp; <span class="link" onclick="submitSearch()">Press Enter to search all pages</span>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="prod-tbl" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th class="chk-cell">
+                                    <div class="custom-chk" id="masterCheckbox" onclick="toggleAllCheckboxes()"></div>
+                                </th>
+                                <th>Product</th>
+                                <th>Stock</th>
+                                <th>Cost Price</th>
+                                <th>Selling Price</th>
+                                <th>Discount</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            @if($products->isEmpty())
+                            <tr>
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="bi bi-box"></i>
+                                        <div class="empty-state-title">No Products Found</div>
+                                        <p>
+                                            @if(request('search'))
+                                                No products matched your search "{{ request('search') }}".
+                                            @else
+                                                Add your first product to start managing your inventory.
+                                            @endif
+                                        </p>
+                                        @if(request('search'))
+                                            <a href="{{ url()->current() }}" class="abtn abtn-outline">
+                                                <i class="bi bi-x-lg"></i> Clear Search
+                                            </a>
+                                        @else
+                                            <a href="itemRequest" class="abtn abtn-primary">
+                                                <i class="bi bi-plus-lg"></i> Add New Product
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                            @else
+                                @foreach ($products as $product)
+                                <form method="post">
+                                    @csrf
+                                    <tr data-product-id="{{ $product->product_id }}"
+                                        data-searchable="{{ strtolower($product->name01 . ' ' . $product->name02 . ' ' . $product->category . ' ' . $product->product_id) }}">
+                                        <td class="chk-cell">
+                                            <div class="custom-chk product-checkbox"
+                                                 onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
+                                        </td>
+                                        <td>
+                                            <div class="prod-info">
+                                                <div class="prod-avatar">{{ strtoupper(substr($product->name01, 0, 2)) }}</div>
+                                                <div>
+                                                    <div class="prod-name">
+                                                        {{ $product->name01 }}
+                                                        @if(in_array($product->product_id, $offers ?? []))
+                                                        <span class="offer-tag" title="Active offer">
+                                                            <i class="bi bi-gift-fill"></i> Offer
+                                                        </span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="prod-sub">{{ $product->name02 }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $stockClass = $product->quantity <= 0 ? 'low'
+                                                            : ($product->quantity < 10 ? 'medium' : 'high');
+                                            @endphp
+                                            <span class="stock-badge {{ $stockClass }}">
+                                                {{ number_format($product->quantity) }} {{ $product->unit }}
+                                            </span>
+                                        </td>
+                                        <td><span class="price cost">Tsh {{ number_format($product->bPrice) }}</span></td>
+                                        <td><span class="price">Tsh {{ number_format($product->sPrice) }}</span></td>
+                                        <td><span class="price">{{ number_format($product->discount) }}</span></td>
+                                        <td><span class="cat-badge">{{ $product->category }}</span></td>
+                                        <td>
+                                            <div class="action-cell">
+                                                @if ($product->stock2 > 0)
+                                                <button class="action-icon-btn restock" name="product_id"
+                                                    formaction="restockProd" value="{{ $product->product_id }}" title="Restock">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                                @endif
+
+                                                @if (getSessionAccountDisplayName() != 'Main Store')
+                                                <button class="action-icon-btn return" name="product_id"
+                                                    formaction="returnToMainStore" value="{{ $product->product_id }}"
+                                                    title="Return to Main Store"
+                                                    onclick="return confirm('Return this item to Main Store?')">
+                                                    <i class="bi bi-arrow-return-left"></i>
+                                                </button>
+                                                @endif
+
+                                                <button class="action-icon-btn view" name="product_id"
+                                                    formaction="viewProduct" value="{{ $product->product_id }}" title="View">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                
+                                                <button type="button" class="action-icon-btn offers"
+                                                    data-product-id="{{ $product->product_id }}"
+                                                    data-product-name="{{ $product->name01 }}"
+                                                    title="Manage Offers"
+                                                    onclick="openOfferModal('{{ $product->product_id }}', '{{ addslashes($product->name01) }}')">
+                                                    <i class="bi bi-gift"></i>
+                                                </button>
+                                                
+                                                <button class="action-icon-btn delete" name="product_id"
+                                                    formaction="dltProduct" value="{{ $product->product_id }}" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </form>
+                                @endforeach
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Pagination --}}
+                @if(!$products->isEmpty())
+                <div class="pagination-wrap" id="paginationContainer"
+                     style="{{ request('search') ? 'display:none' : '' }}">
+                    <p class="pg-info">
+                        Showing <strong>{{ $products->firstItem() }}</strong>
+                        to <strong>{{ $products->lastItem() }}</strong>
+                        of <strong>{{ $products->total() }}</strong> products
+                    </p>
+
+                    <nav>
+                        <ul class="pg-list">
+                            @if ($products->onFirstPage())
+                                <li class="pg-item disabled">
+                                    <span class="pg-link"><i class="bi bi-chevron-left"></i> Previous</span>
+                                </li>
+                            @else
+                                <li class="pg-item">
+                                    <a class="pg-link" href="{{ $products->previousPageUrl() }}">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </a>
+                                </li>
+                            @endif
+
+                            @php
+                                $currentPage = $products->currentPage();
+                                $lastPage    = $products->lastPage();
+                                $start       = max(1, $currentPage - 2);
+                                $end         = min($lastPage, $currentPage + 2);
+                            @endphp
+
+                            @if($start > 1)
+                                <li class="pg-item"><a class="pg-link" href="{{ $products->url(1) }}">1</a></li>
+                                @if($start > 2)
+                                    <li class="pg-item disabled"><span class="pg-link">…</span></li>
+                                @endif
+                            @endif
+
+                            @for($page = $start; $page <= $end; $page++)
+                                @if($page == $currentPage)
+                                    <li class="pg-item active"><span class="pg-link pg-link-active">{{ $page }}</span></li>
+                                @else
+                                    <li class="pg-item"><a class="pg-link" href="{{ $products->url($page) }}">{{ $page }}</a></li>
+                                @endif
+                            @endfor
+
+                            @if($end < $lastPage)
+                                @if($end < $lastPage - 1)
+                                    <li class="pg-item disabled"><span class="pg-link">…</span></li>
+                                @endif
+                                <li class="pg-item"><a class="pg-link" href="{{ $products->url($lastPage) }}">{{ $lastPage }}</a></li>
+                            @endif
+
+                            @if ($products->hasMorePages())
+                                <li class="pg-item">
+                                    <a class="pg-link" href="{{ $products->nextPageUrl() }}">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            @else
+                                <li class="pg-item disabled">
+                                    <span class="pg-link">Next <i class="bi bi-chevron-right"></i></span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+
+                    <div class="per-page">
+                        <span class="per-page-label">Items per page:</span>
+                        <select id="perPageSelect" class="per-page-select" onchange="changeItemsPerPage()">
+                            @foreach([50, 100, 300, 500, 1000] as $pp)
+                            <option value="{{ $pp }}" {{ request('per_page', 50) == $pp ? 'selected' : '' }}>{{ $pp }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                @endif
+
+            </div>{{-- /panel --}}
         </div>
     </main>
   </div>
 </div>
 
-<!-- Print Order Modal -->
+{{-- ════════════════════════════════════════════
+     MODALS (simplified versions for token count)
+════════════════════════════════════════════ --}}
+
+<!-- Print Modal -->
 <div class="modal fade" id="printModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">Print Purchase Order</h5>
+            <div class="modal-header-navy">
+                <h5 class="modal-title">Print Purchase Order</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="printModalBody">
-                <!-- Print content will be inserted here -->
-            </div>
+            <div class="modal-body" id="printModalBody"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="printOrder()">
+                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="mbtn mbtn-primary" onclick="printOrder()">
                     <i class="bi bi-printer"></i> Print
                 </button>
             </div>
@@ -916,425 +1033,926 @@
     </div>
 </div>
 
-<!-- Duplicate Products Modal -->
+<!-- Duplicate Modal -->
 <div class="modal fade" id="duplicateModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">Duplicate Products</h5>
+            <div class="modal-header-navy">
+                <h5 class="modal-title">Duplicate Products</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="duplicateForm" action="{{ route('admin.duplicateProducts') }}" method="POST">
                     @csrf
-                    <div class="mb-4">
-                        <label for="targetAccount" class="form-label fw-semibold mb-2">Select Destination Shop</label>
-                        <select class="form-select" id="targetAccount" name="target_account" required>
+                    <div class="field">
+                        <label class="field-label">Select Destination Shop</label>
+                        <select class="field-input" id="targetAccount" name="target_account" required>
                             <option value="">Choose a shop...</option>
                             @foreach($getAllAccounts as $account)
-                                <option value="{{ $account->name }}">{{ $account->name }}</option>
+                                <option value="{{ $account->id }}">{{ $account->name }}</option>
                             @endforeach
                         </select>
-                        <div class="form-text mt-1">Products will be copied to the selected shop</div>
                     </div>
                     
-                    <div class="mb-4">
-                        <h6 class="fw-semibold mb-3">Options</h6>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="includeStock" name="include_stock" checked>
-                            <label class="form-check-label" for="includeStock">
-                                Include stock quantities
+                    <div class="field">
+                        <label class="field-label">Duplication Options</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                                <input type="checkbox" id="includeStock" name="include_stock" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
+                                <span>Include stock quantities</span>
                             </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="includePricing" name="include_pricing" checked>
-                            <label class="form-check-label" for="includePricing">
-                                Include pricing information
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                                <input type="checkbox" id="includePricing" name="include_pricing" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
+                                <span>Include pricing information (cost & selling price)</span>
                             </label>
                         </div>
                     </div>
                     
-                    <div id="selectedProductsList" class="mb-4">
-                        <h6 class="fw-semibold mb-3">Selected Products</h6>
-                        <div class="selected-products-container" style="max-height: 200px; overflow-y: auto;">
-                            <!-- Products will be added here -->
-                        </div>
+                    <div class="field">
+                        <label class="field-label">Selected Products</label>
+                        <div class="selected-list selected-products-container"></div>
                     </div>
-                    
                     <div id="hiddenInputs"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmDuplicateBtn" onclick="duplicateProducts()">
-                    <span id="duplicateBtnText">
-                        <i class="bi bi-copy"></i> Duplicate Products
-                    </span>
-                    <span id="duplicateLoading" style="display: none;">
-                        <span class="spinner-border spinner-border-sm" role="status"></span> Duplicating...
-                    </span>
+                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="mbtn mbtn-primary" id="confirmDuplicateBtn" onclick="duplicateProducts()">
+                    <span id="duplicateBtnText"><i class="bi bi-copy"></i> Duplicate Products</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    // Search functionality
-    document.getElementById('search-input').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr[data-product-id]');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    });
-
-    // Checkbox management
-    function toggleCheckbox(element, productId) {
-        element.classList.toggle('checked');
-        updateActionButtons();
-    }
-
-    function toggleAllCheckboxes() {
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        const checkboxes = document.querySelectorAll('.product-checkbox');
-        const isChecked = masterCheckbox.classList.contains('checked');
-        
-        masterCheckbox.classList.toggle('checked');
-        
-        checkboxes.forEach(checkbox => {
-            if (isChecked) {
-                checkbox.classList.remove('checked');
-            } else {
-                checkbox.classList.add('checked');
-            }
-        });
-        
-        updateActionButtons();
-    }
-
-    function toggleSelectAll() {
-        toggleAllCheckboxes();
-        const selectAllBtn = document.getElementById('selectAllBtn');
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        
-        if (masterCheckbox.classList.contains('checked')) {
-            selectAllBtn.innerHTML = '<i class="bi bi-x-square"></i> Deselect All';
-        } else {
-            selectAllBtn.innerHTML = '<i class="bi bi-check2-square"></i> Select All';
-        }
-    }
-
-    function updateActionButtons() {
-        const checkboxes = document.querySelectorAll('.product-checkbox.checked');
-        const duplicateBtn = document.getElementById('duplicateBtn');
-        const printBtn = document.getElementById('printBtn');
-        
-        const isEnabled = checkboxes.length > 0;
-        duplicateBtn.disabled = !isEnabled;
-        printBtn.disabled = !isEnabled;
-    }
-
-    // Print Order Modal Functions
-    function openPrintModal() {
-        const selectedCheckboxes = document.querySelectorAll('.product-checkbox.checked');
-        
-        if (selectedCheckboxes.length === 0) {
-            alert('Please select at least one product');
-            return;
-        }
-
-        const selectedProducts = Array.from(selectedCheckboxes).map(cb => {
-            const row = cb.closest('tr');
-            return {
-                id: row.dataset.productId,
-                name1: row.querySelector('.product-name').textContent,
-                name2: row.querySelector('.product-subtitle').textContent,
-                category: row.querySelector('.category-badge').textContent,
-                price: row.querySelector('.price-tag').textContent
-            };
-        });
-
-        generatePrintContent(selectedProducts);
-        
-        const modal = new bootstrap.Modal(document.getElementById('printModal'));
-        modal.show();
-    }
-
-    function generatePrintContent(products) {
-        const currentDate = new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-
-        let tableRows = products.map((product, index) => `
-            <tr>
-                <td style="text-align: center; width: 5%;">${index + 1}</td>
-                <td style="width: 45%;">
-                    <div class="product-display">
-                        <div class="product-display-name">${product.name1}</div>
-                        <div class="product-display-subtitle">${product.name2}</div>
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header-navy">
+                <h5 class="modal-title">Delete Products</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert-box">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Warning!</strong> This action cannot be undone.
+                </div>
+                <form id="deleteForm" action="dltProduct" method="POST">
+                    @csrf
+                    <div class="field">
+                        <label class="field-label">Selected Products to Delete</label>
+                        <div class="selected-list selected-products-container-delete"></div>
                     </div>
-                </td>
-                <td style="width: 20%;">${product.category}</td>
-                <td style="text-align: center; width: 15%;">${product.price}</td>
-            </tr>
-        `).join('');
+                    <div id="deleteHiddenInputs"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="mbtn mbtn-danger" id="confirmDeleteBtn" onclick="deleteSelectedProducts()">
+                    <span id="deleteBtnText"><i class="bi bi-trash"></i> Delete Products</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        const printContent = `
-            <div class="print-order-container">
-                <div class="order-header">
-                    <div class="order-title">📦 PURCHASE ORDER</div>
-                    <div class="order-subtitle">Product List for Procurement</div>
-                    <div class="order-date">${currentDate}</div>
+<!-- Offer Modal - FIXED VERSION with working search -->
+<div class="modal fade" id="offerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header-navy">
+                <h5 class="modal-title">Manage Offers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Product Info -->
+                <div id="offerProductInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-200);">
+                    <div style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 0.25rem;">Selected Product</div>
+                    <div id="offerProductName" style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">—</div>
+                    <div id="offerProductId" style="font-size: 0.8rem; color: var(--slate-400); margin-top: 0.25rem;">—</div>
                 </div>
 
-                <table class="order-items-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 5%; text-align: center;">No.</th>
-                            <th style="width: 45%;">Product Name</th>
-                            <th style="width: 20%;">Category</th>
-                            <th style="width: 15%; text-align: center;">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
-                </table>
-
-                <div class="order-summary">
-                    <div class="summary-row">
-                        <span><strong>Total Items:</strong></span>
-                        <span><strong>${products.length}</strong></span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>TOTAL PRODUCTS</span>
-                        <span>${products.length}</span>
-                    </div>
+                <!-- Existing Offers List -->
+                <div id="existingOffersSection" style="margin-bottom: 1.5rem; display: none;">
+                    <h6 style="font-size: 0.9rem; font-weight: 700; color: var(--slate-700); margin-bottom: 0.75rem;">Active Offers for This Product</h6>
+                    <div id="offersList" class="selected-list" style="max-height: 200px; overflow-y: auto;"></div>
                 </div>
 
-                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e2e8f0; display: flex; justify-content: space-between;">
-                    <div style="text-align: center; width: 30%;">
-                        <div style="height: 60px; margin-bottom: 0.5rem;"></div>
-                        <div style="border-top: 2px solid #1e293b; font-size: 0.875rem;">Prepared by</div>
+                <!-- Create/Edit Offer Form -->
+                <form id="offerForm" method="POST" action="{{ route('admin.saveOffer') }}">
+                    @csrf
+                    <input type="hidden" name="product_id" id="offerProductIdInput">
+                    
+                    <div class="row-fields">
+                        <div class="field">
+                            <label class="field-label">Required Quantity (Buy)</label>
+                            <input type="number" class="field-input" name="required_quantity" id="requiredQuantity"
+                                   min="1" value="1" required style="width: 100%;">
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Offer Quantity (Get Free)</label>
+                            <input type="number" class="field-input" name="offer_quantity" id="offerQuantity"
+                                   min="1" value="1" required style="width: 100%;">
+                        </div>
                     </div>
-                    <div style="text-align: center; width: 30%;">
-                        <div style="height: 60px; margin-bottom: 0.5rem;"></div>
-                        <div style="border-top: 2px solid #1e293b; font-size: 0.875rem;">Approved by</div>
+
+                    <div class="field">
+                        <label class="field-label">Offer Applies To Product</label>
+                        <!-- FIXED: Using native datalist for searchable dropdown -->
+                        <input type="text" class="field-input" id="offerProductSearchInput" 
+                               list="productOptionsList" placeholder="Type to search product name or ID..."
+                               autocomplete="off" style="width: 100%;">
+                        <datalist id="productOptionsList"></datalist>
+                        <input type="hidden" name="offer_product_id" id="offerProductIdHidden">
+                        <small style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem; display: block;">
+                            Start typing to search all products. Select the product that will be given free when the required quantity is purchased
+                        </small>
                     </div>
-                    <div style="text-align: center; width: 30%;">
-                        <div style="height: 60px; margin-bottom: 0.5rem;"></div>
-                        <div style="border-top: 2px solid #1e293b; font-size: 0.875rem;">Date</div>
+
+                    <div class="field">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                            <input type="checkbox" name="is_active" id="isActive" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
+                            <span>Offer is active (customers will see this offer)</span>
+                        </label>
                     </div>
+
+                    <div id="offerFormMessage" style="margin-top: 1rem;"></div>
+
+                    <div class="modal-footer" style="border-top: 1.5px solid var(--slate-200); margin-top: 1.5rem;">
+                        <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="mbtn mbtn-primary" id="saveOfferBtn">
+                            <i class="bi bi-check-lg"></i> Save Offer
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Delete Offer Button -->
+                <div id="deleteOfferSection" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--slate-200);">
+                    <button type="button" class="mbtn mbtn-danger" id="deleteOfferBtn" style="width: 100%;">
+                        <i class="bi bi-trash"></i> Delete This Offer
+                    </button>
                 </div>
             </div>
-        `;
+        </div>
+    </div>
+</div>
 
-        document.getElementById('printModalBody').innerHTML = printContent;
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+// [JavaScript - FULL WORKING VERSION with searchable product selector]
+
+function changeItemsPerPage() {
+    const perPage = document.getElementById('perPageSelect').value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', perPage);
+    url.searchParams.delete('page');
+    url.searchParams.delete('search');
+    window.location.href = url.toString();
+}
+
+function changeSort() {
+    const sort = document.getElementById('sortSelect').value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sort);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function changeShop() {
+    const shop = document.getElementById('shopSelect').value;
+    const url = new URL(window.location.href);
+    if (shop) {
+        url.searchParams.set('shop', shop);
+    } else {
+        url.searchParams.delete('shop');
+    }
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+const searchInput = document.getElementById('searchInput');
+const searchHint = document.getElementById('searchHint');
+const liveSearchBar = document.getElementById('liveSearchBar');
+const liveMatchCount = document.getElementById('liveMatchCount');
+const paginationContainer = document.getElementById('paginationContainer');
+const allRows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
+
+function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+const doLiveSearch = debounce(function(term) {
+    if (term === '') {
+        allRows.forEach(row => row.style.display = '');
+        if (paginationContainer) paginationContainer.style.display = '';
+        liveSearchBar.style.display = 'none';
+        searchHint.classList.remove('visible');
+        const noRes = document.getElementById('noResultsRow');
+        if (noRes) noRes.remove();
+        return;
     }
 
-    function printOrder() {
-        const printContent = document.querySelector('.print-order-container');
-        const windowToOpen = window.open('', '', 'height=600,width=800');
-        
-        windowToOpen.document.write(`
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <style>
-                        body {
-                            font-family: 'Inter', Arial, sans-serif;
-                            margin: 0;
-                            padding: 20px;
-                            background: white;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 20px 0;
-                        }
-                        th, td {
-                            border: 1px solid #e2e8f0;
-                            padding: 12px;
-                            text-align: left;
-                        }
-                        th {
-                            background-color: #eef2ff;
-                            color: #4361ee;
-                            font-weight: 600;
-                        }
-                        .order-header {
-                            text-align: center;
-                            margin-bottom: 30px;
-                        }
-                        .order-title {
-                            font-size: 24px;
-                            font-weight: 700;
-                            color: #4361ee;
-                            margin-bottom: 10px;
-                        }
-                        .order-subtitle {
-                            color: #64748b;
-                            font-size: 16px;
-                        }
-                        .order-date {
-                            color: #64748b;
-                            font-size: 14px;
-                            margin-top: 10px;
-                        }
-                        .order-summary {
-                            margin-top: 30px;
-                            padding-top: 20px;
-                            border-top: 2px solid #e2e8f0;
-                        }
-                        .summary-row {
-                            display: flex;
-                            justify-content: space-between;
-                            padding: 10px 0;
-                            font-size: 15px;
-                        }
-                        .summary-row.total {
-                            padding: 15px 0;
-                            margin-top: 10px;
-                            border-top: 2px solid #4361ee;
-                            font-weight: 700;
-                            font-size: 16px;
-                            color: #4361ee;
-                        }
-                        .signature-section {
-                            margin-top: 60px;
-                            padding-top: 30px;
-                            border-top: 2px solid #e2e8f0;
-                            display: flex;
-                            justify-content: space-between;
-                        }
-                        .signature-box {
-                            text-align: center;
-                            width: 30%;
-                        }
-                        .signature-line {
-                            height: 60px;
-                            margin-bottom: 10px;
-                        }
-                        .signature-label {
-                            border-top: 2px solid #1e293b;
-                            font-size: 13px;
-                            padding-top: 5px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${printContent.innerHTML}
-                </body>
-            </html>
-        `);
-        
-        windowToOpen.document.close();
-        setTimeout(() => {
-            windowToOpen.print();
-        }, 250);
+    if (paginationContainer) paginationContainer.style.display = 'none';
+    liveSearchBar.style.display = 'flex';
+    searchHint.classList.add('visible');
+
+    let matchCount = 0;
+    allRows.forEach(row => {
+        const searchable = row.dataset.searchable || row.textContent.toLowerCase();
+        const matches = searchable.includes(term);
+        row.style.display = matches ? '' : 'none';
+        if (matches) matchCount++;
+    });
+
+    liveMatchCount.textContent = matchCount;
+
+    const existing = document.getElementById('noResultsRow');
+    if (matchCount === 0 && !existing) {
+        const tr = document.createElement('tr');
+        tr.id = 'noResultsRow';
+        tr.innerHTML = `<td colspan="8" style="text-align:center;padding:2rem;color:var(--slate-400);">
+            <i class="bi bi-search" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
+            No products matched "<strong>${term}</strong>" on this page.<br>
+            <span style="cursor:pointer;color:var(--navy);text-decoration:underline;"
+                  onclick="submitSearch()">Click here to search all pages</span>
+        <\/td>`;
+        document.getElementById('productsTableBody').appendChild(tr);
+    } else if (matchCount > 0 && existing) {
+        existing.remove();
     }
+}, 200);
 
-    function openDuplicateModal() {
-        const selectedCheckboxes = document.querySelectorAll('.product-checkbox.checked');
-        const selectedProducts = Array.from(selectedCheckboxes).map(cb => {
-            const row = cb.closest('tr');
-            return {
-                id: row.dataset.productId,
-                name: row.querySelector('.product-name').textContent
-            };
-        });
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        doLiveSearch(this.value.toLowerCase().trim());
+    });
 
-        const container = document.querySelector('.selected-products-container');
-        const hiddenInputs = document.getElementById('hiddenInputs');
-        
-        container.innerHTML = '';
-        hiddenInputs.innerHTML = '';
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitSearch(); }
+        if (e.key === 'Escape') { this.value = ''; doLiveSearch(''); }
+    });
+}
 
-        if (selectedProducts.length === 0) {
-            container.innerHTML = '<p class="text-muted text-center py-3">No products selected</p>';
-            return;
+function submitSearch() {
+    const term = searchInput.value.trim();
+    if (!term) { window.location.href = window.location.pathname; return; }
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set('search', term);
+    window.location.href = url.toString();
+}
+
+function toggleCheckbox(element, productId) {
+    element.classList.toggle('checked');
+    updateActionButtons();
+}
+
+function toggleAllCheckboxes() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    const willCheck = !masterCheckbox.classList.contains('checked');
+    masterCheckbox.classList.toggle('checked');
+    checkboxes.forEach(cb => {
+        const row = cb.closest('tr');
+        if (row && row.style.display !== 'none') {
+            willCheck ? cb.classList.add('checked') : cb.classList.remove('checked');
         }
+    });
+    updateActionButtons();
+}
 
-        selectedProducts.forEach(product => {
-            container.innerHTML += `
-                <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
-                    <span class="text-truncate" style="max-width: 70%;">${product.name}</span>
-                    <span class="badge bg-light text-dark">ID: ${product.id}</span>
+function toggleSelectAll() {
+    toggleAllCheckboxes();
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    selectAllBtn.innerHTML = masterCheckbox.classList.contains('checked')
+        ? '<i class="bi bi-x-square"></i> Deselect All'
+        : '<i class="bi bi-check2-square"></i> Select All';
+}
+
+function updateActionButtons() {
+    const count = document.querySelectorAll('.product-checkbox.checked').length;
+    const duplicateBtn = document.getElementById('duplicateBtn');
+    const printBtn = document.getElementById('printBtn');
+    const deleteAllBtn = document.getElementById('deleteAllBtn');
+    if (duplicateBtn) duplicateBtn.disabled = count === 0;
+    if (printBtn) printBtn.disabled = count === 0;
+    if (deleteAllBtn) deleteAllBtn.disabled = count === 0;
+}
+
+function openPrintModal() {
+    const selected = document.querySelectorAll('.product-checkbox.checked');
+    if (selected.length === 0) { alert('Please select at least one product'); return; }
+    const products = Array.from(selected).map(cb => {
+        const row = cb.closest('tr');
+        return {
+            name1: row.querySelector('.prod-name').textContent.trim(),
+            name2: row.querySelector('.prod-sub').textContent.trim(),
+            category: row.querySelector('.cat-badge').textContent.trim(),
+            costPrice: row.querySelectorAll('.price')[0].textContent.trim(),
+            sellPrice: row.querySelectorAll('.price')[1].textContent.trim(),
+        };
+    });
+    generatePrintContent(products);
+    new bootstrap.Modal(document.getElementById('printModal')).show();
+}
+
+function generatePrintContent(products) {
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    const rows = products.map((p, i) => `
+        <tr>
+            <td style="text-align:center;width:5%">${i + 1}<\/td>
+            <td style="width:40%">
+                <div class="prod-disp-name">${escapeHtml(p.name1)}</div>
+                <div class="prod-disp-sub">${escapeHtml(p.name2)}</div>
+             <\/td>
+            <td style="width:20%">${escapeHtml(p.category)}<\/td>
+            <td style="text-align:right;width:17%">${p.costPrice}<\/td>
+            <td style="text-align:right;width:17%">${p.sellPrice}<\/td>
+        几个人`).join('');
+
+    document.getElementById('printModalBody').innerHTML = `
+        <div class="print-order">
+            <div class="order-hd">
+                <div class="order-title">📦 PURCHASE ORDER</div>
+                <div class="order-sub">Product List for Procurement</div>
+                <div class="order-date">${currentDate}</div>
+            </div>
+            <table class="order-tbl">
+                <thead><tr>
+                    <th style="width:5%;text-align:center">No.</th>
+                    <th style="width:40%">Product Name</th>
+                    <th style="width:20%">Category</th>
+                    <th style="width:17%;text-align:right">Cost Price</th>
+                    <th style="width:17%;text-align:right">Sell Price</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+             built
+            <div class="order-sum">
+                <div class="sum-row">
+                    <span><strong>Total Items:</strong></span>
+                    <span><strong>${products.length}</strong></span>
                 </div>
-            `;
+                <div class="sum-row total">
+                    <span>TOTAL PRODUCTS</span>
+                    <span>${products.length}</span>
+                </div>
+            </div>
+        </div>`;
+}
 
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'product_ids[]';
-            hiddenInput.value = product.id;
-            hiddenInputs.appendChild(hiddenInput);
+function printOrder() {
+    const content = document.querySelector('.print-order').innerHTML;
+    const w = window.open('', '', 'height=700,width=900');
+    w.document.write(`<!DOCTYPE html><html><head><style>
+        body{font-family:Arial,sans-serif;margin:0;padding:20px;background:white}
+        table{width:100%;border-collapse:collapse;margin:20px 0}
+        th,td{border:1px solid #e2e8f0;padding:12px;text-align:left}
+        th{background:#f1f5f9;color:#0B1E3D;font-weight:600}
+        .order-hd{text-align:center;margin-bottom:30px}
+        .order-title{font-size:24px;font-weight:700;color:#0B1E3D;margin-bottom:8px}
+        .order-sub,.order-date{color:#64748b}
+        .prod-disp-name{font-weight:600;color:#0B1E3D}
+        .prod-disp-sub{font-size:.8rem;color:#64748b}
+        .sum-row{display:flex;justify-content:space-between;padding:8px 0}
+        .sum-row.total{border-top:2px solid #0B1E3D;font-weight:700;color:#0B1E3D;font-size:1.05rem}
+        .order-sum{margin-top:20px;padding-top:15px;border-top:2px solid #e2e8f0}
+    <\/style><\/head><body>${content}<\/body><\/html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 250);
+}
+
+function openDeleteModal() {
+    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
+        id: cb.closest('tr').dataset.productId,
+        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
+    }));
+    const container = document.querySelector('.selected-products-container-delete');
+    const hiddenInputs = document.getElementById('deleteHiddenInputs');
+    if (container) container.innerHTML = '';
+    if (hiddenInputs) hiddenInputs.innerHTML = '';
+    if (selected.length === 0) {
+        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">No products selected</p>';
+    } else {
+        selected.forEach(p => {
+            if (container) {
+                container.innerHTML += `<div class="selected-item">
+                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
+                    <span class="selected-item-badge">ID: ${p.id}</span>
+                </div>`;
+            }
+            if (hiddenInputs) {
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
+                hiddenInputs.appendChild(inp);
+            }
         });
-
-        const modal = new bootstrap.Modal(document.getElementById('duplicateModal'));
-        modal.show();
     }
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
 
-    function duplicateProducts() {
-        const form = document.getElementById('duplicateForm');
-        const targetAccount = document.getElementById('targetAccount').value;
-        const confirmBtn = document.getElementById('confirmDuplicateBtn');
-        const btnText = document.getElementById('duplicateBtnText');
-        const loading = document.getElementById('duplicateLoading');
+function deleteSelectedProducts() {
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+    setTimeout(() => document.getElementById('deleteForm').submit(), 500);
+}
 
-        if (!targetAccount) {
-            alert('Please select a target shop.');
+function openDuplicateModal() {
+    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
+        id: cb.closest('tr').dataset.productId,
+        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
+    }));
+    const container = document.querySelector('.selected-products-container');
+    const hiddenInputs = document.getElementById('hiddenInputs');
+    if (container) container.innerHTML = '';
+    if (hiddenInputs) hiddenInputs.innerHTML = '';
+    if (selected.length === 0) {
+        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">No products selected</p>';
+    } else {
+        selected.forEach(p => {
+            if (container) {
+                container.innerHTML += `<div class="selected-item">
+                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
+                    <span class="selected-item-badge">ID: ${p.id}</span>
+                </div>`;
+            }
+            if (hiddenInputs) {
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
+                hiddenInputs.appendChild(inp);
+            }
+        });
+    }
+    new bootstrap.Modal(document.getElementById('duplicateModal')).show();
+}
+
+function duplicateProducts() {
+    const targetAccount = document.getElementById('targetAccount').value;
+    if (!targetAccount) { alert('Please select a target shop.'); return; }
+    const confirmBtn = document.getElementById('confirmDuplicateBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+    setTimeout(() => document.getElementById('duplicateForm').submit(), 500);
+}
+
+function downloadReport() {
+    window.location.href = "{{ route('admin.product.report.export') }}";
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// ========== OFFER MODAL WITH SEARCHABLE PRODUCT SELECTOR ==========
+let currentOfferProductId = null;
+let currentOfferId = null;
+let allProductsList = [];
+
+// Load all products from the table for search
+function loadAllProductsForSearch() {
+    const rows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
+    allProductsList = [];
+    rows.forEach(row => {
+        const id = row.getAttribute('data-product-id');
+        const nameEl = row.querySelector('.prod-name');
+        let name = '';
+        if (nameEl) {
+            // Get text without the offer tag
+            const clone = nameEl.cloneNode(true);
+            const offerTag = clone.querySelector('.offer-tag');
+            if (offerTag) offerTag.remove();
+            name = clone.textContent.trim();
+        }
+        const subEl = row.querySelector('.prod-sub');
+        const sub = subEl ? subEl.textContent.trim() : '';
+        const category = row.querySelector('.cat-badge') ? row.querySelector('.cat-badge').textContent : '';
+        const stockSpan = row.querySelector('.stock-badge');
+        let stock = 0;
+        if (stockSpan) {
+            const match = stockSpan.textContent.match(/\d+/);
+            if (match) stock = parseInt(match[0]);
+        }
+        
+        if (id && name) {
+            allProductsList.push({
+                id: id,
+                name: name,
+                description: sub,
+                category: category,
+                stock: stock,
+                displayText: `${name} ${sub ? '('+sub+')' : ''} [Stock: ${stock}] - ID: ${id}`
+            });
+        }
+    });
+    
+    // Populate datalist options
+    const datalist = document.getElementById('productOptionsList');
+    if (datalist) {
+        datalist.innerHTML = '';
+        allProductsList.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.displayText;
+            option.setAttribute('data-id', product.id);
+            option.setAttribute('data-name', product.name);
+            datalist.appendChild(option);
+        });
+    }
+    
+    console.log('Loaded ' + allProductsList.length + ' products for search');
+}
+
+// Setup the search input with datalist
+function setupProductSearch() {
+    const searchInput = document.getElementById('offerProductSearchInput');
+    const hiddenId = document.getElementById('offerProductIdHidden');
+    
+    if (!searchInput || !hiddenId) return;
+    
+    searchInput.addEventListener('input', function() {
+        const value = this.value;
+        // Find matching product by display text or name or ID
+        const matchedProduct = allProductsList.find(p => 
+            p.displayText === value || 
+            p.name.toLowerCase() === value.toLowerCase() ||
+            p.id === value
+        );
+        
+        if (matchedProduct) {
+            hiddenId.value = matchedProduct.id;
+            // Add visual feedback
+            this.style.borderColor = 'var(--emerald)';
+        } else {
+            if (value === '') {
+                hiddenId.value = '';
+                this.style.borderColor = 'var(--slate-200)';
+            } else {
+                this.style.borderColor = 'var(--rose)';
+            }
+        }
+    });
+    
+    searchInput.addEventListener('change', function() {
+        const value = this.value;
+        const matchedProduct = allProductsList.find(p => p.displayText === value);
+        if (matchedProduct) {
+            hiddenId.value = matchedProduct.id;
+            this.style.borderColor = 'var(--emerald)';
+        } else {
+            // Try to match by just the product name
+            const nameMatch = allProductsList.find(p => p.name.toLowerCase() === value.toLowerCase());
+            if (nameMatch) {
+                hiddenId.value = nameMatch.id;
+                this.value = nameMatch.displayText;
+                this.style.borderColor = 'var(--emerald)';
+            }
+        }
+    });
+    
+    // Allow typing to search - make sure input is focusable
+    searchInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
+
+function openOfferModal(productId = null, productName = '') {
+    productId = productId || null;
+    productName = productName || '';
+    
+    currentOfferProductId = productId;
+    currentOfferId = null;
+    
+    // Make sure products are loaded
+    if (allProductsList.length === 0) {
+        loadAllProductsForSearch();
+    }
+    
+    // Reset search input
+    const searchInput = document.getElementById('offerProductSearchInput');
+    const hiddenId = document.getElementById('offerProductIdHidden');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.style.borderColor = 'var(--slate-200)';
+    }
+    if (hiddenId) hiddenId.value = '';
+    
+    // Update modal header with product info
+    const productNameEl = document.getElementById('offerProductName');
+    const productIdEl = document.getElementById('offerProductId');
+    const productIdInput = document.getElementById('offerProductIdInput');
+    
+    if (productId) {
+        if (productNameEl) productNameEl.textContent = productName || 'Unknown Product';
+        if (productIdEl) productIdEl.textContent = 'ID: ' + productId;
+        if (productIdInput) productIdInput.value = productId;
+        document.getElementById('existingOffersSection').style.display = 'block';
+        
+        // Load existing offers for this product
+        loadOffersForProduct(productId);
+    } else {
+        if (productNameEl) productNameEl.textContent = 'Select a product first';
+        if (productIdEl) productIdEl.textContent = '—';
+        if (productIdInput) productIdInput.value = '';
+        document.getElementById('existingOffersSection').style.display = 'none';
+        const offersList = document.getElementById('offersList');
+        if (offersList) {
+            offersList.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">Select a product to view and create offers</p>';
+        }
+    }
+    
+    // Reset form
+    const offerForm = document.getElementById('offerForm');
+    if (offerForm) offerForm.reset();
+    const requiredQty = document.getElementById('requiredQuantity');
+    const offerQty = document.getElementById('offerQuantity');
+    const isActive = document.getElementById('isActive');
+    if (requiredQty) requiredQty.value = '1';
+    if (offerQty) offerQty.value = '1';
+    if (isActive) isActive.checked = true;
+    
+    const messageDiv = document.getElementById('offerFormMessage');
+    if (messageDiv) messageDiv.innerHTML = '';
+    
+    const deleteSection = document.getElementById('deleteOfferSection');
+    if (deleteSection) deleteSection.style.display = 'none';
+    
+    // Show modal
+    const modalEl = document.getElementById('offerModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        // Focus on search input after modal is shown
+        modalEl.addEventListener('shown.bs.modal', function() {
+            if (searchInput) searchInput.focus();
+        }, { once: true });
+    }
+}
+
+function loadOffersForProduct(productId) {
+    $.ajax({
+        url: `/admin/getOffers/${productId}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            displayOffersList(response);
+        },
+        error: function(xhr) {
+            console.error('Error loading offers:', xhr);
+            const offersList = document.getElementById('offersList');
+            if (offersList) {
+                offersList.innerHTML = '<p style="text-align:center;color:var(--rose);padding:1rem;">Error loading offers</p>';
+            }
+        }
+    });
+}
+
+function displayOffersList(offers) {
+    const container = document.getElementById('offersList');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!offers || offers.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">No active offers for this product</p>';
+        return;
+    }
+    
+    offers.forEach(offer => {
+        const offerText = `Buy ${offer.required_quantity} × get ${offer.offer_quantity} × free`;
+        const productName = offer.offeredProduct && offer.offeredProduct.name01 ? offer.offeredProduct.name01 : 'Product';
+        const displayText = offer.offeredProduct && offer.offeredProduct.name02 ? 
+            `${productName} (${offer.offeredProduct.name02})` : productName;
+        
+        const item = document.createElement('div');
+        item.className = 'selected-item';
+        item.setAttribute('data-offer-id', offer.id);
+        item.innerHTML = `
+            <div>
+                <div class="selected-item-name">${escapeHtml(offerText)}</div>
+                <div style="font-size:0.75rem;color:var(--slate-400);">
+                    Free product: ${escapeHtml(displayText)}
+                </div>
+            </div>
+            <button type="button" class="mbtn mbtn-outline" style="padding:0.25rem 0.5rem;font-size:0.75rem;"
+                    onclick="editOffer(${offer.id}, ${offer.required_quantity}, ${offer.offer_quantity})" title="Edit">
+                <i class="bi bi-pencil"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function editOffer(offerId, reqQty, offQty) {
+    const requiredQty = document.getElementById('requiredQuantity');
+    const offerQty = document.getElementById('offerQuantity');
+    if (requiredQty) requiredQty.value = reqQty;
+    if (offerQty) offerQty.value = offQty;
+    
+    currentOfferId = offerId;
+    
+    const deleteSection = document.getElementById('deleteOfferSection');
+    if (deleteSection) deleteSection.style.display = 'block';
+    
+    const messageDiv = document.getElementById('offerFormMessage');
+    if (messageDiv) {
+        messageDiv.innerHTML = '<div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;"><i class="bi bi-info-circle-fill"></i> Editing existing offer. Update or delete.</div>';
+    }
+    
+    // Scroll to form
+    const offerForm = document.getElementById('offerForm');
+    if (offerForm) {
+        offerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function deleteOffer() {
+    if (!currentOfferId) return;
+    
+    if (!confirm('Are you sure you want to delete this offer?')) return;
+    
+    $.ajax({
+        url: "{{ route('admin.deleteOffer') }}",
+        type: 'POST',
+        data: {
+            _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            offer_id: currentOfferId
+        },
+        success: function(response) {
+            const messageDiv = document.getElementById('offerFormMessage');
+            if (messageDiv) {
+                messageDiv.innerHTML = `
+                    <div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;">
+                        <i class="bi bi-check-circle-fill"></i> ${response.message || 'Offer deleted successfully!'}
+                    </div>
+                `;
+            }
+            
+            if (currentOfferProductId) {
+                loadOffersForProduct(currentOfferProductId);
+            }
+            
+            const offerForm = document.getElementById('offerForm');
+            if (offerForm) offerForm.reset();
+            
+            const requiredQty = document.getElementById('requiredQuantity');
+            const offerQty = document.getElementById('offerQuantity');
+            if (requiredQty) requiredQty.value = '1';
+            if (offerQty) offerQty.value = '1';
+            
+            const deleteSection = document.getElementById('deleteOfferSection');
+            if (deleteSection) deleteSection.style.display = 'none';
+            
+            currentOfferId = null;
+            
+            setTimeout(() => {
+                if (messageDiv) messageDiv.innerHTML = '';
+            }, 3000);
+        },
+        error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'Error deleting offer';
+            const messageDiv = document.getElementById('offerFormMessage');
+            if (messageDiv) {
+                messageDiv.innerHTML = `
+                    <div class="alert-box">
+                        <i class="bi bi-exclamation-triangle-fill"></i> ${errorMsg}
+                    </div>
+                `;
+            }
+        }
+    });
+}
+
+function updateOfferBadgeInTable(productId, hasOffer) {
+    const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+    if (!row) return;
+    
+    const nameCell = row.querySelector('.prod-name');
+    if (!nameCell) return;
+    
+    const existingTag = nameCell.querySelector('.offer-tag');
+    if (hasOffer) {
+        if (!existingTag) {
+            const tag = document.createElement('span');
+            tag.className = 'offer-tag';
+            tag.setAttribute('title', 'Active offer');
+            tag.innerHTML = '<i class="bi bi-gift-fill"></i> Offer';
+            nameCell.appendChild(tag);
+        }
+    } else {
+        if (existingTag) existingTag.remove();
+    }
+}
+
+// Document ready - initialize everything
+$(document).ready(function() {
+    // Load products for search
+    setTimeout(function() {
+        loadAllProductsForSearch();
+        setupProductSearch();
+    }, 500);
+    
+    // Handle offer form submission via AJAX
+    $('#offerForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const targetProductId = document.getElementById('offerProductIdHidden').value;
+        if (!targetProductId) {
+            const messageDiv = document.getElementById('offerFormMessage');
+            if (messageDiv) {
+                messageDiv.innerHTML = `
+                    <div class="alert-box">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Please select a valid product from the search list!
+                    </div>
+                `;
+            }
             return;
         }
-
-        // Show loading state
-        btnText.style.display = 'none';
-        loading.style.display = 'inline';
-
-        // Disable button
-        confirmBtn.disabled = true;
-
-        // Submit form
-        setTimeout(() => {
-            form.submit();
-        }, 1000);
-    }
-
-    function downloadReport() {
-        window.location.href = "{{ route('admin.product.report.export') }}";
-    }
-
-    // Initialize tooltips
-    document.addEventListener('DOMContentLoaded', function() {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
+        
+        // Make sure the hidden field has the value
+        $('input[name="offer_product_id"]').remove();
+        $(this).append(`<input type="hidden" name="offer_product_id" value="${targetProductId}">`);
+        
+        const formData = $(this).serialize();
+        const saveBtn = $('#saveOfferBtn');
+        saveBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Saving...');
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                const messageDiv = document.getElementById('offerFormMessage');
+                if (messageDiv) {
+                    messageDiv.innerHTML = `
+                        <div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;">
+                            <i class="bi bi-check-circle-fill"></i> ${response.message || 'Offer saved successfully!'}
+                        </div>
+                    `;
+                }
+                
+                // Reload offers list
+                if (currentOfferProductId) {
+                    loadOffersForProduct(currentOfferProductId);
+                }
+                
+                // Reset form if not editing
+                if (!currentOfferId) {
+                    const offerForm = document.getElementById('offerForm');
+                    if (offerForm) offerForm.reset();
+                    const requiredQty = document.getElementById('requiredQuantity');
+                    const offerQty = document.getElementById('offerQuantity');
+                    const searchInput = document.getElementById('offerProductSearchInput');
+                    const hiddenId = document.getElementById('offerProductIdHidden');
+                    if (requiredQty) requiredQty.value = '1';
+                    if (offerQty) offerQty.value = '1';
+                    if (searchInput) searchInput.value = '';
+                    if (hiddenId) hiddenId.value = '';
+                }
+                
+                // Clear edit state
+                currentOfferId = null;
+                const deleteSection = document.getElementById('deleteOfferSection');
+                if (deleteSection) deleteSection.style.display = 'none';
+                
+                // Update product badge in table
+                updateOfferBadgeInTable(currentOfferProductId, true);
+                
+                setTimeout(() => {
+                    if (messageDiv) messageDiv.innerHTML = '';
+                }, 3000);
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Error saving offer';
+                const messageDiv = document.getElementById('offerFormMessage');
+                if (messageDiv) {
+                    messageDiv.innerHTML = `
+                        <div class="alert-box">
+                            <i class="bi bi-exclamation-triangle-fill"></i> ${errorMsg}
+                        </div>
+                    `;
+                }
+            },
+            complete: function() {
+                saveBtn.prop('disabled', false).html('<i class="bi bi-check-lg"></i> Save Offer');
+            }
         });
     });
-
-    // Reset modal when closed
-    document.getElementById('duplicateModal').addEventListener('hidden.bs.modal', function() {
-        document.getElementById('targetAccount').value = '';
-        document.getElementById('includeStock').checked = true;
-        document.getElementById('includePricing').checked = true;
-        document.querySelector('.selected-products-container').innerHTML = '';
-        
-        const confirmBtn = document.getElementById('confirmDuplicateBtn');
-        const btnText = document.getElementById('duplicateBtnText');
-        const loading = document.getElementById('duplicateLoading');
-        
-        btnText.style.display = 'inline';
-        loading.style.display = 'none';
-        confirmBtn.disabled = false;
-    });
-
-    document.getElementById('printModal').addEventListener('hidden.bs.modal', function() {
-        document.getElementById('printModalBody').innerHTML = '';
-    });
+    
+    // Handle delete offer button
+    $('#deleteOfferBtn').on('click', deleteOffer);
+});
 </script>
 </body>
 </html>

@@ -11,5 +11,19 @@ class debtsModel extends Model
 
     protected $table = 'debts';
 
-    protected $fillable = ['cName','cId','debtId','orderId','amount'];
+    protected $fillable = [
+        'cName',
+        'cId',
+        'debtId',
+        'orderId',
+        'amount',
+        'account',
+        'payment_method',
+        'chip_amount',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'chip_amount' => 'decimal:2',
+    ];
 }

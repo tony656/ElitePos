@@ -3,864 +3,1427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management System</title>
+    <title>Create New Sales</title>
     @include("links")
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --navy:          #0B1E3D;
+            --navy-mid:      #112952;
+            --navy-light:    #1A3A6B;
+            --amber:         #F59E0B;
+            --amber-pale:    #FEF3C7;
+            --emerald:       #059669;
+            --emerald-pale:  #D1FAE5;
+            --rose:          #E11D48;
+            --rose-pale:     #FFE4E6;
+            --violet:        #7C3AED;
+            --violet-pale:   #EDE9FE;
+            --fuchsia:       #C026D3;
+            --fuchsia-pale:  #FAE8FF;
+            --sky:           #0284C7;
+            --sky-pale:      #E0F2FE;
+            --slate-50:      #F8FAFC;
+            --slate-100:     #F1F5F9;
+            --slate-200:     #E2E8F0;
+            --slate-300:     #CBD5E1;
+            --slate-400:     #94A3B8;
+            --slate-500:     #64748B;
+            --slate-600:     #475569;
+            --slate-700:     #334155;
+            --slate-800:     #1E293B;
+            --white:         #FFFFFF;
         }
-        .bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .main-wrapper {
-            display: flex;
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #EEF2F9;
+            color: var(--slate-800);
             min-height: 100vh;
         }
 
-        .main-content-wrapper {
-            flex: 1;
-            padding: 0 20px;
-            background-color: #f8f9fa;
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--slate-100); }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        /* ── Main wrap ── */
+        .main-wrap { max-width: 1800px; margin: 0 auto; padding: 1.1rem 1.4rem; }
+
+        /* ── Page header ── */
+        .pg-header {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 0.95rem 1.4rem;
+            margin-bottom: 1.1rem;
+            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
         }
 
-        .main-content {
-            display: flex;
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+        .pg-title {
+            display: flex; align-items: center; gap: 0.75rem;
+            color: var(--white); font-size: 1.3rem; font-weight: 700;
         }
 
-        .card-modern {
-            background: rgba(255, 255, 255, 0.97);
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        .pg-title-icon {
+            width: 38px; height: 38px;
+            background: rgba(245,158,11,0.18);
+            border: 1px solid rgba(245,158,11,0.35);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--amber); font-size: 1rem; flex-shrink: 0;
+        }
+
+        .pg-title span { color: var(--amber); }
+
+        .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        .hbtn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem; font-weight: 600;
+            padding: 0.44rem 0.95rem;
+            border-radius: 7px; border: 1px solid transparent;
+            cursor: pointer; text-decoration: none; transition: all 0.15s;
+        }
+        .hbtn-ghost {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.85);
+        }
+        .hbtn-ghost:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        /* ── Alerts ── */
+        .alert-bar {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            font-size: 0.875rem; font-weight: 500;
+            margin-bottom: 1rem;
+            animation: fadeSlide 0.3s ease;
+        }
+        @keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .alert-ok  { background: var(--emerald-pale); border-left: 4px solid var(--emerald); color: #065F46; }
+        .alert-err { background: var(--rose-pale);    border-left: 4px solid var(--rose);    color: #9F1239; }
+        .alert-bar button { background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 1rem; }
+        .alert-bar button:hover { opacity: 1; }
+
+        /* ── Two-col layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1rem;
+            align-items: start;
+        }
+        @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+
+        /* ── Panel ── */
+        .panel {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(11,30,61,0.08);
             overflow: hidden;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: fit-content;
         }
 
-        .card-modern:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        .panel-head {
+            background: var(--navy);
+            padding: 0.75rem 1.1rem;
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--white); font-size: 0.9rem; font-weight: 600;
+            flex-shrink: 0;
+        }
+        .panel-head-left { display: flex; align-items: center; gap: 0.55rem; }
+        .panel-head i { color: var(--amber); }
+
+        /* ── Search box ── */
+        .search-wrap { padding: 0.85rem 1rem; border-bottom: 1px solid var(--slate-200); position: relative; }
+
+        .sbox {
+            position: relative;
+            display: flex; align-items: center;
+        }
+        .sbox-icon {
+            position: absolute; left: 0.7rem;
+            color: var(--slate-400); font-size: 0.875rem; pointer-events: none;
+        }
+        .sbox-input {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.875rem;
+            width: 100%;
+            padding: 0.55rem 2.2rem 0.55rem 2.1rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 8px;
+            background: var(--slate-50);
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        }
+        .sbox-input:focus {
+            border-color: var(--navy-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+        .sbox-input::placeholder { color: var(--slate-400); }
+
+        /* ── Dropdown ── */
+        .dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 1rem; right: 1rem;
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(11,30,61,0.14);
+            z-index: 1000;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            animation: dropIn 0.16s ease;
+        }
+        .dropdown.open { display: block; }
+        @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+        .dd-item {
+            padding: 0.6rem 0.9rem;
+            border-bottom: 1px solid var(--slate-100);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .dd-item:last-child { border-bottom: none; }
+        .dd-item:hover { background: #EFF4FF; }
+        .dd-item-name { font-weight: 600; color: var(--navy); font-size: 0.865rem; margin-bottom: 0.18rem; }
+        .dd-item-meta {
+            display: flex; gap: 0.75rem; align-items: center;
+            font-size: 0.74rem; color: var(--slate-500);
+            font-family: 'DM Mono', monospace;
+        }
+        .dd-badge {
+            display: inline-flex; align-items: center; gap: 0.2rem;
+            font-size: 0.7rem; font-weight: 700;
+            padding: 0.18rem 0.55rem; border-radius: 20px;
+        }
+        .dd-badge-price  { background: var(--emerald-pale); color: #065F46; }
+        .dd-badge-offer  { background: var(--fuchsia-pale); color: var(--fuchsia); }
+        .dd-badge-stock  { background: var(--sky-pale);      color: var(--sky); }
+
+        .dd-loading { padding: 0.9rem; text-align: center; color: var(--slate-400); font-size: 0.85rem; }
+        .dd-empty   { padding: 1.5rem; text-align: center; color: var(--slate-400); font-size: 0.85rem; }
+
+        /* ── Selected badge ── */
+        .sel-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--navy); color: var(--white);
+            font-size: 0.78rem; font-weight: 600;
+            padding: 0.3rem 0.35rem 0.3rem 0.7rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+        .sel-badge-remove {
+            width: 18px; height: 18px;
+            background: rgba(255,255,255,0.15);
+            border: none; color: white; cursor: pointer;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; transition: background 0.15s; flex-shrink: 0;
+        }
+        .sel-badge-remove:hover { background: var(--rose); }
+
+        /* ── Cart section ── */
+        .cart-section { padding: 0 0 0.5rem; }
+
+        .cart-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .cart-label {
+            font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--slate-500); display: flex; align-items: center; gap: 0.4rem;
+        }
+        .cart-label i { color: var(--amber); }
+        .cart-badge {
+            background: var(--amber); color: var(--navy);
+            font-size: 0.7rem; font-weight: 700;
+            padding: 0.15rem 0.5rem; border-radius: 20px;
+        }
+        .offer-banner {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(90deg, var(--fuchsia-pale), #FFF);
+            border-bottom: 1px solid #F5D0FE;
+            font-size: 0.78rem; font-weight: 600; color: var(--fuchsia);
         }
 
-        .card-header-modern {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 24px;
+        /* ── Cart table ── */
+        .cart-overflow { overflow-x: auto; }
+
+        table.cart-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        table.cart-tbl thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.5rem 0.7rem;
+            border-bottom: 2px solid var(--slate-200);
+            white-space: nowrap;
+        }
+        table.cart-tbl tbody td {
+            padding: 0.5rem 0.7rem;
+            border-bottom: 1px solid var(--slate-100);
+            vertical-align: middle;
+        }
+        table.cart-tbl tbody tr:hover td { background: #F8FAFF; }
+        table.cart-tbl tbody tr.offer-row td { background: #F0FDF4; }
+        table.cart-tbl tbody tr.offer-row:hover td { background: #DCFCE7; }
+        table.cart-tbl tbody tr.offer-row td:first-child { border-left: 3px solid var(--emerald); }
+
+        .cart-prod-name {
+            font-weight: 600; color: var(--navy);
+            max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .mono { font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+        .num-right { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.8rem; }
+        .fw-total { font-weight: 600; color: var(--navy); }
+
+        .tbl-input {
+            font-family: 'DM Mono', monospace; font-size: 0.78rem;
+            width: 72px; padding: 0.28rem 0.4rem;
+            border: 1.5px solid var(--slate-200); border-radius: 5px;
+            background: var(--white); color: var(--slate-800);
+            text-align: center; outline: none;
+            transition: border-color 0.15s;
+        }
+        .tbl-input:focus { border-color: var(--navy-light); background: #EEF3FF; }
+
+        .del-btn {
+            width: 27px; height: 27px;
+            background: var(--rose-pale); color: var(--rose);
+            border: none; border-radius: 6px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
+            transition: background 0.15s, transform 0.12s;
+        }
+        .del-btn:hover { background: var(--rose); color: var(--white); transform: scale(1.08); }
+
+        .empty-cart {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 3rem 1rem; color: var(--slate-400); text-align: center;
+        }
+        .empty-cart i { font-size: 2.2rem; margin-bottom: 0.6rem; opacity: 0.4; display: block; }
+        .empty-cart-title { font-size: 0.9rem; font-weight: 600; color: var(--slate-500); margin-bottom: 0.25rem; }
+        .empty-cart p { font-size: 0.8rem; }
+
+        /* ── Right panel sections ── */
+        .rp-sec {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .rp-sec:last-child { border-bottom: none; }
+
+        .sec-title {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--slate-400); margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.35rem;
+        }
+        .sec-title i { color: var(--amber); font-size: 0.8rem; }
+
+        /* ── Customer info card ── */
+        .cust-info {
+            background: var(--slate-50);
+            border: 1.5px solid var(--slate-200);
+            border-left: 3px solid var(--amber);
+            border-radius: 8px;
+            padding: 0.7rem 0.85rem;
+            margin-top: 0.6rem;
+        }
+        .cust-info-title {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--slate-500); margin-bottom: 0.6rem;
+        }
+        .cust-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.815rem;
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .cust-row:last-child { border-bottom: none; }
+        .cust-key { color: var(--slate-500); font-weight: 500; }
+        .cust-val { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--slate-800); font-size: 0.8rem; }
+        .cust-val.available { color: var(--emerald); }
+
+        /* ── Order meta ── */
+        .order-meta {
+            display: flex; gap: 0.75rem; flex-wrap: wrap;
+            margin-top: 0.6rem;
+        }
+        .meta-chip {
+            display: flex; flex-direction: column; gap: 0.1rem;
+            background: var(--slate-100); border-radius: 7px;
+            padding: 0.4rem 0.65rem; flex: 1; min-width: 90px;
+        }
+        .meta-chip-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); }
+        .meta-chip-value { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
+
+        /* ── Field ── */
+        .field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.6rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label { font-size: 0.77rem; font-weight: 600; color: var(--slate-600); display: flex; align-items: center; gap: 0.3rem; }
+        .field-label i { color: var(--navy-light); font-size: 0.8rem; }
+        .field-input {
+            font-family: 'Outfit', sans-serif; font-size: 0.855rem;
+            padding: 0.46rem 0.7rem;
+            border: 1.5px solid var(--slate-200); border-radius: 7px;
+            background: var(--white); color: var(--slate-800);
+            outline: none; transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .field-input:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+        select.field-input {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.7rem center; padding-right: 2rem;
+            appearance: none;
+        }
+        .field-hint { font-size: 0.71rem; color: var(--slate-400); }
+
+        /* ── Pay distribution ── */
+        .pay-dist {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+            background: var(--slate-50); border: 1.5px solid var(--slate-200);
+            border-radius: 8px; padding: 0.65rem;
+            margin-bottom: 0.6rem;
+        }
+        .pay-dist-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-500); margin-bottom: 0.3rem; }
+
+        /* ── Pricing summary ── */
+        .price-rows { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; }
+        .price-row-item {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.845rem;
+        }
+        .price-row-item .key { color: var(--slate-600); font-weight: 500; }
+        .price-row-item .val { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--slate-700); }
+
+        .total-card {
+            background: var(--navy);
+            border-radius: 10px; padding: 0.85rem 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.85rem;
+        }
+        .total-card-label { color: rgba(255,255,255,0.6); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+        .total-card-amount { font-family: 'DM Mono', monospace; font-size: 1.15rem; color: var(--amber); font-weight: 500; }
+        .total-card-curr { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-right: 2px; }
+
+        /* ── Submit button ── */
+        .submit-btn {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            font-family: 'Outfit', sans-serif; font-size: 0.925rem; font-weight: 700;
+            padding: 0.75rem;
+            background: var(--amber); color: var(--navy);
+            border: none; border-radius: 9px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+            transition: box-shadow 0.18s, transform 0.12s, filter 0.15s;
+        }
+        .submit-btn:hover { box-shadow: 0 5px 20px rgba(245,158,11,0.42); transform: translateY(-1px); }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn:disabled { background: var(--slate-300); color: var(--slate-500); box-shadow: none; cursor: not-allowed; transform: none; }
+
+        /* ── Toast ── */
+        .toast-stack { position: fixed; top: 1.2rem; right: 1.2rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.45rem; }
+        .toast-item {
+            display: flex; align-items: center; gap: 0.55rem;
+            background: var(--white); border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(11,30,61,0.16);
+            padding: 0.65rem 0.95rem;
+            min-width: 240px; max-width: 320px;
+            font-size: 0.855rem; font-weight: 500;
+            opacity: 0; transform: translateX(16px);
+            transition: opacity 0.22s, transform 0.22s;
+        }
+        .toast-item.show { opacity: 1; transform: translateX(0); }
+        .toast-ok  { border-left: 4px solid var(--emerald); }
+        .toast-err { border-left: 4px solid var(--rose); }
+        .toast-ok  .t-ico { color: var(--emerald); }
+        .toast-err .t-ico { color: var(--rose); }
+
+        /* ── Modal tweaks ── */
+        .modal-header-navy {
+            background: var(--navy);
+            color: var(--white);
             border-bottom: none;
         }
+        .modal-header-navy .btn-close { filter: invert(1) brightness(0.8); }
+        .modal-header-navy i { color: var(--amber); }
 
-        .card-header-modern h5 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .modal-header-emerald {
+            background: var(--emerald);
+            color: var(--white);
+            border-bottom: none;
         }
+        .modal-header-emerald .btn-close { filter: invert(1) brightness(0.8); }
 
-        .card-body-modern {
-            padding: 20px;
-        }
-
-        .form-group-modern {
-            margin-bottom: 20px;
-        }
-
-        .form-group-modern label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .form-control-modern {
-            width: 100%;
-            padding: 10px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.90rem;
-            transition: all 0.3s ease;
-            background: #f9f9f9;
-        }
-
-        .form-control-modern:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .search-results-modern {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            max-height: 350px;
-            overflow-y: auto;
-            z-index: 1000;
-            margin-top: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            display: none;
-        }
-
-        .search-item-modern {
-            padding: 12px 15px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .search-item-modern:hover {
-            background: #f5f7ff;
-            border-left: 4px solid #667eea;
-            padding-left: 11px;
-        }
-
-        .search-item-name-modern {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .search-item-details-modern {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: #999;
-        }
-
-        .price-badge {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .btn-modern {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-        .btn-primary-modern {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-success-modern {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-        }
-
-        .btn-success-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
-        }
-
-        .price-summary {
-            background: linear-gradient(135deg, #f5f7ff 0%, #f0f0ff 100%);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-
-        .price-row.total {
-            border-top: 2px solid #667eea;
-            padding-top: 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #667eea;
-        }
-
-        .cart-table-modern {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .cart-table-modern thead {
-            background: #f5f7ff;
-            border-bottom: 2px solid #667eea;
-        }
-
-        .cart-table-modern th {
-            padding: 10px 6px;
-            text-align: left;
-            color: #667eea;
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .cart-table-modern td {
-            padding: 10px 6px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .cart-table-modern tbody tr:hover {
-            background: #f9f9f9;
-        }
-
-        .input-number-modern {
-            width: 60px;
-            padding: 6px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        .input-number-modern:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn-delete {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-delete:hover {
-            background: #ff5252;
-        }
-
-        .row-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .alert-modern {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            border: 2px solid #667eea;
-            color: #333;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .suspended-order-item {
-            background: #fff;
-            border-left: 4px solid #ffc107;
-            padding: 12px;
-            margin-bottom: 10px;
+        .suspended-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: var(--white);
+            border-left: 3px solid var(--amber);
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 6px rgba(11,30,61,0.07);
+            transition: box-shadow 0.15s, transform 0.12s;
         }
+        .suspended-row:hover { box-shadow: 0 4px 14px rgba(245,158,11,0.2); transform: translateX(3px); }
+        .suspended-row-name { font-weight: 600; color: var(--navy); font-size: 0.875rem; }
+        .suspended-row-meta { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--slate-500); }
 
-        .suspended-order-item:hover {
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-            transform: translateX(4px);
+        .resume-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-family: 'Outfit', sans-serif; font-size: 0.78rem; font-weight: 600;
+            padding: 0.38rem 0.8rem;
+            background: var(--navy); color: var(--white);
+            border: none; border-radius: 7px; cursor: pointer;
+            transition: background 0.15s; text-decoration: none; white-space: nowrap;
         }
+        .resume-btn:hover { background: var(--navy-light); color: var(--white); }
 
-        .suspended-order-header {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 6px;
+        .info-box {
+            background: #EFF6FF;
+            border-left: 3px solid var(--sky);
+            border-radius: 7px;
+            padding: 0.7rem 0.85rem;
+            font-size: 0.835rem; color: var(--slate-700);
+            margin-bottom: 0.85rem;
         }
-
-        .suspended-order-details {
-            font-size: 0.85rem;
-            color: #666;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .suspended-order-details span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .badge-suspended {
-            background: #ffc107;
-            color: #333;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .no-suspended {
-            text-align: center;
-            color: #999;
-            padding: 20px;
-            font-style: italic;
-        }
-
-        @media (max-width: 1200px) {
-            .main-content {
-                flex-direction: column;
-            }
-
-            .card-modern {
-                width: 100% !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-wrapper {
-                flex-direction: column;
-            }
-            
-            .main-content-wrapper {
-                padding: 15px;
-            }
-            
-            .row-2 {
-                grid-template-columns: 1fr;
-            }
-
-            .suspended-order-details {
-                grid-template-columns: 1fr;
-            }
-        }
+        .info-box i { color: var(--sky); }
     </style>
 </head>
 <body>
 
-<div class="main-wrapper">
-    <!-- Sidebar -->
-    @include("admin/sidenav")
+<div class="row">
+    <div class="col-2">
+        @include("user/sidenav")
+    </div>
 
-    <!-- Main Content -->
-    <div class="main-content-wrapper">
-    
-        <div class="main-content">
-            
-            <!-- Left Section - Order Form -->
-            <div class="card-modern" style="width: 60%;">
-                @if(session('success'))
-                    <div class="alert alert-success d-flex justify-content-between">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-                
-                @if(session('error'))
-                    <div class="alert alert-danger d-flex justify-content-between">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
+    <div class="col">
+        <div class="main-wrap">
 
-                <div class="card-header-modern d-flex justify-content-between align-items-center">
-                    <h5><i class="bi bi-plus-circle"></i> Create New Sales</h5>
-                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#suspendedModal">
-                        Suspended Orders
-                    </button>
+            {{-- ── Page Header ── --}}
+            <div class="pg-header">
+                <div class="pg-title">
+                    <div class="pg-title-icon"><i class="bi bi-bag-plus-fill"></i></div>
+                    Create New <span>Sales</span>
                 </div>
-                <div class="card-body-modern">
-                    <!-- Add to Cart Form -->
-                    <form id="orderForm">
-                        <div class="form-group-modern" style="position: relative;">
-                            <label>Product Name</label>
-                            <input type="search" id="productName" class="form-control-modern" 
-                                   placeholder="Search products..." autocomplete="off">
-                            <input type="hidden" name="pId" id="pId">
-                            <div id="searchResults" class="search-results-modern"></div>
-                        </div>
-
-                        <button type="submit" class="btn-modern btn-success-modern w-100">
-                            <i class="bi bi-plus-circle"></i> Add to Cart
-                        </button>
-                    </form>
-
-                    <!-- Cart Table -->
-                    <div style="margin-top: 30px;">
-                        <h6 style="color: #333; font-weight: 700; margin-bottom: 15px;">
-                            <i class="bi bi-cart"></i> Cart Lists
-                        </h6>
-                        <div style="overflow-x: auto;">
-                            <table class="cart-table-modern">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Qty</th>
-                                        <th style="text-align: right;">Unit Price</th>
-                                        <th style="text-align: right;">Amount</th>
-                                        <th style="text-align: right;">Discount</th>
-                                        <th style="text-align: right;">Total</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cartBody">
-                                    @foreach($cart as $item)
-                                        @php
-                                            $product = DB::table('products')->where('account', session('account'))->where('product_id', $item->productId)->first('name01');
-                                            $amount = $item->productPrice * $item->pQuantity;
-                                            $total = $amount - $item->discount;
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $product ? $product->name01 : 'Unknown Product' }}</td>
-                                            <td>
-                                                <input type="number" class="input-number-modern" 
-                                                       value="{{ $item->pQuantity }}" min="1"
-                                                       onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}', 'pQuantity', this.value)">
-                                            </td>
-                                            <td style="text-align: right;">{{ number_format($item->productPrice) }}</td>
-                                            <td style="text-align: right;">{{ number_format($amount) }}</td>
-                                            <td>
-                                                <input type="number" class="input-number-modern" 
-                                                       value="{{ $item->discount }}" min="0"
-                                                       onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}', 'discount', this.value)">
-                                            </td>
-                                            <td style="text-align: right; font-weight: 600;">{{ number_format($total) }}</td>
-                                            <td>
-                                                <form action="removeFromCart" method="post" style="display: inline;">
-                                                    @csrf
-                                                    <input type="hidden" name="itemId" value="{{ $item->productId }}">
-                                                    <input type="hidden" name="orderId" value="{{ $item->order_id }}">
-                                                    <button type="submit" class="btn-delete">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="header-actions">
+                    <button class="hbtn hbtn-ghost" data-bs-toggle="modal" data-bs-target="#pastSalesModal">
+                        <i class="bi bi-pencil-square"></i> Edit Past Sales
+                    </button>
+                    <button class="hbtn hbtn-ghost" data-bs-toggle="modal" data-bs-target="#suspendedModal">
+                        <i class="bi bi-pause-circle"></i> Suspended Orders
+                    </button>
                 </div>
             </div>
 
-            <!-- Right Section - Order Summary & Suspended Orders -->
-            <div style="width: 40%; display: flex; flex-direction: column; gap: 20px;">
-                
-                <!-- Order Summary Card -->
-                <div class="card-modern">
-                    <div class="card-header-modern">
-                        <h5><i class="bi bi-receipt"></i> Sales Summary</h5>
+            {{-- ── Alerts ── --}}
+            @if(session('success'))
+            <div class="alert-bar alert-ok">
+                <span><i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}</span>
+                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+            </div>
+            @endif
+            @if(session('error'))
+            <div class="alert-bar alert-err">
+                <span><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ session('error') }}</span>
+                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+            </div>
+            @endif
+
+            <div class="layout">
+
+                {{-- ══ LEFT: Product search + Cart ══ --}}
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-head-left">
+                            <i class="bi bi-grid-3x3-gap-fill"></i> Select Products
+                        </div>
                     </div>
-                    <div class="card-body-modern">
-                        <!-- Customer Information -->
-                        <div style="margin-bottom: 25px;">
-                            <h6 style="color: #333; font-weight: 700; margin-bottom: 15px;">Customer Details</h6>
-                            
-                            <form action="saveInfos" method="post">
-                                @csrf
-                                <input type="text" name="orderId" value="{{ $orders->order_id ?? '' }}" hidden>
-                                <div class="form-group-modern">
-                                    <label>Select Customer</label>
-                                    <select id="customerSelect" onchange="this.form.submit()" name="selectedCustomer" class="form-control-modern">
-                                        <option value="">-- Select Customer --</option>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->name }}|{{ $customer->id }}">{{ $customer->name }} - {{ $customer->limits ?? 0 }} limit</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </form>
 
-                            <div class="text-center mb-3">
-                                <a href="customers" class="btn bg py-2 px-3">
-                                    <i class="bi bi-plus"></i> New Customer
-                                </a>
-                            </div>
+                    {{-- Product search --}}
+                    <div class="search-wrap">
+                        <div class="sbox">
+                            <i class="bi bi-search sbox-icon"></i>
+                            <input type="text" id="productSearch" class="sbox-input"
+                                placeholder="Search products…" autocomplete="off">
+                        </div>
+                        <div class="dropdown" id="productDropdown"></div>
+                    </div>
 
+                    {{-- Cart --}}
+                    <div class="cart-section">
+                        <div class="cart-toolbar">
+                            <span class="cart-label"><i class="bi bi-cart3"></i> Cart</span>
+                            <span class="cart-badge" id="cartBadge">
+                                {{ $cart->where('offered_items', '!=', 1)->count() }}
+                            </span>
+                        </div>
+
+                        @php $offeredCount = $cart->where('offered_items', 1)->count(); @endphp
+                        @if($offeredCount > 0)
+                        <div class="offer-banner">
+                            <i class="bi bi-gift-fill"></i>
+                            {{ $offeredCount }} FREE offer item(s) included in this order
+                        </div>
+                        @endif
+
+                        <div class="cart-overflow">
                             @php
-                                $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
-                                $odez = DB::table('orders')->where('account', session('account'))->where('cName', $orders->cName ?? '')->whereIn('status', ['Debt', 'partial'])
-                                    ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
+                                $cartProductIds = $cart->pluck('productId')->toArray();
+                                $cartOffers = [];
+                                if(!empty($offers) && !empty($cartProductIds)) {
+                                    foreach($offers as $offer) {
+                                        if(in_array($offer->product_id, $cartProductIds)) {
+                                            $cartOffers[$offer->product_id] = $offer;
+                                        }
+                                    }
+                                }
+                                $cartItems = $cart->where('offered_items', '!=', 1);
                             @endphp
-                            <div class="container shadow-sm p-3">
-                                <div style="margin-bottom: 10px;">
-                                    Selected Customer: <strong>{{ $checkz->name ?? 'N/A' }}</strong>
-                                </div>
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Limit</th>
-                                            <th>Credit</th>
-                                            <th>Available</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{{ number_format($checkz->limits ?? 0) }}</td>
-                                            <td>{{ number_format($odez ?? 0) }}</td>
-                                            <td>{{ number_format(($checkz->limits ?? 0) - ($odez ?? 0)) }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
 
-                            <p style="margin-top: 15px;">Order ID: <strong>{{ $orders->orderName ?? '' }}</strong></p>
-                            <p>Order Status: <strong>{{ $orders->status ?? '' }}</strong></p>
+                            @if($cartItems->count() > 0)
+                            <table class="cart-tbl">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th style="text-align:center;">Qty</th>
+                                        <th style="text-align:right;">Unit</th>
+                                        <th style="text-align:right;">Amount</th>
+                                        <th style="text-align:right;">Disc.</th>
+                                        <th style="text-align:right;">Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($cartItems as $item)
+                                    @php
+                                        $product       = DB::table('products')->where('account', getSessionAccountId())->where('product_id', $item->productId)->first('name01');
+                                        $amount        = $item->productPrice * $item->pQuantity;
+                                        $discIncrease  = $item->discount_increase ?? 0;
+                                        $netAdj        = ($item->discount ?? 0) - $discIncrease;
+                                        $total         = $amount - $netAdj;
+
+                                        $qualifies = false; $offerInfo = null; $freeCount = 0;
+                                        if(isset($cartOffers[$item->productId])) {
+                                            $offerInfo = $cartOffers[$item->productId];
+                                            $times     = floor($item->pQuantity / $offerInfo->required_quantity);
+                                            if($times > 0) { $qualifies = true; $freeCount = $times * $offerInfo->offer_quantity; }
+                                        }
+                                    @endphp
+                                    <tr class="{{ $qualifies ? 'offer-row' : '' }}">
+                                        <td>
+                                            <div class="cart-prod-name" title="{{ $product->name01 ?? 'Unknown' }}">
+                                                {{ $product->name01 ?? 'Unknown Product' }}
+                                            </div>
+                                            @if($qualifies && $offerInfo)
+                                                <span class="dd-badge dd-badge-offer" style="margin-top:2px;">
+                                                    <i class="bi bi-gift-fill"></i> +{{ $freeCount }} FREE
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <input type="number" class="tbl-input" value="{{ $item->pQuantity }}" min="-999999"
+                                                onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','pQuantity',this.value)">
+                                        </td>
+                                        <td class="num-right">{{ number_format($item->productPrice) }}</td>
+                                        <td class="num-right">{{ number_format($amount) }}</td>
+                                        <td style="text-align:center;">
+                                            <input type="number" class="tbl-input" value="{{ $netAdj }}"
+                                                placeholder="±"
+                                                onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','adjustment',this.value)">
+                                        </td>
+                                        <td class="num-right fw-total">{{ number_format($total) }}</td>
+                                        <td style="text-align:center;">
+                                            <form action="removeFromCart" method="post" style="display:inline;">
+                                                @csrf
+                                                <input type="hidden" name="itemId" value="{{ $item->productId }}">
+                                                <input type="hidden" name="orderId" value="{{ $item->order_id }}">
+                                                <input type="hidden" name="prodQuantity" value="{{ $item->pQuantity }}">
+                                                <button type="submit" class="del-btn" title="Remove">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @else
+                            <div class="empty-cart">
+                                <i class="bi bi-cart-x"></i>
+                                <div class="empty-cart-title">Cart is empty</div>
+                                <p>Search for a product above to add it here</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>{{-- /left panel --}}
+
+                {{-- ══ RIGHT: Summary + Submit ══ --}}
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-head-left"><i class="bi bi-receipt"></i> Sales Summary</div>
+                    </div>
+
+                    {{-- Customer --}}
+                    <div class="rp-sec">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                            <div class="sec-title" style="margin-bottom:0;"><i class="bi bi-person-circle"></i> Customer</div>
+                            <a href="customers" class="hbtn" style="background:var(--navy);color:#fff;font-size:0.75rem;padding:0.3rem 0.65rem;">
+                                <i class="bi bi-plus-lg"></i> New
+                            </a>
                         </div>
 
-                        <!-- Pricing Summary -->
-                        <div class="price-summary">
-                            <div class="price-row">
-                                <span>Subtotal:</span>
-                                <span id="subtotal">{{ number_format($totalP) }}</span>
-                            </div>
-                            <div class="price-row">
-                                <span>Discount:</span>
-                                <span id="totalDiscount">{{ number_format($totalD) }}</span>
-                            </div>
-                            <div class="price-row total">
-                                <span>Total:</span>
-                                <span id="grandTotal">{{ number_format($totalP - $totalD) }}</span>
-                            </div>
-                        </div>
-
-                        <form action="payout" method="post">
+                        <form action="saveInfos" id="saveInfosForm" method="post">
                             @csrf
-                            <input type="text" name="orderId" value="{{ $orders->order_id ?? '' }}" hidden>
-                            
-                            <!-- Order Type -->
-                            <div class="form-group-modern">
-                                <label>Sales Type</label>
-                                <select id="orderType" name="orderType" class="form-control-modern">
+                            <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
+
+                            <div style="position:relative;">
+                                <div class="sbox">
+                                    <i class="bi bi-search sbox-icon"></i>
+                                    <input type="text" id="customerSearch" class="sbox-input"
+                                        placeholder="Search customer…" autocomplete="off">
+                                    <input type="hidden" name="selectedCustomer" id="selectedCustomer">
+                                </div>
+                                <div class="dropdown" id="customerDropdown"></div>
+                            </div>
+
+                            <div id="customerBadgeWrap" style="display:none;margin-top:0.5rem;">
+                                <span class="sel-badge">
+                                    <span id="customerBadgeText"></span>
+                                    <button type="button" class="sel-badge-remove" onclick="clearCustomer()">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </form>
+
+                        @php
+                            $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
+                            $odez   = DB::table('orders')->where('account', getSessionAccountName())
+                                        ->where('cName', $orders->cName ?? '')
+                                        ->whereIn('status', ['Debt','partial'])
+                                        ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
+                        @endphp
+
+                        @if(!empty($orders->cPhone))
+                        <div class="cust-info" id="custInfoCard">
+                            <div class="cust-info-title">Customer Info</div>
+                            <div class="cust-row">
+                                <span class="cust-key">Name</span>
+                                <span class="cust-val" id="custName">{{ $checkz->name ?? '—' }}</span>
+                            </div>
+                            <div class="cust-row">
+                                <span class="cust-key">Credit Limit</span>
+                                <span class="cust-val" id="custLimit">{{ number_format($checkz->limits ?? 0) }}</span>
+                            </div>
+                            <div class="cust-row">
+                                <span class="cust-key">Used Credit</span>
+                                <span class="cust-val" id="custCredit">{{ number_format($odez ?? 0) }}</span>
+                            </div>
+                            <div class="cust-row">
+                                <span class="cust-key">Available</span>
+                                <span class="cust-val available" id="custAvail">{{ number_format(($checkz->limits ?? 0) - ($odez ?? 0)) }}</span>
+                            </div>
+                        </div>
+                        @else
+                        <div class="cust-info" id="custInfoCard" style="display:none;"></div>
+                        @endif
+
+                        @if(!empty($orders->orderName))
+                        <div class="order-meta">
+                            <div class="meta-chip">
+                                <span class="meta-chip-label">Order ID</span>
+                                <span class="meta-chip-value">{{ $orders->orderName ?? '—' }}</span>
+                            </div>
+                            <div class="meta-chip">
+                                <span class="meta-chip-label">Status</span>
+                                <span class="meta-chip-value">{{ $orders->status ?? '—' }}</span>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- Seller --}}
+                    <div class="rp-sec">
+                        <div class="sec-title"><i class="bi bi-person-badge"></i> Seller</div>
+                        <div style="position:relative;">
+                            <div class="sbox">
+                                <i class="bi bi-search sbox-icon"></i>
+                                <input type="text" id="sellerSearch" class="sbox-input"
+                                    placeholder="Search seller…" autocomplete="off">
+                            </div>
+                            <div class="dropdown" id="sellerDropdown"></div>
+                        </div>
+                        <div id="sellerBadgeWrap" style="display:none;margin-top:0.5rem;">
+                            <span class="sel-badge">
+                                <span id="sellerBadgeText"></span>
+                                <button type="button" class="sel-badge-remove" onclick="clearSeller()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Order form --}}
+                    <div class="rp-sec">
+                        <form action="payout" method="post" id="payoutForm">
+                            @csrf
+                            <input type="hidden" name="orderId"          value="{{ $orders->order_id ?? '' }}">
+                            <input type="hidden" name="served"           id="servedHidden">
+                            <input type="hidden" name="selectedCustomer" id="custHidden">
+                            <input type="hidden" name="offered_items"    id="offeredItemsInput" value="">
+
+                            <div class="sec-title"><i class="bi bi-sliders"></i> Order Settings</div>
+
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-tag"></i> Sales Type</label>
+                                <select id="orderType" name="orderType" class="field-input">
                                     <option value="Sell">Pay</option>
                                     <option value="Debt">Credit</option>
+                                    <option value="Return">Return</option>
                                     <option value="Suspended">Suspended</option>
                                 </select>
                             </div>
 
-                            <div class="form-group-modern border rounded-3 p-2" id="payDist">
-                                <label>Distribute Amount</label>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="">Paid</label>
-                                        <input type="number" id="paid" name="paid" class="form-control-modern">
+                            <div id="payDistWrap">
+                                <div class="pay-dist">
+                                    <div>
+                                        <div class="pay-dist-label">Paid</div>
+                                        <input type="number" id="paidInput" name="paid" class="field-input" style="margin:0;">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="">Credit</label>
-                                        <input type="number" id="credit" name="credit" class="form-control-modern">
+                                    <div>
+                                        <div class="pay-dist-label">Credit</div>
+                                        <input type="number" id="creditInput" name="credit" class="field-input" style="margin:0;">
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Payment Type -->
-                            <div class="form-group-modern" id="paymentTypeDiv">
-                                <label>Payment Method</label>
-                                <select id="paymentType" name="paymentMethod" class="form-control-modern">
+                            <div id="payMethodWrap" class="field">
+                                <label class="field-label"><i class="bi bi-wallet2"></i> Payment Method</label>
+                                <select id="paymentType" name="paymentMethod" class="field-input">
+                                   
                                     <option value="Cash">Cash</option>
-                                    <option value="Bank">Bank</option>
+                                     <option value="Credit">Credit</option>
                                 </select>
                             </div>
 
-                            <div id="debtFields" style="display: none; margin-bottom: 15px;">
-                                <textarea class="form-control-modern" placeholder="Debt note..." rows="2"></textarea>
+                            <div id="debtNote" style="display:none;" class="field">
+                                <label class="field-label"><i class="bi bi-sticky"></i> Credit Note</label>
+                                <textarea class="field-input" placeholder="Add a note…" rows="2" style="resize:none;"></textarea>
                             </div>
 
-                            <div id="suspendFields" style="display: none; margin-bottom: 15px;">
-                                <textarea class="form-control-modern" placeholder="Suspension reason..." rows="2"></textarea>
+                            <div id="suspendNote" style="display:none;" class="field">
+                                <label class="field-label"><i class="bi bi-pause-circle"></i> Suspension Reason</label>
+                                <textarea class="field-input" placeholder="Reason for suspending…" rows="2" style="resize:none;"></textarea>
                             </div>
 
-                            <!-- Submit Button -->
-                            <button type="submit" class="btn-modern btn-success-modern w-100" style="padding: 15px; font-size: 1rem;">
-                                <i class="bi bi-check-circle"></i> Submit Sale
+                            @if(canUser('manage_sales_date'))
+                            @php
+                                $orderDate = null;
+                                if (!empty($orders->created_at)) {
+                                    $d = \Carbon\Carbon::parse($orders->created_at);
+                                    if ($d->format('Y-m-d') !== date('Y-m-d')) $orderDate = $d->format('Y-m-d');
+                                }
+                            @endphp
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-calendar3"></i> Sale Date <span style="font-weight:400;color:var(--slate-400);">(optional)</span></label>
+                                <input type="date" name="saleDate" value="{{ $orderDate ?? date('Y-m-d') }}" class="field-input">
+                            </div>
+                            @endif
+
+                            {{-- Summary --}}
+                            @php
+                                $totalAdj = ($totalD ?? 0) - ($totalDI ?? 0);
+                                $grandTotal = $totalP;
+                            @endphp
+                            <div class="price-rows" style="margin-top:0.75rem;">
+                                <div class="price-row-item">
+                                    <span class="key">Subtotal</span>
+                                    <span class="val" id="sumSubtotal">{{ number_format($totalP + $totalD + $totalDI) }}</span>
+                                </div>
+                                <div class="price-row-item">
+                                    <span class="key">Discount</span>
+                                    <span class="val" id="sumDiscount">{{ number_format($totalAdj) }}</span>
+                                </div>
+                            </div>
+
+                            <div class="total-card">
+                                <div>
+                                    <div class="total-card-label">Total</div>
+                                </div>
+                                <div class="total-card-amount">
+                                    <span class="total-card-curr">Tsh</span><span id="grandTotalEl">{{ number_format($grandTotal) }}</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="submit-btn" id="submitBtn">
+                                <i class="bi bi-check-circle-fill"></i> Submit Sale
                             </button>
                         </form>
                     </div>
-                </div>
+                </div>{{-- /right panel --}}
 
-
-            </div>
+            </div>{{-- /layout --}}
         </div>
     </div>
 </div>
 
-<div class="modal" id="suspendedModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="suspendedModalLabel">Suspended Orders</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+{{-- ════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════ --}}
+
+{{-- Past Sales Modal --}}
+<div class="modal fade" id="pastSalesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-navy">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Past Sales</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                
-                <!-- Suspended Orders Card -->
-                <div class="card-modern">
-                    <div class="card-header-modern">
-                        <h5><i class="bi bi-exclamation-triangle"></i> Suspended Orders</h5>
-                    </div>
-                    <div class="card-body-modern">
-                        <div id="suspendedOrdersList" style="max-height: 400px; overflow-y: auto;">
-                            @foreach ($Suspended as $index => $Order )
-                                
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6>
-                                    {{ $index + 1 }}.
-                                    {{ $Order->cName }}
-                                </h6>
-                                <form action="resumeOrder" method="post">
-                                    @csrf
-                                    <input type="hidden" name="orderId" value="{{ $Order->order_id }}" hidden>
-                                    <button type="submit}}">
-                                    <button class="btn btn-primary">
-                                    Resume Order
-                                    <i class="bi bi-arrow-right-short"></i>
-                                </button>
-                                </form>
-                            </div>
-                                                        @endforeach
-
-                            <div class="no-suspended">
-                                <i class="bi bi-inbox"></i> No suspended orders
-                            </div>
-                        </div>
+                <div class="info-box mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Search a past sale by customer name, then select it to return it to orders for editing.
+                </div>
+                <div style="position:relative;margin-bottom:1rem;">
+                    <div class="sbox">
+                        <i class="bi bi-search sbox-icon"></i>
+                        <input type="text" id="pastSalesSearch" class="sbox-input" placeholder="Search by customer name…" autocomplete="off">
                     </div>
                 </div>
+                <div id="pastSalesResults" style="max-height:400px;overflow-y:auto;"></div>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Confirm Return Modal --}}
+<div class="modal fade" id="confirmReturnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-navy">
+                <h5 class="modal-title"><i class="bi bi-arrow-return-left"></i> Confirm Return</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:0.75rem;font-size:0.9rem;color:var(--slate-600);">
+                    Returning this sale to orders will restore stock quantities and allow you to edit or resell.
+                </p>
+                <div id="returnSaleDetails" class="cust-info" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmReturnBtn" class="submit-btn" style="width:auto;padding:0.5rem 1.2rem;">
+                    <i class="bi bi-check-circle-fill"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Suspended Orders Modal --}}
+<div class="modal fade" id="suspendedModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-navy">
+                <h5 class="modal-title"><i class="bi bi-pause-circle"></i> Suspended Orders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                @forelse($Suspended as $index => $order)
+                <div class="suspended-row">
+                    <div>
+                        <div class="suspended-row-name">{{ $order->cName ?: 'No Customer' }}</div>
+                        <div class="suspended-row-meta">Tsh {{ number_format($order->total_price) }}</div>
+                    </div>
+                    <form action="resumeOrder" method="post">
+                        @csrf
+                        <input type="hidden" name="orderId" value="{{ $order->order_id }}">
+                        <button type="submit" class="resume-btn">
+                            Resume <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </form>
+                </div>
+                @empty
+                <div style="text-align:center;padding:2.5rem 1rem;color:var(--slate-400);">
+                    <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
+                    No suspended orders
+                </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Offer Popup Modal --}}
+<div class="modal fade" id="offerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-emerald">
+                <h5 class="modal-title"><i class="bi bi-gift-fill me-2"></i>Special Offer!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding:1.5rem;">
+                <i class="bi bi-gift" style="font-size:3rem;color:var(--emerald);display:block;margin-bottom:1rem;"></i>
+                <p style="font-size:0.9rem;color:var(--slate-600);margin-bottom:0.75rem;">Great news! You qualify for a special offer:</p>
+                <div style="background:var(--emerald-pale);border-left:3px solid var(--emerald);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.875rem;font-weight:600;color:#065F46;">
+                    Buy <span id="offerReqQty">0</span> — Get <span id="offerFreeQty">0</span> FREE!
+                </div>
+                <p style="font-size:0.85rem;color:var(--slate-600);margin-bottom:1rem;">Product: <strong id="offerProdName"></strong></p>
+                <div style="text-align:left;">
+                    <label class="field-label"><i class="bi bi-hash"></i> How many FREE items?</label>
+                    <input type="number" id="offerAcceptQty" class="field-input" value="0" min="0" style="margin-top:0.3rem;">
+                    <div class="field-hint" style="margin-top:0.3rem;">Maximum: <span id="offerMaxQty">0</span> free items</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" onclick="declineOffer()">No Thanks</button>
+                <button type="button" class="submit-btn" onclick="acceptOffer()" style="width:auto;padding:0.5rem 1.2rem;">
+                    <i class="bi bi-check-circle-fill"></i> Accept Offer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Toast stack --}}
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
-let selectedProduct = null;
+// ════════════════════════════════════════════
+// Dynamic URL Prefix based on user role
+// ════════════════════════════════════════════
+const isAdmin = {{ strtolower(trim(Auth::user()->levelStatus ?? '')) === 'admin' ? 'true' : 'false' }};
+const urlPrefix = isAdmin ? 'admin' : 'user';
 
-// Live search
-document.getElementById('productName').addEventListener('input', async (e) => {
-    const query = e.target.value.trim();
-    const searchResults = document.getElementById('searchResults');
+// Helper function to build URLs with correct prefix
+function buildUrl(path) {
+    return `{{ url('') }}/${urlPrefix}/${path}`;
+}
 
-    if (query.length < 2) {
-        searchResults.style.display = 'none';
-        searchResults.innerHTML = '';
-        return;
-    }
+// ════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════
+let selectedProductId   = null;
+let selectedCustomerObj = null;
+let selectedSellerName  = null;
+const offersData        = @json($offers ?? []);
+
+function getOffer(productId) { return offersData.find(o => o.product_id === productId); }
+
+// ════════════════════════════════════════════
+// PRODUCT SEARCH
+// ════════════════════════════════════════════
+const productSearch = document.getElementById('productSearch');
+const productDD     = document.getElementById('productDropdown');
+
+productSearch.addEventListener('input', async e => {
+    const q = e.target.value.trim();
+    if (q.length < 2) { productDD.classList.remove('open'); return; }
+
+    productDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>Searching…</div>';
+    productDD.classList.add('open');
 
     try {
-        const res = await fetch(`{{ url('admin/searchProduct') }}?query=${encodeURIComponent(query)}`);
+        const res  = await fetch(`${buildUrl('searchProduct')}?query=${encodeURIComponent(q)}`);
         const data = await res.json();
 
         if (!data.length) {
-            searchResults.innerHTML = `<div class="search-item-modern" style="text-align:center;color:#999;">No products found</div>`;
+            productDD.innerHTML = '<div class="dd-empty">No products found</div>';
         } else {
-            searchResults.innerHTML = data.map(p => `
-                <div class="search-item-modern" onclick="selectProduct(${p.id}, '${p.name01}', ${p.sPrice})">
-                    <div class="search-item-name-modern">${p.name01}</div>
-                    <div class="search-item-details-modern">
-                        <span><i class="bi bi-bag"></i> Stock: ${p.quantity}</span>
-                        <span class="price-badge">${Number(p.bPrice).toLocaleString()} TZS</span>
+            productDD.innerHTML = data.map(p => {
+                const offer = getOffer(p.product_id);
+                const offerBadge = offer
+                    ? `<span class="dd-badge dd-badge-offer"><i class="bi bi-gift-fill"></i> Buy ${offer.required_quantity} Get ${offer.offer_quantity}</span>`
+                    : '';
+                return `<div class="dd-item" onclick="addProductToOrder(${p.id}, '${escHtml(p.name01)}', ${p.sPrice})">
+                    <div class="dd-item-name">${escHtml(p.name01)} ${offerBadge}</div>
+                    <div class="dd-item-meta">
+                        <span class="dd-badge dd-badge-price">${Number(p.bPrice).toLocaleString()} Tsh</span>
+                        <span class="dd-badge dd-badge-stock"><i class="bi bi-box-seam"></i> ${p.quantity}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    } catch {
+        productDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">Error loading products</div>';
+    }
+});
+
+function addProductToOrder(id, name, price) {
+    productSearch.value = name;
+    productDD.classList.remove('open');
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = buildUrl('newOrder');
+    form.innerHTML = `
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="pId" value="${id}">
+        <input type="hidden" name="orderType" value="Sell">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// ════════════════════════════════════════════
+// CUSTOMER SEARCH
+// ════════════════════════════════════════════
+const custSearch = document.getElementById('customerSearch');
+const custDD     = document.getElementById('customerDropdown');
+
+custSearch.addEventListener('input', async e => {
+    const q = e.target.value.trim();
+    if (q.length < 1) { custDD.classList.remove('open'); return; }
+
+    custDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>Searching…</div>';
+    custDD.classList.add('open');
+
+    try {
+        const res  = await fetch(`${buildUrl('searchCustomers')}?query=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.length) {
+            custDD.innerHTML = '<div class="dd-empty">No customers found</div>';
+        } else {
+            custDD.innerHTML = data.map(c => `
+                <div class="dd-item" onclick="selectCustomer(${c.id}, '${escHtml(c.name)}', ${c.limits || 0})">
+                    <div class="dd-item-name">${escHtml(c.name)}</div>
+                    <div class="dd-item-meta">
+                        <span><i class="bi bi-phone"></i> ${c.phone || 'N/A'}</span>
+                        <span class="dd-badge dd-badge-stock">Limit: ${Number(c.limits || 0).toLocaleString()}</span>
                     </div>
                 </div>
             `).join('');
         }
-        searchResults.style.display = 'block';
-    } catch (err) {
-        searchResults.innerHTML = `<div class="search-item-modern" style="color:red;text-align:center;">Error loading products</div>`;
-        searchResults.style.display = 'block';
+    } catch {
+        custDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">Error</div>';
     }
 });
 
-function selectProduct(id, name, price) {
-    document.getElementById('productName').value = name;
-    document.getElementById('pId').value = id;
-    document.getElementById('searchResults').style.display = 'none';
+async function selectCustomer(id, name, limit) {
+    custSearch.value = name;
+    custDD.classList.remove('open');
+    document.getElementById('selectedCustomer').value   = `${name}|${id}`;
+    document.getElementById('custHidden').value         = `${name}|${id}`;
+    document.getElementById('customerBadgeText').textContent = `${name}`;
+    document.getElementById('customerBadgeWrap').style.display = 'block';
 
-      // AUTO SUBMIT
-    document.getElementById('orderForm').dispatchEvent(
-        new Event('submit', { bubbles: true, cancelable: true })
-    );
-}
+    document.getElementById('saveInfosForm').submit();
 
-// Handle form submission
-document.getElementById('orderForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const pId = document.getElementById('pId').value;
-    const productName = document.getElementById('productName').value;
-    
-    if (!pId || !productName) {
-        alert('Please select a product');
-        return;
-    }
-    
-    // Submit to backend
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ url("admin/newOrder") }}';
-    
-    form.innerHTML = `
-        <input type="hidden" name="_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="pId" value="${pId}">
-        <input type="hidden" name="orderType" value="Sell">
-    `;
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-});
-
-// Order type handling
-document.getElementById('orderType').addEventListener('change', function() {
-    const orderType = this.value;
-    const debtFields = document.getElementById('debtFields');
-    const paymentTypeDiv = document.getElementById('paymentTypeDiv');
-    const suspendFields = document.getElementById('suspendFields');
-    const payDist = document.getElementById('payDist');
-
-    debtFields.style.display = 'none';
-    paymentTypeDiv.style.display = 'block';
-    suspendFields.style.display = 'none';
-
-    if (orderType === 'Debt') {
-        debtFields.style.display = 'block';
-        payDist.style.display = 'none';
-        paymentTypeDiv.style.display = 'none';
-        
-    } else if (orderType === 'Suspended') {
-        suspendFields.style.display = 'block';
-        payDist.style.display = 'none';
-        paymentTypeDiv.style.display = 'none';
-        
-    } else if (orderType === 'Sell') {
-        payMethod.style.display = 'block';
-        paymentTypeDiv.style.display = 'block';
-    }
-});
-
-// Paid/Credit distribution
-const paidInput = document.getElementById('paid');
-const creditInput = document.getElementById('credit');
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Get grand total (remove commas)
-    const grandTotalText = document.getElementById('grandTotal').innerText.replace(/,/g, '');
-    const grandTotal = parseFloat(grandTotalText) || 0;
-
-    // Default values
-    paidInput.value = grandTotal;
-    creditInput.value = 0;
-
-    // When CREDIT changes → reduce PAID
-    creditInput.addEventListener('input', () => {
-        let credit = parseFloat(creditInput.value) || 0;
-        if (credit > grandTotal) credit = grandTotal;
-        creditInput.value = credit;
-        paidInput.value = (grandTotal - credit).toFixed(2);
-    });
-
-    // When PAID changes → calculate CREDIT
-    paidInput.addEventListener('input', () => {
-        let paid = parseFloat(paidInput.value) || 0;
-        if (paid > grandTotal) paid = grandTotal;
-        if (paid < 0) paid = 0;
-        paidInput.value = paid;
-        creditInput.value = (grandTotal - paid).toFixed(2);
-    });
-});
-
-// Load suspended orders
-async function loadSuspendedOrders() {
     try {
-        const res = await fetch('{{ url("admin/suspendedOrders") }}');
-        const orders = await res.json();
-        displaySuspendedOrders(orders);
-    } catch (err) {
-        console.error('Error loading suspended orders:', err);
+        const res  = await fetch(`${buildUrl('getCustomerDetails')}/${id}`);
+        const data = await res.json();
+        showCustInfo(data.name, data.limits, data.credit, data.available);
+        selectedCustomerObj = data;
+    } catch {
+        showCustInfo(name, limit, 0, limit);
     }
 }
 
-function displaySuspendedOrders(orders) {
-    const list = document.getElementById('suspendedOrdersList');
-    
-    if (!orders.length) {
-        list.innerHTML = '<div class="no-suspended"><i class="bi bi-inbox"></i> No suspended orders</div>';
-        return;
-    }
-
-    list.innerHTML = orders.map(order => `
-        <div class="suspended-order-item" onclick="loadSuspendedOrder(${order.id})">
-            <div class="suspended-order-header">
-                <span>${order.orderName || 'Order #' + order.id}</span>
-                <span class="badge-suspended">SUSPENDED</span>
-            </div>
-            <div class="suspended-order-details">
-                <span><i class="bi bi-person"></i> ${order.cName || 'N/A'}</span>
-                <span><i class="bi bi-currency-dollar"></i> ${order.totalAmount?.toLocaleString() || '0'} TZS</span>
-                <span><i class="bi bi-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
-                <span><i class="bi bi-phone"></i> ${order.cPhone || 'N/A'}</span>
-            </div>
-        </div>
-    `).join('');
+function showCustInfo(name, limits, credit, available) {
+    const card = document.getElementById('custInfoCard');
+    card.style.display = '';
+    card.innerHTML = `
+        <div class="cust-info-title">Customer Info</div>
+        <div class="cust-row"><span class="cust-key">Name</span><span class="cust-val" id="custName">${name}</span></div>
+        <div class="cust-row"><span class="cust-key">Credit Limit</span><span class="cust-val">${Number(limits||0).toLocaleString()}</span></div>
+        <div class="cust-row"><span class="cust-key">Used Credit</span><span class="cust-val">${Number(credit||0).toLocaleString()}</span></div>
+        <div class="cust-row"><span class="cust-key">Available</span><span class="cust-val available">${Number(available||0).toLocaleString()}</span></div>
+    `;
 }
 
-function loadSuspendedOrder(orderId) {
-    // Navigate to load the suspended order
-    window.location.href = `{{ url('admin/resumeOrder') }}/${orderId}`;
+function clearCustomer() {
+    custSearch.value = '';
+    document.getElementById('selectedCustomer').value = '';
+    document.getElementById('custHidden').value = '';
+    document.getElementById('customerBadgeWrap').style.display = 'none';
+    document.getElementById('custInfoCard').style.display = 'none';
+    custDD.classList.remove('open');
+    selectedCustomerObj = null;
 }
 
-// Close search on outside click
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('#productName') && !e.target.closest('#searchResults')) {
-        document.getElementById('searchResults').style.display = 'none';
-    }
-});
+// ════════════════════════════════════════════
+// SELLER SEARCH
+// ════════════════════════════════════════════
+const sellerSearch = document.getElementById('sellerSearch');
+const sellerDD     = document.getElementById('sellerDropdown');
 
-// Load suspended orders on page load
-document.addEventListener('DOMContentLoaded', () => {
-    loadSuspendedOrders();
-    
-    // Refresh suspended orders every 30 seconds
-    setInterval(loadSuspendedOrders, 30000);
-});
+sellerSearch.addEventListener('input', async e => {
+    const q = e.target.value.trim();
+    if (q.length < 1) { sellerDD.classList.remove('open'); return; }
 
-// Update cart items via backend
-function updateCartItem(orderId,productId, field, value) {
-    const formData = new FormData();
-    formData.append('orderId', orderId);
-    formData.append('pId', productId);
-    formData.append('field', field);
-    formData.append('value', value);
+    sellerDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>Searching…</div>';
+    sellerDD.classList.add('open');
 
-    fetch('{{ url("admin/updateCartItem") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: formData
-    }).then(response => {
-        if(response.ok) {
-            location.reload();
+    try {
+        const res  = await fetch(`${buildUrl('searchSellers')}?query=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.length) {
+            sellerDD.innerHTML = '<div class="dd-empty">No sellers found</div>';
+        } else {
+            sellerDD.innerHTML = data.map(s => `
+                <div class="dd-item" onclick="selectSeller('${escHtml(s.name)}', '${escHtml(s.levelStatus)}')">
+                    <div class="dd-item-name">${escHtml(s.name)}</div>
+                    <div class="dd-item-meta"><span class="dd-badge dd-badge-stock">${s.levelStatus}</span></div>
+                </div>
+            `).join('');
         }
-    }).catch(err => console.error('Error updating cart:', err));
+    } catch {
+        sellerDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">Error</div>';
+    }
+});
+
+function selectSeller(name, role) {
+    sellerSearch.value = name;
+    sellerDD.classList.remove('open');
+    document.getElementById('servedHidden').value     = name;
+    document.getElementById('sellerBadgeText').textContent = `${name} · ${role}`;
+    document.getElementById('sellerBadgeWrap').style.display = 'block';
+    selectedSellerName = name;
+}
+
+function clearSeller() {
+    sellerSearch.value = '';
+    document.getElementById('servedHidden').value = '';
+    document.getElementById('sellerBadgeWrap').style.display = 'none';
+    sellerDD.classList.remove('open');
+    selectedSellerName = null;
+}
+
+// ════════════════════════════════════════════
+// ORDER TYPE
+// ════════════════════════════════════════════
+document.getElementById('orderType').addEventListener('change', function() {
+    const v  = this.value;
+    const pd = document.getElementById('payDistWrap');
+    const pm = document.getElementById('payMethodWrap');
+    const dn = document.getElementById('debtNote');
+    const sn = document.getElementById('suspendNote');
+
+    pd.style.display = 'block'; pm.style.display = 'block';
+    dn.style.display = 'none';  sn.style.display = 'none';
+
+    if (v === 'Debt')      { pd.style.display = 'none'; pm.style.display = 'none'; dn.style.display = ''; }
+    if (v === 'Suspended') { pd.style.display = 'none'; pm.style.display = 'none'; sn.style.display = ''; }
+    if (v === 'Return')    { pd.style.display = 'none'; }
+});
+
+// ════════════════════════════════════════════
+// PAY DISTRIBUTION
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    const rawTotal = document.getElementById('grandTotalEl').textContent.replace(/,/g, '');
+    const total    = parseFloat(rawTotal) || 0;
+    const paid     = document.getElementById('paidInput');
+    const credit   = document.getElementById('creditInput');
+    paid.value   = total;
+    credit.value = 0;
+
+    credit.addEventListener('input', () => {
+        let c = Math.min(Math.max(parseFloat(credit.value) || 0, 0), total);
+        credit.value = c;
+        paid.value   = (total - c).toFixed(2);
+    });
+    paid.addEventListener('input', () => {
+        let p = Math.min(Math.max(parseFloat(paid.value) || 0, 0), total);
+        paid.value   = p;
+        credit.value = (total - p).toFixed(2);
+    });
+});
+
+// ════════════════════════════════════════════
+// CART UPDATE
+// ════════════════════════════════════════════
+function updateCartItem(orderId, productId, field, value) {
+    const fd = new FormData();
+    fd.append('orderId', orderId);
+    fd.append('pId', productId);
+    fd.append('field', field);
+    fd.append('value', value);
+
+    fetch(`${buildUrl('updateCartItem')}`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: fd
+    })
+    .then(r => r.json())
+    .then(d => { if (d.success) location.reload(); else showToast(d.error || 'Error updating item', 'err'); })
+    .catch(e => showToast('Network error: ' + e.message, 'err'));
+}
+
+// ════════════════════════════════════════════
+// PAST SALES
+// ════════════════════════════════════════════
+let pendingReturnId = null;
+
+document.getElementById('pastSalesModal').addEventListener('shown.bs.modal', () => {
+    loadPastSales('');
+    document.getElementById('pastSalesSearch').focus();
+});
+
+document.getElementById('pastSalesSearch').addEventListener('input', e => {
+    loadPastSales(e.target.value.trim());
+});
+
+async function loadPastSales(q) {
+    const el = document.getElementById('pastSalesResults');
+    el.innerHTML = '<div class="dd-loading">Searching…</div>';
+    try {
+        const url = q ? `${buildUrl('searchSales')}?search=${encodeURIComponent(q)}` : `${buildUrl('searchSales')}`;
+        console.log('Fetching URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (!data.sales?.length) {
+            el.innerHTML = '<div class="dd-empty">No past sales found</div>';
+            return;
+        }
+
+        el.innerHTML = data.sales.map(s => {
+            const d      = new Date(s.created_at);
+            const dt     = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+            const stBadge = s.status === 'Debt'
+                ? `<span class="dd-badge dd-badge-offer">Credit</span>`
+                : `<span class="dd-badge dd-badge-price">Paid</span>`;
+            return `<div class="dd-item" onclick="selectPastSale('${s.sales_id}','${escHtml(s.cName || 'Unknown')}',${s.totalAmount},${s.totalQuantity},'${dt}')">
+                <div class="dd-item-name">${escHtml(s.cName || 'Unknown Customer')} ${stBadge}</div>
+                <div class="dd-item-meta">
+                    <span><i class="bi bi-calendar3"></i> ${dt}</span>
+                    <span><i class="bi bi-box-seam"></i> ${s.totalQuantity} items</span>
+                    <span class="dd-badge dd-badge-price">${Number(s.totalAmount).toLocaleString()} Tsh</span>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading past sales:', error);
+        el.innerHTML = `<div class="dd-empty" style="color:var(--rose);">Error loading sales: ${error.message}</div>`;
+    }
+}
+
+function selectPastSale(id, name, total, qty, date) {
+    pendingReturnId = id;
+    const det = document.getElementById('returnSaleDetails');
+    det.innerHTML = `
+        <div class="cust-row"><span class="cust-key">Customer</span><span class="cust-val">${name}</span></div>
+        <div class="cust-row"><span class="cust-key">Date</span><span class="cust-val">${date}</span></div>
+        <div class="cust-row"><span class="cust-key">Total</span><span class="cust-val">${Number(total).toLocaleString()} Tsh</span></div>
+        <div class="cust-row"><span class="cust-key">Items</span><span class="cust-val">${qty}</span></div>
+    `;
+    det.style.display = '';
+    new bootstrap.Modal(document.getElementById('confirmReturnModal')).show();
+}
+
+document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+    if (!pendingReturnId) return;
+    const btn = document.getElementById('confirmReturnBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing…';
+    try {
+        const fd = new FormData(); fd.append('sales_id', pendingReturnId);
+        const data = await (await fetch(`${buildUrl('returnSaleToOrder')}`, {
+            method:'POST', body:fd, headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}
+        })).json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('confirmReturnModal'))?.hide();
+            bootstrap.Modal.getInstance(document.getElementById('pastSalesModal'))?.hide();
+            showToast('Sale returned to orders!', 'ok');
+            setTimeout(() => location.reload(), 1200);
+        } else { showToast('Error: ' + data.message, 'err'); }
+    } catch (e) { showToast('Error: ' + e.message, 'err'); }
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirm';
+    pendingReturnId = null;
+});
+
+// ════════════════════════════════════════════
+// OFFERS
+// ════════════════════════════════════════════
+let offerCtx = null;
+
+document.querySelector('form[action="payout"]').addEventListener('submit', function() {
+    const items = JSON.parse(sessionStorage.getItem('offeredItems') || '[]');
+    document.getElementById('offeredItemsInput').value = JSON.stringify(items);
+});
+
+async function checkOffer(productId, qty) {
+    try {
+        const d = await (await fetch(`${buildUrl('checkOffer')}/${productId}/${qty}`)).json();
+        if (d.has_offer) { offerCtx = {offer: d.offer, productId}; showOfferModal(d.offer); }
+    } catch {}
+}
+
+function showOfferModal(o) {
+    document.getElementById('offerReqQty').textContent  = o.required_quantity;
+    document.getElementById('offerFreeQty').textContent = o.offer_quantity;
+    document.getElementById('offerMaxQty').textContent  = o.offer_quantity;
+    document.getElementById('offerAcceptQty').value     = o.offer_quantity;
+    document.getElementById('offerAcceptQty').max       = o.offer_quantity;
+    document.getElementById('offerProdName').textContent = o.offer_product_name;
+    new bootstrap.Modal(document.getElementById('offerModal')).show();
+}
+
+function acceptOffer() {
+    const qty = parseInt(document.getElementById('offerAcceptQty').value) || 0;
+    if (qty > 0 && offerCtx) {
+        const items = JSON.parse(sessionStorage.getItem('offeredItems') || '[]');
+        items.push({ productId: offerCtx.offer.offer_product_id, productName: offerCtx.offer.offer_product_name, quantity: qty, fromProductId: offerCtx.productId });
+        sessionStorage.setItem('offeredItems', JSON.stringify(items));
+        showToast(`Added ${qty} FREE ${offerCtx.offer.offer_product_name}!`, 'ok');
+    }
+    bootstrap.Modal.getInstance(document.getElementById('offerModal'))?.hide();
+    offerCtx = null;
+}
+function declineOffer() { offerCtx = null; }
+
+// ════════════════════════════════════════════
+// Close dropdowns on outside click
+// ════════════════════════════════════════════
+document.addEventListener('click', e => {
+    if (!productSearch.contains(e.target) && !productDD.contains(e.target))  productDD.classList.remove('open');
+    if (!custSearch.contains(e.target)    && !custDD.contains(e.target))     custDD.classList.remove('open');
+    if (!sellerSearch.contains(e.target)  && !sellerDD.contains(e.target))   sellerDD.classList.remove('open');
+});
+
+// ════════════════════════════════════════════
+// Toast
+// ════════════════════════════════════════════
+function showToast(msg, type = 'ok') {
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = `toast-item toast-${type}`;
+    el.innerHTML = `<i class="bi ${type === 'ok' ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} t-ico"></i><span>${msg}</span>`;
+    stack.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }, 3200);
+}
+
+// ════════════════════════════════════════════
+// Util
+// ════════════════════════════════════════════
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 </script>
-
 </body>
 </html>

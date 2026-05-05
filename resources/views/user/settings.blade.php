@@ -28,7 +28,6 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--dark-text);
             min-height: 100vh;
         }
@@ -455,13 +454,116 @@
             }
         }
     </style>
+    
+    <!-- Shop switching specific styles -->
+    <style>
+        .shop-switching-section {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f4ff 100%);
+            border: 2px solid #d4deff;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .shop-option {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .shop-option:hover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            transform: translateX(5px);
+        }
+        
+        .shop-option.active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        .shop-option .shop-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark-text);
+        }
+        
+        .shop-option .shop-location {
+            font-size: 0.85rem;
+            color: var(--light-text);
+            margin-top: 0.25rem;
+        }
+        
+        .shop-option .badge-current {
+            background: linear-gradient(135deg, var(--success-color) 0%, #00d4ff 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .shop-option .badge-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .shop-select-wrapper {
+            position: relative;
+        }
+        
+        .shop-select-wrapper::after {
+            content: '\f078';
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--light-text);
+        }
+        
+        #shopSelect {
+            appearance: none;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+        
+        .shop-info-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--light-bg);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+        }
+        
+        .shop-info-text i {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
     
 
 <div class="container-fluid">
   <div class="row">
-    @include("admin/sidenav")
+    @include("user/sidenav")
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
 
@@ -487,320 +589,41 @@
         </h4>
       </div>
 
-       <div class="settings-section">
-       <div class="d-flex justify-content-between align-items-center">
-         <h5 class="section-title mb-0">
-          <i class="bi bi-person-badge"></i> Shops
+      <!-- Shop Switching Section -->
+      @if(isset($fetch) && $fetch->count() > 0)
+      <div class="settings-section">
+        <h5 class="section-title">
+          <i class="bi bi-shop"></i> Shop Switching
         </h5>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAccount">
-          <i class="bi bi-plus-lg"></i> New Shop
-        </button>
-       </div>        
-
-        <div class="my-3 table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Products</th>
-                <th class="text-end">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach ($fetch as $index => $item )
-                  <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $item->name }}</td>
-                    <td>{{ $item->location }}</td>
-                    <td>
-                      @if($item->products)
-                        @php
-                          $productCount = is_array($item->products) ? count($item->products) : 0;
-                        @endphp
-                        <span class="selected-products-badge">{{ $productCount }} products</span>
-                      @else
-                        <span class="text-muted">No products</span>
-                      @endif
-                    </td>
-                    <td class="text-end">
-                      <div class="d-flex justify-content-end gap-2">
-                        @if ($item->name == session('account'))
-                          <span class="badge bg-success px-3 py-2">
-                            Active Account
-                          </span>
-                        @else
-                          <form action="switch" method="post" class="d-inline">
-                            @csrf
-                            <button class="btn btn-sm btn-outline-primary" name="account" value="{{ $item->name }}">
-                              Switch
-                            </button>
-                          </form>
-                        @endif
-                        
-      
-                        
-                        <form action="deleteAccount" method="post" class="d-inline">
-                          @csrf
-                          <button class="btn btn-sm btn-outline-danger" 
-                                  name="accountId" 
-                                  value="{{ $item->id }}"
-                                  onclick="return confirm('Are you sure you want to delete this account?')">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
+        <p class="text-muted mb-4">Switch between your assigned shops. Your current active shop is highlighted.</p>
+        
+        <form action="/switch" method="post" id="switchShopForm">
+          @csrf
+          <div class="mb-3">
+            <label for="shopSelect" class="form-label">Select Shop</label>
+            <select name="account" id="shopSelect" class="form-select" onchange="switchShop()">
+              @foreach($fetch as $shop)
+                <option value="{{ $shop->id }}"
+                  {{ (getSessionAccountDisplayName() == $shop->id) ? 'selected' : '' }}>
+                  {{ $shop->id }}
+                  @if(isset($currentShop) && $currentShop && $currentShop->name == $shop->id)
+                    (Current)
+                  @endif
+                  @if($shop->is_primary ?? false)
+                    (Primary)
+                  @endif
+                </option>
               @endforeach
-            </tbody>
-          </table>
-        </div>
-       </div>
-
-      <!-- Personal Details Section -->
-      <div class="settings-section">
-        <h5 class="section-title">
-          <i class="bi bi-person-badge"></i> Personal Details
-        </h5>
-        
-        <!-- Personal Profile Picture -->
-        <div class="profile-picture-container">
-          @if($getData->personal_profile_picture ?? false)
-            <img src="{{ asset('storage/' . $getData->personal_profile_picture) }}" 
-                 alt="Personal Profile" 
-                 class="profile-picture-preview" 
-                 id="personalProfilePreview">
-          @else
-            <div class="profile-picture-placeholder">
-              <i class="bi bi-person-circle"></i>
-            </div>
-          @endif
-          <div class="profile-upload-control">
-            <label class="form-label">Personal Profile Picture</label>
-            <input type="file" 
-                   class="form-control" 
-                   name="personal_profile_picture" 
-                   id="personalProfileInput"
-                   accept="image/*">
-            <small class="text-muted">Max size: 2MB. Allowed formats: JPG, PNG, GIF</small>
+            </select>
           </div>
-        </div>
-        
-        <form action="personalData" method="post" enctype="multipart/form-data">
-          @csrf
-          <input type="hidden" name="personal_profile_picture_path" id="personalProfilePath">
-          
-          <div class="mb-3">
-            <label for="owner" class="form-label">Full Name</label>
-            <input type="text" class="form-control" id="owner" name="ownerName" 
-                   value="{{$getData->ownerName ?? ''}}" 
-                   placeholder="{{$getData->ownerName ?? 'Your full name'}}">
-          </div>
-          
-          <div class="mb-3">
-            <label for="phone" class="form-label">Phone Number</label>
-            <input type="tel" class="form-control" id="phone" 
-                   value="{{$getData->phone ?? ''}}" 
-                   placeholder="{{$getData->phone ?? '255 xxx xxx xxx'}}" 
-                   name="phone">
-          </div>
-          
-          <div class="mb-3">
-            <label for="email" class="form-label">Email Address</label>
-            <input type="email" class="form-control" id="email" name="email" 
-                   value="{{$getData->email ?? ''}}" 
-                   placeholder="{{$getData->email ?? 'your@email.com'}}">
-          </div>
-          
           <div class="text-end">
-            <button type="submit" class="btn bg btn-save">
-              <i class="bi bi-save"></i> Save Changes
+            <button type="submit" class="btn bg btn-save" id="switchBtn">
+              <i class="bi bi-arrow-repeat"></i> Switch Shop
             </button>
           </div>
         </form>
       </div>
-
-      <!-- Business Details Section -->
-      <div class="settings-section">
-        <h5 class="section-title">
-          <i class="bi bi-building"></i> Business Details
-        </h5>
-        
-        <!-- Business Profile Picture -->
-        <div class="profile-picture-container">
-          @if($getData->business_profile_picture ?? false)
-            <img src="{{ asset('storage/' . $getData->business_profile_picture) }}" 
-                 alt="Business Profile" 
-                 class="profile-picture-preview" 
-                 id="businessProfilePreview">
-          @else
-            <div class="profile-picture-placeholder">
-              <i class="bi bi-building"></i>
-            </div>
-          @endif
-          <div class="profile-upload-control">
-            <label class="form-label">Business Profile Picture</label>
-            <input type="file" 
-                   class="form-control" 
-                   name="business_profile_picture" 
-                   id="businessProfileInput"
-                   accept="image/*">
-            <small class="text-muted">Max size: 2MB. Allowed formats: JPG, PNG, GIF</small>
-          </div>
-        </div>
-        
-        <form action="businessDetails" method="post" enctype="multipart/form-data" id="businessForm">
-          @csrf
-          <input type="hidden" name="business_profile_picture_path" id="businessProfilePath">
-          
-          <div class="mb-3">
-            <label for="bName" class="form-label">Business Name</label>
-            <input type="text" class="form-control" id="bName" name="bName" 
-                   value="{{$getData->bName ?? ''}}" 
-                   placeholder="{{$getData->bName ?? 'Your business name'}}">
-          </div>
-          
-          <div class="mb-3">
-            <label for="address" class="form-label">Business Address</label>
-            <input type="text" class="form-control" id="address" name="address" 
-                   value="{{$getData->address ?? ''}}" 
-                   placeholder="{{$getData->address ?? 'Street, City, Country'}}">
-          </div>
-          
-          <!-- Multiple Payment Services -->
-          <div class="payment-services-container" id="paymentServicesContainer">
-            <label class="form-label">Payment Services</label>
-            <div id="paymentServicesList">
-              @if(isset($getData->payment_services) && is_array($getData->payment_services) && count($getData->payment_services) > 0)
-                @foreach($getData->payment_services as $index => $service)
-                  <div class="payment-service-item" data-index="{{ $index }}">
-                    <div class="payment-service-header">
-                      <h6 class="mb-0">Payment Service #{{ $index + 1 }}</h6>
-                      @if($index > 0)
-                        <button type="button" class="remove-service" onclick="removePaymentService(this)">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      @endif
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <select name="payment_services[{{ $index }}][provider]" class="form-select mb-3">
-                          <option value="">Select service provider</option>
-                          <option value="Vodacom" {{ $service['provider'] == 'Vodacom' ? 'selected' : '' }}>Vodacom M-Pesa</option>
-                          <option value="Tigo" {{ $service['provider'] == 'Tigo' ? 'selected' : '' }}>Tigo Pesa</option>
-                          <option value="Airtel" {{ $service['provider'] == 'Airtel' ? 'selected' : '' }}>Airtel Money</option>
-                          <option value="Halotel" {{ $service['provider'] == 'Halotel' ? 'selected' : '' }}>Halotel HaloPesa</option>
-                          <option value="Azam Pesa" {{ $service['provider'] == 'Azam Pesa' ? 'selected' : '' }}>Azam Pesa</option>
-                          <option value="Zantel" {{ $service['provider'] == 'Zantel' ? 'selected' : '' }}>Zantel EzyPesa</option>
-                          <option value="Other" {{ $service['provider'] == 'Other' ? 'selected' : '' }}>Other Service</option>
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <input type="tel" 
-                               class="form-control" 
-                               name="payment_services[{{ $index }}][number]" 
-                               value="{{ $service['number'] ?? '' }}" 
-                               placeholder="Payment number">
-                      </div>
-                    </div>
-                  </div>
-                @endforeach
-              @else
-                <div class="payment-service-item" data-index="0">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <select name="payment_services[0][provider]" class="form-select mb-3">
-                        <option value="">Select service provider</option>
-                        <option value="Vodacom">Vodacom M-Pesa</option>
-                        <option value="Tigo">Tigo Pesa</option>
-                        <option value="Airtel">Airtel Money</option>
-                        <option value="Halotel">Halotel HaloPesa</option>
-                        <option value="Azam Pesa">Azam Pesa</option>
-                        <option value="Zantel">Zantel EzyPesa</option>
-                        <option value="Other">Other Service</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6">
-                      <input type="tel" 
-                             class="form-control" 
-                             name="payment_services[0][number]" 
-                             placeholder="Payment number">
-                    </div>
-                  </div>
-                </div>
-              @endif
-            </div>
-            <button type="button" class="add-another-btn" onclick="addPaymentService()">
-              <i class="bi bi-plus-circle"></i> Add Another Payment Service
-            </button>
-          </div>
-          
-          <!-- Multiple Bank Accounts -->
-          <div class="payment-services-container mt-4" id="bankAccountsContainer">
-            <label class="form-label">Bank Accounts</label>
-            <div id="bankAccountsList">
-              @if(isset($getData->bank_accounts) && is_array($getData->bank_accounts) && count($getData->bank_accounts) > 0)
-                @foreach($getData->bank_accounts as $index => $bank)
-                  <div class="payment-service-item" data-index="{{ $index }}">
-                    <div class="payment-service-header">
-                      <h6 class="mb-0">Bank Account #{{ $index + 1 }}</h6>
-                      @if($index > 0)
-                        <button type="button" class="remove-service" onclick="removeBankAccount(this)">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      @endif
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <input type="text" 
-                               class="form-control mb-3" 
-                               name="bank_accounts[{{ $index }}][name]" 
-                               value="{{ $bank['name'] ?? '' }}" 
-                               placeholder="Bank name">
-                      </div>
-                      <div class="col-md-6">
-                        <input type="text" 
-                               class="form-control" 
-                               name="bank_accounts[{{ $index }}][account]" 
-                               value="{{ $bank['account'] ?? '' }}" 
-                               placeholder="Account number">
-                      </div>
-                    </div>
-                  </div>
-                @endforeach
-              @else
-                <div class="payment-service-item" data-index="0">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <input type="text" 
-                             class="form-control mb-3" 
-                             name="bank_accounts[0][name]" 
-                             placeholder="Bank name">
-                    </div>
-                    <div class="col-md-6">
-                      <input type="text" 
-                             class="form-control" 
-                             name="bank_accounts[0][account]" 
-                             placeholder="Account number">
-                    </div>
-                  </div>
-                </div>
-              @endif
-            </div>
-            <button type="button" class="add-another-btn" onclick="addBankAccount()">
-              <i class="bi bi-plus-circle"></i> Add Another Bank Account
-            </button>
-          </div>
-          
-          <div class="text-end mt-4">
-            <button type="submit" class="btn bg btn-save">
-              <i class="bi bi-save"></i> Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
+      @endif
 
     </main>
   </div>
@@ -843,180 +666,15 @@
 </div>
 
 <script>
-// Profile picture preview functionality
-document.getElementById('personalProfileInput').addEventListener('change', function(e) {
-    previewImage(e.target, 'personalProfilePreview', 'personalProfilePath');
-});
-
-document.getElementById('businessProfileInput').addEventListener('change', function(e) {
-    previewImage(e.target, 'businessProfilePreview', 'businessProfilePath');
-});
-
-function previewImage(input, previewId, hiddenInputId) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById(previewId);
-            if (preview.tagName === 'IMG') {
-                preview.src = e.target.result;
-            } else {
-                // If it's a placeholder div, replace it with an img
-                const parent = preview.parentNode;
-                const img = document.createElement('img');
-                img.id = previewId;
-                img.className = 'profile-picture-preview';
-                img.src = e.target.result;
-                img.alt = 'Profile Preview';
-                parent.replaceChild(img, preview);
-            }
-            
-            // Upload to server and get path
-            uploadProfilePicture(file, hiddenInputId);
+// Shop switching functionality
+function switchShop() {
+    const select = document.getElementById('shopSelect');
+    if (select) {
+        const form = document.getElementById('switchShopForm');
+        if (form) {
+            form.submit();
         }
-        reader.readAsDataURL(file);
     }
-}
-
-function uploadProfilePicture(file, hiddenInputId) {
-    const formData = new FormData();
-    formData.append('profile_picture', file);
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    
-    fetch('/upload-profile-picture', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(hiddenInputId).value = data.path;
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-// Payment Services Management
-let paymentServiceCount = document.querySelectorAll('.payment-service-item').length;
-let bankAccountCount = document.querySelectorAll('.payment-service-item').length;
-
-function addPaymentService() {
-    const container = document.getElementById('paymentServicesList');
-    const newItem = document.createElement('div');
-    newItem.className = 'payment-service-item';
-    newItem.dataset.index = paymentServiceCount;
-    
-    newItem.innerHTML = `
-        <div class="payment-service-header">
-            <h6 class="mb-0">Payment Service #${paymentServiceCount + 1}</h6>
-            <button type="button" class="remove-service" onclick="removePaymentService(this)">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <select name="payment_services[${paymentServiceCount}][provider]" class="form-select mb-3">
-                    <option value="">Select service provider</option>
-                    <option value="Vodacom">Vodacom M-Pesa</option>
-                    <option value="Tigo">Tigo Pesa</option>
-                    <option value="Airtel">Airtel Money</option>
-                    <option value="Halotel">Halotel HaloPesa</option>
-                    <option value="Azam Pesa">Azam Pesa</option>
-                    <option value="Zantel">Zantel EzyPesa</option>
-                    <option value="Other">Other Service</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <input type="tel" 
-                       class="form-control" 
-                       name="payment_services[${paymentServiceCount}][number]" 
-                       placeholder="Payment number">
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(newItem);
-    paymentServiceCount++;
-}
-
-function removePaymentService(button) {
-    const item = button.closest('.payment-service-item');
-    item.remove();
-    // Reindex remaining items
-    reindexPaymentServices();
-}
-
-function reindexPaymentServices() {
-    const items = document.querySelectorAll('#paymentServicesList .payment-service-item');
-    items.forEach((item, index) => {
-        item.dataset.index = index;
-        item.querySelector('h6').textContent = `Payment Service #${index + 1}`;
-        
-        // Update input names
-        const providerSelect = item.querySelector('[name*="[provider]"]');
-        const numberInput = item.querySelector('[name*="[number]"]');
-        
-        providerSelect.name = `payment_services[${index}][provider]`;
-        numberInput.name = `payment_services[${index}][number]`;
-    });
-    paymentServiceCount = items.length;
-}
-
-// Bank Accounts Management
-function addBankAccount() {
-    const container = document.getElementById('bankAccountsList');
-    const newItem = document.createElement('div');
-    newItem.className = 'payment-service-item';
-    newItem.dataset.index = bankAccountCount;
-    
-    newItem.innerHTML = `
-        <div class="payment-service-header">
-            <h6 class="mb-0">Bank Account #${bankAccountCount + 1}</h6>
-            <button type="button" class="remove-service" onclick="removeBankAccount(this)">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <input type="text" 
-                       class="form-control mb-3" 
-                       name="bank_accounts[${bankAccountCount}][name]" 
-                       placeholder="Bank name">
-            </div>
-            <div class="col-md-6">
-                <input type="text" 
-                       class="form-control" 
-                       name="bank_accounts[${bankAccountCount}][account]" 
-                       placeholder="Account number">
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(newItem);
-    bankAccountCount++;
-}
-
-function removeBankAccount(button) {
-    const item = button.closest('.payment-service-item');
-    item.remove();
-    // Reindex remaining items
-    reindexBankAccounts();
-}
-
-function reindexBankAccounts() {
-    const items = document.querySelectorAll('#bankAccountsList .payment-service-item');
-    items.forEach((item, index) => {
-        item.dataset.index = index;
-        item.querySelector('h6').textContent = `Bank Account #${index + 1}`;
-        
-        // Update input names
-        const nameInput = item.querySelector('[name*="[name]"]');
-        const accountInput = item.querySelector('[name*="[account]"]');
-        
-        nameInput.name = `bank_accounts[${index}][name]`;
-        accountInput.name = `bank_accounts[${index}][account]`;
-    });
-    bankAccountCount = items.length;
 }
 </script>
 </body>

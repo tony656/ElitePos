@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\couponModel;
 use Illuminate\Http\Request;
 use App\Models\logModal;
+use function getSessionAccountName;
 
 class couponController extends Controller
 {
     public function index() {
 
-        $data = couponModel::where('account', session('account'))->orderBy('id', 'desc')->get();
+        $data = couponModel::where('account', getSessionAccountName())->orderBy('id', 'desc')->get();
 
         return view('coupons', compact('data'));
     }
@@ -33,7 +34,7 @@ for ($i = 0; $i < $quantity; $i++) {
     $coupon->couponCode = $code;
     $coupon->amount = $amount;
     $coupon->expire = $expire;
-    $coupon->account = session('account');
+    $coupon->account = getSessionAccountName();
     $coupon->save();
 }
     if($coupon) {
@@ -42,7 +43,7 @@ for ($i = 0; $i < $quantity; $i++) {
             $create->description = $quantity .'(Coupons) Created  Successfully By '.session('username');
             $create->save();
     }
-$data = couponModel::where('account', session('account'))->get();
+$data = couponModel::where('account', getSessionAccountName())->get();
 
 return view('coupons', compact('data'));
 }
@@ -50,7 +51,7 @@ return view('coupons', compact('data'));
 public function deltCoupon(Request $req) {
     $coupId = $req->input('coupId');
 
-    $dlt = couponModel::where('account', session('account'))->where('couponCode', '=', $coupId)->first();
+    $dlt = couponModel::where('account', getSessionAccountName())->where('couponCode', '=', $coupId)->first();
 
     if($dlt) {
         $dlt->delete();

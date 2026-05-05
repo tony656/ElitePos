@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use App\Models\logModal;
 use Illuminate\Support\Facades\Auth;
+use function getSessionAccountName;
 class expensesController extends Controller
 {
     public function index(Request $req) {
@@ -20,18 +21,18 @@ class expensesController extends Controller
             $start_date = $thedate . ' 00:00:00';
             $end_date = $thedate . ' 23:59:59';
         
-            $expense = expensesModel::where('account', session('account'))->whereBetween('created_at', [$start_date, $end_date])->get();
+            $expense = expensesModel::where('account', getSessionAccountName())->whereBetween('created_at', [$start_date, $end_date])->get();
         
         } else {
 
-            $expense = expensesModel::where('account', session('account'))->get();
+            $expense = expensesModel::where('account', getSessionAccountName())->get();
 
         }
         $data = compact(
         'expense'
     );
 
- if ($user->levelStatus === 'Admin') {
+ if (strtolower(trim($user->levelStatus)) === 'admin') {
         return view('admin.expenses', $data);
     }
     if(!empty($user->levelStatus)) {
@@ -54,7 +55,7 @@ class expensesController extends Controller
         $expenses->expuser = $exuser;
         $expenses->category = $category;
         $expenses->amount = $amount;
-        $expenses->account = session('account');
+        $expenses->account = getSessionAccountName();
 
         if($expenses->save()) {
               $create = new logModal();
@@ -65,5 +66,24 @@ class expensesController extends Controller
         return redirect()->back()->with('success', 'Expense is added successfully');
 
 
+    }
+    public function dltExpense (Request $req) {
+        $expenseId = $req->input('expenseId');
+
+        $delt = expensesModel::where('id', $expenseId)->first();
+
+        if($delt) {
+                   $create = new logModal();
+            $create->title = 'Expense Log';
+            $create->description = $delt->expenseName .'(expense) Deleted  Successfully By '.session('username');
+            $create->save();
+
+            $delt->delete();
+
+            return redirect()->back()->with('success', 'Expense deleted successfuly');
+        } else {
+            return redirect()->back()->with('success', 'Expense failed to delete');
+        }
+        
     }
 }

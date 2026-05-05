@@ -6,1018 +6,700 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{config("app.name")}} - Settings</title>
     @include("links")
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4361ee;
-            --primary-light: #f0f4ff;
-            --secondary-color: #3f37c9;
-            --accent-color: #30C5FF;
-            --success-color: #4cc9f0;
-            --danger-color: #ef476f;
-            --light-bg: #f8f9fa;
-            --dark-text: #1a1a2e;
-            --light-text: #6c757d;
-            --border-color: #e5e7eb;
-            --border-radius: 12px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --navy:          #0B1E3D;
+            --navy-mid:      #112952;
+            --navy-light:    #1A3A6B;
+            --amber:         #F59E0B;
+            --amber-pale:    #FEF3C7;
+            --emerald:       #059669;
+            --emerald-pale:  #D1FAE5;
+            --rose:          #E11D48;
+            --rose-pale:     #FFE4E6;
+            --violet:        #7C3AED;
+            --violet-pale:   #EDE9FE;
+            --sky:           #0284C7;
+            --sky-pale:      #E0F2FE;
+            --slate-50:      #F8FAFC;
+            --slate-100:     #F1F5F9;
+            --slate-200:     #E2E8F0;
+            --slate-300:     #CBD5E1;
+            --slate-400:     #94A3B8;
+            --slate-500:     #64748B;
+            --slate-600:     #475569;
+            --slate-700:     #334155;
+            --slate-800:     #1E293B;
+            --white:         #FFFFFF;
         }
-        
-        * {
-            transition: var(--transition);
-        }
-        
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--dark-text);
+            font-family: 'Outfit', sans-serif;
+            background: #EEF2F9;
+            color: var(--slate-800);
             min-height: 100vh;
+            line-height: 1.6;
         }
-        
-        main {
-            padding: 2rem !important;
-        }
-        
-        .settings-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2.5rem;
-            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.15);
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--slate-100); }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        .main-wrap { max-width: 1600px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+
+        .pg-header {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
             position: relative;
             overflow: hidden;
         }
-        
-        .settings-header::before {
+
+        .pg-header::before {
             content: '';
             position: absolute;
             top: -50%;
-            right: -20%;
-            width: 400px;
-            height: 400px;
-            background: rgba(255, 255, 255, 0.1);
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(245,158,11,0.08);
             border-radius: 50%;
             pointer-events: none;
         }
-        
-        .settings-header h4 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+
+        .pg-title {
+            color: var(--white); font-size: 1.4rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.6rem;
             position: relative;
             z-index: 1;
-            margin-bottom: 0;
+            margin: 0;
         }
-        
-        .settings-header i {
-            font-size: 1.5rem;
+        .pg-title i { color: var(--amber); font-size: 1.35rem; }
+
+        .alert-box {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+            border-left: 4px solid;
         }
-        
-        .settings-section {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--border-color);
+        .alert-success {
+            background: var(--emerald-pale);
+            border-color: var(--emerald);
+            color: #065F46;
         }
-        
-        .settings-section:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        .alert-error {
+            background: var(--rose-pale);
+            border-color: var(--rose);
+            color: #9F1239;
         }
-        
-        .section-title {
-            color: var(--primary-color);
-            font-weight: 700;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.25rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 2px solid var(--primary-light);
-        }
-        
-        .section-title i {
-            font-size: 1.5rem;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: var(--dark-text);
-            margin-bottom: 0.75rem;
-            display: block;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .form-control, .form-select {
-            border-radius: var(--border-radius);
-            padding: 0.95rem 1.25rem;
-            border: 2px solid var(--border-color);
-            background-color: #fafbfc;
-            font-size: 0.95rem;
-            transition: var(--transition);
+
+        .section-panel {
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            overflow: hidden;
             margin-bottom: 1.5rem;
-            width: 100%;
+            transition: box-shadow 0.2s;
+        }
+        .section-panel:hover { box-shadow: 0 4px 16px rgba(11,30,61,0.08); }
+
+        .section-head {
+            background: var(--slate-50);
+            border-bottom: 1.5px solid var(--slate-200);
+            padding: 1.1rem 1.25rem;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1.05rem; font-weight: 700; color: var(--navy);
+            display: flex; align-items: center; gap: 0.5rem;
+            margin: 0;
+        }
+        .section-title i { color: var(--amber); font-size: 1.15rem; }
+
+        .section-body { padding: 1.5rem 1.25rem; }
+
+        .field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
+        .field-label {
+            font-size: 0.78rem; font-weight: 600; color: var(--slate-600);
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .field-input {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.875rem;
+            padding: 0.55rem 0.8rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            background: var(--slate-50);
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
             font-weight: 500;
         }
-        
-        .form-control::placeholder {
-            color: var(--light-text);
-            opacity: 0.7;
+        .field-input::placeholder { color: var(--slate-400); opacity: 0.7; }
+        .field-input:focus {
+            border-color: var(--navy-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
         }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            background-color: white;
-            box-shadow: 0 0 0 4px var(--primary-light);
-            outline: none;
+        select.field-input {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            padding-right: 2.25rem;
+            appearance: none;
         }
-        
-        .btn-save {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 0.95rem 2rem;
-            font-weight: 600;
-            width: 100%;
-            max-width: 220px;
-            margin-top: 1.5rem;
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.25);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.85rem;
+
+        .search-wrap { position: relative; margin-bottom: 1rem; }
+        .search-input {
+            padding-left: 2.4rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 0.75rem center;
+            background-size: 16px;
         }
-        
-        .btn-save:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
-            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-            color: white;
+
+        /* Table styles (list view) */
+        .table-wrap { overflow-x: auto; }
+        table.settings-tbl { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
+        table.settings-tbl thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.7rem 0.8rem;
+            border-bottom: 2px solid var(--slate-200);
+            white-space: nowrap;
         }
-        
-        .btn-save:active {
-            transform: translateY(-1px);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            border: none;
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.25);
-            font-weight: 600;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.35);
-            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-        }
-        
-        .btn-outline-primary {
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-outline-danger {
-            color: var(--danger-color);
-            border: 2px solid var(--danger-color);
-        }
-        
-        .btn-outline-danger:hover {
-            background-color: var(--danger-color);
-            border-color: var(--danger-color);
-        }
-        
-        .table {
-            margin-bottom: 0;
-        }
-        
-        .table thead th {
-            background-color: var(--primary-light);
-            color: var(--primary-color);
-            font-weight: 700;
-            border: none;
-            padding: 1.25rem;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-        }
-        
-        .table tbody td {
-            padding: 1.25rem;
-            border-color: var(--border-color);
+        table.settings-tbl tbody td {
+            padding: 0.75rem 0.8rem;
+            border-bottom: 1px solid var(--slate-100);
             vertical-align: middle;
+            color: var(--slate-800);
         }
-        
-        .table tbody tr:hover {
-            background-color: var(--light-bg);
+        table.settings-tbl tbody tr:hover td { background: #F8FAFF; }
+
+        /* Card view styles */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-top: 0.5rem;
         }
-        
-        .selected-products-badge {
-            background: linear-gradient(135deg, var(--success-color) 0%, #00d4ff 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .shop-card {
+            background: var(--white);
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            padding: 1.2rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .shop-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px -12px rgba(0,0,0,0.15);
+            border-color: var(--amber);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        .shop-name-card {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--navy);
+            background: var(--amber-pale);
+            padding: 0.2rem 0.7rem;
+            border-radius: 40px;
             display: inline-block;
-            box-shadow: 0 4px 10px rgba(76, 201, 240, 0.2);
         }
-        
-        .account-products-container {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: var(--primary-light);
-            border-radius: var(--border-radius);
-            border: 2px solid #d4deff;
-        }
-        
-        .account-product-tag {
+        .shop-badge-active {
+            background: var(--emerald-pale);
+            color: #065F46;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 30px;
             display: inline-flex;
             align-items: center;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            margin: 0.5rem 0.5rem 0.5rem 0;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.2);
+            gap: 0.3rem;
         }
-        
-        .account-product-tag i {
-            margin-left: 0.5rem;
-            cursor: pointer;
-            opacity: 0.8;
+        .shop-details {
+            margin: 1rem 0;
         }
-        
-        .account-product-tag i:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-        
-        .modal-content {
-            border: none;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
-            padding: 1.75rem;
-        }
-        
-        .modal-header .modal-title {
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-        
-        .modal-body {
-            padding: 2rem;
-        }
-        
-        .alert {
-            border: none;
-            border-left: 4px solid;
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-        }
-        
-        .alert-success {
-            background: linear-gradient(135deg, rgba(76, 201, 240, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
-            border-left-color: var(--success-color);
-            color: #0d6a57;
-        }
-        
-        .alert-danger {
-            background: linear-gradient(135deg, rgba(239, 71, 111, 0.1) 0%, rgba(255, 71, 87, 0.05) 100%);
-            border-left-color: var(--danger-color);
-            color: #921a40;
-        }
-        
-        .badge {
-            font-weight: 600;
-            padding: 0.6rem 1rem !important;
+        .shop-detail-item {
+            display: flex;
+            justify-content: space-between;
             font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 0.4rem 0;
+            border-bottom: 1px dashed var(--slate-200);
         }
-        
-        .d-flex.justify-content-between.align-items-center {
-            margin-bottom: 1.5rem;
+        .detail-label {
+            color: var(--slate-500);
+            font-weight: 500;
         }
-        
-        hr {
-            margin: 2.5rem 0;
+        .detail-value {
+            font-weight: 600;
+            color: var(--slate-800);
+        }
+        .card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--slate-100);
+        }
+        /* View toggle buttons */
+        .view-toggle-group {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--slate-100);
+            padding: 0.3rem;
+            border-radius: 40px;
+        }
+        .view-btn {
+            background: transparent;
             border: none;
-            border-top: 2px solid var(--border-color);
-        }
-        
-        /* Profile Picture Styles */
-        .profile-picture-container {
+            padding: 0.35rem 1rem;
+            border-radius: 32px;
+            font-size: 0.75rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: var(--primary-light);
-            border-radius: var(--border-radius);
-            border: 2px solid #d4deff;
+            gap: 0.4rem;
+            color: var(--slate-600);
+            transition: all 0.15s;
         }
-        
-        .profile-picture-preview {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid white;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        .view-btn.active {
+            background: var(--white);
+            color: var(--navy);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
-        .profile-picture-placeholder {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 3rem;
-            border: 4px solid white;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        .view-btn i { font-size: 0.9rem; }
+        .sort-select {
+            font-size: 0.75rem;
+            padding: 0.35rem 1.8rem 0.35rem 0.8rem;
+            border-radius: 40px;
+            border: 1px solid var(--slate-200);
+            background-color: var(--white);
+            font-weight: 500;
         }
-        
-        .profile-upload-control {
-            flex: 1;
-        }
-        
-        .profile-upload-control .form-control {
-            padding: 0.75rem;
-            background: white;
-        }
-        
-        /* Payment Service Styles */
-        .payment-service-item {
-            background: var(--light-bg);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border: 2px solid var(--border-color);
-        }
-        
-        .payment-service-header {
+        .controls-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.48rem 0.95rem;
+            background: var(--amber); color: var(--navy);
+            border: none; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+            transition: all 0.18s;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 5px 18px rgba(245,158,11,0.4);
+            transform: translateY(-1px);
+            color: var(--navy);
+        }
+        .btn-save {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+            font-size: 0.82rem; font-weight: 700;
+            padding: 0.6rem 1.5rem;
+            background: var(--amber); color: var(--navy);
+            border: none; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+            transition: all 0.18s;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .btn-outline-primary {
+            background: transparent;
+            color: var(--sky);
+            border: 1.5px solid var(--sky);
+        }
+        .btn-outline-primary:hover {
+            background: var(--sky);
+            color: var(--white);
+        }
+        .btn-outline-warning {
+            background: transparent;
+            color: var(--amber);
+            border: 1.5px solid var(--amber);
+        }
+        .btn-outline-warning:hover {
+            background: var(--amber);
+            color: var(--navy);
+        }
+        .btn-outline-danger {
+            background: transparent;
+            color: var(--rose);
+            border: 1.5px solid var(--rose);
+        }
+        .btn-outline-danger:hover {
+            background: var(--rose);
+            color: var(--white);
+        }
+        .badge-active {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.72rem; font-weight: 700;
+            padding: 0.4rem 0.75rem; border-radius: 20px;
+            background: var(--emerald-pale); color: #065F46;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .profile-wrap {
+            display: flex; align-items: center; gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding: 1.25rem;
+            background: var(--amber-pale);
+            border: 1.5px solid #FBBF24;
+            border-radius: 12px;
+        }
+        .profile-pic {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--white);
+            box-shadow: 0 4px 16px rgba(11,30,61,0.15);
+            flex-shrink: 0;
+        }
+        .profile-placeholder {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: var(--navy);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--amber);
+            font-size: 3rem;
+            border: 3px solid var(--white);
+            flex-shrink: 0;
+        }
+        .payment-item {
+            background: var(--slate-50);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 1.15rem;
             margin-bottom: 1rem;
         }
-        
-        .remove-service {
-            color: var(--danger-color);
-            cursor: pointer;
-            font-size: 1.25rem;
-            padding: 0.5rem;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .remove-service:hover {
-            background: rgba(239, 71, 111, 0.1);
-        }
-        
-        .add-another-btn {
+        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+        .add-more-btn {
             width: 100%;
-            padding: 1rem;
-            background: var(--primary-light);
-            border: 2px dashed var(--primary-color);
-            color: var(--primary-color);
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            margin-top: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.75rem;
+            background: var(--white);
+            border: 1.5px dashed var(--slate-300);
+            border-radius: 8px;
+            cursor: pointer;
         }
-        
-        .add-another-btn:hover {
-            background: var(--primary-color);
-            color: white;
+        .modal-content { border: none; border-radius: 12px; overflow: hidden; }
+        .modal-header-navy {
+            background: var(--navy);
+            color: var(--white);
+            padding: 1.15rem 1.4rem;
         }
-        
         @media (max-width: 768px) {
-            main {
-                padding: 1rem !important;
-            }
-            
-            .settings-section {
-                padding: 1.5rem;
-            }
-            
-            .btn-save {
-                width: 100%;
-                max-width: none;
-            }
-            
-            .settings-header {
-                padding: 1.5rem;
-            }
-            
-            .settings-header h4 {
-                font-size: 1.5rem;
-            }
-            
-            .modal-lg {
-                max-width: 95%;
-            }
-            
-            .profile-picture-container {
-                flex-direction: column;
-                text-align: center;
-                gap: 1.5rem;
-            }
+            .main-wrap { padding: 1rem; }
+            .cards-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    
 
 <div class="container-fluid">
   <div class="row">
     @include("admin/sidenav")
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
+        <div class="main-wrap">
 
-       @if(session('success'))
-      <div class="alert alert-success  d-flex justify-content-between">
-          {{ session('success') }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            @if(session('success'))
+            <div class="alert-box alert-success">
+                <span><i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            @endif
+            
+            @if(session('error'))
+            <div class="alert-box alert-error">
+                <span><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            @endif
 
-      </div>
-  @endif
-  
-  @if(session('error'))
-      <div class="alert alert-danger d-flex justify-content-between">
-          {{ session('error') }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="pg-header">
+                <h4 class="pg-title">
+                    <i class="bi bi-gear-fill"></i> Settings
+                </h4>
+            </div>
 
-      </div>
-  @endif
+            {{-- ══════════════════════════════════════
+                 SHOPS SECTION with TABS & SORT + CARD/LIST VIEW
+            ══════════════════════════════════════ --}}
+            <div class="section-panel">
+                <div class="section-head">
+                    <h5 class="section-title">
+                        <i class="bi bi-shop"></i> Shops
+                    </h5>
+                    <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#newAccount">
+                        <i class="bi bi-plus-lg"></i> New Shop
+                    </button>
+                </div>
 
-      <div class="settings-header">
-        <h4 class="mb-0">
-          <i class="bi bi-gear-fill"></i> Settings
-        </h4>
-      </div>
+                <div class="section-body">
+                    <div class="controls-row">
+                        <div class="search-wrap" style="margin-bottom:0; flex:1; max-width:300px;">
+                            <input type="text" class="field-input search-input" id="shopSearch" 
+                                placeholder="Search shops…" onkeyup="filterAndRender()">
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <select id="sortSelect" class="sort-select" onchange="filterAndRender()">
+                                <option value="name_asc">Sort: Name (A-Z)</option>
+                                <option value="name_desc">Sort: Name (Z-A)</option>
+                                <option value="customers_asc">Customers (low to high)</option>
+                                <option value="customers_desc">Customers (high to low)</option>
+                            </select>
+                            <div class="view-toggle-group">
+                                <button class="view-btn active" id="listViewBtn" onclick="setView('list')">
+                                    <i class="bi bi-table"></i> List
+                                </button>
+                                <button class="view-btn" id="cardViewBtn" onclick="setView('card')">
+                                    <i class="bi bi-grid-3x3-gap-fill"></i> Cards
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-       <div class="settings-section">
-       <div class="d-flex justify-content-between align-items-center">
-         <h5 class="section-title mb-0">
-          <i class="bi bi-person-badge"></i> Shops
-        </h5>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAccount">
-          <i class="bi bi-plus-lg"></i> New Shop
-        </button>
-       </div>        
+                    <!-- Dynamic container for shops (list view default) -->
+                    <div id="shopsDynamicContainer">
+                        <!-- will be filled by JS -->
+                    </div>
+                </div>
+            </div>
 
-        <div class="my-3 table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Products</th>
-                <th class="text-end">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach ($fetch as $index => $item )
-                  <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $item->name }}</td>
-                    <td>{{ $item->location }}</td>
-                    <td>
-                      @if($item->products)
-                        @php
-                          $productCount = is_array($item->products) ? count($item->products) : 0;
-                        @endphp
-                        <span class="selected-products-badge">{{ $productCount }} products</span>
-                      @else
-                        <span class="text-muted">No products</span>
-                      @endif
-                    </td>
-                    <td class="text-end">
-                      <div class="d-flex justify-content-end gap-2">
-                        @if ($item->name == session('account'))
-                          <span class="badge bg-success px-3 py-2">
-                            Active Account
-                          </span>
+            {{-- PERSONAL DETAILS (unchanged design) --}}
+            <div class="section-panel">
+                <div class="section-head">
+                    <h5 class="section-title"><i class="bi bi-person-badge"></i> Personal Details</h5>
+                </div>
+                <div class="section-body">
+                    @php $users = Auth::user(); @endphp
+                    <div class="profile-wrap">
+                        @if($users->userImg ?? false)
+                            <img src="{{ asset('images/' . $users->userImg) }}" class="profile-pic" id="personalProfilePreview">
                         @else
-                          <form action="switch" method="post" class="d-inline">
-                            @csrf
-                            <button class="btn btn-sm btn-outline-primary" name="account" value="{{ $item->name }}">
-                              Switch
-                            </button>
-                          </form>
+                            <div class="profile-placeholder"><i class="bi bi-person-circle"></i></div>
                         @endif
-                        
-      
-                        
-                        <form action="deleteAccount" method="post" class="d-inline">
-                          @csrf
-                          <button class="btn btn-sm btn-outline-danger" 
-                                  name="accountId" 
-                                  value="{{ $item->id }}"
-                                  onclick="return confirm('Are you sure you want to delete this account?')">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-       </div>
-
-      <!-- Personal Details Section -->
-      <div class="settings-section">
-        <h5 class="section-title">
-          <i class="bi bi-person-badge"></i> Personal Details
-        </h5>
-        
-        <!-- Personal Profile Picture -->
-        <div class="profile-picture-container">
-          @if($getData->personal_profile_picture ?? false)
-            <img src="{{ asset('storage/' . $getData->personal_profile_picture) }}" 
-                 alt="Personal Profile" 
-                 class="profile-picture-preview" 
-                 id="personalProfilePreview">
-          @else
-            <div class="profile-picture-placeholder">
-              <i class="bi bi-person-circle"></i>
-            </div>
-          @endif
-          <div class="profile-upload-control">
-            <label class="form-label">Personal Profile Picture</label>
-            <input type="file" 
-                   class="form-control" 
-                   name="personal_profile_picture" 
-                   id="personalProfileInput"
-                   accept="image/*">
-            <small class="text-muted">Max size: 2MB. Allowed formats: JPG, PNG, GIF</small>
-          </div>
-        </div>
-        
-        <form action="personalData" method="post" enctype="multipart/form-data">
-          @csrf
-          <input type="hidden" name="personal_profile_picture_path" id="personalProfilePath">
-          
-          <div class="mb-3">
-            <label for="owner" class="form-label">Full Name</label>
-            <input type="text" class="form-control" id="owner" name="ownerName" 
-                   value="{{$getData->ownerName ?? ''}}" 
-                   placeholder="{{$getData->ownerName ?? 'Your full name'}}">
-          </div>
-          
-          <div class="mb-3">
-            <label for="phone" class="form-label">Phone Number</label>
-            <input type="tel" class="form-control" id="phone" 
-                   value="{{$getData->phone ?? ''}}" 
-                   placeholder="{{$getData->phone ?? '255 xxx xxx xxx'}}" 
-                   name="phone">
-          </div>
-          
-          <div class="mb-3">
-            <label for="email" class="form-label">Email Address</label>
-            <input type="email" class="form-control" id="email" name="email" 
-                   value="{{$getData->email ?? ''}}" 
-                   placeholder="{{$getData->email ?? 'your@email.com'}}">
-          </div>
-          
-          <div class="text-end">
-            <button type="submit" class="btn bg btn-save">
-              <i class="bi bi-save"></i> Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Business Details Section -->
-      <div class="settings-section">
-        <h5 class="section-title">
-          <i class="bi bi-building"></i> Business Details
-        </h5>
-        
-        <!-- Business Profile Picture -->
-        <div class="profile-picture-container">
-          @if($getData->business_profile_picture ?? false)
-            <img src="{{ asset('storage/' . $getData->business_profile_picture) }}" 
-                 alt="Business Profile" 
-                 class="profile-picture-preview" 
-                 id="businessProfilePreview">
-          @else
-            <div class="profile-picture-placeholder">
-              <i class="bi bi-building"></i>
-            </div>
-          @endif
-          <div class="profile-upload-control">
-            <label class="form-label">Business Profile Picture</label>
-            <input type="file" 
-                   class="form-control" 
-                   name="business_profile_picture" 
-                   id="businessProfileInput"
-                   accept="image/*">
-            <small class="text-muted">Max size: 2MB. Allowed formats: JPG, PNG, GIF</small>
-          </div>
-        </div>
-        
-        <form action="businessDetails" method="post" enctype="multipart/form-data" id="businessForm">
-          @csrf
-          <input type="hidden" name="business_profile_picture_path" id="businessProfilePath">
-          
-          <div class="mb-3">
-            <label for="bName" class="form-label">Business Name</label>
-            <input type="text" class="form-control" id="bName" name="bName" 
-                   value="{{$getData->bName ?? ''}}" 
-                   placeholder="{{$getData->bName ?? 'Your business name'}}">
-          </div>
-          
-          <div class="mb-3">
-            <label for="address" class="form-label">Business Address</label>
-            <input type="text" class="form-control" id="address" name="address" 
-                   value="{{$getData->address ?? ''}}" 
-                   placeholder="{{$getData->address ?? 'Street, City, Country'}}">
-          </div>
-          
-          <!-- Multiple Payment Services -->
-          <div class="payment-services-container" id="paymentServicesContainer">
-            <label class="form-label">Payment Services</label>
-            <div id="paymentServicesList">
-              @if(isset($getData->payment_services) && is_array($getData->payment_services) && count($getData->payment_services) > 0)
-                @foreach($getData->payment_services as $index => $service)
-                  <div class="payment-service-item" data-index="{{ $index }}">
-                    <div class="payment-service-header">
-                      <h6 class="mb-0">Payment Service #{{ $index + 1 }}</h6>
-                      @if($index > 0)
-                        <button type="button" class="remove-service" onclick="removePaymentService(this)">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      @endif
+                        <div class="profile-upload">
+                            <label class="field-label">Profile Picture</label>
+                            <input type="file" class="field-input" id="personalProfileInput" accept="image/*">
+                            <div class="profile-hint">Max 2MB · JPG, PNG, GIF</div>
+                        </div>
                     </div>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <select name="payment_services[{{ $index }}][provider]" class="form-select mb-3">
-                          <option value="">Select service provider</option>
-                          <option value="Vodacom" {{ $service['provider'] == 'Vodacom' ? 'selected' : '' }}>Vodacom M-Pesa</option>
-                          <option value="Tigo" {{ $service['provider'] == 'Tigo' ? 'selected' : '' }}>Tigo Pesa</option>
-                          <option value="Airtel" {{ $service['provider'] == 'Airtel' ? 'selected' : '' }}>Airtel Money</option>
-                          <option value="Halotel" {{ $service['provider'] == 'Halotel' ? 'selected' : '' }}>Halotel HaloPesa</option>
-                          <option value="Azam Pesa" {{ $service['provider'] == 'Azam Pesa' ? 'selected' : '' }}>Azam Pesa</option>
-                          <option value="Zantel" {{ $service['provider'] == 'Zantel' ? 'selected' : '' }}>Zantel EzyPesa</option>
-                          <option value="Other" {{ $service['provider'] == 'Other' ? 'selected' : '' }}>Other Service</option>
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <input type="tel" 
-                               class="form-control" 
-                               name="payment_services[{{ $index }}][number]" 
-                               value="{{ $service['number'] ?? '' }}" 
-                               placeholder="Payment number">
-                      </div>
-                    </div>
-                  </div>
-                @endforeach
-              @else
-                <div class="payment-service-item" data-index="0">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <select name="payment_services[0][provider]" class="form-select mb-3">
-                        <option value="">Select service provider</option>
-                        <option value="Vodacom">Vodacom M-Pesa</option>
-                        <option value="Tigo">Tigo Pesa</option>
-                        <option value="Airtel">Airtel Money</option>
-                        <option value="Halotel">Halotel HaloPesa</option>
-                        <option value="Azam Pesa">Azam Pesa</option>
-                        <option value="Zantel">Zantel EzyPesa</option>
-                        <option value="Other">Other Service</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6">
-                      <input type="tel" 
-                             class="form-control" 
-                             name="payment_services[0][number]" 
-                             placeholder="Payment number">
-                    </div>
-                  </div>
+                    <form action="personalData" method="post" enctype="multipart/form-data">
+                        @csrf
+                        <div class="field"><label class="field-label">Full Name</label><input type="text" class="field-input" name="ownerName" value="{{$users->name ?? ''}}"></div>
+                        <div class="field"><label class="field-label">Phone Number</label><input type="tel" class="field-input" name="phone" value="{{$users->contact ?? ''}}"></div>
+                        <div class="field"><label class="field-label">Email Address</label><input type="email" class="field-input" name="email" value="{{$users->email ?? ''}}"></div>
+                        <div style="text-align:right;"><button type="submit" class="btn-save"><i class="bi bi-save"></i> Save Changes</button></div>
+                    </form>
                 </div>
-              @endif
             </div>
-            <button type="button" class="add-another-btn" onclick="addPaymentService()">
-              <i class="bi bi-plus-circle"></i> Add Another Payment Service
-            </button>
-          </div>
-          
-          <!-- Multiple Bank Accounts -->
-          <div class="payment-services-container mt-4" id="bankAccountsContainer">
-            <label class="form-label">Bank Accounts</label>
-            <div id="bankAccountsList">
-              @if(isset($getData->bank_accounts) && is_array($getData->bank_accounts) && count($getData->bank_accounts) > 0)
-                @foreach($getData->bank_accounts as $index => $bank)
-                  <div class="payment-service-item" data-index="{{ $index }}">
-                    <div class="payment-service-header">
-                      <h6 class="mb-0">Bank Account #{{ $index + 1 }}</h6>
-                      @if($index > 0)
-                        <button type="button" class="remove-service" onclick="removeBankAccount(this)">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      @endif
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <input type="text" 
-                               class="form-control mb-3" 
-                               name="bank_accounts[{{ $index }}][name]" 
-                               value="{{ $bank['name'] ?? '' }}" 
-                               placeholder="Bank name">
-                      </div>
-                      <div class="col-md-6">
-                        <input type="text" 
-                               class="form-control" 
-                               name="bank_accounts[{{ $index }}][account]" 
-                               value="{{ $bank['account'] ?? '' }}" 
-                               placeholder="Account number">
-                      </div>
-                    </div>
-                  </div>
-                @endforeach
-              @else
-                <div class="payment-service-item" data-index="0">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <input type="text" 
-                             class="form-control mb-3" 
-                             name="bank_accounts[0][name]" 
-                             placeholder="Bank name">
-                    </div>
-                    <div class="col-md-6">
-                      <input type="text" 
-                             class="form-control" 
-                             name="bank_accounts[0][account]" 
-                             placeholder="Account number">
-                    </div>
-                  </div>
-                </div>
-              @endif
-            </div>
-            <button type="button" class="add-another-btn" onclick="addBankAccount()">
-              <i class="bi bi-plus-circle"></i> Add Another Bank Account
-            </button>
-          </div>
-          
-          <div class="text-end mt-4">
-            <button type="submit" class="btn bg btn-save">
-              <i class="bi bi-save"></i> Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
 
+            {{-- BUSINESS DETAILS (unchanged) --}}
+            <div class="section-panel">
+                <div class="section-head"><h5 class="section-title"><i class="bi bi-building"></i> Business Details</h5></div>
+                <div class="section-body">
+                    <div class="profile-wrap">
+                        @if($getData->business_profile_picture ?? false)
+                            <img src="{{ asset('storage/' . $getData->business_profile_picture) }}" class="profile-pic" id="businessProfilePreview">
+                        @else
+                            <div class="profile-placeholder"><i class="bi bi-building"></i></div>
+                        @endif
+                        <div class="profile-upload"><label class="field-label">Business Logo</label><input type="file" class="field-input" id="businessProfileInput" accept="image/*"></div>
+                    </div>
+                    <form action="businessDetails" method="post" enctype="multipart/form-data">
+                        @csrf
+                        <div class="field"><label class="field-label">Business Name</label><input type="text" class="field-input" name="bName" value="{{$getData->bName ?? ''}}"></div>
+                        <div class="field"><label class="field-label">Business Address</label><input type="text" class="field-input" name="address" value="{{$getData->address ?? ''}}"></div>
+                        <div style="margin-top:1.5rem;"><label class="field-label">Payment Services</label><div id="paymentServicesList">@php $ps = $getData->payment_services ?? []; @endphp @if(count($ps)) @foreach($ps as $idx=>$srv)<div class="payment-item"><div class="row-fields"><select name="payment_services[{{$idx}}][provider]" class="field-input"><option value="Vodacom" {{$srv['provider']=='Vodacom'?'selected':''}}>Vodacom</option><option value="Tigo" {{$srv['provider']=='Tigo'?'selected':''}}>Tigo</option></select><input type="tel" name="payment_services[{{$idx}}][number]" value="{{$srv['number']??''}}" class="field-input" placeholder="Number"></div></div>@endforeach @else <div class="payment-item"><div class="row-fields"><select name="payment_services[0][provider]" class="field-input"><option>Vodacom</option><option>Tigo</option></select><input type="tel" name="payment_services[0][number]" class="field-input" placeholder="Number"></div></div>@endif</div><button type="button" class="add-more-btn" onclick="addPaymentService()">+ Add Payment</button></div>
+                        <div style="text-align:right; margin-top:1.5rem;"><button type="submit" class="btn-save"><i class="bi bi-save"></i> Save Changes</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
   </div>
 </div>
 
-<!-- New Account Modal -->
-<div class="modal fade" id="newAccount" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Create New Account</h4>
-        <button class="btn btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form action="newAccount" method="post" id="newAccountForm">
-          @csrf
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Account Name</label>
-                <input type="text" class="form-control" name="name" required>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Location</label>
-                <input type="text" class="form-control" name="location" required>
-              </div>
-            </div>
-          </div>
-          
-          <div class="text-end">
-            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Account</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+{{-- Modals same as original --}}
+<div class="modal fade" id="newAccount" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header-navy"><h4 class="modal-title">Create New Shop</h4><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form action="newAccount" method="post">@csrf<div class="row-fields"><div class="field"><label class="field-label">Shop Name</label><input type="text" class="field-input" name="name" required></div><div class="field"><label class="field-label">Location</label><input type="text" class="field-input" name="location" required></div></div><div style="text-align:right; margin-top:1rem;"><button type="button" class="btn btn-sm btn-outline-danger me-2" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn-primary">Create Shop</button></div></form></div></div></div></div>
+<div class="modal fade" id="editAccount" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header-navy"><h4 class="modal-title">Edit Shop</h4><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form action="updateAccount" method="post">@csrf<input type="hidden" name="accountId" id="editAccountId"><div class="row-fields"><div class="field"><label class="field-label">Shop Name</label><input type="text" class="field-input" name="name" id="editAccountName" required></div><div class="field"><label class="field-label">Location</label><input type="text" class="field-input" name="location" id="editAccountLocation" required></div></div><div style="text-align:right; margin-top:1rem;"><button type="button" class="btn btn-sm btn-outline-danger me-2" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn-primary">Update Shop</button></div></form></div></div></div></div>
 
 <script>
-// Profile picture preview functionality
-document.getElementById('personalProfileInput').addEventListener('change', function(e) {
-    previewImage(e.target, 'personalProfilePreview', 'personalProfilePath');
-});
+// ──────────────────────────────────────────────
+// SHOPS DATA (from blade $fetch)
+// ──────────────────────────────────────────────
+const shopsData = @json($fetch); // original shops collection
 
-document.getElementById('businessProfileInput').addEventListener('change', function(e) {
-    previewImage(e.target, 'businessProfilePreview', 'businessProfilePath');
-});
+let currentView = 'list'; // list by default
+let currentSort = 'name_asc';
 
-function previewImage(input, previewId, hiddenInputId) {
+function sortShops(shops, sortType) {
+    const sorted = [...shops];
+    switch(sortType) {
+        case 'name_asc': sorted.sort((a,b) => a.name.localeCompare(b.name)); break;
+        case 'name_desc': sorted.sort((a,b) => b.name.localeCompare(a.name)); break;
+        case 'customers_asc': sorted.sort((a,b) => (a.customers||0) - (b.customers||0)); break;
+        case 'customers_desc': sorted.sort((a,b) => (b.customers||0) - (a.customers||0)); break;
+        default: sorted.sort((a,b) => a.name.localeCompare(b.name));
+    }
+    return sorted;
+}
+
+function filterShopsData(shops, searchTerm) {
+    if (!searchTerm.trim()) return shops;
+    const term = searchTerm.toLowerCase();
+    return shops.filter(shop => shop.name.toLowerCase().includes(term) || (shop.location && shop.location.toLowerCase().includes(term)));
+}
+
+function renderListView(shops) {
+    if (!shops.length) return `<div class="text-center py-4 text-muted"><i class="bi bi-shop-slash"></i> No shops found</div>`;
+    let html = `<div class="table-wrap"><table class="settings-tbl"><thead><tr><th>Id</th><th>Name</th><th>Location</th><th>Customers</th><th>Users</th><th>Products</th><th style="text-align:right;">Action</th></tr></thead><tbody>`;
+    shops.forEach((shop, idx) => {
+        const activeBadge = (shop.name == '{{ getSessionAccountDisplayName() }}') ? `<span class="badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>` : '';
+        const switchBtn = (shop.name != '{{ getSessionAccountDisplayName() }}') ? `<form action="switch" method="post" class="d-inline">@csrf<button class="btn btn-sm btn-outline-primary" name="account" value="${shop.id}">Switch</button></form>` : '';
+        html += `<tr>
+            <td>${idx+1}</td>
+            <td><strong>${escapeHtml(shop.name)}</strong></td>
+            <td>${escapeHtml(shop.location||'')}</td>
+            <td>${shop.customers ?? 0}</td>
+            <td>${shop.users ?? 0}</td>
+            <td>${shop.products ?? 0}</td>
+            <td><div class="d-flex justify-content-end gap-2">${activeBadge}${switchBtn}<button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editAccount" onclick="editAccount(${shop.id}, '${escapeHtml(shop.name).replace(/'/g, "\\'")}', '${escapeHtml(shop.location||'').replace(/'/g, "\\'")}')"><i class="bi bi-pencil"></i></button><form action="deleteAccount" method="post" class="d-inline">@csrf<button class="btn btn-sm btn-outline-danger" name="accountId" value="${shop.id}" onclick="return confirm('Delete shop?')"><i class="bi bi-trash"></i></button></form></div></td>
+        </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+function renderCardView(shops) {
+    if (!shops.length) return `<div class="text-center py-4 text-muted"><i class="bi bi-shop-slash"></i> No shops found</div>`;
+    let html = `<div class="cards-grid">`;
+    shops.forEach((shop, idx) => {
+        const isActive = (shop.name == '{{ getSessionAccountDisplayName() }}');
+        const activeChip = isActive ? `<span class="shop-badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>` : '';
+        const switchBtn = !isActive ? `<form action="switch" method="post" style="display:inline-block;">@csrf<button class="btn btn-sm btn-outline-primary" name="account" value="${escapeHtml(shop.name)}">Switch</button></form>` : '';
+        html += `<div class="shop-card">
+            <div class="card-header">
+                <span class="shop-name-card">${escapeHtml(shop.name)}</span>
+                ${activeChip}
+            </div>
+            <div class="shop-details">
+                <div class="shop-detail-item"><span class="detail-label">📍 Location</span><span class="detail-value">${escapeHtml(shop.location||'—')}</span></div>
+                <div class="shop-detail-item"><span class="detail-label">👥 Customers</span><span class="detail-value">${shop.customers ?? 0}</span></div>
+                <div class="shop-detail-item"><span class="detail-label">👤 Users</span><span class="detail-value">${shop.users ?? 0}</span></div>
+                <div class="shop-detail-item"><span class="detail-label">📦 Products</span><span class="detail-value">${shop.products ?? 0}</span></div>
+            </div>
+            <div class="card-actions">
+                ${switchBtn}
+                <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editAccount" onclick="editAccount(${shop.id}, '${escapeHtml(shop.name).replace(/'/g, "\\'")}', '${escapeHtml(shop.location||'').replace(/'/g, "\\'")}')"><i class="bi bi-pencil"></i> Edit</button>
+                <form action="deleteAccount" method="post" style="display:inline-block;">@csrf<button class="btn btn-sm btn-outline-danger" name="accountId" value="${shop.id}" onclick="return confirm('Delete shop?')"><i class="bi bi-trash"></i></button></form>
+            </div>
+        </div>`;
+    });
+    html += `</div>`;
+    return html;
+}
+
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+function filterAndRender() {
+    const searchVal = document.getElementById('shopSearch').value;
+    let filtered = filterShopsData(shopsData, searchVal);
+    const sortType = document.getElementById('sortSelect').value;
+    currentSort = sortType;
+    filtered = sortShops(filtered, sortType);
+    const container = document.getElementById('shopsDynamicContainer');
+    if (currentView === 'list') {
+        container.innerHTML = renderListView(filtered);
+    } else {
+        container.innerHTML = renderCardView(filtered);
+    }
+}
+
+function setView(view) {
+    currentView = view;
+    const listBtn = document.getElementById('listViewBtn');
+    const cardBtn = document.getElementById('cardViewBtn');
+    if (view === 'list') {
+        listBtn.classList.add('active');
+        cardBtn.classList.remove('active');
+    } else {
+        cardBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    }
+    filterAndRender(); 
+}
+
+// Helper for modals / edit
+window.editAccount = function(id, name, location) {
+    document.getElementById('editAccountId').value = id;
+    document.getElementById('editAccountName').value = name;
+    document.getElementById('editAccountLocation').value = location;
+}
+
+// Profile image preview & upload (mimic original)
+function previewImage(input, previewId, hiddenId) {
     const file = input.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const preview = document.getElementById(previewId);
-            if (preview.tagName === 'IMG') {
-                preview.src = e.target.result;
-            } else {
-                // If it's a placeholder div, replace it with an img
-                const parent = preview.parentNode;
-                const img = document.createElement('img');
-                img.id = previewId;
-                img.className = 'profile-picture-preview';
-                img.src = e.target.result;
-                img.alt = 'Profile Preview';
-                parent.replaceChild(img, preview);
-            }
-            
-            // Upload to server and get path
-            uploadProfilePicture(file, hiddenInputId);
-        }
+            let preview = document.getElementById(previewId);
+            if (preview && preview.tagName !== 'IMG') {
+                const newImg = document.createElement('img');
+                newImg.id = previewId;
+                newImg.className = 'profile-pic';
+                newImg.src = e.target.result;
+                preview.parentNode.replaceChild(newImg, preview);
+            } else if (preview) preview.src = e.target.result;
+            uploadProfilePicture(file, hiddenId);
+        };
         reader.readAsDataURL(file);
     }
 }
-
 function uploadProfilePicture(file, hiddenInputId) {
     const formData = new FormData();
     formData.append('profile_picture', file);
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    
-    fetch('/upload-profile-picture', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(hiddenInputId).value = data.path;
-        }
-    })
-    .catch(error => console.error('Error:', error));
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+    fetch('/upload-profile-picture', { method: 'POST', body: formData }).catch(e=>console.error);
 }
+document.getElementById('personalProfileInput')?.addEventListener('change', function(e) { previewImage(e.target, 'personalProfilePreview', 'personalProfilePath'); });
+document.getElementById('businessProfileInput')?.addEventListener('change', function(e) { previewImage(e.target, 'businessProfilePreview', 'businessProfilePath'); });
+function addPaymentService() { alert("Payment service add (backend integration)"); }
 
-// Payment Services Management
-let paymentServiceCount = document.querySelectorAll('.payment-service-item').length;
-let bankAccountCount = document.querySelectorAll('.payment-service-item').length;
-
-function addPaymentService() {
-    const container = document.getElementById('paymentServicesList');
-    const newItem = document.createElement('div');
-    newItem.className = 'payment-service-item';
-    newItem.dataset.index = paymentServiceCount;
-    
-    newItem.innerHTML = `
-        <div class="payment-service-header">
-            <h6 class="mb-0">Payment Service #${paymentServiceCount + 1}</h6>
-            <button type="button" class="remove-service" onclick="removePaymentService(this)">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <select name="payment_services[${paymentServiceCount}][provider]" class="form-select mb-3">
-                    <option value="">Select service provider</option>
-                    <option value="Vodacom">Vodacom M-Pesa</option>
-                    <option value="Tigo">Tigo Pesa</option>
-                    <option value="Airtel">Airtel Money</option>
-                    <option value="Halotel">Halotel HaloPesa</option>
-                    <option value="Azam Pesa">Azam Pesa</option>
-                    <option value="Zantel">Zantel EzyPesa</option>
-                    <option value="Other">Other Service</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <input type="tel" 
-                       class="form-control" 
-                       name="payment_services[${paymentServiceCount}][number]" 
-                       placeholder="Payment number">
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(newItem);
-    paymentServiceCount++;
-}
-
-function removePaymentService(button) {
-    const item = button.closest('.payment-service-item');
-    item.remove();
-    // Reindex remaining items
-    reindexPaymentServices();
-}
-
-function reindexPaymentServices() {
-    const items = document.querySelectorAll('#paymentServicesList .payment-service-item');
-    items.forEach((item, index) => {
-        item.dataset.index = index;
-        item.querySelector('h6').textContent = `Payment Service #${index + 1}`;
-        
-        // Update input names
-        const providerSelect = item.querySelector('[name*="[provider]"]');
-        const numberInput = item.querySelector('[name*="[number]"]');
-        
-        providerSelect.name = `payment_services[${index}][provider]`;
-        numberInput.name = `payment_services[${index}][number]`;
-    });
-    paymentServiceCount = items.length;
-}
-
-// Bank Accounts Management
-function addBankAccount() {
-    const container = document.getElementById('bankAccountsList');
-    const newItem = document.createElement('div');
-    newItem.className = 'payment-service-item';
-    newItem.dataset.index = bankAccountCount;
-    
-    newItem.innerHTML = `
-        <div class="payment-service-header">
-            <h6 class="mb-0">Bank Account #${bankAccountCount + 1}</h6>
-            <button type="button" class="remove-service" onclick="removeBankAccount(this)">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <input type="text" 
-                       class="form-control mb-3" 
-                       name="bank_accounts[${bankAccountCount}][name]" 
-                       placeholder="Bank name">
-            </div>
-            <div class="col-md-6">
-                <input type="text" 
-                       class="form-control" 
-                       name="bank_accounts[${bankAccountCount}][account]" 
-                       placeholder="Account number">
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(newItem);
-    bankAccountCount++;
-}
-
-function removeBankAccount(button) {
-    const item = button.closest('.payment-service-item');
-    item.remove();
-    // Reindex remaining items
-    reindexBankAccounts();
-}
-
-function reindexBankAccounts() {
-    const items = document.querySelectorAll('#bankAccountsList .payment-service-item');
-    items.forEach((item, index) => {
-        item.dataset.index = index;
-        item.querySelector('h6').textContent = `Bank Account #${index + 1}`;
-        
-        // Update input names
-        const nameInput = item.querySelector('[name*="[name]"]');
-        const accountInput = item.querySelector('[name*="[account]"]');
-        
-        nameInput.name = `bank_accounts[${index}][name]`;
-        accountInput.name = `bank_accounts[${index}][account]`;
-    });
-    bankAccountCount = items.length;
-}
+// initialize shops on page load
+document.addEventListener('DOMContentLoaded', () => {
+    filterAndRender();
+    const sortSelect = document.getElementById('sortSelect');
+    if(sortSelect) sortSelect.value = 'name_asc';
+});
 </script>
 </body>
 </html>

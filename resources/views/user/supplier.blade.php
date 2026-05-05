@@ -31,7 +31,7 @@
 
 <div class="container-fluid">
   <div class="row">
-    @include("admin/sidenav")
+    @include("user/sidenav")
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
@@ -139,7 +139,7 @@
         
             if (query.length > 0) {
               $.ajax({
-                url: "{{ url('admin/searchProduct') }}", // Adjust the URL as needed
+                url: "{{ url('user/searchProduct') }}", // Adjust the URL as needed
                 method: 'GET',
                 data: { query: query },
                 success: function(data) {

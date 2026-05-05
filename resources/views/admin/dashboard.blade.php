@@ -1,6 +1,8 @@
 <div class="">
     <!-- Main Content -->
     <div class="ps-3">
+
+        
         <!-- Header -->
         <div class="mb-4">
             <h3 class="fs-3 fw-bold text-dark mb-1">Dashboard</h1>
@@ -16,7 +18,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <p class="mb-1 opacity-75 text-uppercase" style="letter-spacing: 1px;">Products</p>
-                                <h3 class="fw-bold mb-0">{{ $TProducts ?? '' }}</h2>
+                                <h3 class="fw-bold mb-0">{{ number_format($TProducts ?? 0) }}</h2>
                             </div>
                             <div class="icon-shape rounded-circle">
                                 <i class="bi bi-box-seam fs-3"></i>
@@ -156,13 +158,107 @@
                 </div>
             </div>
 
-            <!-- Speedometer Chart -->
+            <!-- Today's Information Panel (REPLACED SPEEDOMETER) -->
             <div class="col-lg-6">
                 <div class="chart-card">
                     <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3">Sales Progress</h5>
-                        <p class="text-muted small mb-4">Monthly target achievement</p>
-                        <div id="speedometer" style="height: 300px;"></div>
+                        <h5 class="fw-bold mb-4">Today's Information</h5>
+                        
+                        <!-- Date & Time Section -->
+                        <div class="info-section mb-4 pb-4 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted small mb-1">📅 Current Date</p>
+                                    <h4 class="fw-bold mb-2" id="currentDate">{{ date('l, F j, Y') }}</h4>
+                                    <p class="text-muted small mb-2">🕐 Current Time</p>
+                                    <h3 class="fw-bold text-primary" id="currentTime">00:00:00</h3>
+                                </div>
+                                <div class="text-center">
+                                    <div id="dayNightIcon" style="font-size: 5rem; margin-bottom: 10px;">🌤️</div>
+                                    <p class="text-muted small fw-bold" id="dayNightText">Day</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Sales Section -->
+                        <div class="info-section mb-4 pb-4 border-bottom">
+                            <p class="text-muted small mb-3 text-uppercase fw-bold">💰 Today's Sales</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded" style="border-left: 4px solid #667eea;">
+                                        <p class="text-muted small mb-1">Total Sales</p>
+                                        <h5 class="fw-bold mb-0">Tsh.{{ number_format($todaySales ?? 0) }}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded" style="border-left: 4px solid #38ef7d;">
+                                        <p class="text-muted small mb-1">Transactions</p>
+                                        <h5 class="fw-bold mb-0">{{ $todayTransactions ?? 0 }}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded" style="border-left: 4px solid #4facfe;">
+                                        <p class="text-muted small mb-1">Cash Received</p>
+                                        <h5 class="fw-bold mb-0">Tsh.{{ number_format($todayPaid ?? 0) }}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded" style="border-left: 4px solid #ff6a00;">
+                                        <p class="text-muted small mb-1">Credit Sales</p>
+                                        <h5 class="fw-bold mb-0">Tsh.{{ number_format($todayCredit ?? 0) }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weather Section -->
+                        <div class="info-section mb-4 pb-4 border-bottom">
+                            <p class="text-muted small mb-3 text-uppercase fw-bold">🌡️ Weather</p>
+                            <div class="row align-items-center">
+                                <div class="col-4 text-center">
+                                    <div id="weatherIcon" style="font-size: 3.5rem;">🌤️</div>
+                                </div>
+                                <div class="col-8">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <p class="text-muted small mb-1">Temperature</p>
+                                            <h5 class="fw-bold mb-0" id="temperature">--°C</h5>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="text-muted small mb-1">Condition</p>
+                                            <h6 class="fw-bold mb-0" id="weatherCondition">Loading...</h6>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="text-muted small mb-1">Humidity</p>
+                                            <h6 class="fw-bold mb-0" id="humidity">--%</h6>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="text-muted small mb-1">Wind Speed</p>
+                                            <h6 class="fw-bold mb-0" id="windSpeed">-- km/h</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Status Section -->
+                        <div class="info-section">
+                            <p class="text-muted small mb-3 text-uppercase fw-bold">📊 Business Status</p>
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <p class="text-muted small mb-1">Active Staff</p>
+                                    <h5 class="fw-bold mb-0">{{ $activeEmployees ?? 0 }}</h5>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-muted small mb-1">In Stock</p>
+                                    <h5 class="fw-bold mb-0">{{ $inStockItems ?? 0 }}</h5>
+                                </div>
+                                <div class="text-end">
+                                    <p class="text-muted small mb-1">System</p>
+                                    <h6 class="fw-bold text-success mb-0">🟢 Online</h6>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,60 +311,7 @@
             </div>
         </div>
 
-        <!-- Recent Orders Table -->
-        <div class="chart-card">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h5 class="fw-bold mb-1">Recent Sales</h5>
-                        <p class="text-muted small mb-0">Latest transactions from your customers</p>
-                    </div>
-                    <button class="btn btn-outline-primary btn-sm">View All <i class="bi bi-arrow-right ms-1"></i></button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="fw-semibold">Product</th>
-                                <th class="fw-semibold">Quantity</th>
-                                <th class="fw-semibold">Amount</th>
-                                <th class="fw-semibold">Staff</th>
-                                <th class="fw-semibold">Date</th>
-                                <th class="fw-semibold">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($orders ?? [] as $order)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle me-2" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-                                                <i class="bi bi-box"></i>
-                                            </div>
-                                            <span class="fw-semibold">{{ $order->cName ?? 'Unknown' }}</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="fw-bold">{{ $order->pQuantity ?? 0 }}</span></td>
-                                    <td><span class="fw-bold text-success">Tsh.{{ number_format($order->totalPrice ?? 0, 2) }}</span></td>
-                                    <td>{{ $order->served_by ?? 'Unknown' }}</td>
-                                    <td>{{ isset($order->created_at) ? \Carbon\Carbon::parse($order->created_at)->format('M d, Y') : 'N/A' }}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-eye"></i> View
-                                        </button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            @if (count($orders ?? []) == 0)
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No sales found</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+       
     </div>
 </div>
 
@@ -400,11 +443,102 @@
     .bg-light {
         background-color: #f8f9fa !important;
     }
+
+    .info-section {
+        animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Update time every second
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Update day/night based on time
+            const hour = now.getHours();
+            const dayNightIcon = document.getElementById('dayNightIcon');
+            const dayNightText = document.getElementById('dayNightText');
+            
+            if (hour >= 5 && hour < 18) {
+                dayNightIcon.textContent = '☀️';
+                dayNightText.textContent = 'Day';
+            } else {
+                dayNightIcon.textContent = '🌙';
+                dayNightText.textContent = 'Night';
+            }
+        }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Fetch weather data (using open-meteo API - no key required)
+        async function fetchWeather() {
+            try {
+                // Using Dar es Salaam coordinates (-6.8, 39.2)
+                const latitude = -6.8;
+                const longitude = 39.2;
+                
+                const response = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const current = data.current;
+                    
+                    document.getElementById('temperature').textContent = Math.round(current.temperature_2m) + '°C';
+                    document.getElementById('humidity').textContent = current.relative_humidity_2m + '%';
+                    document.getElementById('windSpeed').textContent = Math.round(current.wind_speed_10m) + ' km/h';
+                    
+                    // Set weather condition based on WMO weather code
+                    const weatherCodes = {
+                        0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+                        45: 'Foggy', 48: 'Foggy', 51: 'Light Drizzle', 53: 'Moderate Drizzle',
+                        55: 'Heavy Drizzle', 61: 'Slight Rain', 63: 'Moderate Rain', 65: 'Heavy Rain',
+                        71: 'Slight Snow', 73: 'Moderate Snow', 75: 'Heavy Snow', 80: 'Slight Showers',
+                        81: 'Moderate Showers', 82: 'Violent Showers', 85: 'Snow Showers', 95: 'Thunderstorm'
+                    };
+                    
+                    const condition = weatherCodes[current.weather_code] || 'Unknown';
+                    document.getElementById('weatherCondition').textContent = condition;
+                    
+                    // Set weather icon based on condition
+                    const weatherIcons = {
+                        0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+                        45: '🌫️', 48: '🌫️', 51: '🌦️', 53: '🌦️',
+                        55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '⛈️',
+                        71: '🌨️', 73: '🌨️', 75: '🌨️', 80: '🌦️',
+                        81: '🌧️', 82: '⛈️', 85: '🌨️', 95: '⛈️'
+                    };
+                    
+                    document.getElementById('weatherIcon').textContent = weatherIcons[current.weather_code] || '🌤️';
+                }
+            } catch (error) {
+                console.log('Weather data unavailable');
+            }
+        }
+        
+        fetchWeather();
+        // Update weather every 30 minutes
+        setInterval(fetchWeather, 30 * 60 * 1000);
+
         // Monthly Bar Chart
         const monthlyData = @json($monthlyTotalPrices ?? []);
         const barCtx = document.getElementById('barChart').getContext('2d');
@@ -495,7 +629,6 @@
         
         for (let i = 1; i <= dayLabels.length; i++) {
             currentMonthData.push(currentMonthDaily[i] || 0);
-            // For last month data, we need to make sure we have data for this day
             lastMonthData.push(lastMonthDaily[i] || 0);
         }
         

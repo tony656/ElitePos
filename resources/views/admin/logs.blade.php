@@ -7,7 +7,8 @@
     <title>{{config("app.name")}} - Logs Management</title>
     @include("links")
     <style>
-        :root {
+        /* Your existing styles... */
+                :root {
             --primary: #0f3460;
             --primary-light: #16213e;
             --accent: #1abc76;
@@ -32,7 +33,6 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: #fff;
             min-height: 100vh;
         }
@@ -320,6 +320,75 @@
                 border-radius: 1rem;
             }
         }
+        /* Additional styles for location display */
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(26, 188, 118, 0.1);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #1abc76;
+            margin-top: 6px;
+        }
+        
+        .location-badge i {
+            font-size: 12px;
+        }
+        
+        .location-details {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 11px;
+            border-left: 3px solid #1abc76;
+        }
+        
+        .location-details span {
+            display: inline-block;
+            margin-right: 12px;
+        }
+        
+        .coord-link {
+            color: #1abc76;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .coord-link:hover {
+            text-decoration: underline;
+        }
+        
+        .tooltip-custom {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip-custom .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+        }
+        
+        .tooltip-custom:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
     <link href="{{asset('css/dashboard.css')}}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -336,10 +405,13 @@
                     </h3>
                     <div class="btn-toolbar">
                         <div class="btn-group">
-                            <button type="button" class="btn-outline-secondary">
-                                <i class="bi bi-printer"></i> Print Report
-                            </button>
-                            <button type="button" class="btn-outline-secondary">
+                            <form method="GET" action="{{ url()->current() }}" style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="date" name="date" class="form-control" value="{{ request('date', \Carbon\Carbon::now()->toDateString()) }}" style="padding: 0.5rem; border-radius: 0.5rem; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+                                <button type="submit" class="btn-outline-secondary">
+                                    <i class="bi bi-search"></i> Filter
+                                </button>
+                            </form>
+                            <button type="button" class="btn-outline-secondary" onclick="exportLogs()">
                                 <i class="bi bi-download"></i> Export
                             </button>
                         </div>
@@ -351,15 +423,16 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th width="20%">Title</th>
-                                    <th width="60%">Description</th>
+                                    <th width="15%">Title</th>
+                                    <th width="50%">Description & Location</th>
+                                    <th width="15%">Location Source</th>
                                     <th width="20%">Timestamp</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if($fetch->isEmpty())
                                 <tr>
-                                    <td colspan="3">
+                                    <td colspan="4">
                                         <div class="empty-state">
                                             <i class="bi bi-inbox"></i>
                                             <h4>No Logs Found</h4>
@@ -373,11 +446,76 @@
                                     <td>
                                         <strong>{{ $log->title }}</strong>
                                     </td>
-                                    <td class="text-muted">
+                                    <td>
                                         {{ $log->description }}
+                                        
+                                        @if($log->latitude && $log->longitude)
+                                        <div class="location-details">
+                                            <strong><i class="bi bi-geo-alt-fill"></i> Precise Location:</strong><br>
+                                            <span><i class="bi bi-pin-map"></i> GPS: 
+                                                <a href="https://www.google.com/maps?q={{ $log->latitude }},{{ $log->longitude }}" target="_blank" class="coord-link">
+                                                    {{ number_format($log->latitude, 6) }}, {{ number_format($log->longitude, 6) }}
+                                                </a>
+                                                @if($log->accuracy)
+                                                <span class="tooltip-custom">
+                                                    ±{{ round($log->accuracy) }}m
+                                                    <span class="tooltip-text">Accuracy radius: {{ round($log->accuracy) }} meters</span>
+                                                </span>
+                                                @endif
+                                            </span><br>
+                                            @if($log->street && $log->street != 'Unknown')
+                                            <span><i class="bi bi-building"></i> {{ $log->street }}</span><br>
+                                            @endif
+                                            @if($log->city && $log->city != 'Unknown')
+                                            <span><i class="bi bi-city"></i> {{ $log->city }}</span>
+                                            @endif
+                                            @if($log->district && $log->district != 'Unknown')
+                                            <span><i class="bi bi-diagram-2"></i> {{ $log->district }}</span>
+                                            @endif
+                                            @if($log->region && $log->region != 'Unknown')
+                                            <span><i class="bi bi-map"></i> {{ $log->region }}</span>
+                                            @endif
+                                            @if($log->country && $log->country != 'Unknown')
+                                            <span><i class="bi bi-flag"></i> {{ $log->country }}</span>
+                                            @endif
+                                            @if($log->timezone)
+                                            <span><i class="bi bi-clock"></i> {{ $log->timezone }}</span>
+                                            @endif
+                                        </div>
+                                        @elseif($log->region && $log->region != 'Unknown Location')
+                                        <div class="location-details">
+                                            <strong><i class="bi bi-globe"></i> Location (IP-based):</strong><br>
+                                            <span><i class="bi bi-geo-alt"></i> {{ $log->region }}</span>
+                                            @if($log->ip_address)
+                                            <span><i class="bi bi-hdd-network"></i> IP: {{ $log->ip_address }}</span>
+                                            @endif
+                                        </div>
+                                        @else
+                                        <div class="location-badge">
+                                            <i class="bi bi-shield-exclamation"></i> Location not available
+                                        </div>
+                                        @endif
+                                        
+                                        @if($log->user_agent)
+                                        <div class="location-badge" style="background: rgba(52, 152, 219, 0.1); color: #3498db;">
+                                            <i class="bi bi-browser-chrome"></i> {{ substr($log->user_agent, 0, 50) }}{{ strlen($log->user_agent) > 50 ? '...' : '' }}
+                                        </div>
+                                        @endif
                                     </td>
                                     <td>
-                                        {{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y H:i') }}
+                                        @if($log->location_source)
+                                        <span class="status-badge status-{{ $log->location_source == 'GPS (Precise)' ? 'completed' : 'in-progress' }}" style="font-size: 11px;">
+                                            <i class="bi bi-{{ $log->location_source == 'GPS (Precise)' ? 'satellite' : 'globe' }}"></i>
+                                            {{ $log->location_source }}
+                                        </span>
+                                        @else
+                                        <span class="status-badge status-pending">Unknown</span>
+                                        @endif
+                                     </td>
+                                    <td>
+                                        {{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y H:i:s') }}
+                                        <br>
+                                        <small class="text-muted">{{ \Carbon\Carbon::parse($log->created_at)->diffForHumans() }}</small>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -386,14 +524,28 @@
                         </table>
                     </div>
                 </div>
+                
+                <!-- Pagination -->
+                @if(method_exists($fetch, 'links'))
+                <div class="d-flex justify-content-center mt-4">
+                    {{ $fetch->links() }}
+                </div>
+                @endif
             </main>
         </div>
     </div>
 
     <script>
+ 
+        
         // Optional: Add search functionality
         $(document).ready(function() {
-            // Search can be implemented here if needed
+            // Add map link click handler
+            $('.coord-link').on('click', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                window.open(url, '_blank');
+            });
         });
     </script>
 </body>

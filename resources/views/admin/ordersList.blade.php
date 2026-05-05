@@ -4,673 +4,751 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{config("app.name")}} - Debtors Management</title>
+    <title>{{config("app.name")}} - Invoices Management</title>
     @include("links")
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4361ee;
-            --primary-light: #eef2ff;
-            --secondary-color: #3a0ca3;
-            --success-color: #2ec4b6;
-            --warning-color: #ff9f1c;
-            --danger-color: #e63946;
-            --danger-light: #ffe5e9;
-            --info-color: #4895ef;
-            --dark-color: #1a1a2e;
-            --light-color: #f8f9fa;
-            --border-color: #e9ecef;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
+            --navy:          #0B1E3D;
+            --navy-mid:      #112952;
+            --navy-light:    #1A3A6B;
+            --amber:         #F59E0B;
+            --amber-dark:    #D97706;
+            --amber-pale:    #FEF3C7;
+            --emerald:       #059669;
+            --emerald-pale:  #D1FAE5;
+            --rose:          #E11D48;
+            --rose-pale:     #FFE4E6;
+            --violet:        #7C3AED;
+            --violet-pale:   #EDE9FE;
+            --sky:           #0284C7;
+            --sky-pale:      #E0F2FE;
+            --slate-50:      #F8FAFC;
+            --slate-100:     #F1F5F9;
+            --slate-200:     #E2E8F0;
+            --slate-300:     #CBD5E1;
+            --slate-400:     #94A3B8;
+            --slate-500:     #64748B;
+            --slate-600:     #475569;
+            --slate-700:     #334155;
+            --slate-800:     #1E293B;
+            --white:         #FFFFFF;
         }
-        
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #f8fafc;
-            color: #334155;
+            font-family: 'Outfit', sans-serif;
+            background: #EEF2F9;
+            color: var(--slate-800);
+            min-height: 100vh;
             line-height: 1.6;
         }
-        
-        /* Header Styles */
-        .dashboard-header {
-            background: white;
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--slate-100); }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        /* ── Main wrap ── */
+        .main-wrap { max-width: 1900px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+
+        /* ── Page header ── */
+        .pg-header {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 1.4rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+
+        .pg-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 350px;
+            height: 350px;
+            background: rgba(245,158,11,0.08);
+            border-radius: 50%;
+            pointer-events: none;
         }
-        
-        .header-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--primary-light);
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-color);
+
+        .pg-header-content {
+            display: flex; align-items: center; gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pg-icon-wrap {
+            width: 52px; height: 52px;
+            background: rgba(245,158,11,0.15);
+            border: 1.5px solid rgba(245,158,11,0.3);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--amber);
             font-size: 1.5rem;
         }
-        
-        /* Stats Cards */
+
+        .pg-title-wrap h1 {
+            color: var(--white); font-size: 1.45rem; font-weight: 700;
+            margin: 0 0 0.15rem 0;
+        }
+        .pg-subtitle {
+            color: rgba(255,255,255,0.7); font-size: 0.82rem;
+            margin: 0;
+        }
+
+        .pg-actions {
+            display: flex; gap: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-header {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.5rem 0.95rem;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-header:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-1px);
+        }
+
+        /* ── Stats grid ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
         }
-        
+
         .stat-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 1.4rem 1.25rem;
             position: relative;
             overflow: hidden;
+            transition: all 0.25s;
         }
-        
+        .stat-card:hover {
+            box-shadow: 0 8px 24px rgba(11,30,61,0.12);
+            transform: translateY(-3px);
+        }
+
         .stat-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
         }
-        
-        .stat-card.total::before { background: var(--primary-color); }
-        .stat-card.pending::before { background: var(--warning-color); }
-        .stat-card.completed::before { background: var(--success-color); }
-        .stat-card.debt::before { background: var(--danger-color); }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
+        .stat-card.total::before { background: var(--navy); }
+        .stat-card.debt::before { background: var(--rose); }
+        .stat-card.pending::before { background: var(--amber); }
+        .stat-card.completed::before { background: var(--emerald); }
+
+        .stat-layout {
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
-        
-        .stat-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        
-        .stat-info h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
-            color: var(--dark-color);
-        }
-        
+
+        .stat-info { flex: 1; }
+
         .stat-label {
-            color: #64748b;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; color: var(--slate-400);
+            margin-bottom: 0.5rem;
         }
-        
-        .stat-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+
+        .stat-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.75rem; font-weight: 500;
+            color: var(--navy);
+            margin-bottom: 0.25rem;
         }
-        
-        .stat-icon.total { background: var(--primary-light); color: var(--primary-color); }
-        .stat-icon.pending { background: #fff7e6; color: var(--warning-color); }
-        .stat-icon.completed { background: #e6f7f5; color: var(--success-color); }
-        .stat-icon.debt { background: var(--danger-light); color: var(--danger-color); }
-        
-        /* Search Section */
-        .search-section {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-color);
+
+        .stat-meta {
+            font-size: 0.78rem; color: var(--slate-500);
         }
-        
-        .search-container {
-            position: relative;
+
+        .stat-icon-box {
+            width: 52px; height: 52px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .stat-card.total .stat-icon-box { background: rgba(11,30,61,0.1); color: var(--navy); }
+        .stat-card.debt .stat-icon-box { background: var(--rose-pale); color: var(--rose); }
+        .stat-card.pending .stat-icon-box { background: var(--amber-pale); color: var(--amber-dark); }
+        .stat-card.completed .stat-icon-box { background: var(--emerald-pale); color: var(--emerald); }
+
+        /* ── Search panel ── */
+        .search-panel {
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+        }
+
+        .search-row {
+            display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center;
+        }
+
+        .search-wrap {
             flex: 1;
+            min-width: 280px;
+            position: relative;
         }
-        
+
         .search-input {
             width: 100%;
-            padding: 0.875rem 1rem 0.875rem 3rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 0.9375rem;
-            background: white;
-            transition: all 0.2s ease;
-        }
-        
-        .search-input:focus {
+            padding: 0.6rem 0.9rem 0.6rem 2.5rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 8px;
+            background: var(--slate-50);
+            font-size: 0.875rem;
+            color: var(--slate-800);
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            transition: all 0.18s;
         }
-        
+        .search-input:focus {
+            border-color: var(--navy-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+
         .search-icon {
             position: absolute;
-            left: 1rem;
+            left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: var(--slate-400);
+            font-size: 0.95rem;
         }
-        
-        .action-buttons {
-            display: flex;
-            gap: 0.75rem;
+
+        .search-actions {
+            display: flex; gap: 0.75rem;
         }
-        
-        /* Table Styles */
+
+        .btn-filter {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.55rem 1rem;
+            background: var(--amber); color: var(--navy);
+            border: none; border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.18s;
+            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
+        }
+        .btn-filter:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(245,158,11,0.4);
+        }
+
+        .btn-clear {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; font-weight: 600;
+            padding: 0.55rem 1rem;
+            background: transparent;
+            border: 1.5px solid var(--slate-300);
+            border-radius: 8px;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-clear:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-400);
+        }
+
+        /* ── Table container ── */
         .table-container {
-            background: white;
-            border-radius: var(--radius-lg);
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
             overflow: hidden;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
         }
-        
-        .table-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
+
+        .table-head {
+            background: var(--slate-50);
+            border-bottom: 1.5px solid var(--slate-200);
+            padding: 1.1rem 1.25rem;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        
+
         .table-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.05rem; font-weight: 700; color: var(--navy);
             margin: 0;
-            color: var(--dark-color);
         }
-        
-        .table {
-            margin: 0;
-            border-collapse: separate;
-            border-spacing: 0;
+
+        .table-count {
+            font-size: 0.82rem; color: var(--slate-500);
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table.inv-tbl {
             width: 100%;
+            border-collapse: collapse;
+            font-size: 0.845rem;
         }
-        
-        .table thead {
-            background: #f8fafc;
-        }
-        
-        .table th {
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            border-bottom: 2px solid var(--border-color);
+
+        table.inv-tbl thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--slate-200);
             white-space: nowrap;
         }
-        
-        .table td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+
+        table.inv-tbl tbody td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--slate-100);
             vertical-align: middle;
+            color: var(--slate-800);
         }
-        
-        .table tbody tr {
-            transition: all 0.2s ease;
+
+        table.inv-tbl tbody tr:hover td {
+            background: #F8FAFF;
         }
-        
-        .table tbody tr:hover {
-            background: #f8fafc;
+
+        /* ── Customer info ── */
+        .cust-wrap {
+            display: flex; align-items: center; gap: 0.75rem;
         }
-        
-        /* Status Badges */
+
+        .cust-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--amber);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.82rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .cust-name {
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        /* ── Status badge ── */
         .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.375rem 0.875rem;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.72rem; font-weight: 700;
+            padding: 0.35rem 0.65rem;
             border-radius: 20px;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            gap: 0.375rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
-        
-        .status-badge i {
-            font-size: 0.75rem;
-        }
-        
-        .status-pending {
-            background: #fff7e6;
-            color: #f59e0b;
-            border: 1px solid #fed7aa;
-        }
-        
-        .status-completed {
-            background: #d1fae5;
-            color: #059669;
-            border: 1px solid #a7f3d0;
-        }
-        
+
         .status-debt {
-            background: var(--danger-light);
-            color: var(--danger-color);
-            border: 1px solid #fca5a5;
+            background: var(--rose-pale);
+            color: #9F1239;
         }
-        
+
         .status-partial {
-            background: #fef3c7;
-            color: #d97706;
-            border: 1px solid #fcd34d;
+            background: var(--amber-pale);
+            color: #92400E;
         }
-        
-        /* Action Buttons */
-        .action-buttons-cell {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
+
+        .status-completed {
+            background: var(--emerald-pale);
+            color: #065F46;
         }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.25rem;
-            border-radius: var(--radius-md);
-            font-weight: 500;
+
+        /* ── Amount ── */
+        .amt-value {
+            font-family: 'DM Mono', monospace;
+            font-weight: 600;
             font-size: 0.875rem;
-            border: 2px solid transparent;
-            transition: all 0.2s ease;
-            cursor: pointer;
+            color: var(--navy);
         }
-        
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
+
+        /* ── Action buttons ── */
+        .action-row {
+            display: flex; gap: 0.5rem; justify-content: flex-end;
         }
-        
-        .btn-primary:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
-        }
-        
-        .btn-outline {
-            background: white;
-            border-color: var(--border-color);
-            color: var(--dark-color);
-        }
-        
-        .btn-outline:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            background: var(--primary-light);
-        }
-        
-        .btn-success {
-            background: var(--success-color);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #26a69a;
-            transform: translateY(-2px);
-        }
-        
+
         .btn-view {
-            background: #f0f9ff;
-            color: #0369a1;
-            border-color: #bae6fd;
-        }
-        
-        .btn-view:hover {
-            background: #e0f2fe;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.75rem; font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            background: var(--sky-pale);
             color: #075985;
+            border: 1.5px solid #BAE6FD;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s;
         }
-        
-        /* Order ID Styling */
-        .order-id {
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-            font-weight: 600;
-            color: var(--dark-color);
+        .btn-view:hover {
+            background: #0EA5E9;
+            color: var(--white);
+            border-color: #0EA5E9;
+            transform: scale(1.05);
         }
-        
-        .customer-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+
+        .btn-pay {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.75rem; font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            background: var(--emerald);
+            color: var(--white);
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s;
         }
-        
-        .customer-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--primary-light);
-            color: var(--primary-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.875rem;
+        .btn-pay:hover {
+            background: #047857;
+            transform: scale(1.05);
         }
-        
-        /* Empty State */
+
+        /* ── Empty state ── */
         .empty-state {
-            padding: 4rem 2rem;
             text-align: center;
+            padding: 4rem 2rem;
         }
-        
-        .empty-state-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f5f9;
+        .empty-icon {
+            width: 80px; height: 80px;
+            margin: 0 auto 1.25rem;
+            background: var(--slate-100);
             border-radius: 50%;
-            color: #94a3b8;
-            font-size: 2rem;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--slate-400);
+            font-size: 2.5rem;
         }
-        
-        .empty-state-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .empty-title {
+            font-size: 1.15rem; font-weight: 700;
+            color: var(--slate-600);
             margin-bottom: 0.5rem;
-            color: #475569;
         }
-        
-        .empty-state-description {
-            color: #64748b;
-            max-width: 400px;
-            margin: 0 auto 1.5rem;
+        .empty-desc {
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            margin-bottom: 1.5rem;
+            max-width: 380px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        
-        /* Modal Styles */
+
+        /* ── Modal ── */
         .modal-content {
             border: none;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            overflow: hidden;
         }
-        
-        .modal-header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem;
+
+        .modal-header-navy {
+            background: var(--navy);
+            color: var(--white);
+            padding: 1.15rem 1.4rem;
+            border-bottom: none;
         }
-        
+        .modal-header-navy .modal-title {
+            font-size: 1.1rem; font-weight: 700;
+            margin: 0;
+        }
+        .modal-header-navy .btn-close {
+            filter: invert(1) brightness(0.8);
+        }
+
         .modal-body {
-            padding: 1.5rem;
+            padding: 1.75rem 1.4rem;
         }
-        
+
         .modal-footer {
-            border-top: 1px solid var(--border-color);
-            padding: 1.5rem;
+            padding: 1.15rem 1.4rem;
+            border-top: 1.5px solid var(--slate-200);
+            background: var(--slate-50);
         }
-        
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            font-size: 0.82rem; font-weight: 600;
+            color: var(--slate-600);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
         .form-control {
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 0.75rem 1rem;
-            font-size: 0.9375rem;
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 8px;
+            background: var(--slate-50);
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.18s;
         }
-        
         .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            border-color: var(--navy-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
         }
-        
-        /* Amount Styling */
-        .amount {
+
+        .input-group {
+            display: flex;
+        }
+        .input-group-text {
+            background: var(--slate-100);
+            border: 1.5px solid var(--slate-200);
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.875rem;
+            color: var(--slate-600);
             font-weight: 600;
-            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
         }
-        
-        .amount.total {
-            color: var(--dark-color);
+        .input-group .form-control {
+            border-radius: 0 8px 8px 0;
         }
-        
-        .amount.paid {
-            color: var(--success-color);
+
+        .form-text {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+            margin-top: 0.4rem;
         }
-        
-        .amount.remaining {
-            color: var(--danger-color);
+
+        .btn-modal-cancel {
+            padding: 0.55rem 1.1rem;
+            background: transparent;
+            border: 1.5px solid var(--slate-300);
+            border-radius: 8px;
+            color: var(--slate-600);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
         }
-        
-        /* Responsive Design */
+        .btn-modal-cancel:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-400);
+        }
+
+        .btn-modal-submit {
+            padding: 0.55rem 1.1rem;
+            background: var(--amber);
+            color: var(--navy);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-modal-submit:hover {
+            background: var(--amber-dark);
+            transform: translateY(-1px);
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
-            .dashboard-header {
-                padding: 1rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .table-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-            
-            .action-buttons {
-                width: 100%;
-                flex-wrap: wrap;
-            }
-            
-            .btn {
-                flex: 1;
-                justify-content: center;
-            }
-            
-            .search-section {
-                padding: 1rem;
-            }
+            .main-wrap { padding: 1rem; }
+            .pg-header { padding: 1rem; margin-bottom: 1rem; flex-direction: column; }
+            .pg-header-content { width: 100%; }
+            .pg-actions { width: 100%; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .search-row { flex-direction: column; }
+            .search-wrap { width: 100%; min-width: auto; }
+            .search-actions { width: 100%; }
         }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+
+        /* ── Animation ── */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        .stat-card { animation: slideUp 0.4s ease forwards; }
+        .stat-card:nth-child(1) { animation-delay: 0s; }
+        .stat-card:nth-child(2) { animation-delay: 0.05s; }
+        .stat-card:nth-child(3) { animation-delay: 0.1s; }
+        .stat-card:nth-child(4) { animation-delay: 0.15s; }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            @include("admin/sidenav")
-            
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header -->
-                <div class="dashboard-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="header-title">
-                            <div class="header-icon">
-                                <i class="bi bi-cart-check"></i>
-                            </div>
-                            <div>
-                                <h1 class="h4 mb-1 fw-bold">Invoices Management</h1>
-                                <p class="text-muted mb-0">Manage customer orders and payments</p>
-                            </div>
+
+<div class="container-fluid">
+  <div class="row">
+    @include("admin/sidenav")
+    
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
+        <div class="main-wrap">
+
+            {{-- ── Page Header ── --}}
+            <div class="pg-header">
+                <div class="pg-header-content">
+                    <div class="pg-icon-wrap">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div class="pg-title-wrap">
+                        <h1>Invoices Management</h1>
+                        <p class="pg-subtitle">Track customer orders and payment status</p>
+                    </div>
+                </div>
+                <div class="pg-actions">
+                    <button class="btn-header" onclick="printReport()">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                    <button class="btn-header" onclick="exportData()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            {{-- ── Stats Cards ── --}}
+            @php
+                $totalDebt = 0;
+                $pendingOrders = 0;
+                $completedOrders = 0;
+                foreach($orders as $order) {
+                    $totalDebt += $order->credit;
+                    if($order->status == 'Debt' || $order->status == 'Partial') {
+                        $pendingOrders++;
+                    } else {
+                        $completedOrders++;
+                    }
+                }
+            @endphp
+
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-layout">
+                        <div class="stat-info">
+                            <div class="stat-label">Total Orders</div>
+                            <div class="stat-value">{{ number_format(count($orders)) }}</div>
+                            <div class="stat-meta">All time</div>
                         </div>
-                        <div class="action-buttons">
-                            <button class="btn btn-outline" onclick="printReport()">
-                                <i class="bi bi-printer"></i> Print
-                            </button>
-                            <button class="btn btn-outline" onclick="exportData()">
-                                <i class="bi bi-download"></i> Export
-                            </button>
+                        <div class="stat-icon-box">
+                            <i class="bi bi-receipt"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    @php
-                        $totalDebt = 0;
-                        $pendingOrders = 0;
-                        $completedOrders = 0;
-                        foreach($orders as $order) {
-                            $totalDebt += $order->credit;
-                            if($order->status == 'Debt' || $order->status == 'Partial') {
-                                $pendingOrders++;
-                            } else {
-                                $completedOrders++;
-                            }
-                        }
-                    @endphp
-                    
-                    <div class="stat-card total">
-                        <div class="stat-content">
-                            <div class="stat-info">
-                                <div class="stat-label">Total Orders</div>
-                                <h3>{{ number_format(count($orders)) }}</h3>
-                                <span class="text-muted">All time</span>
-                            </div>
-                            <div class="stat-icon total">
-                                <i class="bi bi-receipt"></i>
-                            </div>
+                <div class="stat-card debt">
+                    <div class="stat-layout">
+                        <div class="stat-info">
+                            <div class="stat-label">Total Debt</div>
+                            <div class="stat-value">{{ number_format($totalDebt) }}</div>
+                            <div class="stat-meta">Outstanding</div>
                         </div>
-                    </div>
-                    
-                    <div class="stat-card debt">
-                        <div class="stat-content">
-                            <div class="stat-info">
-                                <div class="stat-label">Total Debt</div>
-                                <h3>Tsh {{ number_format($totalDebt) }}</h3>
-                                <span class="text-muted">Outstanding</span>
-                            </div>
-                            <div class="stat-icon debt">
-                                <i class="bi bi-currency-dollar"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card pending">
-                        <div class="stat-content">
-                            <div class="stat-info">
-                                <div class="stat-label">Pending Orders</div>
-                                <h3>{{ number_format($pendingOrders) }}</h3>
-                                <span class="text-muted">Awaiting payment</span>
-                            </div>
-                            <div class="stat-icon pending">
-                                <i class="bi bi-clock-history"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card completed">
-                        <div class="stat-content">
-                            <div class="stat-info">
-                                <div class="stat-label">Completed Orders</div>
-                                <h3>{{ number_format($completedOrders) }}</h3>
-                                <span class="text-muted">Paid in full</span>
-                            </div>
-                            <div class="stat-icon completed">
-                                <i class="bi bi-check-circle"></i>
-                            </div>
+                        <div class="stat-icon-box">
+                            <i class="bi bi-currency-dollar"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Search Section -->
-                <div class="search-section">
-                    <div class="d-flex flex-column flex-lg-row gap-3">
-                        <div class="search-container">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="text" 
-                                   class="search-input" 
-                                   id="debtor-search" 
-                                   placeholder="Search orders by customer name, order ID, or status..."
-                                   onkeyup="searchOrders()">
+                <div class="stat-card pending">
+                    <div class="stat-layout">
+                        <div class="stat-info">
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-value">{{ number_format($pendingOrders) }}</div>
+                            <div class="stat-meta">Awaiting payment</div>
                         </div>
-                        <div class="action-buttons">
-                            <button class="btn btn-primary" onclick="showFilters()">
-                                <i class="bi bi-funnel-fill"></i> Filter Orders
-                            </button>
-                            <button class="btn btn-outline" onclick="clearFilters()">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </button>
+                        <div class="stat-icon-box">
+                            <i class="bi bi-clock-history"></i>
                         </div>
                     </div>
-                    <div id="search-results" style="display: none;"></div>
                 </div>
 
-                <!-- Orders Table -->
-                <div class="table-container">
-                    <div class="table-header">
-                        <h2 class="table-title">Unpaid Invoice</h2>
-                        <div class="table-actions">
-                            <span class="text-muted">
-                                {{ count($orders) }} order{{ count($orders) !== 1 ? 's' : '' }} found
-                            </span>
+                <div class="stat-card completed">
+                    <div class="stat-layout">
+                        <div class="stat-info">
+                            <div class="stat-label">Completed</div>
+                            <div class="stat-value">{{ number_format($completedOrders) }}</div>
+                            <div class="stat-meta">Paid in full</div>
+                        </div>
+                        <div class="stat-icon-box">
+                            <i class="bi bi-check-circle"></i>
                         </div>
                     </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>DATE</th>
-                                    <th>CUSTOMER</th>
-                                    <th>STATUS</th>
-                                    <th>TOTAL AMOUNT</th>
-                                    
-                                    <th class="text-end">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if($orders->isEmpty())
-                                <tr>
-                                    <td colspan="7">
-                                        <div class="empty-state">
-                                            <div class="empty-state-icon">
-                                                <i class="bi bi-inboxes"></i>
-                                            </div>
-                                            <h3 class="empty-state-title">No Orders Found</h3>
-                                            <p class="empty-state-description">
-                                                There are currently no orders in the system. 
-                                                Start by creating a new order.
-                                            </p>
-                                            <button class="btn btn-primary">
-                                                <i class="bi bi-plus-lg"></i> Create New Order
-                                            </button>
+                </div>
+            </div>
+
+            {{-- ── Search Panel ── --}}
+            <div class="search-panel">
+                <div class="search-row">
+                    <div class="search-wrap">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" id="debtor-search" 
+                            placeholder="Search by customer name, order ID, or status…" 
+                            onkeyup="searchOrders()">
+                    </div>
+                    <div class="search-actions">
+                        <button class="btn-filter" onclick="showFilters()">
+                            <i class="bi bi-funnel-fill"></i> Filter
+                        </button>
+                        <button class="btn-clear" onclick="clearFilters()">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ══════════════════════════════════════
+                 UNPAID INVOICES
+            ══════════════════════════════════════ --}}
+            <div class="table-container">
+                <div class="table-head">
+                    <h2 class="table-title">Unpaid Invoices</h2>
+                    <span class="table-count" id="unpaid-count">
+                        {{ count($orders) }} order{{ count($orders) !== 1 ? 's' : '' }}
+                    </span>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="inv-tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if($orders->isEmpty())
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="bi bi-inbox"></i>
                                         </div>
-                                    </td>
-                                </tr>
-                                @else
+                                        <div class="empty-title">No Unpaid Orders</div>
+                                        <p class="empty-desc">
+                                            There are currently no unpaid orders in the system.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            @else
                                 @foreach ($orders as $index => $order)
                                 @php
                                     $statusClass = '';
@@ -686,7 +764,6 @@
                                         $statusIcon = 'bi-check-circle';
                                     }
                                     
-                                    // Get customer initials
                                     $initials = '';
                                     $names = explode(' ', $order->cName);
                                     foreach($names as $name) {
@@ -695,24 +772,17 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="text-muted">{{ $index + 1 }}</td>
-                                     <td>
-                                        <div class="text-muted">
-                                            {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}
-                                        </div>
-                                        <div class="small text-muted">
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <div>{{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</div>
+                                        <div style="font-size:0.72rem; color:var(--slate-400);">
                                             {{ \Carbon\Carbon::parse($order->created_at)->format('h:i A') }}
                                         </div>
                                     </td>
-                                  
                                     <td>
-                                        <div class="customer-info">
-                                            <div class="customer-avatar">
-                                                {{ $initials }}
-                                            </div>
-                                            <div>
-                                                <div class="fw-medium">{{ $order->cName }}</div>
-                                            </div>
+                                        <div class="cust-wrap">
+                                            <div class="cust-avatar">{{ $initials }}</div>
+                                            <div class="cust-name">{{ $order->cName }}</div>
                                         </div>
                                     </td>
                                     <td>
@@ -722,81 +792,65 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="amount total">Tsh {{ number_format($order->credit) }}</div>
+                                        <div class="amt-value">Tsh {{ number_format($order->credit) }}</div>
                                     </td>
-                                   
                                     <td>
-                                        <div class="action-buttons-cell">
+                                        <div class="action-row">
                                             <form action="viewOrder" method="post" class="d-inline">
                                                 @csrf
-                                                <button class="btn btn-view" 
-                                                        name="customerId" 
-                                                        value="{{ $order->cPhone }}">
+                                                <button class="btn-view" name="customerId" value="{{ $order->cPhone }}">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                             </form>
-                                            <!--@if($order->status == 'Debt' || $order->status == 'Partial')
-                                            <button class="btn btn-success" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#paymentModal"
-                                                    data-orderid="{{ $order->orderName }}">
-                                                <i class="bi bi-credit-card"></i> Pay
-                                            </button>
-                                            @endif-->
                                         </div>
                                     </td>
                                 </tr>
                                 @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- ══════════════════════════════════════
+                 PAID INVOICES
+            ══════════════════════════════════════ --}}
+            <div class="table-container">
+                <div class="table-head">
+                    <h2 class="table-title">Paid Invoices</h2>
+                    <span class="table-count" id="paid-count">
+                        {{ count($paid) }} order{{ count($paid) !== 1 ? 's' : '' }}
+                    </span>
                 </div>
 
-                <!--Paid lists -->
-                 <div class="table-container">
-                    <div class="table-header">
-                        <h2 class="table-title">Paid Invoice</h2>
-                        <div class="table-actions">
-                            <span class="text-muted">
-                                {{ count($orders) }} order{{ count($orders) !== 1 ? 's' : '' }} found
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>DATE</th>
-                                    <th>CUSTOMER</th>
-                                    <th>STATUS</th>
-                                    <th>TOTAL AMOUNT</th>
-                                    
-                                    <th class="text-end">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if($paid->isEmpty())
-                                <tr>
-                                    <td colspan="7">
-                                        <div class="empty-state">
-                                            <div class="empty-state-icon">
-                                                <i class="bi bi-inboxes"></i>
-                                            </div>
-                                            <h3 class="empty-state-title">No Orders Found</h3>
-                                            <p class="empty-state-description">
-                                                There are currently no orders in the system. 
-                                                Start by creating a new order.
-                                            </p>
-                                            <button class="btn btn-primary">
-                                                <i class="bi bi-plus-lg"></i> Create New Order
-                                            </button>
+                <div class="table-wrap">
+                    <table class="inv-tbl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if($paid->isEmpty())
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="bi bi-inbox"></i>
                                         </div>
-                                    </td>
-                                </tr>
-                                @else
+                                        <div class="empty-title">No Paid Orders</div>
+                                        <p class="empty-desc">
+                                            There are currently no completed paid orders in the system.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            @else
                                 @foreach ($paid as $index => $order)
                                 @php
                                     $statusClass = '';
@@ -812,7 +866,6 @@
                                         $statusIcon = 'bi-check-circle';
                                     }
                                     
-                                    // Get customer initials
                                     $initials = '';
                                     $names = explode(' ', $order->cName);
                                     foreach($names as $name) {
@@ -821,191 +874,165 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="text-muted">{{ $index + 1 }}</td>
-                                     <td>
-                                        <div class="text-muted">
-                                            {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}
-                                        </div>
-                                        <div class="small text-muted">
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <div>{{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</div>
+                                        <div style="font-size:0.72rem; color:var(--slate-400);">
                                             {{ \Carbon\Carbon::parse($order->created_at)->format('h:i A') }}
                                         </div>
                                     </td>
-                                  
                                     <td>
-                                        <div class="customer-info">
-                                            <div class="customer-avatar">
-                                                {{ $initials }}
-                                            </div>
-                                            <div>
-                                                <div class="fw-medium">{{ $order->cName }}</div>
-                                            </div>
+                                        <div class="cust-wrap">
+                                            <div class="cust-avatar">{{ $initials }}</div>
+                                            <div class="cust-name">{{ $order->cName }}</div>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="status-badge {{ $statusClass }}">
                                             <i class="bi {{ $statusIcon }}"></i>
-                                            {{ $order->status}}
+                                            {{ $order->status }}
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="amount total">Tsh {{ number_format($order->credit) }}</div>
+                                        <div class="amt-value">Tsh {{ number_format($order->credit) }}</div>
                                     </td>
-                                   
                                     <td>
-                                        <div class="action-buttons-cell">
+                                        <div class="action-row">
                                             <form action="viewOrder" method="post" class="d-inline">
                                                 @csrf
-                                                <button class="btn btn-view" 
-                                                        name="customerId" 
-                                                        value="{{ $order->cPhone }}">
+                                                <button class="btn-view" name="customerId" value="{{ $order->cPhone }}">
                                                     <i class="bi bi-eye"></i> View
                                                 </button>
                                             </form>
-                                            <!--@if($order->status == 'Debt' || $order->status == 'Partial')
-                                            <button class="btn btn-success" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#paymentModal"
-                                                    data-orderid="{{ $order->orderName }}">
-                                                <i class="bi bi-credit-card"></i> Pay
-                                            </button>
-                                            @endif-->
                                         </div>
                                     </td>
                                 </tr>
                                 @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- Payment Modal -->
-    <div class="modal fade" id="paymentModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-credit-card me-2"></i>Process Payment
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="paymentForm" method="post" action="processPayment">
-                    @csrf
-                    <input type="hidden" name="orderId" id="modalOrderName">
-                    <div class="modal-body">
-                        <div class="mb-4">
-                            <label for="paymentAmount" class="form-label fw-semibold mb-2">
-                                Payment Amount
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">Tsh</span>
-                                <input type="number" 
-                                       class="form-control" 
-                                       id="paymentAmount" 
-                                       name="paymentAmount" 
-                                       min="0" 
-                                       step="0.01" 
-                                       placeholder="Enter amount"
-                                       required>
-                            </div>
-                            <div class="form-text mt-2">
-                                Enter the amount being paid for this order.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">
-                            Cancel
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg"></i> Process Payment
-                        </button>
-                    </div>
-                </form>
             </div>
+
+        </div>
+    </main>
+  </div>
+</div>
+
+{{-- ══════════════════════════════════════
+     PAYMENT MODAL
+══════════════════════════════════════ --}}
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-navy">
+                <h5 class="modal-title">
+                    <i class="bi bi-credit-card me-2"></i>Process Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="processPayment">
+                @csrf
+                <input type="hidden" name="orderId" id="modalOrderName">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Payment Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Tsh</span>
+                            <input type="number" 
+                                class="form-control" 
+                                name="paymentAmount" 
+                                min="0" 
+                                step="0.01" 
+                                placeholder="Enter amount"
+                                required>
+                        </div>
+                        <div class="form-text">Enter the amount being paid for this order</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-modal-submit">
+                        <i class="bi bi-check-lg"></i> Process Payment
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        // Search functionality
-        function searchOrders() {
-            const searchTerm = document.getElementById('debtor-search').value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-            let visibleCount = 0;
-            
-            rows.forEach(row => {
-                if (row.querySelector('.empty-state')) return;
-                
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Update count
-            const countElement = document.querySelector('.table-actions span');
-            if (countElement) {
-                countElement.textContent = `${visibleCount} order${visibleCount !== 1 ? 's' : ''} found`;
-            }
-        }
+<script>
+// ════════════════════════════════════════════
+// Search functionality
+// ════════════════════════════════════════════
+function searchOrders() {
+    const searchTerm = document.getElementById('debtor-search').value.toLowerCase();
+    const tables = document.querySelectorAll('.inv-tbl tbody');
+    
+    tables.forEach((tbody, tableIndex) => {
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
         
-        // Modal functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentModal = document.getElementById('paymentModal');
-            if (paymentModal) {
-                paymentModal.addEventListener('show.bs.modal', function(event) {
-                    const button = event.relatedTarget;
-                    const orderId = button.getAttribute('data-orderid');
-                    const modalOrderInput = paymentModal.querySelector('#modalOrderName');
-                    if (modalOrderInput) {
-                        modalOrderInput.value = orderId;
-                    }
-                });
+        rows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
             }
         });
         
-        // Export and Print functions
-        function exportData() {
-            alert('Export functionality would be implemented here');
-            // In production, this would trigger a file download
+        // Update count
+        const countId = tableIndex === 0 ? 'unpaid-count' : 'paid-count';
+        const countElement = document.getElementById(countId);
+        if (countElement) {
+            countElement.textContent = `${visibleCount} order${visibleCount !== 1 ? 's' : ''}`;
         }
-        
-        function printReport() {
-            window.print();
-        }
-        
-        function showFilters() {
-            alert('Filter functionality would open a filter panel here');
-        }
-        
-        function clearFilters() {
-            document.getElementById('debtor-search').value = '';
-            searchOrders();
-        }
-        
-        // Format dates on load
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateCells = document.querySelectorAll('.date-cell');
-            dateCells.forEach(cell => {
-                const dateText = cell.textContent;
-                if (dateText) {
-                    const date = new Date(dateText);
-                    cell.textContent = date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
-            });
+    });
+}
+
+// ════════════════════════════════════════════
+// Modal functionality
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentModal = document.getElementById('paymentModal');
+    if (paymentModal) {
+        paymentModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const orderId = button.getAttribute('data-orderid');
+            const modalOrderInput = paymentModal.querySelector('#modalOrderName');
+            if (modalOrderInput) {
+                modalOrderInput.value = orderId;
+            }
         });
-    </script>
+    }
+});
+
+// ════════════════════════════════════════════
+// Export & Print
+// ════════════════════════════════════════════
+function exportData() {
+    alert('Export functionality would trigger file download');
+}
+
+function printReport() {
+    window.print();
+}
+
+function showFilters() {
+    alert('Filter panel would open here');
+}
+
+function clearFilters() {
+    document.getElementById('debtor-search').value = '';
+    searchOrders();
+}
+</script>
+
 </body>
 </html>

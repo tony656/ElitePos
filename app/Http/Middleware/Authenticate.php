@@ -14,27 +14,40 @@ class Authenticate extends Middleware
      */
    public function handle($request, Closure $next, ...$guards)
 {
-    $this->authenticate($request, $guards);
+   $this->authenticate($request, $guards);
 
-    $user = Auth::user();
+   $user = Auth::user();
 
-    if (!$user || empty($user->levelStatus)) {
-        return redirect()->route('login');
-    }
+   if (!$user || empty($user->levelStatus)) {
+       return redirect()->route('login');
+   }
 
-    $role = $user->levelStatus; // Admin | Manager | Seller
+   $role = $user->levelStatus; // Admin | Manager | Seller
 
-    /*
-    |--------------------------------------------------
-    | ADMIN AREA CHECK
-    |--------------------------------------------------
-    */
-        if (empty($role)) {
-            abort(403, 'Not Authorized');
-        }
+   /*
+   |--------------------------------------------------
+   | ADMIN AREA CHECK
+   |--------------------------------------------------
+   */
+       if (empty($role)) {
+           abort(403, 'Not Authorized');
+       }
+   
+   // Check if system is shut down and user doesn't have emergency access
+   $system = \App\Models\systemModel::first();
+   if ($system && $system->system_shutdown) {
+       // Allow if user has valid emergency access
+       if (!session('emergency_access') ||
+           !session('emergency_expires_at') ||
+           now()->greaterThan(\Carbon\Carbon::parse(session('emergency_expires_at')))) {
+           // Emergency access expired or missing
+           Auth::logout();
+           return redirect()->route('admin.emergency.login')
+               ->with('error', 'Your emergency session has expired. Please login again.');
+       }
+   }
 
-
-    return $next($request);
+   return $next($request);
 }
 
     protected function redirectTo(Request $request): ?string

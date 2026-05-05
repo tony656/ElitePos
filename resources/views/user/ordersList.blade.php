@@ -29,7 +29,6 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #f8fafc;
             color: #334155;
             line-height: 1.6;
         }
@@ -509,7 +508,7 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            @include("admin/sidenav")
+            @include("user/sidenav")
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->

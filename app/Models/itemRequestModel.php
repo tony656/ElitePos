@@ -8,6 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class itemRequestModel extends Model
 {
     use HasFactory;
-    protected $fillable = ['requestName', 'productId', 'quantity', 'price', 'discount', 'totalPrice', 'account', 'status'];
+    protected $fillable = ['requestName', 'productId', 'quantity', 'price', 'totalPrice', 'discount', 'account', 'status', 'payment_type', 'assigned_to', 'assigned_by'];
     protected $table = 'item_requests';
 }

@@ -27,26 +27,15 @@
             --text-muted: #7f8c8d;
         }
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            color: var(--text-primary);
-        }
-
-        .container-fluid {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
         main {
             padding-bottom: 2rem;
         }
 
         /* Header Section */
         .expense-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+           background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             border-radius: 1.25rem;
-            padding: 2rem 2rem;
+            padding: 1rem 2rem;
             margin-bottom: 2rem;
             border: none;
             box-shadow: 0 10px 30px rgba(15, 52, 96, 0.2);
@@ -329,10 +318,10 @@
         }
 
         .amount-input::before {
-            content: "₦";
+            content: "Tsh.";
             position: absolute;
-            left: 1rem;
-            top: 2.5rem;
+            left: 0.3rem;
+            top: 2.3rem;
             font-weight: 700;
             color: var(--accent);
             font-size: 1.1rem;
@@ -402,7 +391,7 @@
         <div class="row">
             @include("admin/sidenav")
             
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-10 py-2 px-md-4">
                 <div class="expense-header">
                     <h3>
                         <i class="bi bi-cash-stack"></i>Expenses Management
@@ -420,17 +409,19 @@
                                     <thead>
                                         <tr>
                                             <th width="5%">#</th>
+                                            <th width="25%">Date</th>
                                             <th width="25%">Expense</th>
                                             <th width="15%">Category</th>
                                             <th width="15%">User</th>
                                             <th width="15%">Amount</th>
-                                            <th width="25%">Date</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($expense as $index => $expenses)
                                         <tr>
                                             <td>{{$index + 1}}</td>
+                                            <td>{{ \Carbon\Carbon::parse($expenses->created_at)->format('M d, Y h:i A') }}</td>
                                             <td>{{$expenses->expenseName}}</td>
                                             <td>
                                                 <span class="category-badge category-{{strtolower($expenses->category)}}">
@@ -438,8 +429,17 @@
                                                 </span>
                                             </td>
                                             <td>{{$expenses->expuser}}</td>
-                                            <td>₦{{number_format($expenses->amount, 2)}}</td>
-                                            <td>{{ \Carbon\Carbon::parse($expenses->created_at)->format('M d, Y h:i A') }}</td>
+                                            <td>Tsh.{{number_format($expenses->amount, 2)}}</td>
+                                            <td>
+                                                <form action="dltExpense" method="post">
+                                                    <input type="text" name="expenseId" value="{{ $expenses->id }}" hidden>
+                                                    @csrf
+                                                    <button class="btn text-danger">
+                                                        <i class="bi bi-trash"></i>
+                                                        Remove
+                                                    </button>
+                                                </form>
+                                            </td>
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -466,15 +466,15 @@
                             </h5>
                             <div class="summary-row">
                                 <span>Total Expenses:</span>
-                                <span>₦{{number_format($expense->sum('amount') ?? 0, 2)}}</span>
+                                <span>Tsh.{{number_format($expense->sum('amount') ?? 0, 2)}}</span>
                             </div>
                             <div class="summary-row">
                                 <span>This Month:</span>
-                                <span>₦{{number_format($expense->where('created_at', '>=', now()->startOfMonth())->sum('amount') ?? 0, 2)}}</span>
+                                <span>Tsh.{{number_format($expense->where('created_at', '>=', now()->startOfMonth())->sum('amount') ?? 0, 2)}}</span>
                             </div>
                             <div class="summary-row">
                                 <span>Today:</span>
-                                <span>₦{{number_format($expense->where('created_at', '>=', today())->sum('amount') ?? 0, 2)}}</span>
+                                <span>Tsh.{{number_format($expense->where('created_at', '>=', today())->sum('amount') ?? 0, 2)}}</span>
                             </div>
                         </div>
                     </div>

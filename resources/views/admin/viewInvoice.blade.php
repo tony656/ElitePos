@@ -113,14 +113,14 @@
                   Customer Name
               </div>
               <pdiv>
-                  {{$invoices->cName ?? "N/A"}}
+                  {{$invoices->first()->cName ?? "N/A"}}
               </div>
               <div class="container justify-content-between d-flex">
                 <div>
                     Customer Phone
                 </div>
                 <div>
-                    {{$invoices->cPhone ?? "N/A"}}
+                    {{$invoices->first()->cPhone ?? "N/A"}}
                 </div>
             </div>
           <div class="container justify-content-between d-flex">
@@ -128,21 +128,11 @@
                   Discount
               </div>
               <div>
-                  {{$invoices->discount ?? "N/A"}}
+                  {{$invoices->first()->discount ?? "N/A"}}
               </div>
           </div>
           <div class="container justify-content-between d-flex">
-            <div>
-               Coupon Code
-            </div>
-            <div>
-              @php
-              $getCup = $invoices->coupons ?? null;
-                 $coupon = DB::table('coupons')->where('couponCode', '=', $getCup)->first();
-              $coup = $getCup. "(".((number_format($coupon->amount ?? 0))).")";
-              @endphp
-                {{$coup ?? "N/A"}}
-            </div>
+    
         </div>
         <div class="container justify-content-between d-flex">
           <div>
@@ -157,20 +147,7 @@
           <div>
             Grand Amount
           </div>
-          <div class="text-success fw-bold">
-            @php
-              $sum = $invoices->sum('totalPrice');
-              $discount = $invoices->discount ?? 0;
-              $couponCode = $invoices->coupons;
-    
-              $getAmount = DB::table('coupons')->where('couponCode', '=', $couponCode)->first();
-              $couponAmount = $getAmount->amount  ?? 0;
-    
-              $toatal = $sum-$discount-$couponAmount;
-    
-            @endphp
-              {{(number_format($toatal)) ?? "N/A"}}
-          </div>
+   
       </div>
      
            </div>
@@ -178,57 +155,109 @@
       </div>
     </div>
             <div class="container table mt-4">
-       
+              @php
+                $salex = DB::table('orders')
+                                ->where('order_id', '=', $invoices->first()->order_id ?? '0')
+                                ->get();
+                
+                // Group orders by date
+                $groupedOrders = $salex->groupBy(function($order) {
+                    return \Carbon\Carbon::parse($order->created_at)->format('Y-m-d');
+                });
+              @endphp
+              
+              @if($groupedOrders->count() > 1)
+              <!-- Date Tabs Navigation -->
+              <ul class="nav nav-tabs mb-3" id="dateTabs" role="tablist">
+                @foreach($groupedOrders as $date => $orders)
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $loop->first ? 'active' : '' }}"
+                            id="tab-{{ $date }}"
+                            data-bs-toggle="tab"
+                            data-bs-target="#content-{{ $date }}"
+                            type="button"
+                            role="tab"
+                            aria-controls="content-{{ $date }}"
+                            aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}
+                      <span class="badge bg-primary ms-1">{{ $orders->count() }}</span>
+                    </button>
+                  </li>
+                @endforeach
+              </ul>
+              
+              <!-- Date Tabs Content -->
+              <div class="tab-content" id="dateTabsContent">
+                @foreach($groupedOrders as $date => $orders)
+                  <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                       id="content-{{ $date }}"
+                       role="tabpanel"
+                       aria-labelledby="tab-{{ $date }}">
+                    <table class="table table-striped table-sm">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Product Name</th>
+                          <th>Quantity</th>
+                          <th>Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach ($orders as $index => $sale)
+                          @php
+                            $pNames = DB::table('products')
+                              ->where('product_id', '=', $sale->productId)
+                              ->first();
+                          @endphp
+                          <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ ($pNames->name01 ?? '') . ' ' . ($pNames->name02 ?? 'N/A') ?: 'Unknown Product' }}</td>
+                            <td>{{ $sale->pQuantity }}</td>
+                            <td>{{ number_format($sale->totalPrice) }}</td>
+                          </tr>
+                        @endforeach
+                      </tbody>
+                      <tfoot>
+                        <tr class="table-active">
+                          <td colspan="2" class="text-end fw-bold">Subtotal:</td>
+                          <td class="fw-bold">{{ $orders->sum('pQuantity') }}</td>
+                          <td class="fw-bold">{{ number_format($orders->sum('totalPrice')) }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                @endforeach
+              </div>
+              @else
+              <!-- Single Date - No Tabs Needed -->
               <table class="table table-striped table-sm">
                 <thead>
                   <tr>
-                    <th>
-                      #
-                    </th>
-                    <th>
-                    Product Name
-                    </th>
-                    <th>
-                      Quantity
-                    </th>
-                    <th>
-                      Price
-                    </th>
-                  
+                    <th>#</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @php
-                  $salex = DB::table('orders')
-                                  ->where('order_id', '=', $invoices->order_id)                      
-                                  ->get();
-                                  @endphp
-                                  @foreach ($salex as $index => $sale)
-                               
-                                  @php
-                                    $pNames = DB::table('products')
-                                  ->where('product_id', '=', $sale->productId)                      
-                                  ->first();
-                                  @endphp
-                  <tr>  
-      <td>
-      {{$index + 1}}
-      </td>
-      <td>
-        {{ ($pNames->name01 ?? '') . ' ' . ($pNames->name02 ?? 'N/A') ?: 'Unknown Product' }}      </td>
-      <td>
-      {{$sale->pQuantity}}
-      </td>
-      <td>
-      {{(number_format($sale->totalPrice))}}
-      </td>
-      
-                  </tr>
+                  @foreach ($salex as $index => $sale)
+                    @php
+                      $pNames = DB::table('products')
+                        ->where('product_id', '=', $sale->productId)
+                        ->first();
+                    @endphp
+                    <tr>
+                      <td>{{ $index + 1 }}</td>
+                      <td>{{ ($pNames->name01 ?? '') . ' ' . ($pNames->name02 ?? 'N/A') ?: 'Unknown Product' }}</td>
+                      <td>{{ $sale->pQuantity }}</td>
+                      <td>{{ number_format($sale->totalPrice) }}</td>
+                    </tr>
                   @endforeach
-      
                 </tbody>
               </table>
-             </div>      
+              @endif
+             </div>
 
          </main>
   </div>

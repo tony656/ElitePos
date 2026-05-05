@@ -6,40 +6,52 @@ use Illuminate\Http\Request;
 use App\Models\customerModel;
 use Illuminate\Support\Str;
 use App\Models\salsModel;
-use App\Models\productsModel;   
+use App\Models\productsModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\usersModel;
+use App\Models\accountModel;
+use function getSessionAccountId;
 
 class customerController extends Controller
 {
 
     
-    public function index()
+    public function index(Request $request)
     {
-        $Account = session('account');
         $user = Auth()->user();
 
-        $fetch = customerModel::where('account', $Account)->get(); // Fetch all customers from the database
-        $myCustomers = customerModel::where('account', $Account)->where('employeeId', $user->id)->get();
+        // For admin: allow account filtering from request, otherwise use session account name
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            $selectedAccount = $request->query('account', getSessionAccountId());
+            // Fetch all accounts for admin dropdown
+            $accounts = accountModel::all();
+        } else {
+            $selectedAccount = getSessionAccountId();
+            $accounts = collect(); // Empty collection for non-admin
+        }
 
-        $users = usersModel::where('account', $Account)->get();
+        $fetch = customerModel::where('account', $selectedAccount)->get(); // Fetch all customers from the database
+        $myCustomers = customerModel::where('account', $selectedAccount)->where('employeeId', $user->id)->get();
 
-        $data = compact(
-        'fetch','myCustomers','users'
-    );
+        foreach($fetch as $customer) {
+            $customer->totalSales = salsModel::where('account', $selectedAccount)->where('cPhone', $customer->id)->count();
+        }
 
- if ($user->levelStatus === 'Admin') {
-        return view('admin.customers', $data);
+        $users = usersModel::where('account', $selectedAccount)->get();
+
+        $data = compact('fetch', 'myCustomers', 'users', 'accounts', 'selectedAccount');
+
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            return view('admin.customers', $data);
+        }
+        if(!empty($user->levelStatus)) {
+            return view('user.customers', $data);
+        }
     }
-    if(!empty($user->levelStatus)) {
-        return view('user.customer', $data);
-    }
-}
     public function addCustomer(Request $request)
     {
         $user = auth()->user();
-        $Account = session('account');
 
         // Validate the incoming request data
         $request->validate([
@@ -48,12 +60,16 @@ class customerController extends Controller
             'credit' => 'nullable|numeric',
             'address' => 'nullable|string|max:255',
             'type' => 'nullable|string|max:255',
-            'allocation' => 'required|string|max:255',
+            'allocation' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
+            'account' => 'nullable|string|max:255',
         ]);
 
+        // Determine which account to use: admin can select, others use session account name
+        $selectedAccount = $request->input('account', getSessionAccountId());
+
         $look = customerModel::where('name', $request->input('name')
-                             )->where('account', $Account)->get();
+                             )->where('account', $selectedAccount)->get();
 
         /*if($look > 1) {
             return redirect()->back()->with('success', 'Customer with this name is available');
@@ -74,7 +90,7 @@ class customerController extends Controller
         $customer->limits = $request->input('credit', 0);
         $customer->business = $request->input('type', '');
         $customer->description = $request->input('description', 'No description');
-        $customer->account = $Account;
+        $customer->account = $selectedAccount;
 
         // Save the customer to the database
         if ($customer->save()) {
@@ -95,9 +111,99 @@ class customerController extends Controller
         }
     }
 
+ public function searchCustomer(Request $request)
+{
+  
+    $query = $request->query('query', '');
+    $user = Auth::user();
+    
+    if (strlen($query) < 1) {
+        return response()->json([]);
+    }
 
+    // Get all account IDs assigned to the user
+    if (strtolower(trim($user->levelStatus)) === 'admin') {
+        // Admins can search all accounts or use specified account
+        $accountParam = $request->query('account', getSessionAccountId());
+        $accountIds = is_array($accountParam) ? $accountParam : [$accountParam];
+    } else {
+        // Regular users: get from user_accounts relationship
+        $accountIds = $user->accounts()->pluck('account')->toArray();
+        
+        // Fallback to the account field in users table if no pivot records
+        if (empty($accountIds)) {
+            $accountIds = [$user->account];
+        }
+    }
+    
+    $customers = customerModel::whereIn('account', $accountIds)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%");
+            })
+            ->select('id', 'name', 'phone', 'limits', 'account')
+            ->limit(15)
+            ->get();
+
+    return response()->json($customers);
+}
+ public function getCustomerDetails($customerId)
+ {
+     $user = Auth::user();
+     
+     // Get all account IDs assigned to the user
+     if (strtolower(trim($user->levelStatus)) === 'admin') {
+         // Admins: get all account IDs (not just session account)
+         $accountIds = $user->accounts()->pluck('account')->toArray();
+         if (empty($accountIds)) {
+             $accountIds = [getSessionAccountId()];
+         }
+     } else {
+         // Regular users: get from user_accounts relationship
+         $accountIds = $user->accounts()->pluck('account')->toArray();
+         
+         // Fallback to the account field in users table if no pivot records
+         if (empty($accountIds)) {
+             $accountIds = [$user->account];
+         }
+     }
+     
+     $customer = DB::table('customers')
+         ->whereIn('account', $accountIds)
+         ->where('id', $customerId)
+         ->first();
+
+     if (!$customer) {
+         return response()->json(['error' => 'Customer not found'], 404);
+     }
+
+     // Use same calculation method as $odez
+     // Sum credit from orders with 'Debt' or 'partial' status
+     // Filtered by both cName AND cPhone for accuracy
+     $currentCredit = DB::table('orders')
+         ->where('account', $customer->account)
+         ->where('cName', $customer->name)
+         ->where('cPhone', $customer->id)
+         ->whereIn('status', ['Debt', 'Partial'])
+         ->sum('credit');
+
+     // Ensure numeric values
+     $limits = (float)($customer->limits ?? 0);
+     $credit = (float)($currentCredit ?? 0);
+     $available = $limits - $credit;
+
+     return response()->json([
+         'id' => $customer->id,
+         'name' => $customer->name,
+         'phone' => $customer->phone,
+         'limits' => $limits,
+         'credit' => $credit,
+         'available' => $available
+     ]);
+ }
     public function editCustomer(Request $req) {
         $req->validate([
+            'customerId' => 'required|integer',
             'name' => 'required|string|max:255',
             'contact' => 'required|string|max:15',
             'credit' => 'nullable|numeric',
@@ -107,12 +213,21 @@ class customerController extends Controller
         ]);
 
         $get = customerModel::where('id', $req->input('customerId')
-                             )->where('account', session('account'))->first();
+                             )->where('account', getSessionAccountId())->first();
+
+        if (!$get) {
+            $create = new logModal();
+            $create->title = 'Customer Log';
+            $create->description = 'Customer Edit Failed - Customer not found By '.session('username');
+            $create->save();
+
+            return redirect()->back()->with('error', 'Customer not found or you do not have permission to edit this customer.');
+        }
 
         /*if($look > 1) {
             return redirect()->back()->with('success', 'Customer with this name is available');
         }*/
-        // Create a new customer instance
+        // Update customer properties
         $get->name = $req->input('name');
         $get->customerId = Str::uuid(); 
         $get->phone = $req->input('contact');
@@ -120,7 +235,7 @@ class customerController extends Controller
         $get->limits = $req->input('credit', 0);
         $get->business = $req->input('type', '');
         $get->description = $req->input('description', 'No description');
-        $get->account = session('account');
+        $get->account = getSessionAccountId();
 
         // Save the customer to the database
         if ($get->save()) {
@@ -143,12 +258,10 @@ class customerController extends Controller
     }
     public function dltCustomer(Request $req) {
 
-        $Account = session('account');
-
         $prodId = $req->input('name');
 
-        $dlts = customerModel::where('account', $Account)->where('name', $prodId)->first();
-        $dlt = customerModel::where('account', $Account)->where('name', $prodId)->delete();
+        $dlts = customerModel::where('account', getSessionAccountId())->where('name', $prodId)->first();
+        $dlt = customerModel::where('account', getSessionAccountId())->where('name', $prodId)->delete();
         if ($dlt) {
             $create = new logModal();
             $create->title = 'Customer Log';
@@ -169,7 +282,8 @@ class customerController extends Controller
 
   public function details($id)
 {
-    $customers = salsModel::where('account', session('account'))->where('cName', $id)->get();
+    $accountId = getSessionAccountId();
+    $customers = salsModel::where('account', $accountId)->where('cName', $id)->get();
 
     if ($customers->isEmpty()) {
         return response()->json(['error' => 'Customer not found'], 404);
@@ -178,7 +292,7 @@ class customerController extends Controller
     $results = [];
 
     foreach ($customers as $customer) {
-        $product = productsModel::where('account', session('account'))->where('product_id', $customer->productId)->first();
+        $product = productsModel::where('account', $accountId)->where('product_id', $customer->productId)->first();
 
         $results[] = [
             'product_name' => $product->name01 ?? 'N/A',
@@ -193,16 +307,41 @@ class customerController extends Controller
 public function customerView(Request $req) {
     $user = auth()->user();
     $products = [];
-            $get = customerModel::where('name', $req->input('name'))->first();
+    $get = customerModel::where('name', $req->input('name'))->first();
 
-            $sales = salsModel::where('account', session('account'))->where('cName', $req->input('name'))->get();
+    // If customer not found, redirect back with error
+    if (!$get) {
+        return redirect()->back()->with('error', 'Customer not found.');
+    }
 
-              
-     $data = compact(
-        'sales','get'
+    $accountId = getSessionAccountId();
+    
+    // Handle date filtering - default to today
+    $selectedDate = $req->input('selectedDate');
+    if ($selectedDate) {
+        $start_date = date('Y-m-d 00:00:00', strtotime($selectedDate));
+        $end_date = date('Y-m-d 23:59:59', strtotime($selectedDate));
+        $sales = salsModel::where('account', $accountId)
+            ->where('cName', $req->input('name'))
+            ->whereBetween('created_at', [$start_date, $end_date])
+            ->orderBy('created_at','desc')
+            ->get();
+    } else {
+        // Default to today's sales
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
+        $sales = salsModel::where('account', $accountId)
+            ->where('cName', $req->input('name'))
+            ->whereBetween('created_at', [$today_start, $today_end])
+            ->orderBy('created_at','desc')
+            ->get();
+    }
+       
+    $data = compact(
+        'sales','get', 'selectedDate'
     );
 
- if ($user->levelStatus === 'Admin') {
+    if (strtolower(trim($user->levelStatus)) === 'admin') {
         return view('admin.customerView', $data);
     }
     if(!empty($user->levelStatus)) {

@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $table = 'users';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +23,13 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'contact',
+        'age',
+        'levelStatus',
+        'permissions',
+        'account',
+        'photo',
+        'status',
     ];
 
     /**
@@ -40,5 +49,23 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'permissions' => 'array',
     ];
+
+    /**
+     * Get all accounts this user has access to.
+     */
+    public function accounts()
+    {
+        return $this->hasMany(UserAccount::class, 'user_id');
+    }
+
+    /**
+     * Get the primary account (where is_primary is true).
+     */
+    public function getPrimaryAccount()
+    {
+        $primary = $this->accounts()->where('is_primary', true)->first();
+        return $primary ? $primary->account : $this->account;
+    }
 }

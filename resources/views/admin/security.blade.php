@@ -102,6 +102,101 @@
             color: #6c757d;
         }
     </style>
+    <style>
+        .session-card {
+            border-left: 4px solid #28a745;
+            transition: all 0.3s ease;
+        }
+        .session-card.suspicious {
+            border-left-color: #ffc107;
+            background-color: #fff8e1;
+        }
+        .session-card.blocked {
+            border-left-color: #dc3545;
+            background-color: #ffe5e5;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .device-info {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .info-item {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .info-item strong {
+            color: #333;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .action-btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+        }
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .security-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .alerts-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .alert-item {
+            padding: 0.75rem;
+            border-left: 4px solid;
+            margin-bottom: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #f8f9fa;
+        }
+        .alert-item.high {
+            border-left-color: #dc3545;
+            background-color: #ffe5e5;
+        }
+        .alert-item.medium {
+            border-left-color: #ffc107;
+            background-color: #fff8e1;
+        }
+        .alert-item.low {
+            border-left-color: #17a2b8;
+            background-color: #e1f5f8;
+        }
+        .alert-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
     <main class="row">
@@ -110,7 +205,7 @@
             
             <div class="container px-2 d-flex py-3">
                 <div class="p-4">
-                    <img src="{{ asset('images/EliteLogo.png') }}" width="100px" alt="">
+                    <img src="{{ asset('/public/images/EliteLogo.png') }}" width="100px" alt="">
                 </div>
                 <div class="p-4">
                     <h4 class="fw-bold">
@@ -143,52 +238,298 @@
                 </div>
             </div>
 
-           
-
-            <div class="container">
-
-                <h5>
-                    Activity
-                </h5>
-
+            <div class="container mt-4">
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="card">
+                        <div class="card border-0 shadow-sm">
                             <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Title</th>
-                                                <th>Description</th>
-                                                <th>User</th>
-                                                <th>Status</th>
-                                                <th>Timestamp</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($logs as $log)
-                                            <tr class="log-card {{ ($log->status == 'done' && strtolower($log->user ?? '') == 'unknown') || (isset($log->user) && strtolower($log->user) == 'unknown') ? 'suspicious' : '' }}">
-                                                <td>{{ $log->title }}</td>
-                                                <td>{{ $log->description }}</td>
-                                                <td>{{ $log->user ?? 'N/A' }}</td>
-                                                <td>
-                                                    <span class="badge {{ $log->status == 'done' ? 'bg-success' : 'bg-warning' }}">
-                                                        {{ $log->status }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                <h5 class="card-title mb-4">
+                                    <i class="bi bi-shield-lock text-primary me-2"></i>
+                                    System Security Controls
+                                </h5>
+                                
+                                <div class="alert alert-{{ $systemShutdown ? 'danger' : 'success' }} mb-4">
+                                    <i class="bi bi-{{ $systemShutdown ? 'exclamation-triangle' : 'check-circle' }} me-2"></i>
+                                    <strong>System Status:</strong>
+                                    {{ $systemShutdown ? 'SYSTEM SHUTDOWN - All access restricted' : 'System operational' }}
+                                </div>
+
+                                <div class="row g-4">
+                                    <!-- Block All Sign-ins -->
+                                    <div class="col-md-6">
+                                        <div class="card h-100 border-{{ $blockSignins ? 'danger' : 'success' }}">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h5 class="card-title mb-2">
+                                                            <i class="bi bi-person-x text-{{ $blockSignins ? 'danger' : 'success' }} me-2"></i>
+                                                            Block All Sign-ins
+                                                        </h5>
+                                                        <p class="card-text text-muted mb-3">
+                                                            {{ $blockSignins ? 'Currently ACTIVE - No new users can sign in' : 'Currently INACTIVE - Sign-ins allowed' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="blockSigninsSwitch"
+                                                               {{ $blockSignins ? 'checked' : '' }}
+                                                               onchange="toggleBlockSignins(this)">
+                                                        <label class="form-check-label" for="blockSigninsSwitch"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        When enabled, all user sign-ins will be blocked system-wide. Existing sessions remain active.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- System Shutdown -->
+                                    <div class="col-md-6">
+                                        <div class="card h-100 border-{{ $systemShutdown ? 'danger' : 'success' }}">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h5 class="card-title mb-2">
+                                                            <i class="bi bi-power text-{{ $systemShutdown ? 'danger' : 'success' }} me-2"></i>
+                                                            System Shutdown
+                                                        </h5>
+                                                        <p class="card-text text-muted mb-3">
+                                                            {{ $systemShutdown ? 'Currently ACTIVE - System is shut down' : 'Currently INACTIVE - System operational' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="systemShutdownSwitch"
+                                                               {{ $systemShutdown ? 'checked' : '' }}
+                                                               onchange="toggleSystemShutdown(this)">
+                                                        <label class="form-check-label" for="systemShutdownSwitch"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        When enabled, the entire system will be shut down. All users will be logged out and prevented from accessing the system.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Face Recognition Control -->
+                                <div class="row g-4 mt-4">
+                                    <div class="col-md-12">
+                                        <div class="card h-100 border-{{ $faceRecognitionEnabled ? 'success' : 'secondary' }}">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h5 class="card-title mb-2">
+                                                            <i class="bi bi-person-badge text-{{ $faceRecognitionEnabled ? 'success' : 'secondary' }} me-2"></i>
+                                                            Face Recognition Security
+                                                        </h5>
+                                                        <p class="card-text text-muted mb-3">
+                                                            {{ $faceRecognitionEnabled ? 'Currently ACTIVE - All users will be continuously scanned' : 'Currently INACTIVE - No face scanning' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="faceRecognitionSwitch"
+                                                               {{ $faceRecognitionEnabled ? 'checked' : '' }}
+                                                               onchange="toggleFaceRecognition(this)">
+                                                        <label class="form-check-label" for="faceRecognitionSwitch"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        When enabled, all logged-in users will be continuously scanned. Unknown faces visible for more than 5 seconds will trigger automatic logout.
+                                                    </small>
+                                                </div>
+                                                @if($faceRecognitionEnabled)
+                                                <div class="mt-2">
+                                                    <a href="{{ route('face.register.page') }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-camera me-1"></i>Register Your Face
+                                                    </a>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6><i class="bi bi-exclamation-triangle text-warning me-2"></i>Important Notes:</h6>
+                                    <ul class="mb-0 ps-3">
+                                        <li>These controls affect the entire system globally</li>
+                                        <li>Only administrators can modify these settings</li>
+                                        <li>All actions are logged in the system</li>
+        function toggleFaceRecognition(checkbox) {
+            const originalState = checkbox.checked;
+            fetch('{{ route('admin.toggle.face.recognition') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ enabled: checkbox.checked })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    console.log('Success:', data);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !originalState;
+                const errorMsg = error.message || 'Failed to update setting. You may not have permission.';
+                alert('Error: ' + errorMsg);
+            });
+        }
+
+                                        <li>To restore normal operations, simply toggle the switches off</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-    </main>
 
+    <!-- Face Recognition Quick Access -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="bi bi-camera-video text-primary me-2"></i>
+                            Face Recognition Management
+                        </h5>
+                        <p class="text-muted mb-3">
+                            Register and manage facial recognition data for users. When enabled, all logged-in devices will continuously scan for faces. If an unknown face is visible for more than 5 seconds, automatic logout will occur.
+                        </p>
+                        <div class="d-flex gap-3">
+                            <a href="{{ route('face.register.page') }}" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Register My Face
+                            </a>
+                            <a href="{{ route('face.encodings') }}" class="btn btn-outline-secondary" target="_blank">
+                                <i class="bi bi-list-check"></i> View All Encodings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleBlockSignins(checkbox) {
+            const originalState = checkbox.checked;
+            fetch('{{ route('admin.toggle.block.signins') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ block: checkbox.checked })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    console.log('Success:', data);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !originalState;
+                const errorMsg = error.message || 'Failed to update setting. You may not have permission.';
+                alert('Error: ' + errorMsg);
+            });
+        }
+
+        function toggleSystemShutdown(checkbox) {
+            if (!confirm('Are you sure you want to ' + (checkbox.checked ? 'SHUT DOWN' : 'RESTORE') + ' the system? This will affect all users.')) {
+                checkbox.checked = !checkbox.checked;
+                return;
+            }
+            
+            const originalState = checkbox.checked;
+            fetch('{{ route('admin.toggle.system.shutdown') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ shutdown: checkbox.checked })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    console.log('Success:', data);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !originalState;
+                const errorMsg = error.message || 'Failed to update setting. You may not have permission.';
+                alert('Error: ' + errorMsg);
+            });
+        }
+        function toggleFaceRecognition(checkbox) {
+            const originalState = checkbox.checked;
+            fetch('{{ route('admin.toggle.face.recognition') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ enabled: checkbox.checked })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    console.log('Success:', data);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !originalState;
+                const errorMsg = error.message || 'Failed to update setting. You may not have permission.';
+                alert('Error: ' + errorMsg);
+            });
+        }
+    </script>
 </body>
 </html>

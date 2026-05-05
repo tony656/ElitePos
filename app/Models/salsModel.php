@@ -11,23 +11,27 @@ class salsModel extends Model
 
     protected $table = 'sales';
         protected $fillable = [
-        'sales_id', // Add this line
-        'salesName',
-        'stockId',
-        'cName',
-        'cPhone',
-        'productId',
-        'pQuantity',
-        'productPrice',
-        'totalPrice',
-        'served_by',
-        'credit',
-        'transactionType',
-        'paid',
-        'coupons',
-        'status',
-        'discount',
-        'served_by',
-        'account'      
-    ];
+            'sales_id',
+            'salesName',
+            'stockId',
+            'cName',
+            'cPhone',
+            'productId',
+            'pQuantity',
+            'productPrice',
+            'totalPrice',
+            'return_amount',
+            'served_by',
+            'credit',
+            'transactionType',
+            'paid',
+            'coupons',
+            'status',
+            'discount',
+            'discount_increase',
+            'offered_items',
+            'offer_parent_product',
+            'account',
+            'created_at'
+        ];
 }

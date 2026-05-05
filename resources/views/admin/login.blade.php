@@ -265,6 +265,11 @@
           <input type="password" name="password" class="form-control" placeholder="Password" required>
         </div>
 
+        <div class="form-group d-flex align-items-center">
+          <input type="checkbox" id="remember" name="remember" class="form-check-input" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #1abc76;">
+          <label for="remember" style="color: rgba(255,255,255,0.7); font-size: 0.9rem; cursor: pointer;">Remember me</label>
+        </div>
+
         <button type="submit" class="btn-login">Sign In</button>
       </div>
     </form>

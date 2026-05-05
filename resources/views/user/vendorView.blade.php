@@ -23,7 +23,6 @@
         }
 
         body {
-            background-color: #f5f7fa;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
@@ -399,7 +398,7 @@
     
     <div class="container-fluid">
         <div class="row">
-            @include("admin/sidenav")
+            @include("user/sidenav")
 
             <main class="col-md-9 ms-sm-auto col-lg-10 bg-light">
                
@@ -551,13 +550,16 @@
         <i class="bi bi-arrow-counterclockwise"></i> Restock
     </button>
 @endif
-
-                                        <button class="btn btn-sm btn-view me-2" name="product_id" formaction="viewProduct" value="{{ $product->product_id }}">
+                                        @if (canUser("edit_supplier"))
+                                             <button class="btn btn-sm btn-view me-2" name="product_id" formaction="viewProduct" value="{{ $product->product_id }}">
                                             <i class="bi bi-eye"></i> View
                                         </button>
+                                        @endif
+                                        @if (canUser("delete_supplier"))
                                         <button class="btn btn-sm btn-delete" name="product_id" formaction="dltProduct" value="{{ $product->product_id }}">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                         @endif
                                     </td>
                                 </tr>
                             </form>

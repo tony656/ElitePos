@@ -7,20 +7,27 @@ use Illuminate\Http\Request;
 
 class logController extends Controller
 {
-    public function index() {
+    public function index(Request $request) {
         $user = Auth::user();
 
-        $fetch = logModal::orderBy('id', 'desc')->get();
+        $query = logModal::orderBy('id', 'desc');
 
-        $data = compact(
-        'fetch'
-    );
+        // Filter by date - default to current date
+        if ($request->has('date') && !empty($request->date)) {
+            $query->whereDate('created_at', $request->date);
+        } else {
+            $query->whereDate('created_at', now()->toDateString());
+        }
 
- if ($user->levelStatus === 'Admin') {
-        return view('admin.logs', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.logs', $data);
-    }
+        $fetch = $query->get();
+
+        $data = compact('fetch');
+
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            return view('admin.logs', $data);
+        }
+        if(!empty($user->levelStatus)) {
+            return view('user.logs', $data);
+        }
     }
 }

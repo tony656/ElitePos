@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\adsModel;
 use Illuminate\Http\Request;
 use App\Models\productsModel;
 use App\Models\usersModel;
@@ -9,21 +10,37 @@ use App\Models\expensesModel;
 use App\Models\ordersModel;
 use App\Models\systemModel;
 use App\Models\salsModel;
+use App\Models\recevingModel;
 use Illuminate\Support\Facades\DB;
 use App\Models\notifications;
 use Illuminate\Support\Facades\Auth;
+use function getSessionAccountId;
+
 class homeController extends Controller
 {
     //
     
  public function dashboard() {
     $user = Auth::user();
-    $Account = session('account');
+    $Account = getSessionAccountId();
     
     // Current month sales
     $currentMonthStart = now()->startOfMonth();
     $currentMonthEnd = now()->endOfMonth();
     
+    \Log::info('Dashboard ads query', [
+        'user_id' => $user->id ?? null,
+        'account' => $Account ?? null
+    ]);
+
+    $ads = adsModel::orderBy('created_at', 'desc')
+            ->get();
+
+    \Log::info('Dashboard ads result', [
+        'ads_count' => $ads->count(),
+        'ads_data' => $ads->toArray()
+    ]);
+
     $currentMonthSales = salsModel::where('account', $Account)
         ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
         ->sum('totalPrice');
@@ -83,6 +100,32 @@ class homeController extends Controller
         ->get();
     
     $totalOrders = salsModel::where('account', $Account)->count();
+    
+    // Daily calculations for today
+    $todayStart = now()->startOfDay();
+    $todayEnd = now()->endOfDay();
+    
+    // Total items received today (quantity) and total cost
+    $todayReceivedItems = recevingModel::where('account', $Account)
+        ->whereBetween('created_at', [$todayStart, $todayEnd])
+        ->where('is_return', '!=', 1)
+        ->sum('quantity');
+    
+    $todayReceivedCost = recevingModel::where('account', $Account)
+        ->whereBetween('created_at', [$todayStart, $todayEnd])
+        ->where('is_return', '!=', 1)
+        ->selectRaw('SUM(price * quantity) as total_cost')
+        ->first()
+        ->total_cost ?? 0;
+    
+    // Total items sold today (quantity) and total revenue
+    $todaySoldItems = salsModel::where('account', $Account)
+        ->whereBetween('created_at', [$todayStart, $todayEnd])
+        ->sum('pQuantity');
+    
+    $todaySalesRevenue = salsModel::where('account', $Account)
+        ->whereBetween('created_at', [$todayStart, $todayEnd])
+        ->sum('totalPrice');
     
     $getName = systemModel::where('account', $Account)->first();
     $status = session('status');
@@ -171,17 +214,25 @@ class homeController extends Controller
         'TProducts', 'ofs', 'users', 'revenue', 'totalOrders', 'orders',
         'NetProfit', 'LNetProfit', 'getName', 'monthlyTotalPrices', 'MrevenueAmount',
         'revenueAmount', 'dataNotifications', 'Msale',
-        'currentMonthSales', 'lastMonthSales', 
+        'currentMonthSales', 'lastMonthSales',
         'currentMonthDailySales', 'lastMonthDailySales',
-        'growthPercentage'
+        'growthPercentage','ads',
+        'todayReceivedItems', 'todayReceivedCost', 'todaySoldItems', 'todaySalesRevenue'
     );
 
-    if ($user->levelStatus === 'Admin') {
+    // Use case-insensitive comparison for role checking
+    $role = strtolower(trim($user->levelStatus));
+    
+    if ($role === 'admin') {
         return view('admin.home', $data);
     }
     
-    if(!empty($user->levelStatus)) {
+    // For non-admin users (Manager, Seller, etc.)
+    if (!empty($user->levelStatus)) {
         return view('user.home', $data);
     }
+    
+    // If somehow levelStatus is empty, abort with unauthorized
+    abort(403, 'Unauthorized access');
 }
 }

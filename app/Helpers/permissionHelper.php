@@ -8,6 +8,11 @@ if (!function_exists('canUser')) {
         $user = Auth::user();
         if (!$user) return false;
 
+        // Admin users have all permissions (case-insensitive)
+        if (strtolower(trim($user->levelStatus)) === 'Admin') {
+            return true;
+        }
+
         // permissions column contains JSON array
         $permissions = $user->permissions;
 
