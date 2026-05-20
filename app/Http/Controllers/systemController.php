@@ -73,9 +73,9 @@ class systemController extends Controller
         }
 
         foreach($fetch as $shops) {
-            $shops->users = usersModel::where('account', $shops->name)->count();
-            $shops->products = productsModel::where('account', $shops->name)->count();
-            $shops->customers = customerModel::where('account', $shops->name)->count();
+            $shops->users = usersModel::where('account', $shops->id)->count();
+            $shops->products = productsModel::where('account', $shops->id)->count();
+            $shops->customers = customerModel::where('account', $shops->id)->count();
         }
         
         // Get current shop details for the active session account
@@ -1248,13 +1248,10 @@ public function uploadProfilePicture(Request $req) {
         );
     }
 
-    // 🚀 CRITICAL FIX: deduct from chip_amount (not available_chip)
-    if ($chipEntry->chip_amount < $chipPayment) {
-        return redirect()->back()->with('error', 'Not enough chip in latest entry to deduct');
-    }
-
+    // Deduct from chip_amount on the last entry
+    // The model's observer will automatically recalculate available_chip for all entries
     $chipEntry->chip_amount -= $chipPayment;
-    $chipEntry->save(); // 🔥 triggers recalculation automatically
+    $chipEntry->save(); // triggers recalculation automatically
 
     // Total payment
     $TotalPayment = $paymentAmount + $chipPayment;

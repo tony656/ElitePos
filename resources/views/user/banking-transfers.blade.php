@@ -551,6 +551,17 @@
                                 value="{{ $date_to ?? '' }}">
                         </div>
                         <div class="filter-field">
+                            <label class="filter-label">Shop</label>
+                            <select class="filter-input filter-select" name="shop_id">
+                                <option value="">All Shops</option>
+                                @foreach($shops as $shop)
+                                <option value="{{ $shop->id }}" {{ ($shop_id ?? '') == $shop->id ? 'selected' : '' }}>
+                                    {{ $shop->name }} ({{ $shop->location ?? 'N/A' }})
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-field">
                             <label class="filter-label">Sort By</label>
                             <select class="filter-input filter-select" name="sort_by">
                                 <option value="transfer_date" {{ ($sort_by ?? 'transfer_date') == 'transfer_date' ? 'selected' : '' }}>Date</option>
@@ -573,6 +584,37 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Statistics Summary -->
+            <div class="card-panel" style="margin-bottom: 1.5rem;">
+                <div class="card-head" style="border-bottom: none; padding-bottom: 0;">
+                    <h6 class="card-title">Deposit Summary</h6>
+                </div>
+                <div class="card-body" style="padding: 1.25rem;">
+                    <div class="row-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1.5px solid var(--slate-200);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Total Deposits</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--navy); font-family: 'DM Mono', monospace;">{{ number_format($totalDeposits ?? 0, 2) }}</div>
+                        </div>
+                        <div style="background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1.5px solid var(--slate-200);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Number of Deposits</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--navy);">{{ $depositCount ?? 0 }}</div>
+                        </div>
+                        <div style="background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1.5px solid var(--slate-200);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Average Deposit</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--navy); font-family: 'DM Mono', monospace;">{{ number_format($averageDeposit ?? 0, 2) }}</div>
+                        </div>
+                        <div style="background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1.5px solid var(--slate-200);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Highest Deposit</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--emerald); font-family: 'DM Mono', monospace;">{{ number_format($maxDeposit ?? 0, 2) }}</div>
+                        </div>
+                        <div style="background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1.5px solid var(--slate-200);">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Lowest Deposit</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--rose); font-family: 'DM Mono', monospace;">{{ number_format($minDeposit ?? 0, 2) }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card-panel">
@@ -776,14 +818,7 @@ $(document).ready(function() {
 
     // Form submission validation
     $('#addBankingTransfer form').on('submit', function(e) {
-        var supplierAccountId = $('select[name="supplier_account_id"]').val();
         var beneficiaryAccountId = $('select[name="beneficiary_account_id"]').val();
-        
-        if (!supplierAccountId) {
-            e.preventDefault();
-            alert('Please select a supplier account');
-            return false;
-        }
         
         if (!beneficiaryAccountId) {
             e.preventDefault();

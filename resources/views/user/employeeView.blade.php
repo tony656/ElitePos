@@ -565,13 +565,16 @@
                                 <div class="permissions-list" id="accountsList">
                                     @forelse($userAccounts as $ua)
                                         <div class="permission-item">
-                                            🏪 {{ $ua->account }}
+                                            🏪 {{ $ua->accountRel->name ?? $ua->account }}
                                             @if($ua->is_primary)
                                                 <span style="background: rgba(15, 52, 96, 0.3); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">Primary</span>
                                             @endif
                                         </div>
                                     @empty
-                                        <span style="color: var(--text-muted);">No additional accounts assigned (using primary: {{ $users->account }})</span>
+                                        @php
+                                            $primaryAccountName = $users->accountRel ? $users->accountRel->name : $users->account;
+                                        @endphp
+                                        <span style="color: var(--text-muted);">No additional accounts assigned (using primary: {{ $primaryAccountName }})</span>
                                     @endforelse
                                 </div>
 
@@ -587,10 +590,10 @@
                                         <option value="" selected disabled>Select account to add</option>
                                         @foreach($accounts as $account)
                                             @php
-                                                $isAssigned = $userAccounts->contains('account', $account->account);
+                                                $isAssigned = $userAccounts->contains('account', $account->id);
                                             @endphp
                                             @if(!$isAssigned)
-                                                <option value="{{ $account->account }}">{{ $account->account }}</option>
+                                                <option value="{{ $account->id }}">{{ $account->name }}</option>
                                             @endif
                                         @endforeach
                                     </select>
@@ -678,6 +681,7 @@
                     if (!newAccountSelect) return;
                     
                     const accountValue = newAccountSelect.value;
+                    const accountText = newAccountSelect.options[newAccountSelect.selectedIndex].text;
                     
                     if (accountValue && accountValue !== '') {
                         const accountsSelect = document.getElementById('accounts');
@@ -699,10 +703,11 @@
                                 accountsList.innerHTML = '';
                             }
                             
-                            // Add visual item to list
+                            // Add visual item to list with name
                             const accountItem = document.createElement('div');
                             accountItem.className = 'permission-item';
-                            accountItem.innerHTML = '🏪 ' + accountValue;
+                            accountItem.innerHTML = '🏪 ' + accountText;
+                            accountItem.dataset.value = accountValue;
                             accountsList.appendChild(accountItem);
                             
                             // Remove the selected option from dropdown
@@ -730,10 +735,14 @@
                     // Remove selected options
                     for (let i = options.length - 1; i >= 0; i--) {
                         if (options[i].selected) {
-                            // Add back to dropdown
+                            // Add back to dropdown with proper text
                             const newOption = document.createElement('option');
                             newOption.value = options[i].value;
-                            newOption.text = options[i].value;
+                            // Find the original text from the accounts dropdown data
+                            const accountId = options[i].value;
+                            const originalOption = newAccountSelect.querySelector(`option[value="${accountId}"]`) ||
+                                                  Array.from(newAccountSelect.options).find(opt => opt.value === accountId);
+                            newOption.text = originalOption ? originalOption.text : accountId;
                             newAccountSelect.appendChild(newOption);
                             
                             options[i].remove();
@@ -753,7 +762,8 @@
                     
                     // If no accounts left, show a message
                     if (accountsSelect.options.length === 0) {
-                        accountsList.innerHTML = '<span style="color: var(--text-muted);">No additional accounts assigned (using primary: {{ $users->account }})</span>';
+                        const primaryName = "{{ $users->accountRel ? $users->accountRel->name : $users->account }}";
+                        accountsList.innerHTML = '<span style="color: var(--text-muted);">No additional accounts assigned (using primary: ' + primaryName + ')</span>';
                     }
                 });
             }

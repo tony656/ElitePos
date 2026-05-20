@@ -780,6 +780,9 @@
             50% { opacity: 0.85; }
         }
     </style>
+    <script>
+  AOS.init();
+</script>
     <!-- Mobile Hamburger Button -->
     <button class="mobile-hamburger" id="mobileHamburger" aria-label="Open menu">
         <i class="fas fa-bars"></i>
@@ -820,7 +823,7 @@
         <!-- Navigation Menu -->
         <ul class="nav-menu" id="navMenu">
             <!-- Dashboard -->
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left">
                 <a href="/admin/dashboard" class="nav-link">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
@@ -831,7 +834,7 @@
 
             <!-- Supplier with Dropdown -->
             @if (canUser('view_suppliers'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="100">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="supplier-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-user-tie"></i></span>
@@ -860,7 +863,7 @@
 
             <!-- Banking with Dropdown -->
             @if (canUser('view_banking'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="200">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="banking-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-university"></i></span>
@@ -883,25 +886,49 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="/admin/banking/supplier-deposit-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Supplier Deposit Report</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
 
-            <!-- Customers -->
+            <!-- Customers with Dropdown -->
             @if (canUser('view_customers'))
-            <li class="nav-item">
-                <a href="/admin/customers" class="nav-link">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="300">
+                <button class="nav-toggle" aria-expanded="false" aria-controls="customers-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-users"></i></span>
                         <span class="nav-text">Customers</span>
                     </div>
-                </a>
+                    <span class="chevron"><i class="fas fa-chevron-right"></i></span>
+                </button>
+                <ul class="submenu" id="customers-menu">
+                    <li class="nav-item">
+                        <a href="/admin/customers" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">All Customers</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/customer-kpi" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Customer KPI</span>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
             </li>
             @endif
             
             <!-- Items with Dropdown -->
             @if (canUser('view_items'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="400">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="items-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-boxes"></i></span>
@@ -942,13 +969,20 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="/admin/items-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Items Report</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
 
             <!-- Receiving with Dropdown -->
             @if (canUser('view_receivings'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="500">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="receiving-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-truck-loading"></i></span>
@@ -985,13 +1019,20 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="/admin/receiving-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Report</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
 
             <!-- New Sale -->
             @if (canUser('create_sales'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="600">
                 <a href="/admin/newOrder" class="nav-link">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-shopping-cart"></i></span>
@@ -1003,7 +1044,7 @@
 
             <!-- Order Lists -->
             @if (canUser('view_invoices'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="700">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="invoices-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-list-check"></i></span>
@@ -1050,7 +1091,7 @@
 
             <!-- Reports with Dropdown -->
             @if (canUser('view_reports'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="800">
                 <button class="nav-toggle" aria-expanded="false" aria-controls="report-menu">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
@@ -1110,7 +1151,7 @@
 
             <!-- Expenses -->
             @if (canUser('view_expenses'))
-            <li class="nav-item">
+            <li class="nav-item" data-aos="fade-left" data-aos-delay="100">
                 <a href="/admin/expenses" class="nav-link">
                     <div class="nav-content">
                         <span class="nav-icon"><i class="fas fa-receipt"></i></span>

@@ -9,7 +9,7 @@ if (!function_exists('canUser')) {
         if (!$user) return false;
 
         // Admin users have all permissions (case-insensitive)
-        if (strtolower(trim($user->levelStatus)) === 'Admin') {
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
             return true;
         }
 

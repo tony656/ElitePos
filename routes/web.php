@@ -13,6 +13,7 @@ use App\Http\Controllers\salsController;
 use App\Http\Controllers\systemController;
 use App\Http\Controllers\userController;
 use App\Http\Controllers\validationController;
+use App\Http\Controllers\BalanceCheckController;
 use App\Models\expensesModel;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\homeController;
@@ -74,8 +75,11 @@ Route::middleware(['auth'])->get('/api/system-status', [systemController::class,
 Route::middleware(['system.security'])->group(function () {
     Route::middleware(['auth'])->group(function () {
 
+        // Customer KPI route (accessible to both admin and user)
+        Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
+
  Route::prefix('admin')->name('admin.')->group(function () {
-      
+       
  Route::get('/home', fn () => view('home'))->name('home');
     
  Route::get('/dashboard', [homeController::class, 'dashboard'])->name('dashboard');
@@ -90,6 +94,8 @@ Route::middleware(['system.security'])->group(function () {
     });
 
     Route::post('/addProducts', [productsController::class, 'saveProduct']);
+    
+    Route::get('/downloadTemplate', [productsController::class, 'downloadTemplate'])->name('downloadTemplate');
 
     Route::post('/viewProduct', [productsController::class, 'viewProduct']);
 
@@ -115,6 +121,8 @@ Route::middleware(['system.security'])->group(function () {
 
     Route::post('/newOrder', [orderController::class, 'newOrder']);
 
+    Route::get('/changeShop', [orderController::class, 'changeShop'])->name('admin.changeShop');
+
     Route::post('/updateCartItem', [orderController::class, 'updateCartItem']);
 
     Route::post('/resumeOrder', [orderController::class, 'resumeOrder']);
@@ -136,6 +144,7 @@ Route::middleware(['system.security'])->group(function () {
     Route::post('/removeFromCart', [orderController::class, 'dltProdOrdcart']);
 
     Route::post('/saveInfos', [orderController::class, 'saveInfo']);
+    Route::post('/saveSeller', [orderController::class, 'saveSeller']);
 
     Route::get('/api/receivings-by-date', [productsController::class, 'getReceivingsByDate']);
 
@@ -169,6 +178,8 @@ Route::middleware(['system.security'])->group(function () {
 
     Route::post('/viewOrder', [orderController::class, 'viewOrder']);
 
+    Route::post('/deleteOrder', [orderController::class, 'deleteOrder']);
+
     Route::post('/discount', [orderController::class, 'discount']);
 
     Route::post('/coupon', [orderController::class, 'coupon']);
@@ -180,6 +191,7 @@ Route::middleware(['system.security'])->group(function () {
     Route::get('/shopReport', [salsController::class, 'AllShopReport']);
 
     Route::get('/kpi', [salsController::class, 'kpiDashboard'])->name('kpi');
+    Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
 
     Route::post('/viewInvoice', [orderController::class, 'viewInvoice']);
 
@@ -253,14 +265,14 @@ Route::middleware(['system.security'])->group(function () {
     Route::post('/deleteOffer', [productsController::class, 'deleteOffer'])->name('deleteOffer');
     Route::get('/checkOffer/{productId}/{quantity}', [productsController::class, 'checkOffer'])->name('checkOffer');
     Route::get('/offeredProductsReport', [productsController::class, 'offeredProductsReport'])->name('offeredProductsReport');
-    Route::get('/search-products-for-offer', [productsController::class, 'admin.searchProductsForOffer'])->name('searchProductsForOffer');
+    Route::get('/search-products-for-offer', [productsController::class, 'searchProductsForOffer'])->name('searchProductsForOffer');
 
     Route::post('/dltExpense', [expensesController::class, 'dltExpense']);
 
 
-    Route::get('/employees', [userController::class, 'index']);
+    Route::get('/employees', [userController::class, 'index'])->name('admin.employees');
 
-    Route::post('/registerEmployee', [userController::class, 'registerEmployee']);
+    Route::post('/registerEmployee', [userController::class, 'registerEmployee'])->name('admin.registerEmployee');
 
     Route::get('/sales/export', [salsController::class, 'export'])->name('sales.export');
 
@@ -283,19 +295,28 @@ Route::middleware(['system.security'])->group(function () {
     // Check today's balance
     Route::get('/check-today-balance', [salsController::class, 'checkTodayBalance'])->name('check.today.balance');
 
+    // Balance Check & Discrepancy Routes (Admin)
+    Route::prefix('balance-check')->name('balance-check.')->group(function () {
+        Route::get('/discrepancies/{shopId}/{date}', [App\Http\Controllers\BalanceCheckController::class, 'showDiscrepancies'])->name('discrepancies');
+        Route::get('/discrepancy/{id}', [App\Http\Controllers\BalanceCheckController::class, 'showDiscrepancyDetail'])->name('discrepancy.detail');
+        Route::post('/resolve/{id}', [App\Http\Controllers\BalanceCheckController::class, 'resolveDiscrepancy'])->name('resolve');
+        Route::post('/recalculate/{shopId}/{date}', [App\Http\Controllers\BalanceCheckController::class, 'recalculateBalance'])->name('recalculate');
+        Route::get('/all', [App\Http\Controllers\BalanceCheckController::class, 'allDiscrepancies'])->name('all');
+    });
+
     Route::post('/deleteNotif', [notification::class, 'delete']);
 
-    Route::get('/employeeView', [userController::class, 'employeeView']);
+    Route::get('/employeeView', [userController::class, 'employeeView'])->name('admin.employeeView');
 
-    Route::post('/employeeView', [userController::class, 'employeeView'])->name('employeeView');
+    Route::post('/employeeView', [userController::class, 'employeeView'])->name('admin.employeeView.post');
 
-    Route::post('/updateEmployee', [userController::class, 'updateEmployee']);
+    Route::post('/updateEmployee', [userController::class, 'updateEmployee'])->name('admin.updateEmployee');
 
-    Route::post('/banUser', [userController::class, 'banUser']);
+    Route::post('/banUser', [userController::class, 'banUser'])->name('admin.banUser');
 
-    Route::post('/deleteUser', [userController::class, 'deleteUser']);
+    Route::post('/deleteUser', [userController::class, 'deleteUser'])->name('admin.deleteUser');
 
-    Route::post('/changePassword', [userController::class, 'changePassword']);
+    Route::post('/changePassword', [userController::class, 'changePassword'])->name('admin.changePassword');
 
     Route::post('/dltItemReq', [itemRequestController::class, 'dltItemReq']);
 
@@ -334,8 +355,15 @@ Route::middleware(['system.security'])->group(function () {
     
     Route::get('make-return', [productsController::class, 'makeReturn'])->name('make-return');
     Route::post('make-return/process', [productsController::class, 'processReturn'])->name('process-return');
-    
+
+    Route::post('return/approve', [productsController::class, 'approveReturn'])->name('return.approve');
+    Route::post('return/reject', [productsController::class, 'rejectReturn'])->name('return.reject');
+
     Route::get('view-returns', [productsController::class, 'viewReturns']);
+
+    Route::get('receiving-report', [productsController::class, 'receivingReport'])->name('receiving-report');
+
+    Route::get('items-report', [productsController::class, 'itemsReport'])->name('items-report');
 
     Route::get('/stock-report', [productsController::class, 'report']);
 
@@ -363,6 +391,11 @@ Route::middleware(['system.security'])->group(function () {
         Route::get('/banking-transfers', [bankingController::class, 'transfers']);
         Route::post('/banking-transfer/store', [bankingController::class, 'storeTransfer']);
         Route::post('/banking-transfer/delete/{id}', [bankingController::class, 'deleteTransfer']);
+
+        // Supplier Deposit Report (Admin)
+        Route::get('/banking/supplier-deposit-report', [bankingController::class, 'supplierDepositReport'])->name('admin.banking.supplierDepositReport');
+        Route::get('/banking/supplier-deposit-report/export', [bankingController::class, 'exportSupplierDepositReport'])->name('admin.banking.exportSupplierDepositReport');
+        Route::get('/banking/get-suppliers-by-shop', [bankingController::class, 'getSuppliersByShop'])->name('admin.banking.getSuppliersByShop');
 
         // Banking Chips Routes (Admin)
         Route::get('/banking-chips', [bankingController::class, 'chips'])->name('admin.banking-chips');
@@ -495,7 +528,7 @@ Route::get('/newProducts', function() {
 
     Route::post('processDebt', [orderController::class, 'debt']);
 
-Route::post('/addProducts', [productsController::class, 'saveProduct']);
+Route::post('/addProducts', [productsController::class, 'saveProduct'])->withoutMiddleware([\App\Http\Middleware\SystemSecurityMiddleware::class]);
 
     Route::post('cashSubmit', action: [salsController::class, 'cashSubmit']);
     Route::post('cashDelete', action: [salsController::class, 'cashDelete']);
@@ -511,6 +544,8 @@ Route::get('/viewProduct', [productsController::class, 'viewProduct']);
 Route::post('/updateProducts', action: [productsController::class, 'updateProducts']);
 
 Route::get('/newOrder', [productsController::class, 'newOrder']);
+
+Route::get('/changeShop', [orderController::class, 'changeShop'])->name('user.changeShop');
 
 Route::post('/newOrder', [orderController::class, 'newOrder']);
 
@@ -537,6 +572,8 @@ Route::get('/fullReport', [salsController::class, 'fullReport']);
 Route::get('/shopReport', [salsController::class, 'AllShopReport']);
 
 Route::get('/kpi', [salsController::class, 'kpiDashboard'])->name('kpi');
+Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
+Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
 
 Route::post('/updQuant', [orderController::class, 'updQuant']);
 
@@ -549,6 +586,8 @@ Route::get('/viewRequest', [itemRequestController::class, 'viewRequest']);
 Route::post('/itemRequest', [itemRequestController::class, 'itemRequest']);
 
 Route::post('/dltProdOrd', [orderController::class, 'dltProdOrd']);
+
+Route::post('/dltItemReq', [itemRequestController::class, 'dltItemReq']);
 
 Route::post('/saveInfo', [itemRequestController::class, 'saveInfo']);
 
@@ -597,7 +636,7 @@ Route::post('/viewInvoice', [orderController::class, 'viewInvoice']);
 
 Route::get('/viewSales', [salsController::class, 'viewSales']);
 
-Route::get('/undoSales', [salsController::class, 'undoSales']);
+Route::post('/undoSales', [salsController::class, 'undoSales']);
 
 Route::get('/searchSales', [salsController::class, 'searchSales']);
 
@@ -605,6 +644,12 @@ Route::get('/getSalesDates', [salsController::class, 'getSalesDates']);
 
 // Check today's balance
 Route::get('/check-today-balance', [salsController::class, 'checkTodayBalance'])->name('check.today.balance');
+
+// Balance Check & Discrepancy Routes (User)
+Route::prefix('balance-check')->name('balance-check.')->group(function () {
+    Route::get('/discrepancies/{shopId}/{date}', [App\Http\Controllers\BalanceCheckController::class, 'showDiscrepancies'])->name('discrepancies');
+    Route::get('/discrepancy/{id}', [App\Http\Controllers\BalanceCheckController::class, 'showDiscrepancyDetail'])->name('discrepancy.detail');
+});
 
 Route::get('/expenses', [expensesController::class, 'index']);
 
@@ -631,8 +676,6 @@ Route::post('/updateAccount', [systemController::class, 'updateAccount']);
 Route::post('/switch', [systemController::class, 'switchAccount']);
 
 Route::get('/getAllAccounts', [systemController::class, 'getAllAccounts']);
-
-Route::post('/undoSales', [salsController::class, 'undoSales']);
 
 Route::get('/allInvoices', [systemController::class, 'allInvoices']);
 
@@ -665,6 +708,7 @@ Route::get('/getAllOffersApi', [productsController::class, 'getAllOffersApi'])->
 Route::post('/deleteOffer', [productsController::class, 'deleteOffer'])->name('deleteOffer');
 Route::get('/checkOffer/{productId}/{quantity}', [productsController::class, 'checkOffer'])->name('checkOffer');
 Route::get('/offeredProductsReport', [productsController::class, 'offeredProductsReport'])->name('offeredProductsReport');
+Route::get('/search-products-for-offer', [productsController::class, 'searchProductsForOffer'])->name('searchProductsForOffer');
 
 Route::get('/employees', [userController::class, 'index']);
 
@@ -680,16 +724,16 @@ Route::post('/sendNotif', [notification::class, 'notification']);
 
 Route::post('/deleteNotif', [notification::class, 'delete']);
 
-Route::get('/employeeView', [userController::class, 'employeeView']);
-Route::post('/employeeView', [userController::class, 'employeeView'])->name('employeeView');
+Route::get('/employeeView', [userController::class, 'employeeView'])->name('user.employeeView');
+Route::post('/employeeView', [userController::class, 'employeeView'])->name('user.employeeView.post');
 
-Route::post('/updateEmployee', [userController::class, 'updateEmployee']);
+Route::post('/updateEmployee', [userController::class, 'updateEmployee'])->name('user.updateEmployee');
 
-Route::post('/banUser', [userController::class, 'banUser']);
+Route::post('/banUser', [userController::class, 'banUser'])->name('user.banUser');
 
-Route::post('/deleteUser', [userController::class, 'deleteUser']);
+Route::post('/deleteUser', [userController::class, 'deleteUser'])->name('user.deleteUser');
 
-Route::post('/changePassword', [userController::class, 'changePassword']);
+Route::post('/changePassword', [userController::class, 'changePassword'])->name('user.changePassword');
 
 Route::get('/coupons', [couponController::class, 'index']);
 
@@ -727,12 +771,17 @@ Route::post('make-return/process', [productsController::class, 'processReturn'])
 
 Route::get('view-returns', [productsController::class, 'viewReturns']);
 
+Route::get('receiving-report', [productsController::class, 'receivingReport'])->name('receiving-report');
+
+Route::get('items-report', [productsController::class, 'itemsReport'])->name('items-report');
+
 Route::get('/stock.report', [productsController::class, 'report']);
 
 Route::get('/suppliers', [supplier::class, 'index']);
     Route::post('/saveInfos', [orderController::class, 'saveInfo']);
+    Route::post('/saveSeller', [orderController::class, 'saveSeller']);
 
-    // Banking Routes
+    // Banking Routes (User)
     Route::get('/banking-partners', [bankingController::class, 'partners']);
     Route::get('/banking-suppliers', [bankingController::class, 'suppliers']);
     Route::post('/banking-supplier/store', [bankingController::class, 'storeSupplier']);
@@ -750,16 +799,23 @@ Route::get('/suppliers', [supplier::class, 'index']);
     Route::post('/banking-beneficiary/account/update/{id}', [bankingController::class, 'updateAccount']);
     Route::post('/banking-beneficiary/account/delete/{id}', [bankingController::class, 'deleteAccount']);
 
-    // Banking Transfers Routes
+    // Banking Transfers Routes (User)
     Route::get('/banking-transfers', [bankingController::class, 'transfers']);
     Route::post('/banking-transfer/store', [bankingController::class, 'storeTransfer']);
     Route::post('/banking-transfer/delete/{id}', [bankingController::class, 'deleteTransfer']);
 
-        // Banking Chips Routes
-        Route::get('/banking-chips', [bankingController::class, 'chips']);
-        Route::post('/banking-chip/store', [bankingController::class, 'storeChip']);
-        Route::post('/banking-chip/update/{id}', [bankingController::class, 'updateChip']);
-        Route::post('/banking-chip/delete/{id}', [bankingController::class, 'deleteChip']);
+    // Banking Chips Routes (User)
+    Route::get('/banking-chips', [bankingController::class, 'chips']);
+    Route::post('/banking-chip/store', [bankingController::class, 'storeChip']);
+    Route::post('/banking-chip/update/{id}', [bankingController::class, 'updateChip']);
+    Route::post('/banking-chip/delete/{id}', [bankingController::class, 'deleteChip']);
+    
+    // Supplier Deposit Report (User)
+    Route::get('/banking/supplier-deposit-report', [bankingController::class, 'supplierDepositReport'])->name('user.banking.supplierDepositReport');
+    Route::get('/banking/supplier-deposit-report/export', [bankingController::class, 'exportSupplierDepositReport'])->name('user.banking.exportSupplierDepositReport');
+    Route::get('/banking/get-suppliers-by-shop', [bankingController::class, 'getSuppliersByShop'])->name('user.banking.getSuppliersByShop');
+        
+
 
 
 
@@ -808,6 +864,7 @@ Route::post('deleteDebt', [orderController::class, 'deleteDebt']);
 
 Route::match(['get', 'post'], 'customerView', [customerController::class, 'customerView']);
 
+Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
 
 Route::get('/security', [systemController::class, 'security'])->name('security');
 

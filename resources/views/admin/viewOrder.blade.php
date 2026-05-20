@@ -524,6 +524,26 @@
             color: var(--white);
         }
 
+        .btn-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            background: transparent;
+            color: var(--rose);
+            border: 1.5px solid var(--rose);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-left: 0.5rem;
+        }
+        .btn-delete:hover {
+            background: var(--rose);
+            color: var(--white);
+        }
+
         /* ── Order details ── */
         .order-details {
             display: none;
@@ -990,9 +1010,15 @@
                                     </div>
                                     <div style="text-align: right;">
                                         @if(!$isPaid && canUser('pay_debts'))
-                                        <button type="button" class="btn-pay" data-bs-toggle="modal" 
+                                        <button type="button" class="btn-pay" data-bs-toggle="modal"
                                             data-bs-target="#{{ $modalId }}" onclick="event.stopPropagation();">
                                             <i class="bi bi-cash-stack"></i> Pay
+                                        </button>
+                                        @endif
+                                        @if(canUser('delete_orders'))
+                                        <button type="button" class="btn-delete" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal_{{ $orderId }}" onclick="event.stopPropagation();">
+                                            <i class="bi bi-trash"></i> Delete
                                         </button>
                                         @endif
                                     </div>
@@ -1139,6 +1165,46 @@
         @endif
     @endforeach
 @endif
+
+{{-- Delete Order Confirmation Modals --}}
+@if(isset($groupedOrders) && $groupedOrders->count() > 0)
+    @php $deleteModalCounter = 0; @endphp
+    @foreach($groupedOrders as $orderId => $orderItems)
+        @php
+            $firstItem = $orderItems->first();
+            $deleteModalId = 'deleteModal_' . $orderId;
+        @endphp
+        <div class="modal fade" id="{{ $deleteModalId }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header-navy">
+                        <h5 class="modal-title">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="{{ url('admin/deleteOrder') }}" method="POST">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <p>Are you sure you want to delete order <strong>#{{ $firstItem->orderName ?? $orderId }}</strong>?</p>
+                                <p class="text-danger" style="font-size: 0.875rem; margin-top: 0.75rem;">
+                                    <i class="bi bi-info-circle"></i> This action will permanently delete all items in this order and restore product stock quantities.
+                                </p>
+                            </div>
+                            <input type="hidden" name="orderId" value="{{ $orderId }}">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-confirm" style="background: var(--rose);">Delete Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+@endif
+
 <script>
     function toggleOrderDetails(orderId) {
         const detailsRow = document.getElementById('details-' + orderId);

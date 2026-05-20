@@ -264,24 +264,46 @@
             display: inline-flex; align-items: center;
             font-size: 0.72rem; font-weight: 700;
             padding: 0.25rem 0.55rem; border-radius: 5px;
-            background: var(--violet-pale); color: #5B21B6;
             text-transform: uppercase; letter-spacing: 0.04em;
         }
+        .status-badge.pending  { background: var(--amber-pale);   color: #92400E; }
+        .status-badge.returned { background: var(--violet-pale);  color: #5B21B6; }
+        .status-badge.approved { background: var(--emerald-pale); color: #065F46; }
 
-        /* ── Action button ── */
-        .act-btn-delete {
+        /* ── Action buttons ── */
+        .act-btn {
             width: 30px; height: 30px;
-            border: 1.5px solid var(--rose);
+            border: 1.5px solid;
             border-radius: 6px;
             display: inline-flex; align-items: center; justify-content: center;
             font-size: 0.82rem;
-            color: var(--rose);
             cursor: pointer;
             transition: all 0.15s;
             background: transparent;
+            margin-right: 4px;
+        }
+        .act-btn-approve {
+            border-color: var(--emerald);
+            color: var(--emerald);
+        }
+        .act-btn-approve:hover {
+            background: var(--emerald-pale);
+            transform: scale(1.08);
+        }
+        .act-btn-reject {
+            border-color: var(--rose);
+            color: var(--rose);
+        }
+        .act-btn-reject:hover {
+            background: var(--rose-pale);
+            transform: scale(1.08);
+        }
+        .act-btn-delete {
+            border-color: var(--slate-400);
+            color: var(--slate-500);
         }
         .act-btn-delete:hover {
-            background: var(--rose-pale);
+            background: var(--slate-100);
             transform: scale(1.08);
         }
 
@@ -383,6 +405,16 @@
                             <option value="Approved" {{ $statusFilter == 'Approved' ? 'selected' : '' }}>Approved</option>
                             <option value="Returned" {{ $statusFilter == 'Returned' ? 'selected' : '' }}>Returned</option>
                         </select>
+
+                        <label for="shop">Shop:</label>
+                        <select name="shop" onchange="this.form.submit()" id="shop">
+                            <option value="">All Shops</option>
+                            @foreach($shops as $shop)
+                                <option value="{{ $shop->id }}" {{ $shopFilter == $shop->id ? 'selected' : '' }}>
+                                    {{ $shop->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </form>
                 </div>
 
@@ -410,7 +442,7 @@
                         </div>
                         <div class="summary-note">
                             <i class="bi bi-info-circle"></i>
-                            Returns decrease product quantities in the inventory.
+                            Pending returns require admin approval before stock is deducted. Approved/Returned returns have already reduced inventory.
                         </div>
                     </div>
 
@@ -442,7 +474,7 @@
                                     <td><span class="price-val">Tsh {{ number_format($item->price, 2) }}</span></td>
                                     <td><span class="total-val">Tsh {{ number_format($item->price * $item->quantity, 2) }}</span></td>
                                     <td>
-                                        @if($item->isDebt == 1)
+                                        @if($item->isDebt = 1)
                                             <span class="pay-badge credit">Credit</span>
                                         @else
                                             <span class="pay-badge cash">Cash</span>
@@ -451,15 +483,43 @@
                                     <td><i class="bi bi-person"></i> {{ $item->supplier ?? 'Unknown' }}</td>
                                     <td><i class="bi bi-person-check"></i> {{ $item->served_by ?? 'Unknown' }}</td>
                                     <td>
-                                        <span class="status-badge">Returned</span>
+                                        @php $status = strtolower(trim($item->status ?? 'returned')); @endphp
+                                        @if($status == 'pending')
+                                            <span class="status-badge pending">Pending</span>
+                                        @elseif($status == 'approved')
+                                            <span class="status-badge approved">Approved</span>
+                                        @else
+                                            <span class="status-badge returned">Returned</span>
+                                        @endif
                                     </td>
                                     <td>
-                                        <form method="post">
+                                        @php $status = strtolower(trim($item->status ?? 'returned')); @endphp
+                                        @if($status == 'pending')
+                                            <form method="post" style="display:inline;">
+                                                @csrf
+                                                <input type="hidden" name="return_id" value="{{ $item->id }}">
+                                                <button formaction="{{ url('admin/return/approve') }}"
+                                                    class="act-btn act-btn-approve" title="Approve return"
+                                                    onclick="return confirm('Approve this return? Stock will be deducted.')">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" style="display:inline;">
+                                                @csrf
+                                                <input type="hidden" name="return_id" value="{{ $item->id }}">
+                                                <button formaction="{{ url('admin/return/reject') }}"
+                                                    class="act-btn act-btn-reject" title="Reject return"
+                                                    onclick="return confirm('Reject this return? No stock will be deducted.')">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <form method="post" style="display:inline;">
                                             @csrf
                                             <input type="hidden" name="product_id" value="{{ $item->productId }}">
                                             <input type="hidden" name="action" value="delete">
-                                            <button formaction="{{ url('admin/dltrestock') }}" 
-                                                class="act-btn-delete" title="Delete" 
+                                            <button formaction="{{ url('admin/dltrestock') }}"
+                                                class="act-btn act-btn-delete" title="Delete"
                                                 onclick="return confirm('Delete this return record?')">
                                                 <i class="bi bi-trash"></i>
                                             </button>

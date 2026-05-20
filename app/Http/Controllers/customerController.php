@@ -31,11 +31,14 @@ class customerController extends Controller
             $accounts = collect(); // Empty collection for non-admin
         }
 
-        $fetch = customerModel::where('account', $selectedAccount)->get(); // Fetch all customers from the database
-        $myCustomers = customerModel::where('account', $selectedAccount)->where('employeeId', $user->id)->get();
+        // Fetch ALL customers from all accounts (no account filter)
+        $fetch = customerModel::all();
+
+        // myCustomers: customers assigned to this user across all accounts
+        $myCustomers = customerModel::where('employeeId', $user->id)->get();
 
         foreach($fetch as $customer) {
-            $customer->totalSales = salsModel::where('account', $selectedAccount)->where('cPhone', $customer->id)->count();
+            $customer->totalSales = salsModel::where('cPhone', $customer->id)->count();
         }
 
         $users = usersModel::where('account', $selectedAccount)->get();
@@ -114,38 +117,49 @@ class customerController extends Controller
  public function searchCustomer(Request $request)
 {
   
-    $query = $request->query('query', '');
-    $user = Auth::user();
-    
-    if (strlen($query) < 1) {
-        return response()->json([]);
-    }
+   $query = $request->query('query', '');
+   $user = Auth::user();
+   
+   if (strlen($query) < 1) {
+       return response()->json([]);
+   }
 
-    // Get all account IDs assigned to the user
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        // Admins can search all accounts or use specified account
-        $accountParam = $request->query('account', getSessionAccountId());
-        $accountIds = is_array($accountParam) ? $accountParam : [$accountParam];
-    } else {
-        // Regular users: get from user_accounts relationship
-        $accountIds = $user->accounts()->pluck('account')->toArray();
-        
-        // Fallback to the account field in users table if no pivot records
-        if (empty($accountIds)) {
-            $accountIds = [$user->account];
-        }
-    }
-    
-    $customers = customerModel::whereIn('account', $accountIds)
-            ->where(function ($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                  ->orWhere('phone', 'LIKE', "%{$query}%");
-            })
-            ->select('id', 'name', 'phone', 'limits', 'account')
-            ->limit(15)
-            ->get();
+   // Get selected shop from session
+   $selectedShopId = session('selected_shop_id');
+   
+   // If no shop selected, fallback to session account
+   if (!$selectedShopId) {
+       $selectedShopId = getSessionAccountId();
+   }
+   
+   // For non-admin users, verify they have access to the selected shop
+   if (strtolower(trim($user->levelStatus)) !== 'admin') {
+       $assignedAccountIds = $user->accounts()->pluck('account')->toArray();
+       // Fallback to the account field in users table if no pivot records
+       if (empty($assignedAccountIds)) {
+           $assignedAccountIds = [$user->account];
+       }
+       if (!in_array($selectedShopId, $assignedAccountIds)) {
+           // User doesn't have access to this shop, return empty results
+           return response()->json([]);
+       }
+       // Use only the selected shop (not all assigned shops)
+       $accountIds = [$selectedShopId];
+   } else {
+       // Admin: use selected shop or fallback
+       $accountIds = [$selectedShopId];
+   }
+   
+   $customers = customerModel::whereIn('account', $accountIds)
+           ->where(function ($q) use ($query) {
+               $q->where('name', 'LIKE', "%{$query}%")
+                 ->orWhere('phone', 'LIKE', "%{$query}%");
+           })
+           ->select('id', 'name', 'phone', 'limits', 'account')
+           ->limit(15)
+           ->get();
 
-    return response()->json($customers);
+   return response()->json($customers);
 }
  public function getCustomerDetails($customerId)
  {

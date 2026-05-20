@@ -390,6 +390,40 @@
         }
         .field-hint { font-size: 0.71rem; color: var(--slate-400); }
 
+        /* ── Inline Shop Selector ── */
+        .shop-select-inline {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.5rem 2rem 0.5rem 0.75rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--navy);
+            cursor: pointer;
+            outline: none;
+            min-width: 160px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%234361EE' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.6rem center;
+            appearance: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .shop-select-inline:hover {
+            border-color: var(--navy-light);
+        }
+        .shop-select-inline:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            outline: none;
+        }
+        .shop-select-inline option {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            color: var(--slate-800);
+            background: var(--white);
+        }
+
         /* ── Pay distribution ── */
         .pay-dist {
             display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
@@ -551,12 +585,25 @@
                         </div>
                     </div>
 
-                    {{-- Product search --}}
+                    {{-- Product search with shop selector --}}
                     <div class="search-wrap">
-                        <div class="sbox">
-                            <i class="bi bi-search sbox-icon"></i>
-                            <input type="text" id="productSearch" class="sbox-input"
-                                placeholder="Search products…" autocomplete="off">
+                        <div class="sbox" style="display:flex; gap:0.5rem; align-items:center;">
+                            {{-- Shop Selector --}}
+                            @if(isset($allShops) && $allShops->count() > 1)
+                            <select class="shop-select-inline" id="shopSelect" onchange="changeShop(this.value)" title="Select Shop">
+                                @foreach($allShops as $shop)
+                                <option value="{{ $shop->id }}" {{ (session('selected_shop_id') == $shop->id) ? 'selected' : '' }}>
+                                    {{ $shop->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            @endif
+                            {{-- Search Input --}}
+                            <div style="flex:1; position:relative;">
+                                <i class="bi bi-search sbox-icon"></i>
+                                <input type="text" id="productSearch" class="sbox-input"
+                                    placeholder="Search products…" autocomplete="off">
+                            </div>
                         </div>
                         <div class="dropdown" id="productDropdown"></div>
                     </div>
@@ -712,10 +759,12 @@
 
                         @php
                             $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
-                            $odez   = DB::table('orders')->where('account', getSessionAccountName())
-                                        ->where('cName', $orders->cName ?? '')
-                                        ->whereIn('status', ['Debt','partial'])
+                            $odez1   = DB::table('orders')->where('cName', $orders->cName ?? '')
+                                        ->whereIn('status', ['Debt','Partial'])
                                         ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
+                            $odez2   = DB::table('debts')->where('cName', $orders->cName ?? '')
+                                        ->where('cId', $orders->cPhone ?? '')->sum('amount');
+                            $odez    = $odez1 - $odez2;
                         @endphp
 
                         @if(!empty($orders->cPhone))
@@ -758,23 +807,35 @@
 
                     {{-- Seller --}}
                     <div class="rp-sec">
-                        <div class="sec-title"><i class="bi bi-person-badge"></i> Seller</div>
-                        <div style="position:relative;">
-                            <div class="sbox">
-                                <i class="bi bi-search sbox-icon"></i>
-                                <input type="text" id="sellerSearch" class="sbox-input"
-                                    placeholder="Search seller…" autocomplete="off">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                            <div class="sec-title" style="margin-bottom:0;"><i class="bi bi-person-badge"></i> Seller</div>
+                        </div>
+                        
+                        <form action="saveSeller" id="saveSellerForm" method="post">
+                            @csrf
+                            <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
+                            
+                            <div style="position:relative;">
+                                <div class="sbox">
+                                    <i class="bi bi-search sbox-icon"></i>
+                                    <input type="text" id="sellerSearch" class="sbox-input"
+                                        placeholder="Search seller…" autocomplete="off"
+                                        value="{{ $orders->served_by ?? '' }}">
+                                    <input type="hidden" name="selectedSeller" id="selectedSeller"
+                                        value="{{ $orders->served_by ?? '' }}">
+                                </div>
+                                <div class="dropdown" id="sellerDropdown"></div>
                             </div>
-                            <div class="dropdown" id="sellerDropdown"></div>
-                        </div>
-                        <div id="sellerBadgeWrap" style="display:none;margin-top:0.5rem;">
-                            <span class="sel-badge">
-                                <span id="sellerBadgeText"></span>
-                                <button type="button" class="sel-badge-remove" onclick="clearSeller()">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </span>
-                        </div>
+                            
+                            <div id="sellerBadgeWrap" style="display:{{ $orders->served_by ? 'block' : 'none' }};margin-top:0.5rem;">
+                                <span class="sel-badge">
+                                    <span id="sellerBadgeText">{{ $orders->served_by ?? '' }}</span>
+                                    <button type="button" class="sel-badge-remove" onclick="clearSeller()">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </form>
                     </div>
 
                     {{-- Order form --}}
@@ -782,7 +843,7 @@
                         <form action="payout" method="post" id="payoutForm">
                             @csrf
                             <input type="hidden" name="orderId"          value="{{ $orders->order_id ?? '' }}">
-                            <input type="hidden" name="served"           id="servedHidden">
+                            <input type="hidden" name="served"           id="servedHidden" value="{{ $orders->served_by ?? '' }}">
                             <input type="hidden" name="selectedCustomer" id="custHidden">
                             <input type="hidden" name="offered_items"    id="offeredItemsInput" value="">
 
@@ -1064,6 +1125,7 @@ function addProductToOrder(id, name, price) {
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <input type="hidden" name="pId" value="${id}">
         <input type="hidden" name="orderType" value="Sell">
+        <input type="hidden" name="served" value="${document.getElementById('servedHidden').value}">
     `;
     document.body.appendChild(form);
     form.submit();
@@ -1179,10 +1241,14 @@ sellerSearch.addEventListener('input', async e => {
 function selectSeller(name, role) {
     sellerSearch.value = name;
     sellerDD.classList.remove('open');
-    document.getElementById('servedHidden').value     = name;
+    document.getElementById('selectedSeller').value = name;
+    document.getElementById('servedHidden').value = name;
     document.getElementById('sellerBadgeText').textContent = `${name} · ${role}`;
     document.getElementById('sellerBadgeWrap').style.display = 'block';
     selectedSellerName = name;
+    
+    // Auto-submit the seller form to save to database
+    document.getElementById('saveSellerForm').submit();
 }
 
 function clearSeller() {
@@ -1379,6 +1445,39 @@ function acceptOffer() {
     offerCtx = null;
 }
 function declineOffer() { offerCtx = null; }
+
+// ════════════════════════════════════════════
+// Shop Selector
+// ════════════════════════════════════════════
+function changeShop(shopId) {
+    // Show loading state
+    const shopSelect = document.getElementById('shopSelect');
+    if (shopSelect) {
+        shopSelect.disabled = true;
+    }
+    
+    // Send request to update session
+    fetch(`{{ url('admin/changeShop') }}?shop_id=${shopId}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Reload the page to refresh data for the selected shop
+            window.location.reload();
+        } else {
+            showToast('Failed to change shop', 'err');
+            if (shopSelect) shopSelect.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error changing shop:', error);
+        showToast('Network error changing shop', 'err');
+        if (shopSelect) shopSelect.disabled = false;
+    });
+}
 
 // ════════════════════════════════════════════
 // Close dropdowns on outside click

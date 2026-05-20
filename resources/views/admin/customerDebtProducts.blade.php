@@ -226,6 +226,9 @@
         .btn-pay { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:var(--r); background:var(--emerald); color:var(--white); font-family:var(--font); font-size:13px; font-weight:700; border:none; cursor:pointer; box-shadow:0 3px 12px rgba(5,150,105,.25); transition:all .18s; }
         .btn-pay:hover { background:#047857; transform:translateY(-1px); box-shadow:0 6px 18px rgba(5,150,105,.3); }
 
+        .btn-delete { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:var(--r); background:transparent; color:var(--rose); border:1.5px solid var(--rose); font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; transition:all .18s; }
+        .btn-delete:hover { background:var(--rose); color:var(--white); }
+
         /* ══════════════════════════════════
            TABLE VIEW
         ══════════════════════════════════ */
@@ -325,6 +328,9 @@
                     <div class="pg-right">
                         <a href="{{ url('admin/shopDebtors/' . urlencode($shopName)) }}" class="btn-ghost">
                             <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <a href="{{ url('customer-kpi') }}" class="btn-ghost" style="margin-left: 8px;">
+                            <i class="bi bi-graph-up"></i> Customer KPI
                         </a>
                     </div>
                 </div>
@@ -561,6 +567,13 @@
                                     <i class="bi bi-cash-stack"></i>
                                     Pay remaining — {{ number_format($remaining) }} Tsh
                                 </button>
+                                @if(canUser('delete_orders'))
+                                <button type="button" class="btn-delete"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal_card_{{ $invoiceName }}_{{ $cardModalCounter }}">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                                @endif
                             </div>
                             @endif
                         </div>
@@ -629,6 +642,41 @@
                                             <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
                                             <button type="submit" class="btn-confirm">
                                                 <i class="bi bi-check-circle-fill"></i> Confirm payment
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- Delete Modal for Card View --}}
+                        @if(canUser('delete_orders'))
+                        <div class="modal fade" id="deleteModal_card_{{ $invoiceName }}_{{ $cardModalCounter }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-top">
+                                        <div class="modal-top-left">
+                                            <div class="modal-top-icon" style="background:var(--rose);"><i class="bi bi-exclamation-triangle"></i></div>
+                                            <h5>Confirm Delete</h5>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url('admin/deleteOrder') }}" method="POST">
+                                        @csrf
+                                        <div class="modal-body">
+                                            <div class="field">
+                                                <p>Are you sure you want to delete invoice <strong>#{{ $invoiceName }}</strong>?</p>
+                                                <p style="font-size:12px; color:var(--rose); margin-top:10px;">
+                                                    <i class="bi bi-info-circle"></i> This will permanently delete all items in this order and restore product stock.
+                                                </p>
+                                            </div>
+                                            <input type="hidden" name="orderId" value="{{ $invoiceName }}">
+                                        </div>
+                                        <div class="modal-footer-custom">
+                                            <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn-confirm" style="background:var(--rose);">
+                                                <i class="bi bi-trash"></i> Delete Invoice
                                             </button>
                                         </div>
                                     </form>
@@ -724,10 +772,20 @@
                                             <button type="button" class="btn-pay"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}"
+                                                onclick="toggleChipField('payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}', {{ $availableChip }})"
                                                 style="padding:6px 12px; font-size:12px;">
                                                 <i class="bi bi-cash-stack"></i> Pay
                                             </button>
-                                            @else
+                                            @endif
+                                            @if(canUser('delete_orders'))
+                                            <button type="button" class="btn-delete"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal_table_{{ $invoiceName }}_{{ $loop->index }}"
+                                                style="padding:6px 12px; font-size:12px; margin-left:5px;">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                            @endif
+                                            @if($isPaid && !canUser('delete_orders'))
                                                 <span style="font-size:11px; color:var(--slate-400);">—</span>
                                             @endif
                                         </td>
@@ -757,25 +815,25 @@
                                                         </div>
                                                         <div class="field">
                                                             <label class="field-label">Payment method <span style="color:var(--rose);">*</span></label>
-                                                            <select class="field-input" name="payment_method" id="payment_method_table_{{ $invoiceName }}_{{ $loop->index }}" required onchange="toggleChipField('table_{{ $invoiceName }}_{{ $loop->index }}', {{ $availableChip }})">
+                                                            <select class="field-input" name="payment_method" id="payment_method_payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}" required onchange="toggleChipField('payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}', {{ $availableChip }})">
                                                                 <option value="cash">Cash</option>
                                                                 <option value="chip">Chip</option>
                                                             </select>
                                                         </div>
-                                                        <div class="field" id="chip_amount_field_table_{{ $invoiceName }}_{{ $loop->index }}" style="display: none;">
+                                                        <div class="field" id="chip_amount_field_payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}" style="display: none;">
                                                             <label class="field-label">Chip amount <span style="color:var(--rose);">*</span></label>
                                                             <input type="number" class="field-input" name="chip_amount"
                                                                 min="0" max="{{ $availableChip }}" step="0.01"
-                                                                placeholder="Enter chip amount…" id="chip_amount_input_table_{{ $invoiceName }}_{{ $loop->index }}">
+                                                                placeholder="Enter chip amount…" id="chip_amount_input_payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}">
                                                             <div class="field-hint">Available chip: <strong>{{ number_format($availableChip) }} Tsh</strong></div>
-                                                            <div class="field-hint" style="color: var(--emerald);">Cash portion will be: <strong id="cash_portion_table_{{ $invoiceName }}_{{ $loop->index }}">{{ number_format($remaining) }}</strong> Tsh</div>
+                                                            <div class="field-hint" style="color: var(--emerald);">Cash portion will be: <strong id="cash_portion_payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}">{{ number_format($remaining) }}</strong> Tsh</div>
                                                         </div>
                                                         <div class="field">
                                                             <label class="field-label">Payment amount <span style="color:var(--rose);">*</span></label>
                                                             <input type="number" class="field-input" name="paymentAmount"
                                                                 max="{{ $remaining }}" step="1" required
-                                                                placeholder="Enter amount…" id="payment_amount_table_{{ $invoiceName }}_{{ $loop->index }}"
-                                                                oninput="updateCashPortion('table_{{ $invoiceName }}_{{ $loop->index }}', {{ $availableChip }})">
+                                                                placeholder="Enter amount…" id="payment_amount_payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}"
+                                                                oninput="updateCashPortion('payDebtModal_table_{{ $invoiceName }}_{{ $loop->index }}', {{ $availableChip }})">
                                                             <div class="field-hint">Maximum: {{ number_format($remaining) }} Tsh</div>
                                                         </div>
                                                         <div class="field">
@@ -796,6 +854,42 @@
                                         </div>
                                     </div>
                                     @endif
+
+                                    {{-- Delete Modal for Table View --}}
+                                    @if(canUser('delete_orders'))
+                                    <div class="modal fade" id="deleteModal_table_{{ $invoiceName }}_{{ $loop->index }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-top">
+                                                    <div class="modal-top-left">
+                                                        <div class="modal-top-icon" style="background:var(--rose);"><i class="bi bi-exclamation-triangle"></i></div>
+                                                        <h5>Confirm Delete</h5>
+                                                    </div>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form action="{{ url('admin/deleteOrder') }}" method="POST">
+                                                    @csrf
+                                                    <div class="modal-body">
+                                                        <div class="field">
+                                                            <p>Are you sure you want to delete invoice <strong>#{{ $invoiceName }}</strong>?</p>
+                                                            <p style="font-size:12px; color:var(--rose); margin-top:10px;">
+                                                                <i class="bi bi-info-circle"></i> This will permanently delete all items in this order and restore product stock.
+                                                            </p>
+                                                        </div>
+                                                        <input type="hidden" name="orderId" value="{{ $invoiceName }}">
+                                                    </div>
+                                                    <div class="modal-footer-custom">
+                                                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn-confirm" style="background:var(--rose);">
+                                                            <i class="bi bi-trash"></i> Delete Invoice
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     <tr class="invoice-details-row" id="details-{{ $invoiceName }}" style="display:none;">
                                         <td colspan="8" style="padding:0; border:none;">
                                             <div style="background:var(--slate-50); padding:1rem 1.5rem; border-bottom:1.5px solid var(--slate-200);">

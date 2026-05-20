@@ -843,7 +843,7 @@
                                                             <i class="bi bi-eye"></i> View
                                                         </button>
                                                         <button class="btn-undo" formaction="/admin/undoSales" 
-                                                            name="sales_id" value="{{ $sale->sales_id }}">
+                                                            name="salesName" value="{{ $sale->salesName }}">
                                                             <i class="bi bi-x-circle"></i> Undo
                                                         </button>
                                                     </form>
@@ -918,7 +918,12 @@
 
     // Function to fetch sales dates for a specific month
     function fetchSalesDates(year, month) {
-        fetch(`/admin/getSalesDates?year=${year}&month=${month}`)
+        const shopId = new URLSearchParams(window.location.search).get('shop_id');
+        let url = `/admin/getSalesDates?year=${year}&month=${month}`;
+        if (shopId) {
+            url += `&shop_id=${shopId}`;
+        }
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 saleDates = data.dates;

@@ -837,12 +837,12 @@
                                                 <div class="action-btns">
                                                     <form method="post" style="display: inline;">
                                                         @csrf
-                                                        <button class="btn-view" formaction="/admin/viewSales" 
+                                                        <button class="btn-view" formaction="/user/viewSales"
                                                             name="sales_id" value="{{ $sale->sales_id }}">
                                                             <i class="bi bi-eye"></i> View
                                                         </button>
-                                                        <button class="btn-undo" formaction="/admin/undoSales" 
-                                                            name="sales_id" value="{{ $sale->sales_id }}">
+                                                        <button class="btn-undo" formaction="/user/undoSales"
+                                                            name="salesName" value="{{ $sale->salesName }}">
                                                             <i class="bi bi-x-circle"></i> Undo
                                                         </button>
                                                     </form>
@@ -878,7 +878,7 @@
 
                             <div id="calendar"></div>
 
-                            <form id="dateForm" action="{{ route('admin.saleDate') }}" method="post">
+                            <form id="dateForm" action="{{ route('user.saleDate') }}" method="post">
                                 @csrf
                                 <input type="hidden" id="selectedDate" name="selectedDate">
                             </form>
@@ -917,7 +917,12 @@
 
     // Function to fetch sales dates for a specific month
     function fetchSalesDates(year, month) {
-        fetch(`/admin/getSalesDates?year=${year}&month=${month}`)
+        const shopId = new URLSearchParams(window.location.search).get('shop_id');
+        let url = `/user/getSalesDates?year=${year}&month=${month}`;
+        if (shopId) {
+            url += `&shop_id=${shopId}`;
+        }
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 saleDates = data.dates;

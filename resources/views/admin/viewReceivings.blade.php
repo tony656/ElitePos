@@ -6,7 +6,7 @@
     <title>View Receivings</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy:       #0B1E3D;
@@ -29,7 +29,7 @@
         *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             background: #F0F4FA;
             color: var(--slate-800);
             min-height: 100vh;
@@ -173,7 +173,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.8rem;
             font-weight: 600;
             padding: 0.42rem 0.9rem;
@@ -225,7 +225,7 @@
         }
 
         .filter-input {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.825rem;
             padding: 0.38rem 0.65rem;
             border: 1.5px solid var(--slate-200);
@@ -532,12 +532,14 @@
                             <form method="POST" action="{{ route('admin.approve-all-receivings') }}">
                                 @csrf
                                 <input type="hidden" name="date" value="{{ $selectedDate }}">
+                                <input type="hidden" name="shop" value="{{ $shopFilter ?? '' }}">
                                 <button type="submit" class="tbtn tbtn-success" onclick="return confirm('Approve all pending receivings?')">
                                     <i class="bi bi-check-all"></i> Approve All
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('admin.approve-selected-receivings') }}" id="approveSelectedForm">
                                 @csrf
+                                <input type="hidden" name="shop" value="{{ $shopFilter ?? '' }}">
                                 <button type="submit" class="tbtn tbtn-primary" onclick="return confirm('Approve selected receivings?')">
                                     <i class="bi bi-check-circle"></i> Approve Selected
                                 </button>
@@ -606,6 +608,7 @@
                     @php
                         $totalQty   = $products->sum('quantity');
                         $totalValue = $products->sum(fn($p) => ($p->quantity ?? 0) * ($p->price ?? 0));
+                        $totalReturnValue = $totalReturnValue ?? 0;
                     @endphp
                     <div class="summary-bar">
                         <div class="summary-stat">
@@ -622,6 +625,11 @@
                             <span class="summary-stat-label">Total Value</span>
                             <span class="summary-stat-value emerald">Tsh {{ number_format($totalValue, 2) }}</span>
                         </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-stat">
+                            <span class="summary-stat-label">Total Value - Return</span>
+                            <span class="summary-stat-value" style="color:var(--rose);">Tsh {{ number_format($totalReturnValue, 2) }}</span>
+                        </div>
                     </div>
 
                     {{-- Table Body (toggle) --}}
@@ -637,7 +645,9 @@
                                         <th>Qty</th>
                                         <th>Cost</th>
                                         <th>Total</th>
-                                        <th>Payment · Status</th>
+                                        <th>Status</th>
+                                        <th>Return Qty</th>
+                                        <th>Payment</th>
                                         <th>Supplier</th>
                                         <th>Allocated</th>
                                         <th>Actions</th>
@@ -663,32 +673,50 @@
                                                 <span class="currency-prefix">Tsh</span>{{ number_format($item->price * $item->quantity, 2) }}
                                             </span>
                                         </td>
+                                         <td>
+                                            @if($item->status == 'Approved')
+                                                <span class="badge-pill badge-approved">Approved</span>
+                                            @elseif($item->status == 'Returned')
+                                                <span class="badge-pill badge-returned">Returned</span>
+                                            @else
+                                                <span class="badge-pill badge-pending">Pending</span>
+                                            @endif
+                                        </td>
+                                         <td>
+                                            @php
+                                                $retQty = $returnQtyMap[$item->productId] ?? 0;
+                                            @endphp
+                                            @if($retQty > 0)
+                                                <span class="mono amount" style="color:var(--rose);font-weight:600;">{{ number_format($retQty) }}</span>
+                                            @else
+                                                <span class="mono" style="color:var(--slate-400);">—</span>
+                                            @endif
+                                        </td>
                                         <td>
-                                            <div style="display:flex;flex-direction:column;gap:0.3rem;">
-                                                @if($item->isDebt == 1)
-                                                    <span class="badge-pill badge-credit"><i class="bi bi-credit-card" style="margin-right:1px;"></i>Credit</span>
-                                                @else
-                                                    <span class="badge-pill badge-cash"><i class="bi bi-cash" style="margin-right:1px;"></i>Cash</span>
-                                                @endif
-                                                @if($item->status == 'Approved')
-                                                    <span class="badge-pill badge-approved">Approved</span>
-                                                @elseif($item->status == 'Returned')
-                                                    <span class="badge-pill badge-returned">Returned</span>
-                                                @else
-                                                    <span class="badge-pill badge-pending">Pending</span>
-                                                @endif
+                                            @if($item->isDebt == 1)
+                                                <span class="badge-pill badge-credit"><i class="bi bi-credit-card" style="margin-right:1px;"></i>Credit</span>
+                                            @else
+                                                <span class="badge-pill badge-cash"><i class="bi bi-cash" style="margin-right:1px;"></i>Cash</span>
+                                            @endif
+                                        </td>
+                                       
+                                        
+                                        <td>
+                                            @php
+                                                $supplierName = DB::table('accounts')->where('id', $item->supplier)->value('name');
+                                            @endphp
+                                            <div class="person-cell">
+                                                <div class="person-avatar">{{ substr($supplierName ?? 'U', 0, 2) }}</div>
+                                                {{ $supplierName ?? 'Unknown Supplier' }}
                                             </div>
                                         </td>
                                         <td>
+                                            @php
+                                                $allocatedName = DB::table('accounts')->where('id', $item->account)->value('name');
+                                            @endphp
                                             <div class="person-cell">
-                                                <div class="person-avatar">{{ substr($item->supplierName ?? 'U', 0, 2) }}</div>
-                                                {{ $item->supplierName ?? 'Unknown Supplier' }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="person-cell">
-                                                <div class="person-avatar" style="background:#E0E7FF;color:#3730A3;">{{ substr($item->servedByName ?? 'U', 0, 2) }}</div>
-                                                {{ $item->servedByName ?? 'Unknown' }}
+                                                <div class="person-avatar" style="background:#E0E7FF;color:#3730A3;">{{ substr($allocatedName ?? 'U', 0, 2) }}</div>
+                                                {{ $allocatedName ?? 'Unknown' }}
                                             </div>
                                         </td>
                                         <td>
@@ -708,6 +736,7 @@
                                                 <form method="post">
                                                     @csrf
                                                     <input type="hidden" name="product_id" value="{{ $item->productId }}">
+                                                    <input type="hidden" name="shop" value="{{ $shopFilter ?? '' }}">
                                                     <button formaction="{{ url('admin/restockProd') }}" class="act-btn act-approve" title="Approve">
                                                         <i class="bi bi-check-lg"></i>
                                                     </button>
@@ -730,7 +759,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="11">
+                                        <td colspan="14">
                                             <div class="empty-state">
                                                 <i class="bi bi-inbox"></i>
                                                 <p>No receivings found for the selected filters.</p>

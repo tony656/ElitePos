@@ -235,6 +235,15 @@
                 {{-- Filter Bar --}}
                 <div class="filter-bar au au3">
                     <div class="filter-group">
+                        <label class="filter-label">Account:</label>
+                        <select class="filter-select" id="filterAccount" onchange="applyFilters()">
+                            <option value="">All Accounts</option>
+                            @foreach($allAccounts as $account)
+                            <option value="{{ $account->id }}" {{ $selectedAccountId == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <label class="filter-label">Shop:</label>
                         <select class="filter-select" id="filterShop" onchange="applyFilters()">
                             <option value="">All Shops</option>
@@ -433,12 +442,14 @@
 
 <script>
     function applyFilters() {
+        const account = document.getElementById('filterAccount').value;
         const shop = document.getElementById('filterShop').value;
         const from = document.getElementById('filterFrom').value;
         const to = document.getElementById('filterTo').value;
         const sort = document.getElementById('filterSort').value;
         
         const params = new URLSearchParams(window.location.search);
+        if (account) params.set('account_id', account); else params.delete('account_id');
         if (shop) params.set('shop_id', shop); else params.delete('shop_id');
         if (from) params.set('date_from', from); else params.delete('date_from');
         if (to) params.set('date_to', to); else params.delete('date_to');

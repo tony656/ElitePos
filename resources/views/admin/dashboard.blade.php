@@ -73,27 +73,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Profit Card -->
-            <div class="col-md-3">
-                <div class="stat-card bg-success-gradient shadow-lg">
-                    <div class="card-body p-4 text-white">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <p class="mb-1 opacity-75 text-uppercase" style=" letter-spacing: 1px;">Profit</p>
-                                <h3 class="fw-bold mb-0">Tsh.{{ number_format($NetProfit ?? 0) }}</h2>
-                            </div>
-                            <div class="icon-shape rounded-circle">
-                                <i class="bi bi-graph-up-arrow fs-3"></i>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="opacity-75" style="">Last year</span>
-                            <span class="fw-semibold">${{ number_format($LNetProfit ?? 0) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Divider -->

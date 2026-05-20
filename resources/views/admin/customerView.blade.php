@@ -242,6 +242,9 @@
                     </div>
                 </div>
                 <div class="pg-right">
+                    <a href="{{ url('admin/customer-kpi') }}" class="btn-amber" style="margin-right: 10px;">
+                        <i class="bi bi-graph-up"></i> KPI
+                    </a>
                     <button class="btn-amber" data-bs-toggle="modal" data-bs-target="#editCustomer">
                         <i class="bi bi-pencil-square"></i> Edit
                     </button>
@@ -330,7 +333,7 @@
                             @if(!$sales->isEmpty())
                             <div class="filter-wrap">
                                 <form method="GET" action="customerView" id="dateFilterForm" style="display:contents;">
-                                    <input type="hidden" name="name" value="{{ $req->input('name') }}">
+                                    <input type="hidden" name="name" value="{{ request()->input('name') }}">
                                     <div class="date-wrap">
                                         <input type="date" class="date-input" id="dateFilter"
                                                name="selectedDate"

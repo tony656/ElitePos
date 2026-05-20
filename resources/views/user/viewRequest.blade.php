@@ -6,533 +6,763 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{config("app.name")}} - Requested Items</title>
     @include("links")
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --danger-color: #f72585;
-            --warning-color: #f8961e;
-            --success-color: #4cc9f0;
-            --light-bg: #f8f9fa;
-            --dark-text: #2b2d42;
-            --light-text: #8d99ae;
+            --ink:        #0f1117;
+            --ink-light:  #6b7280;
+            --surface:    #ffffff;
+            --surface-2:  #f4f6fb;
+            --border:     #e5e9f2;
+            --blue:       #3b5bdb;
+            --blue-soft:  #eef2ff;
+            --green:      #0d9060;
+            --green-soft: #ecfdf5;
+            --amber:      #c05621;
+            --amber-soft: #fff7ed;
+            --red:        #c0392b;
+            --red-soft:   #fef2f2;
+            --purple:     #7c3aed;
+            --purple-soft:#f5f3ff;
+            --radius:     10px;
+            --shadow-sm:  0 1px 3px rgba(0,0,0,.07);
+            --shadow:     0 4px 16px rgba(0,0,0,.08);
         }
-        
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--dark-text);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface-2);
+            color: var(--ink);
         }
-        
-        .dashboard-header {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            border-left: 4px solid var(--primary-color);
-            overflow: hidden;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        }
-        
-        .stat-card.out-of-stock {
-            border-left-color: var(--danger-color);
-        }
-        
-        .stat-card.expired {
-            border-left-color: var(--warning-color);
-        }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
+
+        /* ── PAGE HEADER ───────────────────────────── */
+        .page-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1.1rem 2rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background-color: rgba(67, 97, 238, 0.1);
-            color: var(--primary-color);
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
-        
-        .stat-icon.out-of-stock {
-            background-color: rgba(247, 37, 133, 0.1);
-            color: var(--danger-color);
+
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        
-        .stat-icon.expired {
-            background-color: rgba(248, 150, 30, 0.1);
-            color: var(--warning-color);
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            color: var(--ink-light);
+            text-decoration: none;
+            font-size: .85rem;
+            font-weight: 500;
+            padding: .4rem .75rem;
+            border-radius: var(--radius);
+            transition: background .15s, color .15s;
         }
-        
-        .product-table {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        .back-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            flex-wrap: wrap;
+        }
+
+        /* ── BUTTONS ───────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .5rem 1rem;
+            border-radius: var(--radius);
+            font-size: .85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all .18s ease;
+            white-space: nowrap;
+        }
+        .btn-primary   { background: var(--blue);  color: #fff; }
+        .btn-primary:hover { background: #2f4dc4; color: #fff; }
+        .btn-success   { background: var(--green); color: #fff; }
+        .btn-success:hover { background: #0a7a53; color: #fff; }
+        .btn-outline   { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--surface-2); }
+        .btn-ghost     { background: transparent; color: var(--blue); border: 1px solid var(--blue-soft); }
+        .btn-ghost:hover { background: var(--blue-soft); }
+        .btn-sm        { padding: .35rem .75rem; font-size: .8rem; }
+
+        /* ── STAT CARDS ────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .stat-label {
+            font-size: .78rem;
+            font-weight: 500;
+            color: var(--ink-light);
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            margin-bottom: .3rem;
+        }
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+        .stat-icon-blue   { background: var(--blue-soft);   color: var(--blue);  }
+        .stat-icon-amber  { background: var(--amber-soft);  color: var(--amber); }
+        .stat-icon-green  { background: var(--green-soft);  color: var(--green); }
+
+        /* ── TOOLBAR ───────────────────────────────── */
+        .toolbar {
+            margin: 0 2rem 1rem;
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .search-wrap i {
+            position: absolute;
+            left: .85rem; top: 50%;
+            transform: translateY(-50%);
+            color: var(--ink-light);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding: .55rem 1rem .55rem 2.4rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: .875rem;
+            background: var(--surface);
+            color: var(--ink);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .search-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+        }
+
+        .date-input {
+            padding: .55rem .85rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: .875rem;
+            background: var(--surface);
+            color: var(--ink);
+            outline: none;
+            cursor: pointer;
+        }
+        .date-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59,91,219,.1);
+        }
+
+        /* ── TABLE CARD ────────────────────────────── */
+        .table-card {
+            margin: 0 2rem 2rem;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
         }
-        
-        .product-table thead {
-            background-color: var(--primary-color);
-            color: white;
+
+        .tbl { width: 100%; border-collapse: collapse; }
+
+        .tbl thead tr {
+            background: var(--ink);
         }
-        
-        .product-table th {
-            font-weight: 500;
-            padding: 1rem;
+        .tbl thead th {
+            padding: .85rem 1rem;
+            font-size: .75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,.7);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            white-space: nowrap;
         }
-        
-        .product-table td {
-            padding: 0.75rem 1rem;
+        .tbl thead th:first-child { padding-left: 1.5rem; }
+        .tbl thead th:last-child  { padding-right: 1.5rem; text-align: right; }
+
+        .tbl tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .12s;
+        }
+        .tbl tbody tr:last-child { border-bottom: none; }
+        .tbl tbody tr:hover { background: #fafbff; }
+
+        .tbl td {
+            padding: .85rem 1rem;
+            font-size: .875rem;
             vertical-align: middle;
         }
-        
-        .badge-category {
-            background-color: #e9ecef;
-            color: var(--dark-text);
-            font-weight: 500;
-            padding: 0.35rem 0.75rem;
-            border-radius: 50px;
+        .tbl td:first-child { padding-left: 1.5rem; }
+        .tbl td:last-child  { padding-right: 1.5rem; }
+
+        .td-actions { text-align: right; white-space: nowrap; }
+
+        /* ── BADGES / PILLS ────────────────────────── */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .25rem .7rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
+        .pill-you     { background: var(--blue-soft);   color: var(--blue);  }
+        .pill-shop    { background: var(--surface-2);   color: var(--ink);   }
+        .pill-pending { background: var(--amber-soft);  color: var(--amber); }
+        .pill-approved{ background: var(--green-soft);  color: var(--green); }
+        .pill-rejected{ background: var(--red-soft);    color: var(--red);   }
+        .pill-submitted{ background: var(--blue-soft);  color: var(--blue);  }
+        .pill-mixed   { background: var(--purple-soft); color: var(--purple);}
+        .pill-stock   { background: var(--amber-soft);  color: var(--amber); }
         
-        .btn-view {
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 8px;
-            padding: 0.375rem 0.75rem;
-            transition: all 0.3s ease;
+        /* ── STOCK AVAILABILITY BADGES ─────────────────── */
+        .stock-available {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: var(--green-soft);
+            color: var(--green);
         }
-        
-        .btn-view:hover {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .btn-delete {
-            background-color: #f8f9fa;
-            color: var(--danger-color);
-            border-radius: 8px;
-            padding: 0.375rem 0.75rem;
-            transition: all 0.3s ease;
-            border: 1px solid #f8f9fa;
-        }
-        
-        .btn-delete:hover {
-            background-color: rgba(247, 37, 133, 0.1);
-            border-color: rgba(247, 37, 133, 0.2);
-        }
-        
-        .search-box {
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .search-box:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-        }
-        
-        .quantity-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        .stock-available::before {
+            content: '';
+            width: 6px; height: 6px;
             border-radius: 50%;
-            margin-right: 6px;
+            background: currentColor;
+            opacity: .7;
         }
-        
-        .quantity-low {
-            background-color: var(--danger-color);
+        .stock-unavailable {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: var(--red-soft);
+            color: var(--red);
         }
-        
-        .quantity-medium {
-            background-color: var(--warning-color);
+        .stock-unavailable::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .7;
         }
-        
-        .quantity-high {
-            background-color: #38b000;
+
+        /* dot indicator before status */
+        .pill::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .7;
         }
-        
-        /* Modal Styles */
-        .modal-request-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+
+        .req-id {
+            font-family: 'Syne', sans-serif;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--ink-light);
         }
-        
-        .modal-request-item:last-child {
-            border-bottom: none;
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
         }
-        
-        .request-total {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid var(--primary-color);
+        .empty-state-icon { font-size: 3rem; color: var(--border); margin-bottom: 1rem; }
+        .empty-state h5 { font-size: 1rem; font-weight: 600; color: var(--ink-light); margin-bottom: .4rem; }
+        .empty-state p  { font-size: .85rem; color: var(--ink-light); }
+
+        /* ── MODAL ─────────────────────────────────── */
+        .modal-content {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.15);
+            overflow: hidden;
         }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
+        .modal-header {
+            background: var(--ink);
+            color: #fff;
+            padding: 1.25rem 1.5rem;
+            border: none;
         }
-        
-        .status-pending {
-            background-color: rgba(248, 150, 30, 0.1);
-            color: var(--warning-color);
+        .modal-header .btn-close { filter: invert(1); opacity: .6; }
+        .modal-header .btn-close:hover { opacity: 1; }
+        .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+
+        .modal-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+            padding: 1.25rem 1.5rem;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
         }
-        
-        .status-approved {
-            background-color: rgba(76, 201, 240, 0.1);
-            color: var(--success-color);
+        .modal-meta-item label {
+            display: block;
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--ink-light);
+            margin-bottom: .2rem;
         }
-        
-        .status-rejected {
-            background-color: rgba(247, 37, 133, 0.1);
-            color: var(--danger-color);
+        .modal-meta-item span { font-size: .9rem; font-weight: 600; }
+
+        .modal-body { padding: 1.25rem 1.5rem; }
+
+        .modal-tbl { width: 100%; border-collapse: collapse; font-size: .85rem; }
+        .modal-tbl thead tr { background: var(--surface-2); }
+        .modal-tbl thead th {
+            padding: .6rem .85rem;
+            text-align: left;
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--ink-light);
+            text-transform: uppercase;
+            letter-spacing: .05em;
         }
-        
-        .status-submitted {
-            background-color: rgba(67, 97, 238, 0.1);
-            color: var(--primary-color);
+        .modal-tbl tbody tr { border-bottom: 1px solid var(--border); }
+        .modal-tbl tbody tr:last-child { border-bottom: none; }
+        .modal-tbl td { padding: .7rem .85rem; vertical-align: middle; }
+
+        .totals-row {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.25rem;
+            padding: 1rem 1.25rem;
+            background: var(--surface-2);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            flex-wrap: wrap;
         }
-        
-        @media (max-width: 768px) {
-            .stat-card {
-                margin-bottom: 1rem;
-            }
-            
-            .product-table {
-                display: block;
-                overflow-x: auto;
-            }
+        .totals-row .t-item label {
+            display: block;
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--ink-light);
+            margin-bottom: .2rem;
+        }
+        .totals-row .t-item span {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        /* ── RESPONSIVE ────────────────────────────── */
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stats-grid .stat-card:last-child { grid-column: span 2; }
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; margin: 1rem; }
+            .stats-grid .stat-card:last-child { grid-column: auto; }
+            .table-card, .toolbar { margin-left: 1rem; margin-right: 1rem; }
+            .page-header { padding: 1rem; }
+            .modal-meta { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    
+
+@php
+    $isAdmin = Auth::check() && Auth::user()->levelStatus === 'Admin';
+@endphp
 
 <div class="container-fluid">
   <div class="row">
-    @include("user/sidenav")
+    @include("admin/sidenav")
 
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3 bg-light">
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-0 pt-3 bg-light">
 
-        <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h4 class="mb-0">
-                    <a href="#" onclick="history.back()" class="text-decoration-none text-dark">
-                        <i class="bi bi-chevron-left"></i>          
-                        Requested Items
-                    </a>
-                </h4>
-             <div>
-                <a href="{{ url('user/itemRequest') }}" class="btn btn-primary me-2">
-                    <i class="bi bi-plus-circle"></i> Create New Request
+        {{-- ── PAGE HEADER ── --}}
+        <div class="page-header">
+            <div class="page-header-left">
+                <a href="#" onclick="history.back()" class="back-btn">
+                    <i class="bi bi-chevron-left"></i> Back
+                </a>
+                <span class="page-title">Requested Items</span>
+            </div>
+            <div class="header-actions">
+                <form method="GET" action="{{ url('user/viewRequest') }}" class="d-flex align-items-center gap-2 flex-wrap" id="filter-form">
+                    <input type="date" name="date_from" id="dateFrom" class="date-input" value="{{ $dateFrom ?? '' }}" title="From date">
+                    <input type="date" name="date_to" id="dateTo" class="date-input" value="{{ $dateTo ?? '' }}" title="To date">
+                    <select name="shop" id="shopFilter" class="date-input" title="Filter by shop">
+                        <option value="">All Shops</option>
+                        @foreach($shops ?? [] as $s)
+                            <option value="{{ $s->id }}" {{ ($shopFilter ?? '') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+                    @if($dateFrom || $dateTo || ($shopFilter ?? ''))
+                    <a href="{{ url('user/viewRequest') }}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Clear</a>
+                    @endif
+                </form>
+                <a href="{{ url('user/itemRequest') }}" class="btn btn-outline">
+                    <i class="bi bi-list-ul"></i> Item Requests
+                </a>
+                <a href="{{ url('user/itemRequest') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Request
                 </a>
             </div>
-            </div>
-            <div>
-                <input type="date" id="dateFilter" class="form-control form-control-sm" style="width: auto;" placeholder="Filter by date">
-            </div>
         </div>
 
-        <div class="row mb-4">
-            <!-- Total Products Card -->
-            <div class="col-md-4">
-                <div class="stat-card h-100 p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Total Requests</h6>
-                            <h3 class="mb-0">{{ number_format($totalRequest) }}</h2>
-                        </div>
-                        <div class="stat-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 10L12 5L4 10L12 15L20 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M20 14L12 19L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                        </div>
-                    </div>
+        {{-- ── STAT CARDS ── --}}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value">{{ number_format($totalRequest) }}</div>
+                </div>
+                <div class="stat-icon stat-icon-blue">
+                    <i class="bi bi-inbox-fill"></i>
                 </div>
             </div>
-            
-            <!-- Out of Stock Card -->
-            <div class="col-md-4">
-                <div class="stat-card out-of-stock h-100 p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Pending Requests</h6>
-                            <h3 class="mb-0">{{ number_format($totalPednding) }}</h2>
-                        </div>
-                        <div class="stat-icon out-of-stock">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.0618 4.4295C12.6211 3.54786 11.3635 3.54786 10.9228 4.4295L3.88996 18.5006C3.49244 19.2959 4.07057 20.2317 4.95945 20.2317H19.0252C19.914 20.2317 20.4922 19.2959 20.0947 18.5006L13.0618 4.4295ZM9.34184 3.6387C10.4339 1.45376 13.5507 1.45377 14.6428 3.63871L21.6756 17.7098C22.6608 19.6809 21.228 22 19.0252 22H4.95945C2.75657 22 1.32382 19.6809 2.30898 17.7098L9.34184 3.6387Z"></path>
-                                <path d="M12 8V13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                                <path d="M12 16L12 16.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                            </svg>
-                        </div>
-                    </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value">{{ number_format($totalPednding) }}</div>
+                </div>
+                <div class="stat-icon stat-icon-amber">
+                    <i class="bi bi-hourglass-split"></i>
                 </div>
             </div>
-            
-            <!-- Expired Card -->
-            <div class="col-md-4">
-                <div class="stat-card expired h-100 p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-2">Total Submitted</h6>
-                            <h3 class="mb-0">{{ number_format($totalSub) }}</h2>
-                        </div>
-                        <div class="stat-icon expired">
-                            <svg width="24" height="24" viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14.2,31.9h0a2,2,0,0,0-.9-2.9A11.8,11.8,0,0,1,6.1,16.8,12,12,0,0,1,16.9,6a12.1,12.1,0,0,1,11.2,5.6,2.3,2.3,0,0,0,2.3.9h0a2,2,0,0,0,1.1-3,15.8,15.8,0,0,0-15-7.4,16,16,0,0,0-4.8,30.6A2,2,0,0,0,14.2,31.9Z"></path>
-                                <path d="M16.5,11.5v5h-5a2,2,0,0,0,0,4h9v-9a2,2,0,0,0-4,0Z"></path>
-                                <path d="M45.7,43l-15-26a2,2,0,0,0-3.4,0l-15,26A2,2,0,0,0,14,46H44A2,2,0,0,0,45.7,43ZM29,42a2,2,0,1,1,2-2A2,2,0,0,1,29,42Zm2-8a2,2,0,0,1-4,0V26a2,2,0,0,1,4,0Z"></path>
-                            </svg>
-                        </div>
-                    </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-label">Submitted</div>
+                    <div class="stat-value">{{ number_format($totalSub) }}</div>
+                </div>
+                <div class="stat-icon stat-icon-green">
+                    <i class="bi bi-send-check-fill"></i>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-4 border-0">
-            <div class="card-body p-3 d-flex">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="search" class="form-control search-box border-start-0" id="search-input" placeholder="Search requests...">
-                </div>
+        {{-- ── TOOLBAR ── --}}
+        <div class="toolbar">
+            <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="search" class="search-input" id="search-input" placeholder="Search by request ID, shop name, status…">
             </div>
         </div>
 
-        <div class="card product-table">
+        {{-- ── TABLE ── --}}
+        <div class="table-card">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="tbl">
                     <thead>
                         <tr>
-                           <th>#</th>
-                           <th>Date</th>
-                           <th>Request ID</th>
-                           <th><i class="bi bi-arrow-right-circle"></i> From Shop</th>
-                           <th><i class="bi bi-arrow-left-circle"></i> To Shop</th>
-                           <th>Items</th>
-                           <th>Qty</th>
-                           <th>Total Price</th>
-                           <th>Payment</th>
-                           <th>Assigned To</th>
-                           <th>Status</th>
-                           <th class="text-end">Actions</th>
-                       </tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Request ID</th>
+                            <th><i class="bi bi-arrow-right-circle me-1"></i>From Shop</th>
+                            <th><i class="bi bi-arrow-left-circle me-1"></i>To Shop</th>
+                            <th>Items</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
-                    <!-- In your viewRequest.blade.php, replace the table body section -->
-<tbody id="request-table-body">
-    @if(empty($groupedRequests))
-    <tr>
-        <td colspan="8" class="text-center py-4">
-            <div class="d-flex flex-column align-items-center">
-                <i class="bi bi-box-seam fs-1 text-muted mb-2"></i>
-                <h5 class="text-muted">No requests found</h5>
-                <p class="text-muted">No requests have been made yet</p>
-            </div>
-        </td>
-    </tr>
-    @else
-        @php $index = 1; @endphp
-        @foreach ($groupedRequests as $requestId => $items)
-            @php
-                $totalQuantity = 0;
-                $totalPrice = 0;
-                $requestDate = $items[0]->created_at ?? now();
-                $requestDateFormatted = date('Y-m-d', strtotime($requestDate));
-                
-                // Get supplier name (use the first item's supplier or account)
-                $supplierName = $items[0]->supplierName ?? $items[0]->account ?? 'N/A';
-                $AccountName = $items[0]->account ?? 'N/A';
+                    <tbody id="request-table-body">
 
-                foreach($items as $item) {
-                    $totalQuantity += $item->quantity;
-                    $totalPrice += $item->quantity * $item->price;
-                }
-                
-                // Get overall status for this request
-                $statuses = [];
-                foreach($items as $item) {
-                    $statuses[] = $item->status;
-                }
-                $statuses = array_unique($statuses);
-                
-                if (count($statuses) === 1) {
-                    $overallStatus = $statuses[0];
-                } else {
-                    if (in_array('Pending', $statuses)) {
-                        $overallStatus = 'Pending';
-                    } elseif (in_array('Approved', $statuses)) {
-                        $overallStatus = 'Approved';
-                    } else {
-                        $overallStatus = 'Mixed';
-                    }
-                }
-            @endphp
-            <tr class="request-row" data-date="{{ $requestDateFormatted }}">
-                <td>{{ $index++ }}</td>
-                <td>{{ date('M d, Y', strtotime($requestDate)) }}</td>
-                <td>
-                    <div class="d-flex flex-column">
-                        <small class="text-muted">{{ $requestId }}</small>
-                    </div>
-                </td>
-                <td>
-                    @if($isRequester)
-                        <span class="badge bg-primary">You</span>
-                    @else
-                        <span class="badge bg-primary">{{ $AccountName }}</span>
-                    @endif
-                </td>
-                <td>
-                    @if($isReceiver)
-                        <span class="badge bg-success">You</span>
-                    @else
-                        <span class="badge bg-success">{{ $supplierName }}</span>
-                    @endif
-                </td>
-                <td><strong>{{ count($items) }}</strong></td>
-                <td>{{ number_format($totalQuantity) }}</td>
-                <td>Tsh {{ number_format($totalPrice) }}</td>
-                <td>
-                    @php
-                        $paymentType = $items[0]->payment_type ?? 'cash';
-                    @endphp
-                    <span class="badge {{ $paymentType == 'cash' ? 'bg-success' : 'bg-info' }}">
-                        {{ ucfirst($paymentType) }}
-                    </span>
-                </td>
-                <td>
-                    @php
-                        $assignedTo = $items[0]->assigned_to ?? 'N/A';
-                    @endphp
-                    <span class="badge bg-secondary">
-                        {{ $assignedTo }}
-                    </span>
-                </td>
-                <td>
-                    @if($overallStatus == 'Pending')
-                        <span class="status-badge status-pending">Pending</span>
-                    @elseif($overallStatus == 'Approved')
-                        <span class="status-badge status-approved">Approved</span>
-                    @elseif($overallStatus == 'Rejected')
-                        <span class="status-badge status-rejected">Rejected</span>
-                    @elseif($overallStatus == 'Submitted')
-                        <span class="status-badge status-submitted">Submitted</span>
-                    @elseif($overallStatus == 'Out of Stock')
-                        <span class="badge bg-warning">Out of Stock</span>
-                    @else
-                        <span class="badge bg-secondary">{{ $overallStatus }}</span>
-                    @endif
-                </td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-view me-2 view-request-btn" 
-                            data-request-id="{{ $requestId }}"
-                            data-items='@json($items)'
-                            data-total-quantity="{{ $totalQuantity }}"
-                            data-total-price="{{ $totalPrice }}">
-                        <i class="bi bi-eye"></i> View Details
-                    </button>
-                    @php
-                       $isRequester = (getSessionAccountDisplayName() == $AccountName);
-                       $isReceiver  = (getSessionAccountDisplayName() == $supplierName);
-                    @endphp
+                        @if(empty($groupedRequests))
+                        <tr>
+                            <td colspan="10">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                                    <h5>No requests found</h5>
+                                    <p>No item requests have been made yet</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @else
+                            @php $index = 1; @endphp
+                            @foreach ($groupedRequests as $requestId => $items)
+                                @php
+                                    /* ── Per-row variables ── */
+                                    $requesterAccount = $items[0]->account      ?? '';
+                                    $supplierAccount  = $items[0]->supplierId ?? '';
+                                    
 
-                    @if ($isReceiver && $overallStatus != 'Approved')
-                        <form method="post" class="d-inline" action="{{ route('admin.request.approveAll') }}">
-                            @csrf
-                            <input type="hidden" name="requestName" value="{{ $requestId }}">
-                            <button type="submit" class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle"></i> Approve All
-                            </button>
-                        </form>
-                    @elseif($overallStatus == 'Approved')
-                        <a href="{{ url('user/view-receivings') }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-box-arrow-in-right"></i> View Receiving
-                        </a>
-                    @endif
-                </td>
-            </tr>
-        @endforeach
-    @endif
-</tbody>
+                                    /* Who am I? */
+                                    $iAmRequester = (getCurrentShopId() === (int)$requesterAccount);
+                                    $iAmReceiver  = (getCurrentShopId() === (int)$supplierAccount);
+
+                                    $requesterAccountName = DB::table('accounts')->where('id', $requesterAccount)->value('name');
+                                    
+                                    /* Totals */
+                                    $totalQuantity = 0;
+                                    $totalPrice    = 0;
+                                    foreach ($items as $item) {
+                                        $totalQuantity += $item->quantity;
+                                        $totalPrice    += $item->quantity * $item->price;
+                                    }
+
+                                    /* Date */
+                                    $requestDate          = $items[0]->created_at ?? now();
+                                    $requestDateFormatted = date('Y-m-d', strtotime($requestDate));
+
+                                    /* Overall status */
+                                    $statuses = array_unique(array_column($items->toArray(), 'status'));
+                                    if (count($statuses) === 1) {
+                                        $overallStatus = $statuses[0];
+                                    } elseif (in_array('Pending', $statuses)) {
+                                        $overallStatus = 'Pending';
+                                    } elseif (in_array('Approved', $statuses)) {
+                                        $overallStatus = 'Approved';
+                                    } else {
+                                        $overallStatus = 'Mixed';
+                                    }
+                                @endphp
+
+                                <tr class="request-row" data-date="{{ $requestDateFormatted }}">
+                                    <td style="color:var(--ink-light); font-size:.8rem;">{{ $index++ }}</td>
+                                    <td style="white-space:nowrap; font-size:.83rem;">
+                                        {{ date('M d, Y', strtotime($requestDate)) }}
+                                    </td>
+                                    <td><span class="req-id">{{ $requestId }}</span></td>
+
+                                    {{-- FROM SHOP (requester) --}}
+                                    <td>
+                                        @if($iAmRequester)
+                                            <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
+                                        @else
+                                            <span class="pill pill-shop">{{ $requesterAccountName ?: 'N/A' }}</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- TO SHOP (supplier/receiver) --}}
+                                    <td>
+                                        @if($iAmReceiver)
+                                            <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
+                                        @elseif($supplierAccount)
+                                            <span class="pill pill-shop">{{ $requesterAccountName }}</span>
+                                        @else
+                                            <span style="color:var(--ink-light); font-size:.8rem;">—</span>
+                                        @endif
+                                    </td>
+
+                                    <td><strong>{{ count($items) }}</strong></td>
+                                    <td>{{ number_format($totalQuantity) }}</td>
+                                    <td><strong>{{ number_format($item->price) }}</strong></td>
+                                    <td style="white-space:nowrap;">Tsh {{ number_format($totalPrice) }}</td>
+                                    <td>
+                                        <span class="pill {{ $items[0]->payment_type === 'cash' ? 'bg-success' : 'bg-info' }}">
+                                            {{ $items[0]->payment_type ? ucfirst($items[0]->payment_type) : 'Cash' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $items[0]->assignedToName ?? ($items[0]->assigned_to ?? 'N/A') }}</td>
+
+                                    {{-- STATUS --}}
+                                    <td>
+                                        @php
+                                            $pillMap = [
+                                                'Pending'      => 'pill-pending',
+                                                'Approved'     => 'pill-approved',
+                                                'Rejected'     => 'pill-rejected',
+                                                'Submitted'    => 'pill-submitted',
+                                                'Out of Stock' => 'pill-stock',
+                                                'Mixed'        => 'pill-mixed',
+                                            ];
+                                            $pillClass = $pillMap[$overallStatus] ?? 'pill-mixed';
+                                        @endphp
+                                        <span class="pill {{ $pillClass }}">{{ $overallStatus }}</span>
+                                    </td>
+
+                                    {{-- ACTIONS --}}
+                                    <td class="td-actions">
+                                        {{-- View details (everyone) --}}
+                                        <button class="btn btn-ghost btn-sm view-request-btn"
+                                                data-request-id="{{ $requestId }}"
+                                                data-items='@json($items)'
+                                                data-total-quantity="{{ $totalQuantity }}"
+                                                data-total-price="{{ $totalPrice }}"
+                                                data-is-receiver="{{ $iAmReceiver ? 'true' : 'false' }}"
+                                                data-is-admin="{{ $isAdmin ? 'true' : 'false' }}">
+                                            <i class="bi bi-eye"></i> Details 
+                                        </button>
+
+                                        {{-- RECEIVER (Shop 2 / Supplier) — Approve All --}}
+                                        @if($iAmReceiver && $overallStatus !== 'Approved')
+                                            <form method="post" class="d-inline"
+                                                  action="{{ route('admin.request.approveAll') }}">
+                                                @csrf
+                                                <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-check2-all"></i> Approve All
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        {{-- REQUESTER (Shop 1) — View Receiving when approved --}}
+                                        @if($iAmRequester && $overallStatus === 'Approved')
+                                            <a href="{{ url('user/view-receivings') }}"
+                                               class="btn btn-primary btn-sm">
+                                                <i class="bi bi-box-arrow-in-right"></i> View Receiving
+                                            </a>
+                                        @endif
+
+                                        {{-- ADMIN — Delete Request --}}
+                                        @if($isAdmin)
+                                            <form method="post" class="d-inline" action="{{ route('admin.request.delete') }}" onsubmit="return confirm('Are you sure you want to delete this entire request? This action cannot be undone.');">
+                                                @csrf
+                                                <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                <button type="submit" class="btn btn-sm" style="background: var(--red-soft); color: var(--red); border: none;">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        @endif
+                                        </td>
+                                </tr>
+                            @endforeach
+                        @endif
+
+                    </tbody>
                 </table>
             </div>
         </div>
+
     </main>
   </div>
 </div>
 
-<!-- Request Details Modal -->
-<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+{{-- ── REQUEST DETAILS MODAL ── --}}
+<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="requestDetailsModalLabel">Request Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    <i class="bi bi-clipboard2-data me-2"></i>
+                    Request <span id="modal-request-id"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <h6>Request ID: <span id="modal-request-id" class="text-primary"></span></h6>
-                        <h6>Supplier: <span id="modal-supplier-name" class="text-muted"></span></h6>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Date: <span id="modal-request-date" class="text-muted"></span></h6>
-                        <h6>Status: <span id="modal-request-status" class="status-badge"></span></h6>
-                    </div>
+
+            <div class="modal-meta">
+                <div class="modal-meta-item">
+                    <label>Supplier / To Shop</label>
+                    <span id="modal-supplier-name">—</span>
                 </div>
-                
+                <div class="modal-meta-item">
+                    <label>Date</label>
+                    <span id="modal-request-date">—</span>
+                </div>
+                <div class="modal-meta-item">
+                    <label>Overall Status</label>
+                    <span id="modal-request-status"></span>
+                </div>
+            </div>
+
+            <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                    <table class="modal-tbl">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Product</th>
                                 <th>Qty</th>
+                                <th>Price</th>
                                 <th>Total</th>
+                                <th>Stock</th>
                                 <th>Payment</th>
                                 <th>Assigned To</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="modal-request-items">
-                            <!-- Items will be populated here -->
-                        </tbody>
+                        <tbody id="modal-request-items"></tbody>
                     </table>
                 </div>
-                
-                <div class="request-total">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Total Items: <span id="modal-total-items" class="fw-bold"></span></h6>
-                            <h6>Total Quantity: <span id="modal-total-quantity" class="fw-bold"></span></h6>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Total Price: <span id="modal-total-price" class="fw-bold"></span></h6>
-                        </div>
+
+                <div class="totals-row">
+                    <div class="t-item">
+                        <label>Total Items</label>
+                        <span id="modal-total-items">—</span>
+                    </div>
+                    <div class="t-item">
+                        <label>Total Quantity</label>
+                        <span id="modal-total-quantity">—</span>
+                    </div>
+                    <div class="t-item">
+                        <label>Total Price</label>
+                        <span id="modal-total-price">—</span>
                     </div>
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -541,142 +771,147 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Search functionality
-        $('#search-input').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
-            $('.request-row').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-            });
-        });
+$(document).ready(function () {
 
-        // Date filter functionality
-        $('#dateFilter').on('change', function() {
-            var selectedDate = $(this).val();
-            
-            if (!selectedDate) {
-                $('.request-row').show();
-            } else {
-                $('.request-row').each(function() {
-                    var rowDate = $(this).data('date');
-                    $(this).toggle(rowDate === selectedDate);
-                });
-            }
-        });
-
-        // View request details modal
-        $('.view-request-btn').on('click', function() {
-            var requestId = $(this).data('request-id');
-            var items = $(this).data('items');
-            var totalQuantity = $(this).data('total-quantity');
-            var totalPrice = $(this).data('total-price');
-            
-            // Set modal header info
-            $('#modal-request-id').text(requestId);
-            $('#modal-supplier-name').text(items[0].supplierName || 'N/A');
-            $('#modal-request-date').text(new Date(items[0].created_at).toLocaleDateString());
-            $('#modal-total-items').text(items.length);
-            $('#modal-total-quantity').text(totalQuantity.toLocaleString());
-            $('#modal-total-price').text('Tsh ' + totalPrice.toLocaleString());
-            
-            // Clear previous items
-            $('#modal-request-items').empty();
-            
-            // Populate items
-            $.each(items, function(index, item) {
-                var statusClass = '';
-                switch(item.status) {
-                    case 'Pending':
-                        statusClass = 'status-pending';
-                        break;
-                    case 'Approved':
-                        statusClass = 'status-approved';
-                        break;
-                    case 'Rejected':
-                        statusClass = 'status-rejected';
-                        break;
-                    case 'Submitted':
-                        statusClass = 'status-submitted';
-                        break;
-                    default:
-                        statusClass = 'bg-secondary';
-                }
-                
-                var itemTotal = item.quantity * item.price;
-                
-                // ✅ Stock status display
-                var stockStatus = '';
-                if(item.inStock) {
-                    stockStatus = `<span class="badge bg-success">✅ IN STOCK (${item.stockQty})</span>`;
-                } else {
-                    stockStatus = `<span class="badge bg-danger">❌ OUT OF STOCK (${item.stockQty})</span>`;
-                }
-
-                var actionsHtml = '';
-if ("{{ getSessionAccountDisplayName() }}" === (item.supplierName || '') && item.status !== 'Approved') {
-    var approveDisabled = item.inStock ? '' : 'disabled';
-    actionsHtml = `
-        <div class="mb-1">${stockStatus}</div>
-        <form method="post" class="d-inline">
-            @csrf
-            <input type="hidden" name="requestName" value="${requestId}">
-            <input type="hidden" name="product_id" value="${item.productId}">
-            <button class="btn btn-sm btn-success btn-view me-1" name="product_id" formaction="/user/approveRequest" value="${item.productId}" ${approveDisabled}>
-                Approve
-            </button>
-            <button class="btn btn-sm btn-danger me-1" name="product_id" formaction="/user/rejectRequest" value="${item.productId}">
-                Reject
-            </button>
-            <button class="btn btn-sm btn-warning" name="product_id" formaction="/user/outOfStockRequest" value="${item.productId}">
-                OOS
-            </button>
-        </form>
-    `;
-}
-                
-                var itemTotal = item.quantity * item.price;
-                $('#modal-request-items').append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.productName || 'Unknown Product'}</td>
-                        <td>${item.quantity.toLocaleString()}</td>
-                        <td>Tsh ${itemTotal.toLocaleString()}</td>
-                        <td>
-                            <span class="badge ${item.payment_type === 'cash' ? 'bg-success' : 'bg-info'}">
-                                ${item.payment_type ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1) : 'Cash'}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">
-                                ${item.assigned_to || 'N/A'}
-                            </span>
-                        </td>
-                        <td><span class="status-badge ${statusClass}">${item.status}</span></td>
-                        <td>${actionsHtml}</td>
-                    </tr>
-                `);
-            });
-            
-            // Set overall status
-            var statuses = items.map(item => item.status);
-            var overallStatus = '';
-            if (statuses.every(s => s === 'Pending')) overallStatus = 'Pending';
-            else if (statuses.every(s => s === 'Approved')) overallStatus = 'Approved';
-            else if (statuses.every(s => s === 'Rejected')) overallStatus = 'Rejected';
-            else if (statuses.every(s => s === 'Submitted')) overallStatus = 'Submitted';
-            else overallStatus = 'Mixed';
-            
-            $('#modal-request-status').text(overallStatus).addClass('status-badge ' + 
-                (overallStatus === 'Pending' ? 'status-pending' :
-                 overallStatus === 'Approved' ? 'status-approved' :
-                 overallStatus === 'Rejected' ? 'status-rejected' :
-                 overallStatus === 'Submitted' ? 'status-submitted' : 'bg-secondary'));
-            
-            // Show modal
-            var modal = new bootstrap.Modal(document.getElementById('requestDetailsModal'));
-            modal.show();
+    /* ── Search ── */
+    $('#search-input').on('input', function () {
+        var q = $(this).val().toLowerCase();
+        $('.request-row').each(function () {
+            $(this).toggle($(this).text().toLowerCase().includes(q));
         });
     });
+
+    /* ── Date / Shop filter: submit GET form ── */
+    $('#filter-form').on('submit', function (e) {
+        // allow normal GET submission so controller handles filtering server-side
+    });
+
+    /* ── View-details modal ── */
+    $(document).on('click', '.view-request-btn', function () {
+        var requestId    = $(this).data('request-id');
+        var items        = $(this).data('items');
+        var totalQty     = $(this).data('total-quantity');
+        var totalPrice   = $(this).data('total-price');
+        var isReceiver   = $(this).attr('data-is-receiver') === 'true';
+        var isAdmin      = $(this).attr('data-is-admin') === 'true';
+        var sessionAcct  = "{{ getCurrentShopId() }}";
+        var csrfToken    = "{{ csrf_token() }}";
+        console.log('Modal opened - isReceiver:', isReceiver, 'isAdmin:', isAdmin, 'sessionAccount:', sessionAcct);
+
+        /* Header */
+        $('#modal-request-id').text(requestId);
+        $('#modal-supplier-name').text(items[0].supplierId || '—');
+        $('#modal-request-date').text(items[0].created_at
+            ? new Date(items[0].created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})
+            : '—');
+        $('#modal-total-items').text(items.length);
+        $('#modal-total-quantity').text(Number(totalQty).toLocaleString());
+        $('#modal-total-price').text('Tsh ' + Number(totalPrice).toLocaleString());
+
+        /* Status */
+        var statuses = items.map(i => i.status);
+        var all = v => statuses.every(s => s === v);
+        var overall = all('Pending') ? 'Pending'
+                    : all('Approved') ? 'Approved'
+                    : all('Rejected') ? 'Rejected'
+                    : all('Submitted') ? 'Submitted'
+                    : 'Mixed';
+        var pillMap = {
+            Pending  : 'pill-pending',
+            Approved : 'pill-approved',
+            Rejected : 'pill-rejected',
+            Submitted: 'pill-submitted',
+            Mixed    : 'pill-mixed'
+        };
+        $('#modal-request-status')
+            .html(`<span class="pill ${pillMap[overall] || 'pill-mixed'}">${overall}</span>`);
+
+        /* Rows */
+        $('#modal-request-items').empty();
+        $.each(items, function (i, item) {
+            var pillCls = pillMap[item.status] || 'pill-mixed';
+            var itemTotal = item.quantity * item.price;
+
+            /* Action buttons: show to RECEIVER (supplier) only */
+            var actionsHtml = '';
+            console.log('Processing item:', item.productName || item.productId, '| Status:', item.status, '| isReceiver:', isReceiver, '| Show buttons?', isReceiver && item.status !== 'Approved');
+            if (isReceiver && item.status !== 'Approved') {
+                actionsHtml = `
+                    <form method="post" class="d-inline">
+                        @csrf
+                        <input type="hidden" name="requestName" value="${requestId}">
+                        <input type="hidden" name="product_id" value="${item.productId}">
+                        <input type="hidden" name="supplierId" value="${sessionAcct}">
+                        <button class="btn btn-success btn-sm" name="product_id"
+                                formaction="/admin/approveRequest" value="${item.productId}">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                        <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);"
+                                name="product_id" formaction="/admin/rejectRequest" value="${item.productId}">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                        
+                        <button class="btn btn-sm" style="background:var(--amber-soft);color:var(--amber);"
+                                name="product_id" formaction="/admin/outOfStockRequest" value="${item.productId}">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                        <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);border:none;"
+                        formaction="/admin/dltItemReq"
+                                data-item-id="${item.productId}" data-req-name="${requestId}"
+                                title="Delete this item" onclick="deleteItem(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>`;
+            }
+
+            /* ── Stock availability ── */
+            var stockQty    = item.stockQty    != null ? item.stockQty    : 0;
+            var inStock     = item.inStock     != null ? item.inStock     : false;
+            var stockDiff   = stockQty - item.quantity;
+            var stockBadge  = inStock
+                ? `<span class="stock-available">In Stock (${stockQty.toLocaleString()} avail, -${item.quantity.toLocaleString()} req)</span>`
+                : `<span class="stock-unavailable">Out of Stock (${stockQty.toLocaleString()} avail, ${stockDiff.toLocaleString()} short)</span>`;
+
+            $('#modal-request-items').append(`
+                <tr>
+                    <td style="color:var(--ink-light);font-size:.8rem;">${i + 1}</td>
+                    <td><strong>${item.productName || 'Unknown'}</strong></td>
+                    <td>${Number(item.quantity).toLocaleString()}</td>
+                    <td>${Number(item.price).toLocaleString()}</td>
+                    <td style="white-space:nowrap;">Tsh ${Number(itemTotal).toLocaleString()}</td>
+                    <td>${stockBadge}</td>
+                    <td>
+                        <span class="badge ${item.payment_type === 'cash' ? 'bg-success' : 'bg-info'}">
+                            ${item.payment_type ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1) : 'Cash'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            ${item.assignedToName || item.assigned_to || 'N/A'}
+                        </span>
+                    </td>
+                    <td><span class="pill ${pillCls}">${item.status}</span></td>
+                    <td>${actionsHtml}</td>
+                </tr>
+            `);
+        });
+
+        new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
+    });
+
+    /* ── Delete single item via AJAX ── */
+    function deleteItem(btn) {
+        var itemId  = $(btn).data('item-id');
+        var reqName = $(btn).data('req-name');
+        if (!confirm('Are you sure you want to delete this item?')) return;
+        $.post('/dltItemReq', { _token: csrfToken, itemId: itemId, reqName: reqName }, function (res) {
+            location.reload();
+        }).fail(function () {
+            alert('Failed to delete item. Please try again.');
+        });
+    }
+
+});
 </script>
 </body>
 </html>

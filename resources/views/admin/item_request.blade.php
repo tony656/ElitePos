@@ -354,7 +354,7 @@
      ================================================================ --}}
 @php
     $lastOrder = DB::table('item_requests')
-        ->where('account', getSessionAccountName())
+        ->where('account', getCurrentShopId())
         ->where('status', 'Pending')
         ->orderBy('id', 'desc')
         ->first();
@@ -365,11 +365,14 @@
                     : 'N/A';
     $servedBy     = $lastOrder->served_by    ?? 'N/A';
     $Status       = $lastOrder->status       ?? 'Pending';
-    $supplirtName = $lastOrder->supplierName ?? 'Not Selected';
-    $Allocation = $lastOrder->assigned_to ?? 'Not Selected';
-
+    $supplirtId = $lastOrder->supplierId ?? 'Not Selected';
+    $Allocate = $lastOrder->assigned_to ?? 'Not Selected';
+    $supplirtName = DB::table('accounts')->where('id', $supplirtId)->value('name');
+    
+    $Allocation = DB::table('users')->where('id', $Allocate)->value('name');
+    
     $orderItems = $requestName
-        ? DB::table('item_requests')->where('requestName', $requestName)->orderBy('id', 'desc')->get()
+        ? DB::table('item_requests')->where('requestName', $requestName)->where('account', getCurrentShopId())->orderBy('id', 'desc')->get()
         : collect();
 
     $grandTotal    = 0;
@@ -377,8 +380,9 @@
 
     foreach ($orderItems as $item) {
         $prod      = DB::table('products')->where('product_id', $item->productId)->first();
-        $unitPrice = $prod ? (float) $prod->sPrice : 0;
-        $lineTotal = (int) $item->quantity * $unitPrice;
+        $unitPrice = $prod && !empty($prod->sPrice) ? (float) $prod->sPrice : 1;
+        $qty       = max((int) ($item->quantity ?? 0), 1);
+        $lineTotal = $qty * $unitPrice;
         $grandTotal += $lineTotal;
 
         $enrichedItems[] = [
@@ -390,9 +394,6 @@
     }
 
     $subtotal  = $grandTotal;
-    $Customers = DB::table('accounts')
-                    ->where('name', '!=', getSessionAccountName())
-                    ->get();
 @endphp
 
 <div class="layout">
@@ -662,7 +663,7 @@
                                     <select class="form-select" name="selectedCustomer" onchange="this.form.submit()">
                                         <option value="">— Choose supplier —</option>
                                         @foreach ($Customers as $customer)
-                                            <option value="{{ $customer->name }}|{{ $customer->id }}">
+                                            <option value="{{ $customer->id }}">
                                                 {{ $customer->name }} — {{ $customer->id }}
                                             </option>
                                         @endforeach
@@ -682,18 +683,11 @@
                                     </div>
                               
                                     </div>
-                                @php
-                                    $users = DB::table('users')
-                                        ->where('account', getSessionAccountName())
-                                        ->where('levelStatus', '!=', 'Admin')
-                                        ->orderBy('name', 'asc')
-                                        ->get();
-                                @endphp
                                 <select class="form-select" name="assignedTo" id="assignedTo" onchange="this.form.submit()">
                                     <option value="">— Select user / location —</option>
                                     @foreach($users as $user)
-                                        <option value="{{ $user->name }}"
-                                            {{ (old('assignedTo') == $user->name || ($lastOrder && $lastOrder->assigned_to == $user->name)) ? 'selected' : '' }}>
+                                        <option value="{{ $user->id }}"
+                                            {{ (old('assignedTo') == $user->id || ($lastOrder && $lastOrder->assigned_to == $user->id)) ? 'selected' : '' }}>
                                             {{ $user->name }} ({{ $user->levelStatus ?? 'User' }})
                                         </option>
                                     @endforeach
@@ -779,9 +773,17 @@ $(document).ready(function () {
                     });
                     $('#search-results').html(output).show();
                 },
-                error: function () {
+                error: function (xhr) {
+                    let msg = 'Error loading results';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        msg = xhr.responseJSON.error;
+                    } else if (xhr.status === 401) {
+                        msg = 'Session expired. Please refresh the page and try again.';
+                    } else if (xhr.status === 0) {
+                        msg = 'Cannot connect to server. Please check your connection.';
+                    }
                     $('#search-results')
-                        .html('<div class="search-no-results">Error loading results</div>')
+                        .html('<div class="search-no-results">' + msg + '</div>')
                         .show();
                 }
             });

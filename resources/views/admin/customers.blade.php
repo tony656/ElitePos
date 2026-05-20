@@ -270,6 +270,16 @@
             font-weight: 500; color: var(--slate-700); font-size: 0.82rem;
         }
 
+        /* ── Account badge ── */
+        .account-badge {
+            display: inline-flex; align-items: center;
+            font-size: 0.72rem; font-weight: 600;
+            padding: 0.25rem 0.6rem; border-radius: 5px;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            border: 1px solid var(--slate-200);
+        }
+
         /* ── Action buttons ── */
         .action-btns { display: flex; gap: 0.35rem; justify-content: flex-end; }
 
@@ -419,6 +429,9 @@
                 <button class="hbtn-primary" data-bs-toggle="modal" data-bs-target="#Customer">
                     <i class="bi bi-plus-lg"></i> New Customer
                 </button>
+                <a href="{{ url('customer-kpi') }}" class="hbtn-primary" style="margin-left: 10px;">
+                    <i class="bi bi-graph-up"></i> Customer KPI
+                </a>
             </div>
 
             {{-- ── Alerts ── --}}
@@ -493,20 +506,21 @@
                     <table class="cust-tbl" id="customersTable">
                         <thead>
                             <tr>
-                                <th style="width:5%;">#</th>
-                                <th style="width:20%;" class="sortable" data-sort="name">Name</th>
-                                <th style="width:15%;">Contact</th>
-                                <th style="width:15%;" class="sortable" data-sort="business">Business Type</th>
-                                <th style="width:12%;" class="sortable" data-sort="credit">Credit Limit</th>
-                                <th style="width:12%;" class="sortable" data-sort="sales">Total Sales</th>
-                                <th style="width:13%;" class="sortable" data-sort="date">Member Since</th>
+                                <th style="width:4%;">#</th>
+                                <th style="width:18%;" class="sortable" data-sort="name">Name</th>
+                                <th style="width:13%;">Contact</th>
+                                <th style="width:12%;" class="sortable" data-sort="business">Business Type</th>
+                                <th style="width:10%;" class="sortable" data-sort="credit">Credit Limit</th>
+                                <th style="width:10%;" class="sortable" data-sort="sales">Total Sales</th>
+                                <th style="width:11%;" class="sortable" data-sort="date">Member Since</th>
+                                <th style="width:12%;" class="sortable" data-sort="account">Account</th>
                                 <th style="width:10%;text-align:right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="customersBody">
                             @if($fetch->isEmpty())
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="empty-state">
                                         <i class="bi bi-people-fill"></i>
                                         <div class="empty-state-title">No Customers Found</div>
@@ -524,7 +538,8 @@
                                     data-business="{{ strtolower($customer->business) }}"
                                     data-sales="{{ floatval($customer->totalSales) }}"
                                     data-credit="{{ floatval($customer->limits) }}"
-                                    data-date="{{ strtotime($customer->created_at) }}">
+                                    data-date="{{ strtotime($customer->created_at) }}"
+                                    data-account="{{ strtolower($customer->account ?? '') }}">
                                     
                                     <td>{{ $index + 1 }}</td>
                                     <td><div class="cust-name">{{ $customer->name }}</div></td>
@@ -544,6 +559,9 @@
                                         <span title="{{ $customer->created_at }}">
                                             {{ \Carbon\Carbon::parse($customer->created_at)->diffForHumans() }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <span class="account-badge">{{ $customer->account ?? '—' }}</span>
                                     </td>
                                     <td>
                                         <div class="action-btns">
@@ -740,17 +758,21 @@
     function filterTable() {
         const searchValue = document.getElementById('searchInput').value.toLowerCase();
         const businessFilter = document.getElementById('filterBusiness').value.toLowerCase();
+        const accountFilter = document.getElementById('filterAccount');
+        const accountValue = accountFilter ? accountFilter.value.toLowerCase() : '';
         const rows = document.querySelectorAll('#customersBody .customer-row');
-        
+
         rows.forEach(row => {
             const name = row.dataset.name;
             const business = row.dataset.business;
+            const account = row.dataset.account || '';
             const text = row.textContent.toLowerCase();
-            
+
             const matchesSearch = text.includes(searchValue);
             const matchesBusiness = !businessFilter || business.includes(businessFilter);
-            
-            row.style.display = (matchesSearch && matchesBusiness) ? '' : 'none';
+            const matchesAccount = !accountValue || account.includes(accountValue);
+
+            row.style.display = (matchesSearch && matchesBusiness && matchesAccount) ? '' : 'none';
         });
     }
     

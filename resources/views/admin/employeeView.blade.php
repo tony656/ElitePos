@@ -271,6 +271,12 @@
 
                             @php
                                 $currentPermissions = $users->permissions ?? [];
+                                if (is_string($currentPermissions)) {
+                                    $decoded = json_decode($currentPermissions, true);
+                                    $currentPermissions = is_array($decoded) ? $decoded : [];
+                                } elseif (!is_array($currentPermissions)) {
+                                    $currentPermissions = [];
+                                }
                             @endphp
                             <div class="profile-stats">
                                 <div class="ps-cell">
@@ -311,7 +317,7 @@
                                 <span class="section-title">Personal Information</span>
                             </div>
                             <div class="section-body">
-                                <form action="updateEmployee" method="POST" enctype="multipart/form-data">
+                                <form action="{{ url('admin/updateEmployee') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="employeeId" value="{{ $users->id }}">
 
@@ -438,11 +444,14 @@
                                             @forelse($userAccounts as $ua)
                                             <div class="perm-badge shop-badge {{ $ua->is_primary ? 'primary-badge' : '' }}" data-value="{{ $ua->account }}" onclick="toggleSelectItem(this)">
                                                 <i class="bi bi-shop" style="font-size:11px;"></i>
-                                                {{ $ua->account }}
+                                                {{ $ua->accountRel->name ?? $ua->account }}
                                                 @if($ua->is_primary) <span style="opacity:.7; font-size:10px;">Primary</span> @endif
                                             </div>
                                             @empty
-                                            <span class="empty-badge" id="acctEmptyMsg">No shops assigned (using: {{ $users->account }})</span>
+                                            @php
+                                                $primaryAccountName = $users->accountRel ? $users->accountRel->name : $users->account;
+                                            @endphp
+                                            <span class="empty-badge" id="acctEmptyMsg">No shops assigned (using: {{ $primaryAccountName }})</span>
                                             @endforelse
                                         </div>
                                         <select name="accounts[]" id="accounts" style="display:none;" multiple>
@@ -455,8 +464,8 @@
                                             <select id="newAccount" class="field-select">
                                                 <option value="" selected disabled>Select shop…</option>
                                                 @foreach($accounts as $account)
-                                                    @if(!$userAccounts->contains('account', $account->account))
-                                                    <option value="{{ $account->account }}">{{ $account->account }}</option>
+                                                    @if(!$userAccounts->contains('account', $account->id))
+                                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
                                                     @endif
                                                 @endforeach
                                             </select>
@@ -474,11 +483,11 @@
                                         <button type="submit" class="btn-save"><i class="bi bi-save-fill"></i> Save changes</button>
                                         <div class="action-footer-right">
                                             @if($users->status != 'deleted')
-                                            <button type="submit" formaction="banUser" class="btn-warn">
+                                            <button type="submit" formaction="{{ url('admin/banUser') }}" class="btn-warn">
                                                 <i class="bi bi-shield-x"></i>
                                                 {{ $users->status == 'banned' ? 'Unban' : 'Ban' }}
                                             </button>
-                                            <button type="submit" formaction="deleteUser" class="btn-danger"
+                                            <button type="submit" formaction="{{ url('admin/deleteUser') }}" class="btn-danger"
                                                     onclick="return confirm('Delete this employee? This cannot be undone.')">
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
@@ -496,7 +505,7 @@
                                 <span class="section-title">Change Password</span>
                             </div>
                             <div class="section-body">
-                                <form action="changePassword" method="POST">
+                                <form action="{{ url('admin/changePassword') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="employeeId" value="{{ $users->id }}">
                                     <div class="perms-hint" style="margin-bottom:1rem;"><i class="bi bi-info-circle"></i> Leave blank to keep the current password</div>
@@ -593,12 +602,12 @@
 
         function existingAccts() { return Array.from(acctSel.options).map(o => o.value); }
 
-        function addAcctBadge(value) {
+        function addAcctBadge(value, label) {
             document.getElementById('acctEmptyMsg')?.remove();
             const b = document.createElement('div');
             b.className = 'perm-badge shop-badge';
             b.dataset.value = value;
-            b.innerHTML = '<i class="bi bi-shop" style="font-size:11px;"></i> ' + value;
+            b.innerHTML = '<i class="bi bi-shop" style="font-size:11px;"></i> ' + label;
             b.onclick = function() { toggleSelectItem(this); };
             acctList.appendChild(b);
             acctList.scrollTop = acctList.scrollHeight;
@@ -613,8 +622,9 @@
         document.getElementById('addAccount').onclick = () => {
             const v = newAcctS.value;
             if (!v) return;
+            const l = newAcctS.options[newAcctS.selectedIndex].text;
             if (!existingAccts().includes(v)) {
-                addAcctBadge(v);
+                addAcctBadge(v, l);
                 syncAcctOption(v);
                 newAcctS.remove(newAcctS.selectedIndex);
                 newAcctS.value = '';
@@ -633,7 +643,8 @@
             if (!acctList.querySelector('.perm-badge')) {
                 const s = document.createElement('span');
                 s.id = 'acctEmptyMsg'; s.className = 'empty-badge';
-                s.textContent = 'No shops assigned (using: ' + primary + ')';
+                const primaryName = "{{ $users->accountRel ? $users->accountRel->name : $users->account }}";
+                s.textContent = 'No shops assigned (using: ' + primaryName + ')';
                 acctList.appendChild(s);
             }
         };

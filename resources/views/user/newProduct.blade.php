@@ -9,6 +9,8 @@
     <link href="{{asset('css/dashboard.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- SheetJS for Excel parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -317,7 +319,7 @@
 
                     {{-- ══ MANUAL TAB ══ --}}
                     <div id="manual" class="tab-pane active">
-                        <form action="addProducts" method="post" enctype="multipart/form-data">
+                        <form action="/user/addProducts" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" name="upload_type" value="manual">
 
@@ -483,7 +485,7 @@
 
                     {{-- ══ EXCEL TAB ══ --}}
                     <div id="excel" class="tab-pane">
-                        <form action="addProducts" method="post" enctype="multipart/form-data">
+                        <form action="/user/addProducts" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" name="upload_type" value="excel">
 
@@ -496,7 +498,7 @@
                             </div>
 
                             <div style="text-align:center; margin-bottom:1.5rem;">
-                                <a href="downloadTemplate" download class="dl-template-btn">
+                                <a href="/user/downloadTemplate" download class="dl-template-btn">
                                     <i class="bi bi-download"></i> Download Template
                                 </a>
                             </div>
@@ -666,10 +668,46 @@
         if (file.name.endsWith('.csv')) {
             const reader = new FileReader();
             reader.onload = function (e) {
-                const rows = e.target.result.trim().split('\n').map(r => r.split(',').map(c => c.trim()));
+                const text = e.target.result.trim();
+                // Detect delimiter: count commas vs tabs in first line
+                const firstLine = text.split('\n')[0];
+                const commaCount = (firstLine.match(/,/g) || []).length;
+                const tabCount = (firstLine.match(/\t/g) || []).length;
+                const delimiter = tabCount > commaCount ? '\t' : ',';
+                console.log('CSV delimiter detected:', delimiter, 'commas:', commaCount, 'tabs:', tabCount);
+                
+                const rows = text.split('\n').map(r => r.split(delimiter).map(c => c.trim()));
                 displayPreview(rows, file.name);
             };
             reader.readAsText(file);
+        } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            // Excel file - use SheetJS to parse
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    // Convert to array of arrays (like CSV parsing)
+                    const rowArray = rows.map(row => {
+                        // Handle both array and object formats
+                        if (Array.isArray(row)) {
+                            return row.map(cell => cell !== null && cell !== undefined ? String(cell).trim() : '');
+                        } else {
+                            // If object, convert to array based on headers
+                            return Object.values(row).map(v => v !== null && v !== undefined ? String(v).trim() : '');
+                        }
+                    });
+                    
+                    displayPreview(rowArray, file.name);
+                } catch (err) {
+                    console.error('Excel parsing error:', err);
+                    showLoadedMsg(file.name);
+                }
+            };
+            reader.readAsArrayBuffer(file);
         } else {
             showLoadedMsg(file.name);
         }

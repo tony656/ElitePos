@@ -806,6 +806,18 @@
                         <label for="reportMonth"><i class="bi bi-calendar-week"></i> Month:</label>
                         <input type="month" id="reportMonth" class="form-control" value="{{ isset($monthParam) ? $monthParam : date('Y-m') }}">
                     </div>
+                    @if(isset($allShops) && $allShops->count() > 0)
+                    <div class="date-filter">
+                        <label for="shopSelect"><i class="bi bi-shop"></i> Shop:</label>
+                        <select id="shopSelect" class="form-control">
+                            @foreach($allShops as $shop)
+                                <option value="{{ $shop->id }}" {{ (session('selected_shop_id') == $shop->id) ? 'selected' : '' }}>
+                                    {{ $shop->name }} ({{ $shop->location ?? 'N/A' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                 </div>
 
                 <!-- Tab Navigation -->
@@ -937,8 +949,9 @@
                             <div class="table-title">
                                 <i class="bi bi-table"></i>
                                 Daily Report - {{ date('F Y', strtotime(isset($monthParam) ? $monthParam . '-01' : now())) }}
-
-                                ( {{  session('account') ?? 'empty'  }})
+                                @if(isset($selectedShopName))
+                                ({{ $selectedShopName }})
+                                @endif
                             </div>
                             <div class="table-controls">
                                 <div class="date-filter">
@@ -972,6 +985,7 @@
                                             <th title="Total Sale">T.Sales</th>
                                             <th title="Cash Return">Cash Ret</th>
                                             <th title="Credit Return">Credit Ret</th>
+                                            <th title="Total Returned">Total Ret</th>
                                             <th title="Discount">Dsc</th>
                                             <th title="Price Increase">Inc</th>
                                             <th title="Offered Items">Offered</th>
@@ -1049,6 +1063,7 @@
                                                 <td>{{ number_format($row->Mcash_sales + $row->Mcredit_sales - ($row->Mreturn ?? 0)) }}</td>
                                                 <td class="{{ ($row->Mreturn ?? 0) > 0 ? 'text-success' : '' }}">{{ number_format($row->cash_return ?? 0) }}</td>
                                                 <td class="text-danger">-{{ number_format($row->credit_return ?? 0) }}</td>
+                                                <td class="fw6">{{ number_format($row->total_returned ?? ($row->cash_return ?? 0) + ($row->credit_return ?? 0)) }}</td>
                                                 <td>{{ number_format($row->Mdisc) }}</td>
                                                 <td>{{ number_format($row->MdiscIncrease ?? 0) }}</td>
                                                 <td>{{ number_format($row->Moffered ?? 0) }}</td>
@@ -1149,6 +1164,7 @@
                                                 <td class="fw-bold">{{ number_format($tfootTotalSales) }}</td>
                                                 <td class="fw-bold">{{ number_format($tfootCashReturn) }}</td>
                                                 <td class="fw-bold text-danger">-{{ number_format($tfootCreditReturn) }}</td>
+                                                <td class="fw-bold">{{ number_format($report->sum('total_returned') ?? ($tfootCashReturn + $tfootCreditReturn)) }}</td>
                                                 <td class="fw-bold">{{ number_format($tfootDiscount) }}</td>
                                                 <td class="fw-bold">{{ number_format($tfootIncrease) }}</td>
                                                 <td class="fw-bold">{{ number_format($tfootOffered) }}</td>
@@ -1640,6 +1656,20 @@
                         const currentUrl = window.location.href;
                         const url = new URL(currentUrl);
                         url.searchParams.set('month', selectedMonth);
+                        window.location.href = url.toString();
+                    }
+                });
+            }
+
+            // 3b. SHOP SELECTOR - RELOAD PAGE WITH NEW SHOP
+            const shopSelect = document.getElementById('shopSelect');
+            if (shopSelect) {
+                shopSelect.addEventListener('change', function() {
+                    const selectedShopId = this.value;
+                    if (selectedShopId) {
+                        const currentUrl = window.location.href;
+                        const url = new URL(currentUrl);
+                        url.searchParams.set('shop_id', selectedShopId);
                         window.location.href = url.toString();
                     }
                 });

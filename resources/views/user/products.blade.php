@@ -1169,16 +1169,14 @@
 
                     <div class="field">
                         <label class="field-label">Offer Applies To Product</label>
-                        <select class="field-input" name="offer_product_id" id="offerProductSelect" required style="width: 100%;">
-                            <option value="">Select a product...</option>
-                            @foreach($products as $productOption)
-                                <option value="{{ $productOption->product_id }}">
-                                    {{ $productOption->name01 }} ({{ $productOption->name02 }}) - {{ number_format($productOption->quantity) }} in stock
-                                </option>
-                            @endforeach
-                        </select>
+                        <!-- FIXED: Using native datalist for searchable dropdown -->
+                        <input type="text" class="field-input" id="offerProductSearchInput"
+                               list="productOptionsList" placeholder="Type to search product name or ID..."
+                               autocomplete="off" style="width: 100%;">
+                        <datalist id="productOptionsList"></datalist>
+                        <input type="hidden" name="offer_product_id" id="offerProductIdHidden">
                         <small style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem; display: block;">
-                            Select the product that will be given free when the required quantity is purchased
+                            Start typing to search all products. Select the product that will be given free when the required quantity is purchased
                         </small>
                     </div>
 
@@ -1759,6 +1757,170 @@ function updateOfferBadgeInTable(productId, hasOffer) {
         nameCell.find('.offer-tag').remove();
     }
 }
+
+// ========== OFFER MODAL WITH SEARCHABLE PRODUCT SELECTOR ==========
+let allProductsList = [];
+
+// Load all products from server (bypasses pagination)
+function loadAllProductsForSearch() {
+    $.ajax({
+        url: '{{ route("user.searchProductsForOffer") }}',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            allProductsList = [];
+            
+            if (response.results && response.results.length > 0) {
+                response.results.forEach(product => {
+                    allProductsList.push({
+                        id: product.id,
+                        name: product.text,
+                        stock: product.stock || 0,
+                        displayText: product.text
+                    });
+                });
+            }
+            
+            // Populate datalist options
+            const datalist = document.getElementById('productOptionsList');
+            if (datalist) {
+                datalist.innerHTML = '';
+                allProductsList.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.displayText;
+                    option.setAttribute('data-id', product.id);
+                    option.setAttribute('data-name', product.name);
+                    datalist.appendChild(option);
+                });
+            }
+            
+            console.log('Loaded ' + allProductsList.length + ' products from server for search');
+        },
+        error: function(xhr) {
+            console.error('Error loading products for search:', xhr);
+            // Fallback to page products only
+            loadProductsFromPageOnly();
+        }
+    });
+}
+
+// Fallback: load only from current page (old behavior)
+function loadProductsFromPageOnly() {
+    const rows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
+    allProductsList = [];
+    rows.forEach(row => {
+        const id = row.getAttribute('data-product-id');
+        const nameEl = row.querySelector('.prod-name');
+        let name = '';
+        if (nameEl) {
+            const clone = nameEl.cloneNode(true);
+            const offerTag = clone.querySelector('.offer-tag');
+            if (offerTag) offerTag.remove();
+            name = clone.textContent.trim();
+        }
+        const subEl = row.querySelector('.prod-sub');
+        const sub = subEl ? subEl.textContent.trim() : '';
+        const stockSpan = row.querySelector('.stock-badge');
+        let stock = 0;
+        if (stockSpan) {
+            const match = stockSpan.textContent.match(/\d+/);
+            if (match) stock = parseInt(match[0]);
+        }
+        
+        if (id && name) {
+            allProductsList.push({
+                id: id,
+                name: name,
+                description: sub,
+                stock: stock,
+                displayText: `${name} ${sub ? '('+sub+')' : ''} [Stock: ${stock}] - ID: ${id}`
+            });
+        }
+    });
+    
+    // Populate datalist options
+    const datalist = document.getElementById('productOptionsList');
+    if (datalist) {
+        datalist.innerHTML = '';
+        allProductsList.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.displayText;
+            option.setAttribute('data-id', product.id);
+            option.setAttribute('data-name', product.name);
+            datalist.appendChild(option);
+        });
+    }
+    
+    console.log('Loaded ' + allProductsList.length + ' products from current page only');
+}
+
+// Setup the search input with datalist
+function setupProductSearch() {
+    const searchInput = document.getElementById('offerProductSearchInput');
+    const hiddenId = document.getElementById('offerProductIdHidden');
+    
+    if (!searchInput || !hiddenId) return;
+    
+    searchInput.addEventListener('input', function() {
+        const value = this.value;
+        // Find matching product by display text or name or ID
+        const matchedProduct = allProductsList.find(p =>
+            p.displayText === value ||
+            p.name.toLowerCase() === value.toLowerCase() ||
+            p.id === value
+        );
+        
+        if (matchedProduct) {
+            hiddenId.value = matchedProduct.id;
+            this.style.borderColor = 'var(--emerald)';
+        } else {
+            if (value === '') {
+                hiddenId.value = '';
+                this.style.borderColor = 'var(--slate-200)';
+            } else {
+                this.style.borderColor = 'var(--rose)';
+            }
+        }
+    });
+    
+    searchInput.addEventListener('change', function() {
+        const value = this.value;
+        const matchedProduct = allProductsList.find(p => p.displayText === value);
+        if (matchedProduct) {
+            hiddenId.value = matchedProduct.id;
+            this.style.borderColor = 'var(--emerald)';
+        } else {
+            // Try to match by just the product name
+            const nameMatch = allProductsList.find(p => p.name.toLowerCase() === value.toLowerCase());
+            if (nameMatch) {
+                hiddenId.value = nameMatch.id;
+                this.value = nameMatch.displayText;
+                this.style.borderColor = 'var(--emerald)';
+            }
+        }
+    });
+    
+    // Allow typing to search - make sure input is focusable
+    searchInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
+
+// Override openOfferModal to load products
+const originalOpenOfferModal = openOfferModal;
+window.openOfferModal = function(productId = null, productName = '') {
+    // Call original function
+    originalOpenOfferModal(productId, productName);
+    
+    // Load products for search if not already loaded
+    if (allProductsList.length === 0) {
+        loadAllProductsForSearch();
+    }
+    
+    // Setup search after a short delay to ensure modal is rendered
+    setTimeout(setupProductSearch, 100);
+};
+
 </script>
 </body>
 </html>

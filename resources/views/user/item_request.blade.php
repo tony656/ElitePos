@@ -4,158 +4,348 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{config("app.name")}} - Item Request</title>
+    <title>{{config("app.name")}} — Item Request</title>
     @include("links")
+    <link href="{{asset('css/dashboard.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
-        .bd-placeholder-img {
-            font-size: 1.125rem;
-            text-anchor: middle;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            user-select: none;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:         #0B1E3D;
+            --navy-mid:     #112952;
+            --navy-light:   #1A3A6B;
+            --amber:        #F59E0B;
+            --amber-pale:   #FEF3C7;
+            --emerald:      #059669;
+            --emerald-pale: #D1FAE5;
+            --rose:         #E11D48;
+            --rose-pale:    #FFE4E6;
+            --violet:       #7C3AED;
+            --violet-pale:  #EDE9FE;
+            --slate-50:     #F8FAFC;
+            --slate-100:    #F1F5F9;
+            --slate-200:    #E2E8F0;
+            --slate-300:    #CBD5E1;
+            --slate-400:    #94A3B8;
+            --slate-500:    #64748B;
+            --slate-600:    #475569;
+            --slate-700:    #334155;
+            --slate-800:    #1E293B;
+            --white:        #FFFFFF;
+
+            --font:  'Sora', system-ui, sans-serif;
+            --mono:  'JetBrains Mono', monospace;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --radius-lg: 14px;
         }
 
-        @media (min-width: 768px) {
-            .bd-placeholder-img-lg { font-size: 3.5rem; }
+        body {
+            font-family: var(--font);
+            background: var(--slate-100);
+            color: var(--slate-800);
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        .main-container { min-height: 100vh; }
+        /* ── Layout ── */
+        .layout { display: flex; min-height: 100vh; }
+        main { flex: 1; min-width: 0; padding: 2rem 2rem 3rem; margin-left: 270px; }
 
+        /* Responsive: remove left margin on mobile (sidebar overlays) */
+        @media (max-width: 768px) {
+            main { margin-left: 0; }
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.35s ease both; }
+        .fade-up-1 { animation-delay: 0.05s; }
+        .fade-up-2 { animation-delay: 0.12s; }
+        .fade-up-3 { animation-delay: 0.19s; }
+
+        /* ── Alerts ── */
+        .alert {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+            margin-bottom: 1rem; font-size: 13px; font-weight: 500;
+        }
+        .alert-success { background: var(--emerald-pale); color: var(--emerald); border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: var(--rose);    border-left: 3px solid var(--rose); }
+        .alert-info    { background: var(--violet-pale);  color: var(--violet);  border-left: 3px solid var(--violet); font-size: 13px; }
+        .alert .close-btn { background: none; border: none; cursor: pointer; color: inherit; font-size: 16px; opacity: 0.6; }
+        .alert .close-btn:hover { opacity: 1; }
+
+        /* ── Page header ── */
         .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: var(--navy);
+            border-radius: var(--radius-lg);
+            padding: 1.4rem 1.75rem;
+            margin-bottom: 1.75rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; flex-wrap: wrap;
+            position: relative; overflow: hidden;
         }
-        .page-header h4 { font-weight: 600; margin: 0; }
-        .page-header .bi { font-size: 1.5rem; margin-right: 10px; }
+        .page-header::before {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: var(--navy-light); opacity: 0.5;
+        }
+        .page-header::after {
+            content: '';
+            position: absolute; bottom: -50px; right: 60px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: var(--amber); opacity: 0.08;
+        }
+        .header-title { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+        .header-icon {
+            width: 38px; height: 38px; border-radius: var(--radius-sm);
+            background: var(--amber); display: flex; align-items: center; justify-content: center;
+        }
+        .header-icon svg { width: 18px; height: 18px; color: var(--navy); }
+        .header-label { font-size: 16px; font-weight: 700; color: var(--white); letter-spacing: -0.2px; }
+        .header-sub   { font-size: 12px; color: var(--slate-400); margin-top: 1px; }
 
-        .form-container {
-            background: white;
-            border-radius: 12px;
-            padding: 1.75rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
+        .btn-header {
+            position: relative; z-index: 1;
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 16px; border-radius: var(--radius-sm);
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.07);
+            color: var(--white); font-family: var(--font); font-size: 13px;
+            font-weight: 500; cursor: pointer; text-decoration: none;
+            transition: background 0.2s;
         }
-        .form-container .form-label { font-weight: 600; color: #495057; margin-bottom: 0.5rem; }
+        .btn-header:hover { background: rgba(255,255,255,0.14); color: var(--white); }
+        .btn-header svg { width: 14px; height: 14px; }
 
-        .form-control {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.1);
-        }
+        /* ── Grid ── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+        @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
 
+        /* ── Card ── */
+        .card {
+            background: var(--white); border-radius: var(--radius-lg);
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--slate-200);
+        }
+        .card-header-icon {
+            width: 28px; height: 28px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .card-header-icon svg { width: 14px; height: 14px; }
+        .icon-amber   { background: var(--amber-pale);   color: var(--amber); }
+        .icon-emerald { background: var(--emerald-pale); color: var(--emerald); }
+        .icon-violet  { background: var(--violet-pale);  color: var(--violet); }
+        .icon-navy    { background: rgba(11,30,61,0.08); color: var(--navy-light); }
+
+        .card-title { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+        .card-body  { padding: 1.4rem; }
+
+        /* ── Form elements ── */
+        .form-group { margin-bottom: 1.1rem; }
+        .form-label {
+            display: block; font-size: 11.5px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--slate-500); margin-bottom: 6px;
+        }
+        .form-control, .form-select {
+            width: 100%; padding: 9px 12px;
+            border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
+            font-family: var(--font); font-size: 13.5px; color: var(--slate-800);
+            background: var(--white); outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+        .form-control::placeholder { color: var(--slate-400); }
+        .form-hint { font-size: 11.5px; color: var(--slate-400); margin-top: 5px; }
+
+        /* ── Product search ── */
+        .search-wrap { position: relative; }
         #search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            margin-top: 2px;
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            z-index: 1000; background: var(--white);
+            border: 1.5px solid var(--navy-light); border-radius: var(--radius);
+            max-height: 280px; overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(11,30,61,0.14);
             display: none;
         }
-
         .search-item {
-            padding: 0.875rem 1rem;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f1f1;
-            transition: all 0.2s ease;
-        }
-        .search-item:hover {
-            background-color: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding-left: 0.75rem;
+            padding: 10px 14px; cursor: pointer;
+            border-bottom: 1px solid var(--slate-100);
+            transition: background 0.15s;
         }
         .search-item:last-child { border-bottom: none; }
-        .search-item.selected {
-            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
-            border-left: 4px solid #667eea;
+        .search-item:hover, .search-item.selected {
+            background: var(--slate-50); border-left: 3px solid var(--amber); padding-left: 11px;
         }
-        .search-item-name { font-weight: 600; color: #212529; margin-bottom: 0.25rem; font-size: 0.95rem; }
-        .search-item-details { display: flex; justify-content: space-between; font-size: 0.85rem; }
-        .search-item-price { color: #28a745; font-weight: 600; }
-        .search-no-results { padding: 1.5rem; color: #6c757d; text-align: center; font-style: italic; }
-        .product-input-group { position: relative; }
+        .search-item-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
+        .search-item-price { font-size: 12px; color: var(--emerald); font-family: var(--mono); font-weight: 500; margin-top: 2px; }
+        .search-no-results { padding: 1.25rem; text-align: center; font-size: 13px; color: var(--slate-400); }
 
-        .order-summary-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
-            overflow: hidden;
+        /* ── Radio payment ── */
+        .radio-group { display: flex; gap: 10px; }
+        .radio-pill {
+            flex: 1; position: relative;
         }
-        .card-body { padding: 1.75rem; }
-
-        .pricing-summary {
-            background: linear-gradient(135deg, #f5f7ff 0%, #f0f0ff 100%);
-            padding: 1.25rem;
-            border-radius: 10px;
-            margin: 1.5rem 0;
+        .radio-pill input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .radio-pill label {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 9px 12px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--slate-200); cursor: pointer;
+            font-size: 13px; font-weight: 500; color: var(--slate-600);
+            transition: all 0.18s; background: var(--white);
         }
-        .price-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; }
-        .price-row:last-child { margin-bottom: 0; }
-        .price-row.total {
-            border-top: 2px solid #667eea;
-            padding-top: 0.875rem;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #667eea;
-            margin-top: 0.875rem;
+        .radio-pill label svg { width: 15px; height: 15px; }
+        .radio-pill input[type=radio]:checked + label {
+            border-color: var(--navy-light); color: var(--navy);
+            background: rgba(26,58,107,0.05);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.08);
+        }
+        .radio-credit input[type=radio]:checked + label { border-color: var(--violet); color: var(--violet); background: var(--violet-pale); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+        .radio-cash   input[type=radio]:checked + label { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-pale); box-shadow: 0 0 0 3px rgba(5,150,105,0.1); }
+
+        /* ── Submit button ── */
+        .btn-add {
+            width: 100%; padding: 11px; border: none; border-radius: var(--radius-sm);
+            background: var(--navy); color: var(--white);
+            font-family: var(--font); font-size: 14px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-add:hover:not(:disabled) { background: var(--navy-light); transform: translateY(-1px); }
+        .btn-add:disabled { background: var(--slate-300); cursor: not-allowed; }
+        .btn-add svg { width: 16px; height: 16px; }
+
+        /* ── Items table ── */
+        .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--slate-200); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th {
+            background: var(--navy); color: rgba(255,255,255,0.8);
+            font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 10px 14px; text-align: left; white-space: nowrap;
+        }
+        thead th:last-child { text-align: right; }
+        tbody tr { border-bottom: 1px solid var(--slate-100); transition: background 0.12s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--slate-50); }
+        td { padding: 10px 14px; vertical-align: middle; }
+        td.text-right { text-align: right; }
+
+        .prod-name { font-weight: 600; font-size: 13px; color: var(--slate-800); }
+        .prod-id   { font-size: 11px; color: var(--slate-400); font-family: var(--mono); }
+
+        .qty-input {
+            width: 72px; padding: 5px 8px; text-align: center;
+            border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm);
+            font-family: var(--mono); font-size: 13px; color: var(--slate-800);
+            outline: none;
+        }
+        .qty-input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(26,58,107,0.1); }
+
+        .price-val { font-family: var(--mono); font-size: 12.5px; font-weight: 500; color: var(--emerald); }
+        .total-val { font-family: var(--mono); font-size: 13px;   font-weight: 600; color: var(--slate-800); }
+
+        .btn-del {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: var(--radius-sm);
+            background: var(--rose-pale); color: var(--rose);
+            border: 1px solid #fecdd3; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-del:hover { background: var(--rose); color: var(--white); border-color: var(--rose); }
+        .btn-del svg { width: 13px; height: 13px; pointer-events: none; }
+
+        tfoot td {
+            background: var(--slate-50); border-top: 2px solid var(--slate-200);
+            font-weight: 700; padding: 10px 14px;
+            font-family: var(--mono); font-size: 13px;
+        }
+        .tfoot-label { text-align: right; color: var(--slate-600); }
+        .tfoot-total { text-align: right; color: var(--navy); font-size: 14px; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center; padding: 3rem 1.5rem;
+            border: 1.5px dashed var(--slate-300); border-radius: var(--radius);
+            background: var(--slate-50); margin-top: 1.25rem;
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.35; }
+        .empty-state h5 { font-size: 14px; font-weight: 600; color: var(--slate-600); margin-bottom: 4px; }
+        .empty-state p  { font-size: 12.5px; color: var(--slate-400); }
+
+        /* ── Order info block ── */
+        .order-info {
+            background: var(--slate-50); border: 1px solid var(--slate-200);
+            border-radius: var(--radius-sm); padding: 1rem 1.1rem; margin-bottom: 1.25rem;
+        }
+        .order-info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0; border-bottom: 1px solid var(--slate-100); font-size: 13px;
+        }
+        .order-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .order-info-row:first-child { padding-top: 0; }
+        .info-label { color: var(--slate-500); font-size: 12px; }
+        .info-val   { font-weight: 600; color: var(--slate-800); font-family: var(--mono); font-size: 12.5px; }
+
+        .badge {
+            display: inline-block; padding: 3px 9px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+        }
+        .badge-pending  { background: var(--amber-pale);   color: #92400e; }
+        .badge-approved { background: var(--emerald-pale); color: var(--emerald); }
+        .badge-info     { background: var(--violet-pale);  color: var(--violet); }
+
+        /* ── Pricing summary ── */
+        .pricing-block {
+            background: var(--navy); border-radius: var(--radius-sm);
+            padding: 1.1rem 1.25rem; margin: 1.25rem 0;
+        }
+        .price-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 13px; color: rgba(255,255,255,0.65); padding: 4px 0;
+        }
+        .price-row.grand {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            margin-top: 8px; padding-top: 10px;
+            color: var(--white); font-size: 15px; font-weight: 700;
+        }
+        .price-row .price-num { font-family: var(--mono); font-weight: 600; color: var(--amber); }
+        .price-row.grand .price-num { font-size: 17px; color: var(--amber); }
+
+        /* ── Section divider ── */
+        .section-label {
+            font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+            font-weight: 700; color: var(--slate-400); margin-bottom: 8px;
         }
 
-        .btn { border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600; transition: all 0.3s ease; }
-        .btn-lg { padding: 1rem 2rem; font-size: 1.1rem; }
-        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; }
-        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(40,167,69,0.3); }
-        .btn-outline-primary { border: 2px solid #667eea; color: #667eea; }
-        .btn-outline-primary:hover { background: #667eea; color: white; }
-
-        .items-table-container { margin-top: 2rem; }
-        .items-table-container h5 {
-            font-weight: 700; color: #333; margin-bottom: 1rem;
-            padding-bottom: 0.75rem; border-bottom: 2px solid #667eea;
+        /* ── Submit request button ── */
+        .btn-submit {
+            width: 100%; padding: 12px; border: none; border-radius: var(--radius-sm);
+            background: var(--emerald); color: var(--white);
+            font-family: var(--font); font-size: 14px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s, transform 0.15s;
         }
+        .btn-submit:hover { background: #047857; transform: translateY(-1px); }
+        .btn-submit svg { width: 16px; height: 16px; }
 
-        .table { border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .table thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .table th { font-weight: 600; border: none; padding: 1rem; }
-        .table td { padding: 0.875rem 1rem; vertical-align: middle; }
-        .table tbody tr:hover { background-color: #f8f9fa; }
-        .table tbody tr:last-child td { border-bottom: none; }
-        .table .form-control { width: 80px; padding: 0.375rem 0.5rem; text-align: center; }
-        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
-
-        .form-check-input:checked { background-color: #667eea; border-color: #667eea; }
-        .form-check-input:focus { box-shadow: 0 0 0 0.25rem rgba(102,126,234,0.25); }
-
-        .order-info { background: #f8f9fa; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; }
-        .order-info-item { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
-        .order-info-item:last-child { margin-bottom: 0; }
-        .badge { font-size: 0.85rem; padding: 0.4em 0.8em; border-radius: 6px; }
-
-        @media (max-width: 768px) {
-            .page-header { padding: 1rem; }
-            .form-container, .order-summary-card { padding: 1.25rem; }
-            .card-body { padding: 1.25rem; }
-        }
-
-        .hidden-fields { opacity: 0; height: 0; overflow: hidden; margin: 0; padding: 0; }
+        /* ── Hidden fields ── */
+        .hidden-fields { position: absolute; opacity: 0; pointer-events: none; height: 0; overflow: hidden; }
     </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="{{asset("css/dashboard.css")}}" rel="stylesheet">
 </head>
 <body>
 
@@ -163,9 +353,8 @@
      ALL DATA COMPUTED ONCE HERE — shared by both left and right columns
      ================================================================ --}}
 @php
-    // Latest pending request for the logged-in account
     $lastOrder = DB::table('item_requests')
-        ->where('account', getSessionAccountName())
+        ->where('account', getCurrentShopId())
         ->where('status', 'Pending')
         ->orderBy('id', 'desc')
         ->first();
@@ -176,23 +365,24 @@
                     : 'N/A';
     $servedBy     = $lastOrder->served_by    ?? 'N/A';
     $Status       = $lastOrder->status       ?? 'Pending';
-    $supplirtName = $lastOrder->supplierName ?? 'Not Selected';
-
-    // Fetch all line items for this request (newest first)
+    $supplirtId = $lastOrder->supplierId ?? 'Not Selected';
+    $Allocate = $lastOrder->assigned_to ?? 'Not Selected';
+    $supplirtName = DB::table('accounts')->where('id', $supplirtId)->value('name');
+    
+    $Allocation = DB::table('users')->where('id', $Allocate)->value('name');
+    
     $orderItems = $requestName
-        ? DB::table('item_requests')->where('requestName', $requestName)->orderBy('id', 'desc')->get()
+        ? DB::table('item_requests')->where('requestName', $requestName)->where('account', getCurrentShopId())->orderBy('id', 'desc')->get()
         : collect();
 
-    // Build enriched rows: join with products to get sPrice
     $grandTotal    = 0;
     $enrichedItems = [];
 
     foreach ($orderItems as $item) {
-        $prod      = DB::table('products')
-                        ->where('product_id', $item->productId)
-                        ->first();
-        $unitPrice = $prod ? (float) $prod->sPrice : 0;
-        $lineTotal = (int) $item->quantity * $unitPrice;
+        $prod      = DB::table('products')->where('product_id', $item->productId)->first();
+        $unitPrice = $prod && !empty($prod->sPrice) ? (float) $prod->sPrice : 1;
+        $qty       = max((int) ($item->quantity ?? 0), 1);
+        $lineTotal = $qty * $unitPrice;
         $grandTotal += $lineTotal;
 
         $enrichedItems[] = [
@@ -203,82 +393,79 @@
         ];
     }
 
-    $subtotal  = $grandTotal;   // no discount on item requests
-    $Customers = DB::table('accounts')
-                    ->where('name', '!=', getSessionAccountName())
-                    ->get();
+    $subtotal  = $grandTotal;
 @endphp
 
-<div class="container-fluid main-container">
-    <div class="row">
-        @include("user/sidenav")
+<div class="layout">
+    @include("user/sidenav")
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-3">
+    <main class="fade-up">
 
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h4><i class="bi bi-cart-plus"></i> Item Request</h4>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <a href="{{ url('user/viewRequest') }}" class="btn btn-outline-light">
-                            <i class="bi bi-list-ul"></i> View All Requests
-                        </a>
-                    </div>
-                
+        {{-- Alerts --}}
+        @if(session('success'))
+        <div class="alert alert-success fade-up fade-up-1">
+            <span>{{ session('success') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert alert-danger fade-up fade-up-1">
+            <span>{{ session('error') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+
+        {{-- Page header --}}
+        <div class="page-header fade-up fade-up-1">
+            <div class="header-title">
+                <div class="header-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="header-label">Item Request</div>
+                    <div class="header-sub">{{ date('l, d M Y') }}</div>
                 </div>
             </div>
+            <a href="{{ url('user/viewRequest') }}" class="btn-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                View All Requests
+            </a>
+        </div>
 
-            <!-- Alerts -->
-            @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-3" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            @endif
-            @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-3" role="alert">
-                <i class="bi bi-exclamation-circle me-2"></i>
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            @endif
-            
-            <!-- Debug Info - Remove this in production -->
-            @php
-                $debugAccount = getSessionAccountDisplayName();
-                $debugUsername = session('username');
-                $debugCount = DB::table('item_requests')->count();
-            @endphp
-            <div class="alert alert-warning alert-dismissible fade show rounded-3 mb-3" role="alert">
-                <strong>Debug Info:</strong><br>
-                Session Account: {{ $debugAccount ?? 'EMPTY - This is the problem!' }}<br>
-                Session Username: {{ $debugUsername ?? 'EMPTY' }}<br>
-                Total Item Requests in DB: {{ $debugCount }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+        {{-- Two-column layout --}}
+        <div class="two-col">
 
-            <div class="row g-4">
+            {{-- ======== LEFT COLUMN ======== --}}
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
 
-                <!-- ========== LEFT COLUMN ========== -->
-                <div class="col-lg-6">
-
-                    <!-- Add Item Form -->
-                    <div class="form-container">
-                        <h5 class="mb-4 fw-bold text-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Add New Item
-                        </h5>
-
-                        <form action="/user/itemRequest" method="post" autocomplete="off">
+                {{-- Add Item Form --}}
+                <div class="card fade-up fade-up-2">
+                    <div class="card-header">
+                        <div class="card-header-icon icon-amber">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/>
+                                <line x1="8" y1="12" x2="16" y2="12"/>
+                            </svg>
+                        </div>
+                        <span class="card-title">Add new item</span>
+                    </div>
+                    <div class="card-body">
+                        <form action="/user/itemRequest" method="post" autocomplete="off" id="addItemForm">
                             @csrf
                             <input type="hidden" name="OrderName" value="{{ $orders->orderName ?? '' }}">
 
-                            <div class="mb-4 product-input-group">
-                                <label for="product-name" class="form-label">Search Product</label>
+                            {{-- Product search --}}
+                            <div class="form-group search-wrap">
+                                <label class="form-label">Search product</label>
                                 <input type="search" class="form-control" id="product-name"
-                                       placeholder="Start typing product name..." autocomplete="off">
+                                       placeholder="Type product name…" autocomplete="off">
                                 <div id="search-results"></div>
                             </div>
 
@@ -293,142 +480,109 @@
                                 <input type="number" id="maxDiscount" name="maxDiscount" readonly>
                             </div>
 
-                            <!-- Payment Type Selection -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">Payment Type</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="paymentType" id="paymentCashUser" value="cash">
-                                        <label class="form-check-label" for="paymentCashUser">
-                                            <i class="bi bi-cash-stack text-success"></i> Cash
+                            {{-- Payment type --}}
+                            <div class="form-group">
+                                <label class="form-label">Payment type</label>
+                                <div class="radio-group">
+                                    <div class="radio-pill radio-credit">
+                                        <input type="radio" name="paymentType" id="paymentCredit" value="credit" checked>
+                                        <label for="paymentCredit">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                                            </svg>
+                                            Credit
                                         </label>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="paymentType" id="paymentCreditUser" value="credit" checked>
-                                        <label class="form-check-label" for="paymentCreditUser">
-                                            <i class="bi bi-credit-card text-primary"></i> Credit
+                                    <div class="radio-pill radio-cash">
+                                        <input type="radio" name="paymentType" id="paymentCash" value="cash">
+                                        <label for="paymentCash">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                            Cash
                                         </label>
                                     </div>
                                 </div>
-                            </div>
+                            </div>                          
 
-                            <!-- Supplier Information (moved from right column) -->
-                            <div class="mb-4">
-                                <h6 class="fw-bold mb-3">Supplier Information</h6>
-                                <div class="mb-3">
-                                    <p class="mb-2">
-                                        <strong>Current Supplier:</strong> {{ $supplirtName }}
-                                    </p>
-                                    <div id="selectCustomer">
-                                        <label class="form-label">Select Supplier</label>
-                                        <select class="form-select" name="selectedCustomer" id="customerSelect">
-                                            <option value="">-- Select supplier --</option>
-                                            @foreach ($Customers as $customer)
-                                                <option value="{{ $customer->name }}|{{ $customer->id }}">
-                                                    {{ $customer->name }} - {{ $customer->id }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Assign To User (moved from right column) -->
-                            <div class="mb-4">
-                                <h6 class="fw-bold mb-3">Assign To (Location/User)</h6>
-                                <div class="mb-3">
-                                    <p class="mb-2">
-                                        <strong>Current Assignee:</strong>
-                                        {{ $lastOrder && $lastOrder->assigned_to ? $lastOrder->assigned_to : 'Not Assigned' }}
-                                    </p>
-                                    <div>
-                                        <label class="form-label">Select User/Location</label>
-                                        <select class="form-select" name="assignedTo" id="assignedToSelect">
-                                            <option value="">-- Select User/Location --</option>
-                                            @php
-                                                // Get users from the same account
-                                                $users = DB::table('users')
-                                                    ->where('account', getSessionAccountName())
-                                                    ->where('levelStatus', '!=', 'Admin')
-                                                    ->orderBy('name', 'asc')
-                                                    ->get();
-                                            @endphp
-                                            @foreach($users as $user)
-                                                <option value="{{ $user->name }}" {{ (old('assignedTo') == $user->name || ($lastOrder && $lastOrder->assigned_to == $user->name)) ? 'selected' : '' }}>
-                                                    {{ $user->name }} ({{ $user->levelStatus ?? 'User' }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-grid">
-                                <button class="btn btn-success btn-lg" type="submit" id="addItemBtn" {{ count($enrichedItems) > 0 ? '' : 'disabled' }}>
-                                    <i class="bi bi-plus-circle me-2"></i> Add to Current Item
-                                </button>
-                            </div>
+                            <button class="btn-add" type="submit" id="addItemBtn" disabled>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add to current request
+                            </button>
                         </form>
                     </div>
+                </div>
 
-                    <!-- Items Table -->
-                    <div class="items-table-container">
-                        <h5><i class="bi bi-cart3 me-2"></i>Current Items</h5>
-
+                {{-- Items table --}}
+                <div class="card fade-up fade-up-3">
+                    <div class="card-header">
+                        <div class="card-header-icon icon-navy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/>
+                            </svg>
+                        </div>
+                        <span class="card-title">Current items
+                            @if(count($enrichedItems) > 0)
+                                <span style="margin-left:6px; background:var(--navy); color:#fff; font-size:10px; padding:1px 7px; border-radius:20px;">
+                                    {{ count($enrichedItems) }}
+                                </span>
+                            @endif
+                        </span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
                         @if(count($enrichedItems) > 0)
-                        <div class="table-responsive rounded-3">
-                            <table class="table table-hover">
+                        <div class="table-wrap">
+                            <table>
                                 <thead>
                                     <tr>
                                         <th>Product</th>
                                         <th>Qty</th>
-                                        <th class="text-end">Unit Price</th>
-                                        <th class="text-end">Subtotal</th>
-                                        <th class="text-end">Actions</th>
+                                        <th style="text-align:right;">Unit price</th>
+                                        <th style="text-align:right;">Subtotal</th>
+                                        <th style="text-align:right;">Del</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($enrichedItems as $row)
                                     <tr>
                                         <td>
-                                            <h6 class="mb-0">
-                                                {{ $row['product']->name01 ?? 'Product Not Found' }}
-                                            </h6>
-                                            <small class="text-muted">ID: {{ $row['item']->productId }}</small>
+                                            <div class="prod-name">{{ $row['product']->name01 ?? 'Product not found' }}</div>
+                                            <div class="prod-id">ID: {{ $row['item']->productId }}</div>
                                         </td>
                                         <td>
-                                            <form action="/user/requpdQuant" method="post" class="d-inline">
+                                            <form action="/user/requpdQuant" method="post">
                                                 @csrf
                                                 <input type="hidden" name="OrdersIds" value="{{ $row['item']->requestName }}">
                                                 <input type="hidden" name="prodId"    value="{{ $row['item']->productId }}">
-                                                <input type="number"
-                                                       class="form-control form-control-sm"
-                                                       onchange="this.form.submit()"
+                                                <input type="number" class="qty-input"
                                                        name="prodQuantity"
                                                        value="{{ $row['item']->quantity }}"
                                                        min="1"
-                                                       style="width:80px;">
+                                                       onchange="this.form.submit()">
                                             </form>
                                         </td>
-                                        <td class="text-end">
-                                            <span class="fw-bold text-success">
-                                                {{ number_format($row['unitPrice'], 2) }} TZS
-                                            </span>
+                                        <td class="text-right">
+                                            <span class="price-val">{{ number_format($row['unitPrice'], 2) }}</span>
                                         </td>
-                                        <td class="text-end">
-                                            <span class="fw-bold">
-                                                {{ number_format($row['lineTotal'], 2) }} TZS
-                                            </span>
+                                        <td class="text-right">
+                                            <span class="total-val">{{ number_format($row['lineTotal'], 2) }}</span>
                                         </td>
-                                        <td class="text-end">
-                                            <form action="/user/dltItemReq" method="post" class="d-inline">
+                                        <td class="text-right">
+                                            <form action="/user/dltItemReq" method="post" style="display:inline;">
                                                 @csrf
                                                 <input type="hidden" name="itemId"       value="{{ $row['item']->productId }}">
                                                 <input type="hidden" name="reqName"      value="{{ $row['item']->requestName }}">
                                                 <input type="hidden" name="prodQuantity" value="{{ $row['item']->quantity }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                <button type="submit" class="btn-del"
                                                         onclick="return confirm('Remove this item?')">
-                                                    <i class="bi bi-trash"></i>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                                                        <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                                                    </svg>
                                                 </button>
                                             </form>
                                         </td>
@@ -436,112 +590,171 @@
                                     @endforeach
                                 </tbody>
                                 <tfoot>
-                                    <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end pe-3">Total:</td>
-                                        <td class="text-end text-primary fw-bold">
-                                            {{ number_format($grandTotal, 2) }} TZS
-                                        </td>
-                                        <td></td>
+                                    <tr>
+                                        <td colspan="3" class="tfoot-label">Grand total</td>
+                                        <td colspan="2" class="tfoot-total">{{ number_format($grandTotal, 2) }} TZS</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                         @else
-                        <div class="text-center py-5 bg-light rounded-3">
-                            <i class="bi bi-cart-x display-4 text-muted mb-3"></i>
-                            <h5 class="text-muted">No items in the order yet</h5>
-                            <p class="text-muted">Start by searching and adding products above</p>
+                        <div class="empty-state" style="margin: 1.25rem;">
+                            <div class="empty-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/>
+                                </svg>
+                            </div>
+                            <h5>No items yet</h5>
+                            <p>Search and add products above to begin this request</p>
                         </div>
                         @endif
                     </div>
                 </div>
 
-                <!-- ========== RIGHT COLUMN ========== -->
-                <div class="col-lg-6">
-                    <div class="order-summary-card">
-                        <div class="card-body">
+            </div>
 
-                            <!-- Order Info -->
-                            <div class="order-info">
-                                <div class="order-info-item">
-                                    <span class="text-muted">Request ID:</span>
-                                    <span class="fw-bold">{{ $requestName ?? 'NEW-ORDER' }}</span>
-                                </div>
-                                <div class="order-info-item">
-                                    <span class="text-muted">Date:</span>
-                                    <span>{{ $orderDate }}</span>
-                                </div>
-                                <div class="order-info-item">
-                                    <span class="text-muted">Status:</span>
-                                    <span class="badge bg-info">{{ $Status }}</span>
-                                </div>
-                                <div class="order-info-item">
-                                    <span class="text-muted">Served By:</span>
-                                    <span>{{ $servedBy }}</span>
-                                </div>
-                            </div>
-
-
-                            <!-- Pricing Summary — $subtotal/$grandTotal set at top of file -->
-                            <div class="pricing-summary">
-                                <div class="price-row">
-                                    <span>Subtotal:</span>
-                                    <span class="fw-bold">{{ number_format($subtotal, 2) }} TZS</span>
-                                </div>
-                                <div class="price-row total">
-                                    <span>Grand Total:</span>
-                                    <span class="fw-bold">{{ number_format($grandTotal, 2) }} TZS</span>
-                                </div>
-                            </div>
-    <!-- Submit -->
-                            @if($requestName)
-                            <form action="/user/requestSubmit" method="POST">
-                                @csrf
-                            <!-- Request Date -->
-                            <div class="mb-3">
-                                <label for="requestDate" class="form-label">Request Date</label>
-                                <input type="date" class="form-control" id="requestDate"
-                                       name="requestDatePicker" value="{{ old('requestDate', date('Y-m-d')) }}">
-                            </div>
-
-                        
-                                
-                                <input type="hidden" name="OrdersIds" value="{{ $requestName }}">
-                                <button type="submit" class="btn btn-success w-100 btn-lg">
-                                    <i class="bi bi-check-circle me-2"></i>Submit Request
-                                </button>
-                            </form>
-                            @else
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle me-2"></i>
-                                Add products to begin order
-                            </div>
-                            @endif
-
+            {{-- ======== RIGHT COLUMN ======== --}}
+            <div class="fade-up fade-up-3">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon icon-violet">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                            </svg>
                         </div>
+                        <span class="card-title">Request summary</span>
+                    </div>
+                    <div class="card-body">
+
+                        {{-- Order info --}}
+                        <div class="order-info">
+                            <div class="order-info-row">
+                                <span class="info-label">Request ID</span>
+                                <span class="info-val">{{ $requestName ?? 'NEW-ORDER' }}</span>
+                            </div>
+                            <div class="order-info-row">
+                                <span class="info-label">Date</span>
+                                <span class="info-val" style="font-size:12px;">{{ $orderDate }}</span>
+                            </div>
+                            <div class="order-info-row">
+                                <span class="info-label">Status</span>
+                                <span class="badge badge-pending">{{ $Status }}</span>
+                            </div>
+                            <div class="order-info-row">
+                                <span class="info-label">Served by</span>
+                                <span class="info-val">{{ $servedBy }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Supplier --}}
+                        <div style="margin-bottom:1.25rem;">
+                            <div class="section-label">Supplier</div>
+                            <form action="/user/saveInfo" method="post">
+                                @csrf
+                                <input type="hidden" name="requestName" value="{{ $requestName }}">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                        <label class="form-label" style="margin-bottom:0;">Select supplier</label>
+                                        <span style="font-size:12px; color:var(--slate-500);">Current: <strong>{{ $supplirtName }}</strong></span>
+                                    </div>
+                                    <select class="form-select" name="selectedCustomer" onchange="this.form.submit()">
+                                        <option value="">— Choose supplier —</option>
+                                        @foreach ($Customers as $customer)
+                                            <option value="{{ $customer->id }}">
+                                                {{ $customer->name }} — {{ $customer->id }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                               
+                            </form>
+
+                            <form action="/user/saveInfo" method="post">
+                                @csrf
+                                <input type="hidden" name="requestName" value="{{ $requestName }}">
+                                  {{-- Assign to --}}
+                            <div class="form-group">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                       <label class="form-label" for="assignedTo">Assign to</label>
+                                        <span style="font-size:12px; color:var(--slate-500);">Current: <strong>{{ $Allocation }}</strong></span>
+                                    </div>
+                              
+                                    </div>
+                                <select class="form-select" name="assignedTo" id="assignedTo" onchange="this.form.submit()">
+                                    <option value="">— Select user / location —</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}"
+                                            {{ (old('assignedTo') == $user->id || ($lastOrder && $lastOrder->assigned_to == $user->id)) ? 'selected' : '' }}>
+                                            {{ $user->name }} ({{ $user->levelStatus ?? 'User' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="form-hint">Select the user or location for this request</p>
+                            </div>
+                            </form>
+                        </div>
+
+                        {{-- Pricing --}}
+                        <div class="pricing-block">
+                            <div class="price-row">
+                                <span>Subtotal</span>
+                                <span class="price-num">{{ number_format($subtotal, 2) }} TZS</span>
+                            </div>
+                            <div class="price-row grand">
+                                <span>Grand total</span>
+                                <span class="price-num">{{ number_format($grandTotal, 2) }} TZS</span>
+                            </div>
+                        </div>
+
+                        {{-- Submit --}}
+                        @if($requestName)
+                        <form action="/user/requestSubmit" method="POST">
+                            @csrf
+                            <div class="form-group">
+                                <label class="form-label" for="requestDate">Request date</label>
+                                <input type="date" class="form-control" id="requestDate"
+                                       name="requestDatePicker"
+                                       value="{{ old('requestDate', date('Y-m-d')) }}">
+                            </div>
+                            <input type="hidden" name="OrdersIds" value="{{ $requestName }}">
+                            <button type="submit" class="btn-submit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Submit request
+                            </button>
+                        </form>
+                        @else
+                        <div class="alert alert-info" style="margin:0;">
+                            <span>Add products to begin your request</span>
+                        </div>
+                        @endif
+
                     </div>
                 </div>
+            </div>
 
-            </div><!-- /.row -->
-        </main>
-    </div>
+        </div>
+    </main>
 </div>
 
 <script>
 $(document).ready(function () {
 
-    // Live product search
     $('#product-name').on('input', function () {
         let query = $(this).val().trim();
         if (query.length > 1) {
             $.ajax({
-                url: "{{ url('admin/searchProduct') }}",
+                url: "{{ url('user/searchProduct') }}",
                 method: 'GET',
                 data: { query: query },
                 success: function (data) {
                     if (!data || data.error) {
                         $('#search-results')
-                            .html('<div class="search-no-results">' + (data.error || 'No results') + '</div>')
+                            .html('<div class="search-no-results">' + (data.error || 'No results found') + '</div>')
                             .show();
                         return;
                     }
@@ -555,16 +768,22 @@ $(document).ready(function () {
                                  data-price="${price}"
                                  data-discount="${product.discount || 0}">
                                 <div class="search-item-name">${product.name01}</div>
-                                <div class="search-item-details">
-                                    <span class="search-item-price">${price.toFixed(2)} TZS</span>
-                                </div>
+                                <div class="search-item-price">${price.toFixed(2)} TZS</div>
                             </div>`;
                     });
                     $('#search-results').html(output).show();
                 },
-                error: function () {
+                error: function (xhr) {
+                    let msg = 'Error loading results';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        msg = xhr.responseJSON.error;
+                    } else if (xhr.status === 401) {
+                        msg = 'Session expired. Please refresh the page and try again.';
+                    } else if (xhr.status === 0) {
+                        msg = 'Cannot connect to server. Please check your connection.';
+                    }
                     $('#search-results')
-                        .html('<div class="search-no-results">Error loading results</div>')
+                        .html('<div class="search-no-results">' + msg + '</div>')
                         .show();
                 }
             });
@@ -573,14 +792,12 @@ $(document).ready(function () {
         }
     });
 
-    // Close on outside click
     $(document).on('click', function (e) {
         if (!$(e.target).closest('#product-name, #search-results').length) {
             $('#search-results').hide();
         }
     });
 
-    // Select product → fill hidden fields → auto-submit
     $(document).on('click', '#search-results .search-item', function () {
         $('#search-results .search-item').removeClass('selected');
         $(this).addClass('selected');
@@ -596,20 +813,20 @@ $(document).ready(function () {
         $('#maxDiscount').val(productMaxDiscount);
         $('#search-results').hide();
 
-        // Sync request date from visible input to hidden field
-        $('#formRequestDate').val($('#requestDatePicker').val());
+        $('#formRequestDate').val($('#requestDate').val());
 
-        // Auto-submit the form
-        $('form[action="/user/itemRequest"]').submit();
+        $('#addItemBtn').prop('disabled', false);
+
+        setTimeout(function () {
+            $('#addItemForm').submit();
+        }, 100);
     });
 
-    // Also update hidden field when requestDatePicker changes
-    $('#requestDatePicker').on('change', function() {
+    $('#requestDate').on('change', function () {
         $('#formRequestDate').val($(this).val());
     });
 
 });
 </script>
-
 </body>
 </html>

@@ -54,8 +54,9 @@ class BankingChip extends Model
      */
     public function recalculateCumulativeChip()
     {
-        // Get all chip entries for this shop ordered by date (and id for tie-breaking)
+        // Get all chip entries for this shop and account ordered by date (and id for tie-breaking)
         $chipEntries = self::where('shop_id', $this->shop_id)
+            ->where('account', $this->account)
             ->orderBy('id', 'asc')
             ->get();
 

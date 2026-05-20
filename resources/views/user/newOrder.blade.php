@@ -390,6 +390,40 @@
         }
         .field-hint { font-size: 0.71rem; color: var(--slate-400); }
 
+        /* ── Inline Shop Selector ── */
+        .shop-select-inline {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.5rem 2rem 0.5rem 0.75rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--navy);
+            cursor: pointer;
+            outline: none;
+            min-width: 160px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%234361EE' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.6rem center;
+            appearance: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .shop-select-inline:hover {
+            border-color: var(--navy-light);
+        }
+        .shop-select-inline:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            outline: none;
+        }
+        .shop-select-inline option {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            color: var(--slate-800);
+            background: var(--white);
+        }
+
         /* ── Pay distribution ── */
         .pay-dist {
             display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
@@ -551,12 +585,25 @@
                         </div>
                     </div>
 
-                    {{-- Product search --}}
+                    {{-- Product search with shop selector --}}
                     <div class="search-wrap">
-                        <div class="sbox">
-                            <i class="bi bi-search sbox-icon"></i>
-                            <input type="text" id="productSearch" class="sbox-input"
-                                placeholder="Search products…" autocomplete="off">
+                        <div class="sbox" style="display:flex; gap:0.5rem; align-items:center;">
+                            {{-- Shop Selector --}}
+                            @if(isset($allShops) && $allShops->count() > 1)
+                            <select class="shop-select-inline" id="shopSelect" onchange="changeShop(this.value)" title="Select Shop">
+                                @foreach($allShops as $shop)
+                                <option value="{{ $shop->id }}" {{ (session('selected_shop_id') == $shop->id) ? 'selected' : '' }}>
+                                    {{ $shop->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            @endif
+                            {{-- Search Input --}}
+                            <div style="flex:1; position:relative;">
+                                <i class="bi bi-search sbox-icon"></i>
+                                <input type="text" id="productSearch" class="sbox-input"
+                                    placeholder="Search products…" autocomplete="off">
+                            </div>
                         </div>
                         <div class="dropdown" id="productDropdown"></div>
                     </div>
@@ -608,7 +655,8 @@
                                 <tbody>
                                     @foreach($cartItems as $item)
                                     @php
-                                        $product       = DB::table('products')->where('account', getSessionAccountId())->where('product_id', $item->productId)->first('name01');
+                                        $productObj = DB::table('products')->where('account', getSessionAccountId())->where('product_id', $item->productId)->first('name01');
+                                        $productName = $productObj->name01 ?? 'Unknown Product';
                                         $amount        = $item->productPrice * $item->pQuantity;
                                         $discIncrease  = $item->discount_increase ?? 0;
                                         $netAdj        = ($item->discount ?? 0) - $discIncrease;
@@ -623,8 +671,8 @@
                                     @endphp
                                     <tr class="{{ $qualifies ? 'offer-row' : '' }}">
                                         <td>
-                                            <div class="cart-prod-name" title="{{ $product->name01 ?? 'Unknown' }}">
-                                                {{ $product->name01 ?? 'Unknown Product' }}
+                                            <div class="cart-prod-name" title="{{ $productName }}">
+                                                {{ $productName }}
                                             </div>
                                             @if($qualifies && $offerInfo)
                                                 <span class="dd-badge dd-badge-offer" style="margin-top:2px;">
@@ -633,7 +681,7 @@
                                             @endif
                                         </td>
                                         <td style="text-align:center;">
-                                            <input type="number" class="tbl-input" value="{{ $item->pQuantity }}" min="-999999"
+                                            <input type="number" class="tbl-input" value="{{ $item->pQuantity }}"
                                                 onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','pQuantity',this.value)">
                                         </td>
                                         <td class="num-right">{{ number_format($item->productPrice) }}</td>
@@ -711,9 +759,9 @@
 
                         @php
                             $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
-                            $odez   = DB::table('orders')->where('account', getSessionAccountName())
+                            $odez   = DB::table('orders')->where('account', getSessionAccountId())
                                         ->where('cName', $orders->cName ?? '')
-                                        ->whereIn('status', ['Debt','partial'])
+                                        ->whereIn('status', ['Debt','Partial'])
                                         ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
                         @endphp
 
@@ -757,23 +805,35 @@
 
                     {{-- Seller --}}
                     <div class="rp-sec">
-                        <div class="sec-title"><i class="bi bi-person-badge"></i> Seller</div>
-                        <div style="position:relative;">
-                            <div class="sbox">
-                                <i class="bi bi-search sbox-icon"></i>
-                                <input type="text" id="sellerSearch" class="sbox-input"
-                                    placeholder="Search seller…" autocomplete="off">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                            <div class="sec-title" style="margin-bottom:0;"><i class="bi bi-person-badge"></i> Seller</div>
+                        </div>
+                        
+                        <form action="saveSeller" id="saveSellerForm" method="post">
+                            @csrf
+                            <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
+                            
+                            <div style="position:relative;">
+                                <div class="sbox">
+                                    <i class="bi bi-search sbox-icon"></i>
+                                    <input type="text" id="sellerSearch" class="sbox-input"
+                                        placeholder="Search seller…" autocomplete="off"
+                                        value="{{ $orders->served_by ?? '' }}">
+                                    <input type="hidden" name="selectedSeller" id="selectedSeller"
+                                        value="{{ $orders->served_by ?? '' }}">
+                                </div>
+                                <div class="dropdown" id="sellerDropdown"></div>
                             </div>
-                            <div class="dropdown" id="sellerDropdown"></div>
-                        </div>
-                        <div id="sellerBadgeWrap" style="display:none;margin-top:0.5rem;">
-                            <span class="sel-badge">
-                                <span id="sellerBadgeText"></span>
-                                <button type="button" class="sel-badge-remove" onclick="clearSeller()">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </span>
-                        </div>
+                            
+                            <div id="sellerBadgeWrap" style="display:{{ $orders->served_by ? 'block' : 'none' }};margin-top:0.5rem;">
+                                <span class="sel-badge">
+                                    <span id="sellerBadgeText">{{ $orders->served_by ?? '' }}</span>
+                                    <button type="button" class="sel-badge-remove" onclick="clearSeller()">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </form>
                     </div>
 
                     {{-- Order form --}}
@@ -781,7 +841,7 @@
                         <form action="payout" method="post" id="payoutForm">
                             @csrf
                             <input type="hidden" name="orderId"          value="{{ $orders->order_id ?? '' }}">
-                            <input type="hidden" name="served"           id="servedHidden">
+                            <input type="hidden" name="served"           id="servedHidden" value="{{ $orders->served_by ?? '' }}">
                             <input type="hidden" name="selectedCustomer" id="custHidden">
                             <input type="hidden" name="offered_items"    id="offeredItemsInput" value="">
 
@@ -1004,17 +1064,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
 // ════════════════════════════════════════════
-// Dynamic URL Prefix based on user role
-// ════════════════════════════════════════════
-const isAdmin = {{ strtolower(trim(Auth::user()->levelStatus ?? '')) === 'admin' ? 'true' : 'false' }};
-const urlPrefix = isAdmin ? 'admin' : 'user';
-
-// Helper function to build URLs with correct prefix
-function buildUrl(path) {
-    return `{{ url('') }}/${urlPrefix}/${path}`;
-}
-
-// ════════════════════════════════════════════
 // State
 // ════════════════════════════════════════════
 let selectedProductId   = null;
@@ -1038,25 +1087,31 @@ productSearch.addEventListener('input', async e => {
     productDD.classList.add('open');
 
     try {
-        const res  = await fetch(`${buildUrl('searchProduct')}?query=${encodeURIComponent(q)}`);
+        // Use correct search URL based on user role
+        const isAdmin = {{ strtolower(trim(Auth::user()->levelStatus ?? '')) === 'admin' ? 'true' : 'false' }};
+        const searchUrl = isAdmin ? '{{ url('admin/searchProduct') }}' : '{{ url('user/searchProduct') }}';
+        const res  = await fetch(`${searchUrl}?query=${encodeURIComponent(q)}`);
         const data = await res.json();
 
         if (!data.length) {
             productDD.innerHTML = '<div class="dd-empty">No products found</div>';
         } else {
-            productDD.innerHTML = data.map(p => {
-                const offer = getOffer(p.product_id);
-                const offerBadge = offer
-                    ? `<span class="dd-badge dd-badge-offer"><i class="bi bi-gift-fill"></i> Buy ${offer.required_quantity} Get ${offer.offer_quantity}</span>`
-                    : '';
-                return `<div class="dd-item" onclick="addProductToOrder(${p.id}, '${escHtml(p.name01)}', ${p.sPrice})">
-                    <div class="dd-item-name">${escHtml(p.name01)} ${offerBadge}</div>
-                    <div class="dd-item-meta">
-                        <span class="dd-badge dd-badge-price">${Number(p.bPrice).toLocaleString()} Tsh</span>
-                        <span class="dd-badge dd-badge-stock"><i class="bi bi-box-seam"></i> ${p.quantity}</span>
-                    </div>
-                </div>`;
-            }).join('');
+            productDD.innerHTML = data
+                .filter(p => p != null) // Filter out any null entries
+                .map(p => {
+                    const offer = getOffer(p?.product_id);
+                    const offerBadge = offer
+                        ? `<span class="dd-badge dd-badge-offer"><i class="bi bi-gift-fill"></i> Buy ${offer.required_quantity} Get ${offer.offer_quantity}</span>`
+                        : '';
+                    const sPrice = p?.sPrice ?? 0;
+                    return `<div class="dd-item" onclick="addProductToOrder(${p?.id ?? 0}, '${escHtml(p?.name01 ?? '')}', ${sPrice})">
+                        <div class="dd-item-name">${escHtml(p?.name01 ?? 'Unknown Product')} ${offerBadge}</div>
+                        <div class="dd-item-meta">
+                            <span class="dd-badge dd-badge-price">${Number(p?.bPrice ?? 0).toLocaleString()} Tsh</span>
+                            <span class="dd-badge dd-badge-stock"><i class="bi bi-box-seam"></i> ${p?.quantity ?? 0}</span>
+                        </div>
+                    </div>`;
+                }).join('');
         }
     } catch {
         productDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">Error loading products</div>';
@@ -1069,11 +1124,15 @@ function addProductToOrder(id, name, price) {
 
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = buildUrl('newOrder');
+    // Use correct URL based on user role
+    const isAdmin = {{ strtolower(trim(Auth::user()->levelStatus ?? '')) === 'admin' ? 'true' : 'false' }};
+    const baseUrl = isAdmin ? '{{ url('admin/newOrder') }}' : '{{ url('user/newOrder') }}';
+    form.action = baseUrl;
     form.innerHTML = `
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <input type="hidden" name="pId" value="${id}">
         <input type="hidden" name="orderType" value="Sell">
+        <input type="hidden" name="served" value="${document.getElementById('servedHidden').value}">
     `;
     document.body.appendChild(form);
     form.submit();
@@ -1093,7 +1152,7 @@ custSearch.addEventListener('input', async e => {
     custDD.classList.add('open');
 
     try {
-        const res  = await fetch(`${buildUrl('searchCustomers')}?query=${encodeURIComponent(q)}`);
+        const res  = await fetch(`{{ url('admin/searchCustomers') }}?query=${encodeURIComponent(q)}`);
         const data = await res.json();
         if (!data.length) {
             custDD.innerHTML = '<div class="dd-empty">No customers found</div>';
@@ -1124,7 +1183,7 @@ async function selectCustomer(id, name, limit) {
     document.getElementById('saveInfosForm').submit();
 
     try {
-        const res  = await fetch(`${buildUrl('getCustomerDetails')}/${id}`);
+        const res  = await fetch(`{{ url('admin/getCustomerDetails') }}/${id}`);
         const data = await res.json();
         showCustInfo(data.name, data.limits, data.credit, data.available);
         selectedCustomerObj = data;
@@ -1169,7 +1228,7 @@ sellerSearch.addEventListener('input', async e => {
     sellerDD.classList.add('open');
 
     try {
-        const res  = await fetch(`${buildUrl('searchSellers')}?query=${encodeURIComponent(q)}`);
+        const res  = await fetch(`{{ url('admin/searchSellers') }}?query=${encodeURIComponent(q)}`);
         const data = await res.json();
         if (!data.length) {
             sellerDD.innerHTML = '<div class="dd-empty">No sellers found</div>';
@@ -1189,10 +1248,14 @@ sellerSearch.addEventListener('input', async e => {
 function selectSeller(name, role) {
     sellerSearch.value = name;
     sellerDD.classList.remove('open');
-    document.getElementById('servedHidden').value     = name;
+    document.getElementById('selectedSeller').value = name;
+    document.getElementById('servedHidden').value = name;
     document.getElementById('sellerBadgeText').textContent = `${name} · ${role}`;
     document.getElementById('sellerBadgeWrap').style.display = 'block';
     selectedSellerName = name;
+    
+    // Auto-submit the seller form to save to database
+    document.getElementById('saveSellerForm').submit();
 }
 
 function clearSeller() {
@@ -1254,7 +1317,7 @@ function updateCartItem(orderId, productId, field, value) {
     fd.append('field', field);
     fd.append('value', value);
 
-    fetch(`${buildUrl('updateCartItem')}`, {
+    fetch('{{ url("admin/updateCartItem") }}', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: fd
@@ -1282,20 +1345,14 @@ async function loadPastSales(q) {
     const el = document.getElementById('pastSalesResults');
     el.innerHTML = '<div class="dd-loading">Searching…</div>';
     try {
-        const url = q ? `${buildUrl('searchSales')}?search=${encodeURIComponent(q)}` : `${buildUrl('searchSales')}`;
-        console.log('Fetching URL:', url);
-        
+        const url = q ? `{{ url('admin/searchSales') }}?search=${encodeURIComponent(q)}` : `{{ url('admin/searchSales') }}`;
         const response = await fetch(url);
-        console.log('Response status:', response.status);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Response data:', data);
         
         if (!data.sales?.length) {
             el.innerHTML = '<div class="dd-empty">No past sales found</div>';
@@ -1342,7 +1399,7 @@ document.getElementById('confirmReturnBtn').addEventListener('click', async () =
     btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing…';
     try {
         const fd = new FormData(); fd.append('sales_id', pendingReturnId);
-        const data = await (await fetch(`${buildUrl('returnSaleToOrder')}`, {
+        const data = await (await fetch('{{ url("admin/returnSaleToOrder") }}', {
             method:'POST', body:fd, headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}'}
         })).json();
         if (data.success) {
@@ -1368,7 +1425,7 @@ document.querySelector('form[action="payout"]').addEventListener('submit', funct
 
 async function checkOffer(productId, qty) {
     try {
-        const d = await (await fetch(`${buildUrl('checkOffer')}/${productId}/${qty}`)).json();
+        const d = await (await fetch(`{{ url('admin/checkOffer') }}/${productId}/${qty}`)).json();
         if (d.has_offer) { offerCtx = {offer: d.offer, productId}; showOfferModal(d.offer); }
     } catch {}
 }
@@ -1395,6 +1452,43 @@ function acceptOffer() {
     offerCtx = null;
 }
 function declineOffer() { offerCtx = null; }
+
+// ════════════════════════════════════════════
+// Shop Selector
+// ════════════════════════════════════════════
+function changeShop(shopId) {
+    // Show loading state
+    const shopSelect = document.getElementById('shopSelect');
+    if (shopSelect) {
+        shopSelect.disabled = true;
+    }
+    
+    // Determine correct URL based on user role
+    const isAdmin = {{ strtolower(trim(Auth::user()->levelStatus ?? '')) === 'admin' ? 'true' : 'false' }};
+    const baseUrl = isAdmin ? '{{ url('admin/changeShop') }}' : '{{ url('user/changeShop') }}';
+    
+    // Send request to update session
+    fetch(`${baseUrl}?shop_id=${shopId}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Reload the page to refresh data for the selected shop
+            window.location.reload();
+        } else {
+            showToast('Failed to change shop', 'err');
+            if (shopSelect) shopSelect.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error changing shop:', error);
+        showToast('Network error changing shop', 'err');
+        if (shopSelect) shopSelect.disabled = false;
+    });
+}
 
 // ════════════════════════════════════════════
 // Close dropdowns on outside click

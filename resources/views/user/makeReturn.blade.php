@@ -3,245 +3,665 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Make Return</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{config("app.name")}} — Make Return</title>
+    @include('links')
+    <link href="{{asset('css/dashboard.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
     <style>
-        :root { --primary-color: #004E89; --secondary-color: #1a659e; --success-color: #28a745; --danger-color: #dc3545; --text-dark: #343a40; --text-light: #6c757d; --border-radius: 8px; --shadow: 0 2px 8px rgba(0,0,0,0.06); --transition: all 0.2s ease; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; zoom: 1.1; }
-        .main-container { max-width: 1900px; margin: 0 auto; padding: 0.75rem; }
-        .page-header { background: white; padding: 0.9rem 1.2rem; border-radius: var(--border-radius); margin-bottom: 0.75rem; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .page-title { font-size: 1.4rem; font-weight: 700; color: var(--danger-color); display: flex; align-items: center; gap: 0.4rem; }
-        .warning-banner { background: #fff5f5; border: 2px solid var(--danger-color); border-radius: var(--border-radius); padding: 0.75rem 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem; }
-        .warning-banner i { color: var(--danger-color); font-size: 1.5rem; }
-        .warning-banner strong { color: var(--danger-color); }
-        .main-layout { display: grid; grid-template-columns: 70% 30%; gap: 0.75rem; height: calc(100vh - 220px); }
-        @media (max-width: 1200px) { .main-layout { grid-template-columns: 1fr; height: auto; } }
-        .left-panel, .right-panel { background: white; border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-header { background: linear-gradient(135deg, var(--danger-color), #c82333); color: white; padding: 0.75rem 1rem; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
-        .panel-body { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 0.75rem; }
-        .product-search-section { flex-shrink: 0; position: relative; }
-        .search-box { position: relative; }
-        .search-box input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.2rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 0.9rem; }
-        .search-box input:focus { border-color: var(--danger-color); outline: none; }
-        .search-box i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .product-list-section { width: 100%; max-height: 400px; display: none; flex-direction: column; background: white; border-radius: var(--border-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid #e9ecef; }
-        .product-list-section.active { display: flex; }
-        .product-list-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e9ecef; background: #fff5f5; }
-        .product-list-title { font-weight: 600; color: var(--danger-color); }
-        .product-count { background: var(--danger-color); color: white; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.8rem; }
-        .product-list { flex: 1; overflow-y: auto; }
-        .product-item { padding: 0.6rem 1rem; border-bottom: 1px solid #e9ecef; cursor: pointer; transition: var(--transition); }
-        .product-item:hover { background: #fff5f5; }
-        .product-info { flex: 1; }
-        .product-name { font-weight: 600; color: var(--text-dark); }
-        .product-prices { font-size: 0.75rem; color: var(--text-light); }
-        .supplier-section { padding: 0.75rem; border-bottom: 1px solid #e9ecef; flex-shrink: 0; }
-        .form-group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-        .form-group { margin-bottom: 0; }
-        .form-label { font-weight: 600; color: var(--text-dark); margin-bottom: 0.3rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem; }
-        .form-control, .form-select { border: 2px solid #e9ecef; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.9rem; }
-        .cart-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .cart-header { padding: 0.75rem; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
-        .cart-title { font-weight: 600; }
-        .cart-count { background: var(--danger-color); color: white; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.8rem; }
-        .cart-items { flex: 1; overflow-y: auto; padding: 0.75rem; }
-        .cart-items-table { width: 100%; border-collapse: collapse; }
-        .cart-items-table th { padding: 0.5rem; text-align: left; font-size: 0.75rem; background: #fff5f5; border-bottom: 2px solid #e9ecef; color: var(--danger-color); }
-        .cart-items-table td { padding: 0.4rem; font-size: 0.8rem; border-bottom: 1px solid #e9ecef; }
-        .qty-cell input, .price-cell input { width: 100%; padding: 0.3rem; text-align: center; border: 1px solid #e9ecef; border-radius: 3px; font-size: 0.75rem; }
-        .remove-item-table button { background: transparent; border: none; color: var(--danger-color); cursor: pointer; }
-        .summary-section { padding: 0.75rem; border-top: 1px solid #e9ecef; background: #fff5f5; }
-        .summary-item { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
-        .total-summary { background: linear-gradient(135deg, var(--danger-color), #c82333); color: white; padding: 0.8rem; border-radius: 6px; margin-top: 0.5rem; }
-        .total-amount { font-size: 1.4rem; font-weight: 800; text-align: right; }
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.75rem; }
-        .btn-primary-action { background: linear-gradient(135deg, var(--danger-color), #c82333); border: none; color: white; padding: 0.6rem; border-radius: 6px; font-weight: 700; cursor: pointer; }
-        .btn-secondary-action { background: #f8f9fa; border: 2px solid #e9ecef; color: var(--text-dark); padding: 0.6rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; color: var(--text-light); }
-        .alert { border: none; border-radius: var(--border-radius); margin-bottom: 0.75rem; padding: 0.75rem 1rem; }
-        .alert-success { background: rgba(40,167,69,0.1); border-left: 4px solid var(--success-color); }
-        .alert-danger { background: rgba(220,53,69,0.1); border-left: 4px solid var(--danger-color); }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: white; border-radius: var(--border-radius); box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; min-width: 300px; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:         #0B1E3D;
+            --navy-mid:     #112952;
+            --navy-light:   #1A3A6B;
+            --amber:        #F59E0B;
+            --amber-pale:   #FEF3C7;
+            --emerald:      #059669;
+            --emerald-pale: #D1FAE5;
+            --rose:         #E11D48;
+            --rose-pale:    #FFE4E6;
+            --violet:       #7C3AED;
+            --violet-pale:  #EDE9FE;
+            --slate-50:     #F8FAFC;
+            --slate-100:    #F1F5F9;
+            --slate-200:    #E2E8F0;
+            --slate-300:    #CBD5E1;
+            --slate-400:    #94A3B8;
+            --slate-500:    #64748B;
+            --slate-600:    #475569;
+            --slate-700:    #334155;
+            --slate-800:    #1E293B;
+            --white:        #FFFFFF;
+            --font: 'Sora', system-ui, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 8px; --r-lg: 12px; --r-xl: 16px;
+        }
+
+        body { font-family: var(--font); background: #ECF0F8; color: var(--slate-800); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--slate-100); }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+
+        .wrap { padding: 1.25rem 1.5rem 2rem; }
+
+        /* ══ PAGE HEADER ══ */
+        .pg-header {
+            background: var(--navy); border-radius: var(--r-xl);
+            padding: 1rem 1.5rem; margin-bottom: 1rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; flex-wrap: wrap; position: relative; overflow: hidden;
+        }
+        .pg-header::before { content:''; position:absolute; top:-50px; right:-30px; width:160px; height:160px; border-radius:50%; background:var(--navy-light); opacity:.45; pointer-events:none; }
+        .pg-header::after  { content:''; position:absolute; bottom:-50px; right:80px; width:110px; height:110px; border-radius:50%; background:var(--rose); opacity:.07; pointer-events:none; }
+        .pg-left { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
+        .header-icon { width:38px; height:38px; border-radius:var(--r); background:var(--rose); display:flex; align-items:center; justify-content:center; font-size:17px; color:var(--white); flex-shrink:0; }
+        .pg-title-text h1 { font-size:15px; font-weight:700; color:var(--white); letter-spacing:-.2px; }
+        .pg-title-text p  { font-size:11.5px; color:rgba(255,255,255,.4); margin-top:1px; }
+        .pg-right { display:flex; gap:7px; position:relative; z-index:1; flex-wrap:wrap; }
+
+        .btn-ghost-hdr { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; border-radius:var(--r); border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.07); color:rgba(255,255,255,.75); font-family:var(--font); font-size:12.5px; font-weight:500; cursor:pointer; transition:all .15s; text-decoration:none; }
+        .btn-ghost-hdr:hover { background:rgba(255,255,255,.15); color:var(--white); }
+
+        /* ══ WARNING BANNER ══ */
+        .warn-banner {
+            background: var(--rose-pale); border: 1.5px solid rgba(225,29,72,.25);
+            border-left: 4px solid var(--rose); border-radius: var(--r-lg);
+            padding: .75rem 1rem; margin-bottom: 1rem;
+            display: flex; align-items: flex-start; gap: 10px;
+        }
+        .warn-banner i { color: var(--rose); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+        .warn-banner strong { color: var(--rose); display: block; font-size: 13px; }
+        .warn-banner small { font-size: 12px; color: var(--slate-600); }
+
+        /* Alerts */
+        .alert { display:flex; align-items:center; gap:8px; padding:.75rem 1rem; border-radius:var(--r); font-size:13px; font-weight:500; margin-bottom:1rem; }
+        .alert-success { background:var(--emerald-pale); color:var(--emerald); border-left:3px solid var(--emerald); }
+        .alert-danger  { background:var(--rose-pale);    color:var(--rose);    border-left:3px solid var(--rose); }
+
+        /* ══ MAIN LAYOUT ══ */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1rem;
+            height: calc(100vh - 200px);
+            min-height: 500px;
+        }
+        @media(max-width:1000px) { .main-grid { grid-template-columns: 1fr; height: auto; } }
+
+        /* ══ PANELS ══ */
+        .panel {
+            background: var(--white); border: 1.5px solid var(--slate-200);
+            border-radius: var(--r-xl); overflow: hidden;
+            box-shadow: 0 1px 4px rgba(11,30,61,.05);
+            display: flex; flex-direction: column;
+        }
+
+        .panel-head {
+            display: flex; align-items: center; gap: 8px;
+            padding: .8rem 1.2rem; border-bottom: 1.5px solid var(--slate-200);
+            background: var(--slate-50); flex-shrink: 0;
+        }
+        .panel-head-icon { width: 28px; height: 28px; border-radius: var(--r); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+        .phi-rose    { background: var(--rose-pale);    color: var(--rose); }
+        .phi-navy    { background: rgba(11,30,61,.08);  color: var(--navy-light); }
+        .phi-amber   { background: var(--amber-pale);   color: #92400e; }
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--navy); flex: 1; }
+        .count-pill  { font-size: 11px; font-weight: 700; font-family: var(--mono); padding: 2px 8px; border-radius: 20px; background: var(--rose); color: var(--white); }
+        .count-pill.navy { background: var(--navy); }
+
+        .panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: .9rem; gap: .9rem; }
+
+        /* ══ PRODUCT SEARCH ══ */
+        .search-wrap { position: relative; flex-shrink: 0; }
+        .search-wrap i.si { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--slate-400); font-size: 13px; pointer-events: none; }
+        .search-input {
+            width: 100%; padding: 9px 12px 9px 32px;
+            border: 1.5px solid var(--slate-200); border-radius: var(--r);
+            font-family: var(--font); font-size: 13.5px; color: var(--slate-800);
+            background: var(--slate-50); outline: none;
+            transition: border-color .18s, box-shadow .18s;
+        }
+        .search-input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(26,58,107,.1); background: var(--white); }
+        .search-input::placeholder { color: var(--slate-400); }
+
+        /* Dropdown results */
+        .results-drop {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200;
+            background: var(--white); border: 1.5px solid var(--navy-light);
+            border-radius: var(--r-lg); max-height: 280px; overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(11,30,61,.14); display: none;
+        }
+        .results-drop.open { display: block; }
+        .results-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--slate-100); background: var(--slate-50); }
+        .results-head-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--slate-400); }
+
+        .prod-item { padding: 9px 13px; cursor: pointer; border-bottom: 1px solid var(--slate-100); transition: background .12s; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+        .prod-item:last-child { border-bottom: none; }
+        .prod-item:hover { background: var(--slate-50); border-left: 3px solid var(--rose); padding-left: 10px; }
+        .prod-item-name  { font-size: 13px; font-weight: 600; color: var(--navy); }
+        .prod-item-meta  { font-size: 11.5px; color: var(--slate-400); margin-top: 1px; font-family: var(--mono); }
+        .prod-item-stock { font-size: 11.5px; font-weight: 700; color: var(--emerald); font-family: var(--mono); white-space: nowrap; }
+        .no-results { padding: 1.25rem; text-align: center; font-size: 13px; color: var(--slate-400); }
+
+        /* ══ CART TABLE ══ */
+        .cart-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .cart-scroll { flex: 1; overflow-y: auto; }
+
+        .cart-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .cart-tbl thead th {
+            background: var(--navy); color: rgba(255,255,255,.65);
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+            padding: 8px 10px; border: none; white-space: nowrap; text-align: left;
+        }
+        .cart-tbl thead th:last-child { text-align: center; }
+        .cart-tbl tbody tr { border-bottom: 1px solid var(--slate-100); }
+        .cart-tbl tbody tr:last-child { border-bottom: none; }
+        .cart-tbl tbody tr:hover td { background: var(--slate-50); }
+        .cart-tbl td { padding: 8px 10px; vertical-align: middle; }
+
+        .cart-prod-name { font-weight: 600; color: var(--navy); font-size: 12.5px; }
+        .num-input {
+            width: 72px; padding: 5px 7px; text-align: center;
+            border: 1.5px solid var(--slate-200); border-radius: var(--r);
+            font-family: var(--mono); font-size: 12.5px; color: var(--slate-800);
+            outline: none; transition: border-color .15s;
+        }
+        .num-input:focus { border-color: var(--navy-light); }
+        .del-btn {
+            width: 28px; height: 28px; border-radius: var(--r); background: var(--rose-pale);
+            color: var(--rose); border: none; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 12px; margin: auto;
+            transition: all .15s;
+        }
+        .del-btn:hover { background: var(--rose); color: var(--white); }
+
+        /* Empty cart */
+        .empty-cart { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 1.5rem; text-align: center; color: var(--slate-400); flex: 1; }
+        .empty-cart i { font-size: 2rem; margin-bottom: .5rem; opacity: .3; display: block; }
+        .empty-cart p { font-size: 13px; }
+
+        /* ══ RIGHT PANEL ══ */
+        .right-body { flex: 1; overflow-y: auto; padding: .9rem; display: flex; flex-direction: column; gap: .75rem; }
+
+        /* Field */
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .field-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--slate-400); display: flex; align-items: center; gap: 5px; }
+        .field-label i { font-size: 12px; }
+        .field-input, .field-select, .field-textarea {
+            width: 100%; font-family: var(--font); font-size: 13px;
+            padding: 8px 11px; border: 1.5px solid var(--slate-200);
+            border-radius: var(--r); background: var(--white);
+            color: var(--slate-800); outline: none;
+            transition: border-color .18s, box-shadow .18s;
+        }
+        .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(26,58,107,.1); }
+        .field-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:2rem; }
+        .field-textarea { resize: vertical; min-height: 68px; }
+        .field-hint { font-size: 11px; color: var(--slate-400); display: flex; align-items: center; gap: 4px; }
+
+        /* Summary block */
+        .summary-block { margin-top: auto; flex-shrink: 0; padding: .9rem; border-top: 1.5px solid var(--slate-200); background: var(--slate-50); }
+        .summ-row { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; padding: 4px 0; }
+        .summ-row .sl { color: var(--slate-500); }
+        .summ-row .sv { font-family: var(--mono); font-weight: 600; color: var(--slate-800); }
+
+        .total-box {
+            background: var(--navy); border-radius: var(--r-lg);
+            padding: .9rem 1rem; margin-top: .65rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .total-box-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+        .total-box-val   { font-family: var(--mono); font-size: 19px; font-weight: 700; color: var(--rose); }
+
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: .65rem; }
+        .btn-clear-cart {
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            padding: 10px; border-radius: var(--r); border: 1.5px solid var(--slate-200);
+            background: transparent; font-family: var(--font); font-size: 13px; font-weight: 600;
+            color: var(--slate-600); cursor: pointer; transition: all .15s;
+        }
+        .btn-clear-cart:hover { background: var(--slate-100); }
+        .btn-submit-return {
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            padding: 10px; border-radius: var(--r); border: none;
+            background: var(--rose); color: var(--white);
+            font-family: var(--font); font-size: 13px; font-weight: 700;
+            cursor: pointer; box-shadow: 0 3px 12px rgba(225,29,72,.3);
+            transition: all .18s;
+        }
+        .btn-submit-return:hover { background: #be123c; transform: translateY(-1px); }
+        .btn-submit-return:disabled { background: var(--slate-300); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* ══ TOAST ══ */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        .toast {
+            background: var(--white); border-radius: var(--r-lg);
+            border: 1.5px solid var(--slate-200);
+            box-shadow: 0 8px 24px rgba(11,30,61,.14);
+            padding: .75rem 1.1rem; display: flex; align-items: center; gap: 9px;
+            min-width: 280px; font-size: 13px; font-weight: 500;
+            opacity: 0; transform: translateX(100%); transition: all .25s ease;
+        }
         .toast.show { opacity: 1; transform: translateX(0); }
+        .toast-success { border-left: 3px solid var(--emerald); }
+        .toast-success i { color: var(--emerald); }
+        .toast-error   { border-left: 3px solid var(--rose); }
+        .toast-error i { color: var(--rose); }
+
+        @media(max-width:768px) { .wrap { padding: 1rem; } }
     </style>
 </head>
 <body>
-    <div class="row">
-        @include('user/sidenav')
+<div class="row">
+    @include('user/sidenav')
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="main-container">
-                <div class="page-header">
-                    <div class="page-title"><i class="bi bi-arrow-return-left"></i> Make Return</div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ url('user/make-receiving') }}" class="btn btn-outline-primary"><i class="bi bi-plus-circle me-1"></i> Make Receiving</a>
-                        <a href="{{ url('user/view-returns') }}" class="btn btn-outline-danger"><i class="bi bi-list-check me-1"></i> View Returns</a>
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div class="wrap">
+
+            {{-- Page header --}}
+            <div class="pg-header">
+                <div class="pg-left">
+                    <div class="header-icon"><i class="bi bi-arrow-return-left"></i></div>
+                    <div class="pg-title-text">
+                        <h1>Make Return</h1>
+                        <p>Return products to supplier and reduce stock</p>
                     </div>
                 </div>
-
-                <div class="warning-banner">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <div><strong>Warning: This will decrease product quantities!</strong><br><small>Returning products will reduce stock in your inventory.</small></div>
-                </div>
-
-                @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-                @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
-
-                <div class="main-layout">
-                    <div class="left-panel">
-                        <div class="panel-header"><i class="bi bi-search"></i> Select Products to Return</div>
-                        <div class="panel-body">
-                            <div class="product-search-section">
-                                <div class="search-box">
-                                    <i class="bi bi-search"></i>
-                                    <input type="text" id="productSearch" placeholder="Search products by name...">
-                                </div>
-                                <div class="product-list-section" id="productListSection">
-                                    <div class="product-list-header">
-                                        <div class="product-list-title">Available Products</div>
-                                        <div class="product-count" id="productCount">0</div>
-                                    </div>
-                                    <div class="product-list" id="productList"></div>
-                                </div>
-                            </div>
-                            <div class="cart-section" style="flex:1;">
-                                <div class="cart-header">
-                                    <div class="cart-title"><i class="bi bi-arrow-return-left"></i> Products to Return</div>
-                                    <div class="cart-count" id="cartCount">0</div>
-                                </div>
-                                <div class="cart-items" id="cartItems">
-                                    <div class="empty-state"><div class="empty-state-icon"><i class="bi bi-arrow-return-left"></i></div><div class="empty-state-title">No products added</div></div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="pg-right">
+                    <div class="field" style="min-width: 200px; margin-right: 0.5rem;">
+                        <select id="shopSelector" class="field-input" style="padding: 0.4rem 2rem 0.4rem 0.7rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: white; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 16 16\"%3E%3Cpath fill=\"%23ffffff\" d=\"M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\"/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.6rem center;" onchange="changeShop(this.value)">
+                            <option value="" disabled>Select shop</option>
+                            @foreach($allShops as $shop)
+                                <option value="{{ $shop->id }}" {{ $shop->id == $selectedShopId ? 'selected' : '' }}>
+                                    {{ $shop->name }} ({{ $shop->location ?? 'Main' }})
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-
-                    <div class="right-panel">
-                        <div class="panel-header"><i class="bi bi-clipboard"></i> Return Details</div>
-                        <div class="supplier-section">
-                            <form id="orderForm">
-                                @csrf
-                                <div class="form-group-row">
-                                    <div class="form-group">
-                                        <label class="form-label"><i class="bi bi-shop"></i> Supplier</label>
-                                        <select name="supplier" id="supplier" class="form-select" required>
-                                            <option value="" disabled selected>Select Supplier</option>
-                                            @foreach (DB::table('vendors')->get() as $vendor)<option value="{{ $vendor->name }}">{{ $vendor->name }}</option>@endforeach
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label"><i class="bi bi-person"></i> Processed By</label>
-                                        <select name="served" id="served" class="form-select" required>
-                                            <option value="" disabled selected>Select Staff</option>
-                                            @foreach (DB::table('users')->get() as $user)
-                                                @if($user->account === getSessionAccountDisplayName() || $user->levelStatus === 'Admin')<option value="{{ $user->name }}">{{ $user->name }}</option>@endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group" style="margin-top:0.6rem;">
-                                    <label class="form-label"><i class="bi bi-chat-text"></i> Reason for Return</label>
-                                    <textarea name="reason" id="reason" class="form-control" rows="2" required placeholder="Specify reason..."></textarea>
-                                </div>
-                                <div class="form-group" style="margin-top:0.6rem;">
-                                    <label class="form-label"><i class="bi bi-credit-card"></i> Payment Type</label>
-                                    <select name="transactionType" id="transactionType" class="form-select">
-                                        <option value="Cash">Cash</option>
-                                        <option value="Credit">Credit</option>
-                                    </select>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="summary-section">
-                            <div class="summary-item"><span>Total Items</span><span id="itemCount">0</span></div>
-                            <div class="total-summary">
-                                <div>TOTAL RETURN VALUE</div>
-                                <div class="total-amount" id="totalAmount">Tsh. 0.00</div>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn-secondary-action" id="clearCartBtn"><i class="bi bi-x-circle me-1"></i> Clear</button>
-                                <button class="btn-primary-action" id="submitOrderBtn"><i class="bi bi-check-circle me-1"></i> Submit Return</button>
-                            </div>
-                        </div>
-                    </div>
+                    <a href="{{ url('user/make-receiving') }}" class="btn-ghost-hdr">
+                        <i class="bi bi-plus-circle"></i> Make Receiving
+                    </a>
+                    <a href="{{ url('user/view-returns') }}" class="btn-ghost-hdr">
+                        <i class="bi bi-list-check"></i> View Returns
+                    </a>
                 </div>
             </div>
-        </main>
-    </div>
-    <div class="toast-container" id="toastContainer"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-    const STORAGE_KEY = 'returnCartUser';
-    function saveCartToStorage(){localStorage.setItem(STORAGE_KEY, JSON.stringify(shoppingCart));}
-    function loadCartFromStorage(){try{const s=localStorage.getItem(STORAGE_KEY);if(s)shoppingCart=JSON.parse(s);}catch(e){shoppingCart=[];}}
-    function clearCartStorage(){localStorage.removeItem(STORAGE_KEY);}
+
+            {{-- Warning --}}
+            <div class="warn-banner">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Return request will be sent for admin approval first!</strong>
+                    <small>Stock will only be deducted after an admin approves this return request. If rejected, no stock will be deducted.</small>
+                </div>
+            </div>
+
+            {{-- Alerts --}}
+            @if(session('success'))<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</div>@endif
+            @if(session('error'))<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</div>@endif
+
+            {{-- Main grid --}}
+            <div class="main-grid">
+
+                {{-- ═══ LEFT — Products + Cart ═══ --}}
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-head-icon phi-rose"><i class="bi bi-search"></i></div>
+                        <span class="panel-title">Select Products to Return</span>
+                        <span class="count-pill" id="cartCount">0</span>
+                    </div>
+                    <div class="panel-body">
+
+                        {{-- Search --}}
+                        <div class="search-wrap">
+                            <i class="bi bi-search si"></i>
+                            <input type="text" class="search-input" id="productSearch" placeholder="Search products by name…" autocomplete="off">
+                            <div class="results-drop" id="productListSection">
+                                <div class="results-head">
+                                    <span class="results-head-label">Available products</span>
+                                    <span class="count-pill" id="productCount" style="background:var(--navy);">0</span>
+                                </div>
+                                <div id="productList"></div>
+                            </div>
+                        </div>
+
+                        {{-- Cart --}}
+                        <div class="cart-wrap">
+                            <div class="panel-head" style="border-radius:0; margin:-0; background:var(--slate-50); border:none; border-bottom:1.5px solid var(--slate-200); border-top:1.5px solid var(--slate-200); flex-shrink:0;">
+                                <div class="panel-head-icon phi-navy"><i class="bi bi-cart3"></i></div>
+                                <span class="panel-title">Products to Return</span>
+                            </div>
+                            <div class="cart-scroll" id="cartItems">
+                                <div class="empty-cart">
+                                    <i class="bi bi-arrow-return-left"></i>
+                                    <p>No products added yet<br><span style="font-size:11.5px;">Search and click a product to add it</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {{-- ═══ RIGHT — Details + Summary ═══ --}}
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-head-icon phi-amber"><i class="bi bi-clipboard-check"></i></div>
+                        <span class="panel-title">Return Details</span>
+                    </div>
+
+                    <form id="orderForm" style="display:contents;">
+                        @csrf
+                        <div class="right-body">
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-shop"></i> Supplier</label>
+                                <select id="supplier" name="supplier" class="field-select" required>
+                                    <option value="" disabled selected>Select supplier…</option>
+                                    @foreach(DB::table('vendors')->get() as $vendor)
+                                    <option value="{{ $vendor->name }}">{{ $vendor->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-person"></i> Processed by</label>
+                                <select id="served" name="served" class="field-select" required>
+                                    <option value="" disabled selected>Select staff…</option>
+                                    @foreach(DB::table('users')->get() as $user)
+                                        @if($user->account === getSessionAccountDisplayName() || $user->levelStatus === 'Admin')
+                                        <option value="{{ $user->name }}">{{ $user->name }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-chat-text"></i> Reason for return</label>
+                                <textarea id="reason" name="reason" class="field-textarea" placeholder="Specify the reason for return…" required></textarea>
+                            </div>
+
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-credit-card"></i> Payment type</label>
+                                <select id="transactionType" name="transactionType" class="field-select">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Credit">Credit</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label class="field-label"><i class="bi bi-calendar-check"></i> Return date</label>
+                                <input type="date" id="receivingDate" name="receivingDate" class="field-input"
+                                       value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}">
+                                <span class="field-hint"><i class="bi bi-info-circle"></i> Defaults to today</span>
+                            </div>
+                        </div>
+
+                        {{-- Summary footer --}}
+                        <div class="summary-block">
+                            <div class="summ-row">
+                                <span class="sl">Total items</span>
+                                <span class="sv" id="itemCount">0</span>
+                            </div>
+                            <div class="summ-row">
+                                <span class="sl">Products in cart</span>
+                                <span class="sv" id="cartCountSumm">0</span>
+                            </div>
+
+                            <div class="total-box">
+                                <div>
+                                    <div class="total-box-label">Total return value</div>
+                                </div>
+                                <div class="total-box-val" id="totalAmount">Tsh 0</div>
+                            </div>
+
+                            <div class="action-row">
+                                <button type="button" class="btn-clear-cart" id="clearCartBtn">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                                <button type="button" class="btn-submit-return" id="submitOrderBtn">
+                                    <i class="bi bi-check-circle-fill"></i> Submit
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>{{-- end main-grid --}}
+        </div>
+    </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // ════════════════════════════════════════════
+    // Shop change handler
+    // ════════════════════════════════════════════
+    function changeShop(shopId) {
+        if (!shopId) return;
+        const url = new URL('{{ route("user.make-return") }}');
+        url.searchParams.set('shop_id', shopId);
+        window.location.href = url.toString();
+    }
+
+    /* ══ Products data from server ══ */
     const allProducts = [
-        @if(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountName())->count()>0)
-        @foreach(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountName())->get() as $p)
+        @if(DB::table('products')->where('name01','!=','')->where('account',session('selected_shop_id'))->count() > 0)
+        @foreach(DB::table('products')->where('name01','!=','')->where('account',session('selected_shop_id'))->get() as $p)
         {id:"{{$p->product_id}}",name:"{{addslashes($p->name01)}}",cost:{{$p->bPrice??0}},wholesale:{{$p->wholesale??0}},retail:{{$p->sPrice??0}},currentStock:{{$p->quantity??0}}},
         @endforeach
         @endif
     ];
-    let shoppingCart=[];let lastSearchTerm='';
-    document.addEventListener('DOMContentLoaded',function(){loadCartFromStorage();setupEventListeners();updateCounts();updateCartDisplay();updateSummary();});
-    function setupEventListeners(){
-        document.getElementById('productSearch').addEventListener('input',handleProductSearch);
-        document.getElementById('clearCartBtn').addEventListener('click',clearCart);
-        document.getElementById('submitOrderBtn').addEventListener('click',submitOrder);
-        document.addEventListener('click',function(e){
-            const s=document.getElementById('productListSection'),i=document.getElementById('productSearch');
-            if(s&&!s.contains(e.target)&&i&&!i.contains(e.target))s.classList.remove('active');
+
+    /* ══ Cart state ══ */
+    const STORAGE_KEY = 'returnCartUser';
+    let shoppingCart = [];
+
+    function saveCart()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(shoppingCart)); }
+    function loadCart()  { try { const s = localStorage.getItem(STORAGE_KEY); if(s) shoppingCart = JSON.parse(s); } catch(e) { shoppingCart = []; } }
+    function clearStoredCart() { localStorage.removeItem(STORAGE_KEY); }
+
+    /* ══ Init ══ */
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCart();
+        bindEvents();
+        refreshCart();
+    });
+
+    function bindEvents() {
+        document.getElementById('productSearch').addEventListener('input', handleSearch);
+        document.getElementById('clearCartBtn').addEventListener('click', clearCart);
+        document.getElementById('submitOrderBtn').addEventListener('click', submitOrder);
+        document.addEventListener('click', e => {
+            const drop = document.getElementById('productListSection');
+            const inp  = document.getElementById('productSearch');
+            if (drop && !drop.contains(e.target) && inp && !inp.contains(e.target)) {
+                drop.classList.remove('open');
+            }
         });
     }
-    function handleProductSearch(e){
-        const t=e.target.value.toLowerCase().trim(),s=document.getElementById('productListSection');
-        if(t===''){s.classList.remove('active');document.getElementById('productCount').textContent='0';return;}
-        s.classList.add('active');
-        const f=allProducts.filter(p=>p.name.toLowerCase().includes(t));
-        displayProducts(f);
+
+    /* ══ Search ══ */
+    function handleSearch(e) {
+        const q    = e.target.value.toLowerCase().trim();
+        const drop = document.getElementById('productListSection');
+        if (!q) { drop.classList.remove('open'); return; }
+        const results = allProducts.filter(p => p.name.toLowerCase().includes(q));
+        renderResults(results);
+        drop.classList.add('open');
     }
-    function displayProducts(products){
-        const l=document.getElementById('productList');
-        if(products.length===0){l.innerHTML='<div class="empty-state">No products found</div>';document.getElementById('productCount').textContent='0';return;}
-        l.innerHTML=products.map(p=>`<div class="product-item" onclick="handleProductClick('${p.id}',this)"><div class="product-info"><div class="product-name">${p.name}</div><div class="product-prices">Cost: ${p.cost.toLocaleString()} | Stock: ${p.currentStock}</div></div></div>`).join('');
-        document.getElementById('productCount').textContent=products.length;
+
+    function renderResults(products) {
+        const list = document.getElementById('productList');
+        const cnt  = document.getElementById('productCount');
+        cnt.textContent = products.length;
+        if (!products.length) {
+            list.innerHTML = '<div class="no-results">No products found</div>';
+            return;
+        }
+        list.innerHTML = products.map(p => `
+            <div class="prod-item" onclick="addToCart('${p.id}')">
+                <div>
+                    <div class="prod-item-name">${p.name}</div>
+                    <div class="prod-item-meta">Cost: ${p.cost.toLocaleString()} Tsh</div>
+                </div>
+                <span class="prod-item-stock">Stock: ${p.currentStock}</span>
+            </div>
+        `).join('');
     }
-    function handleProductClick(id){
-        const p=allProducts.find(x=>x.id===id);
-        if(!p)return;
-        if(p.currentStock<1){showToast('Cannot return with zero stock!','error');return;}
-        const e=shoppingCart.find(x=>x.productId===id);
-        if(e){if(e.quantity<p.currentStock){e.quantity+=1;showToast(`Increased ${e.name}`);}else{showToast('Cannot exceed stock','error');return;}}
-        else{shoppingCart.push({cartId:Date.now()+Math.random().toString(36).substr(2,9),productId:p.id,name:p.name,cost:p.cost,wholesale:p.wholesale,retail:p.retail,quantity:1,type:document.getElementById('transactionType')?.value||'Cash',expiry:''});showToast(`${p.name} added`);}
-        saveCartToStorage();document.getElementById('productSearch').value='';document.getElementById('productListSection').classList.remove('active');
-        updateCartDisplay();updateCounts();updateSummary();
+
+    /* ══ Cart logic ══ */
+    function addToCart(id) {
+        const p = allProducts.find(x => x.id === id);
+        if (!p) return;
+        if (p.currentStock < 1) { showToast('Cannot return — zero stock!', 'error'); return; }
+        const existing = shoppingCart.find(x => x.productId === id);
+        if (existing) {
+            if (existing.quantity < p.currentStock) { existing.quantity++; }
+            else { showToast('Cannot exceed current stock', 'error'); return; }
+        } else {
+            shoppingCart.push({
+                cartId: Date.now() + Math.random().toString(36).substr(2, 9),
+                productId: p.id, name: p.name,
+                cost: p.cost, wholesale: p.wholesale, retail: p.retail,
+                quantity: 1
+            });
+        }
+        saveCart();
+        document.getElementById('productSearch').value = '';
+        document.getElementById('productListSection').classList.remove('open');
+        showToast(`${p.name} added to cart`);
+        refreshCart();
     }
-    function updateCartDisplay(){
-        const c=document.getElementById('cartItems');
-        if(shoppingCart.length===0){c.innerHTML='<div class="empty-state"><div class="empty-state-icon"><i class="bi bi-arrow-return-left"></i></div><div>No products added</div></div>';return;}
-        c.innerHTML=`<table class="cart-items-table"><thead><tr><th>Product</th><th>Qty</th><th>Cost</th><th>Wholesale</th><th>Retail</th><th>Del</th></tr></thead><tbody>${shoppingCart.map(i=>`<tr><td>${i.name}</td><td class="qty-cell"><input type="number" value="${i.quantity}" min="1" oninput="updateQuantity('${i.cartId}',this.value);updateSummary();saveCartToStorage()"></td><td class="price-cell"><input type="number" value="${i.cost}" step="0.01" oninput="updatePrice('${i.cartId}','cost',this.value);updateSummary()"></td><td class="price-cell"><input type="number" value="${i.wholesale}" step="0.01" oninput="updatePrice('${i.cartId}','wholesale',this.value)"></td><td class="price-cell"><input type="number" value="${i.retail}" step="0.01" oninput="updatePrice('${i.cartId}','retail',this.value)"></td><td><button onclick="removeFromCart('${i.cartId}')"><i class="bi bi-trash"></i></button></td></tr>`).join('')}</tbody></table>`;
+
+    function removeFromCart(cartId) {
+        shoppingCart = shoppingCart.filter(x => x.cartId !== cartId);
+        saveCart(); refreshCart(); showToast('Item removed');
     }
-    function updateQuantity(id,v){const i=shoppingCart.find(x=>x.cartId===id);if(i)i.quantity=parseInt(v)||1;}
-    function updatePrice(id,t,v){const i=shoppingCart.find(x=>x.cartId===id);if(i){i[t]=parseFloat(v)||0;updateSummary();}}
-    function removeFromCart(id){shoppingCart=shoppingCart.filter(x=>x.cartId!==id);saveCartToStorage();updateCartDisplay();updateCounts();updateSummary();showToast('Removed');}
-    function clearCart(){if(shoppingCart.length===0)return;if(!confirm('Clear all?'))return;shoppingCart=[];clearCartStorage();updateCartDisplay();updateCounts();updateSummary();}
-    function updateCounts(){document.getElementById('cartCount').textContent=shoppingCart.length;}
-    function updateSummary(){let t=0,i=0;shoppingCart.forEach(x=>{t+=(x.cost||0)*(x.quantity||1);i+=x.quantity;});const fmt=n=>`Tsh. ${n.toLocaleString()}`;document.getElementById('itemCount').textContent=i;document.getElementById('totalAmount').textContent=fmt(t);}
-    function submitOrder(){
-        const sup=document.getElementById('supplier').value,srv=document.getElementById('served').value,reason=document.getElementById('reason').value;
-        if(shoppingCart.length===0){showToast('Add products first','error');return;}
-        if(!sup||!srv){showToast('Select supplier and staff','error');return;}
-        if(!reason||reason.trim()===''){showToast('Provide a reason','error');return;}
-        if(!confirm('This will decrease product quantities. Continue?'))return;
-        const fd=new FormData();fd.append('_token','{{csrf_token()}}');fd.append('supplier',sup);fd.append('served',srv);fd.append('reason',reason);
-        shoppingCart.forEach(i=>{fd.append('product_id[]',i.productId);fd.append('quantity[]',i.quantity);fd.append('bPrice[]',i.cost);fd.append('wholesale[]',i.wholesale);fd.append('sPrice[]',i.retail);fd.append('transactionType[]',i.type);fd.append('expiry[]','');});
-        const btn=document.getElementById('submitOrderBtn');btn.innerHTML='Processing...';btn.disabled=true;
-        fetch('{{route("user.process-return")}}',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.text()).then(d=>{shoppingCart=[];clearCartStorage();updateCartDisplay();updateCounts();updateSummary();document.getElementById('orderForm').reset();showToast('Return processed! Quantities updated.');setTimeout(()=>location.href='{{url("user/view-returns")}}',1500);}).catch(()=>showToast('Error','error')).finally(()=>{btn.innerHTML='Submit Return';btn.disabled=false;});
+
+    function updateQuantity(cartId, val) {
+        const item = shoppingCart.find(x => x.cartId === cartId);
+        if (item) item.quantity = parseInt(val) || 1;
+        saveCart(); refreshSummary();
     }
-    function showToast(m,t='success'){let c=document.getElementById('toastContainer');if(!c){c=document.createElement('div');c.id='toastContainer';c.className='toast-container';document.body.appendChild(c);}const x=document.createElement('div');x.className=`toast toast-${t}`;x.innerHTML=m;c.appendChild(x);setTimeout(()=>x.classList.add('show'),10);setTimeout(()=>{x.classList.remove('show');setTimeout(()=>x.remove(),300);},3000);}
-    </script>
+
+    function updatePrice(cartId, field, val) {
+        const item = shoppingCart.find(x => x.cartId === cartId);
+        if (item) item[field] = parseFloat(val) || 0;
+        refreshSummary();
+    }
+
+    function clearCart() {
+        if (!shoppingCart.length) return;
+        if (!confirm('Clear all items from cart?')) return;
+        shoppingCart = []; clearStoredCart(); refreshCart(); showToast('Cart cleared');
+    }
+
+    function refreshCart() {
+        const wrap = document.getElementById('cartItems');
+        if (!shoppingCart.length) {
+            wrap.innerHTML = `<div class="empty-cart"><i class="bi bi-arrow-return-left"></i><p>No products added yet<br><span style="font-size:11.5px;">Search and click a product to add it</span></p></div>`;
+            refreshSummary(); updateCountPills(); return;
+        }
+        wrap.innerHTML = `
+            <table class="cart-tbl">
+                <thead><tr>
+                    <th>Product</th><th>Qty</th><th>Cost</th><th>Wholesale</th><th>Retail</th><th style="text-align:center;">Del</th>
+                </tr></thead>
+                <tbody>
+                ${shoppingCart.map(i => `
+                    <tr>
+                        <td class="cart-prod-name">${i.name}</td>
+                        <td><input type="number" class="num-input" value="${i.quantity}" min="1"
+                               oninput="updateQuantity('${i.cartId}',this.value)"></td>
+                        <td><input type="number" class="num-input" value="${i.cost}" step="0.01"
+                               oninput="updatePrice('${i.cartId}','cost',this.value)"></td>
+                        <td><input type="number" class="num-input" value="${i.wholesale}" step="0.01"
+                               oninput="updatePrice('${i.cartId}','wholesale',this.value)"></td>
+                        <td><input type="number" class="num-input" value="${i.retail}" step="0.01"
+                               oninput="updatePrice('${i.cartId}','retail',this.value)"></td>
+                        <td><button class="del-btn" onclick="removeFromCart('${i.cartId}')"><i class="bi bi-trash"></i></button></td>
+                    </tr>
+                `).join('')}
+                </tbody>
+            </table>`;
+        refreshSummary(); updateCountPills();
+    }
+
+    function refreshSummary() {
+        let total = 0, items = 0;
+        shoppingCart.forEach(x => { total += (x.cost || 0) * (x.quantity || 1); items += x.quantity; });
+        document.getElementById('itemCount').textContent      = items;
+        document.getElementById('cartCountSumm').textContent  = shoppingCart.length;
+        document.getElementById('totalAmount').textContent    = 'Tsh ' + Math.round(total).toLocaleString();
+    }
+
+    function updateCountPills() {
+        document.getElementById('cartCount').textContent = shoppingCart.length;
+    }
+
+    /* ══ Submit ══ */
+    function submitOrder() {
+        const sup    = document.getElementById('supplier').value;
+        const srv    = document.getElementById('served').value;
+        const reason = document.getElementById('reason').value;
+        if (!shoppingCart.length)    { showToast('Add products first', 'error'); return; }
+        if (!sup || !srv)            { showToast('Select supplier and staff', 'error'); return; }
+        if (!reason.trim())          { showToast('Provide a reason for return', 'error'); return; }
+        if (!confirm('This will decrease product quantities in inventory. Continue?')) return;
+
+        const btn = document.getElementById('submitOrderBtn');
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing…';
+        btn.disabled  = true;
+
+        const fd = new FormData();
+        fd.append('_token', '{{csrf_token()}}');
+        fd.append('supplier', sup);
+        fd.append('served', srv);
+        fd.append('reason', reason);
+        fd.append('receivingDate', document.getElementById('receivingDate').value);
+        fd.append('transactionType', document.getElementById('transactionType').value);
+        shoppingCart.forEach(i => {
+            fd.append('product_id[]', i.productId);
+            fd.append('quantity[]', i.quantity);
+            fd.append('bPrice[]', i.cost);
+            fd.append('wholesale[]', i.wholesale);
+            fd.append('sPrice[]', i.retail);
+            fd.append('transactionType[]', i.type || 'Cash');
+            fd.append('expiry[]', '');
+        });
+
+        fetch('{{route("user.process-return")}}', {
+            method: 'POST', body: fd,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.text())
+        .then(() => {
+            shoppingCart = []; clearStoredCart();
+            refreshCart();
+            document.getElementById('orderForm').reset();
+            showToast('Return request submitted! Awaiting admin approval.');
+            setTimeout(() => location.href = '{{url("user/view-returns")}}', 1500);
+        })
+        .catch(() => showToast('Error processing return. Please try again.', 'error'))
+        .finally(() => {
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Submit';
+            btn.disabled  = false;
+        });
+    }
+
+    /* ══ Toast ══ */
+    function showToast(msg, type = 'success') {
+        let container = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<i class="bi ${icon}"></i> ${msg}`;
+        container.appendChild(t);
+        setTimeout(() => t.classList.add('show'), 10);
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 280); }, 3000);
+    }
+</script>
 </body>
 </html>

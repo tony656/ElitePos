@@ -394,7 +394,7 @@ public function logoutAndRedirect()
     public function emergencyLogin()
     {
         // If already logged in as admin, redirect to dashboard
-        if (Auth::check() && Auth::user()->levelStatus === 'Admin') {
+        if (Auth::check() && strtolower(trim(Auth::user()->levelStatus)) === 'admin') {
             return redirect()->route('admin.dashboard');
         }
         

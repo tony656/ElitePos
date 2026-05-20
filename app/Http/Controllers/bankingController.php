@@ -25,8 +25,7 @@ class bankingController extends Controller
     {
         $user = Auth::user();
 
-        $suppliers = BankingSupplier::where('account', getSessionAccountId())
-                        ->with('accounts')
+        $suppliers = BankingSupplier::with('accounts')
                         ->get();
 
         $data = compact('suppliers');
@@ -43,26 +42,52 @@ class bankingController extends Controller
     /**
      * Display banking partners (suppliers & beneficiaries) list
      */
-    public function partners()
+    public function partners(Request $req)
     {
         $user = Auth::user();
 
-        $suppliers = BankingSupplier::where('account', getSessionAccountId())
-                        ->with('accounts')
-                        ->get();
-
-        $beneficiaries = BankingBeneficiary::where('account', getSessionAccountId())
-                            ->with('accounts')
+        // Get all shops (accounts) for filter dropdown based on permission
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            $shops = accountModel::orderBy('name', 'asc')->get();
+        } else {
+            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
+            if (empty($assignedAccountIds)) {
+                $shops = collect();
+            } else {
+                $shops = accountModel::whereIn('id', $assignedAccountIds)
+                            ->orderBy('name', 'asc')
                             ->get();
+            }
+        }
 
-        $data = compact('suppliers', 'beneficiaries');
+        // Build supplier query with optional shop filter
+        $supplierQuery = BankingSupplier::with('accounts');
+        if ($req->has('shop_id') && $req->shop_id) {
+            $supplierQuery->whereHas('accounts', function ($q) use ($req) {
+                $q->where('account', $req->shop_id);
+            });
+        }
+        $suppliers = $supplierQuery->get();
+
+        // Build beneficiary query with optional shop filter
+        $beneficiaryQuery = BankingBeneficiary::with('accounts');
+        if ($req->has('shop_id') && $req->shop_id) {
+            $beneficiaryQuery->whereHas('accounts', function ($q) use ($req) {
+                $q->where('account', $req->shop_id);
+            });
+        }
+        $beneficiaries = $beneficiaryQuery->get();
+
+        $shopId = $req->input('shop_id');
+
+        $data = compact('suppliers', 'beneficiaries', 'shops', 'shopId');
 
         if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-partners', $data);
+            return view('admin.banking-partners', $data)->with($req->all());
         }
 
         if (!empty($user->levelStatus)) {
-            return view('user.banking-partners', $data);
+            return view('user.banking-partners', $data)->with($req->all());
         }
     }
 
@@ -73,8 +98,7 @@ class bankingController extends Controller
     {
         $user = Auth::user();
 
-        $beneficiaries = BankingBeneficiary::where('account', getSessionAccountId())
-                            ->with('accounts')
+        $beneficiaries = BankingBeneficiary::with('accounts')
                             ->get();
 
         $data = compact('beneficiaries');
@@ -405,19 +429,30 @@ class bankingController extends Controller
     {
         $user = Auth::user();
         $accountName = getSessionAccountId();
-
-        // Build query with filters
-        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
+        $today = date('Y-m-d');
+        
+        // Build base query - for admins, show all transfers; for regular users, filter by account
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
+        } else {
+            $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
                         ->where('account', $accountName);
+        }
 
         // Date range filter
         if ($req->has('date_from') && $req->date_from) {
             $query->whereDate('transfer_date', '>=', $req->date_from);
-        }
-        if ($req->has('date_to') && $req->date_to) {
+        } else if ($req->has('date_to') && $req->date_to) {
             $query->whereDate('transfer_date', '<=', $req->date_to);
+        } else {
+            $query->whereDate('transfer_date', $today);
         }
-
+        
+        // Shop filter - applies to both admins and regular users
+        if ($req->has('shop_id') && $req->shop_id) {
+            $query->where('shop_id', $req->shop_id);
+        }
+          
         // Sorting
         $sortBy = $req->get('sort_by', 'transfer_date');
         $sortDirection = $req->get('sort_direction', 'desc');
@@ -431,6 +466,13 @@ class bankingController extends Controller
         $query->orderBy($sortBy, $sortDirection);
 
         $transfers = $query->get();
+
+        // Calculate statistics
+        $totalDeposits = $transfers->sum('amount');
+        $depositCount = $transfers->count();
+        $averageDeposit = $depositCount > 0 ? $transfers->avg('amount') : 0;
+        $maxDeposit = $transfers->max('amount') ?? 0;
+        $minDeposit = $transfers->min('amount') ?? 0;
 
         $suppliers = BankingSupplier::where('account', $accountName)->with('accounts')->get();
         $beneficiaries = BankingBeneficiary::where('account', $accountName)->with('accounts')->get();
@@ -449,7 +491,7 @@ class bankingController extends Controller
             }
         }
 
-        $data = compact('transfers', 'suppliers', 'beneficiaries', 'shops');
+        $data = compact('transfers', 'suppliers', 'beneficiaries', 'shops', 'totalDeposits', 'depositCount', 'averageDeposit', 'maxDeposit', 'minDeposit');
 
         if (strtolower(trim($user->levelStatus)) === 'admin') {
             return view('admin.banking-transfers', $data)->with($req->all());
@@ -811,7 +853,7 @@ class bankingController extends Controller
     public function chips(Request $req)
     {
         $user = Auth::user();
-        $accountName = getSessionAccountId();
+        $sessionAccountId = getSessionAccountId();
 
         // Check permission for viewing all chips
         $permissions = $user->permissions;
@@ -820,43 +862,39 @@ class bankingController extends Controller
         }
         $canViewAllChips = in_array('view_all_banking_chips', $permissions);
 
-        // Get assigned shop IDs for non-admin users
-        $assignedAccountIds = [];
-        if (strtolower(trim($user->levelStatus)) !== 'admin') {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
-
-        // Get all shops (accounts) for filter dropdown based on permission
+        // Get all accounts (shops) the user can access
         if (strtolower(trim($user->levelStatus)) === 'admin' || $canViewAllChips) {
-            $shops = accountModel::orderBy('name', 'asc')->get();
+            $allAccounts = accountModel::orderBy('name', 'asc')->get();
         } else {
-            // Non-admin without permission: only assigned shops
+            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
             if (empty($assignedAccountIds)) {
-                $shops = collect();
+                $allAccounts = collect();
             } else {
-                $shops = accountModel::whereIn('id', $assignedAccountIds)
+                $allAccounts = accountModel::whereIn('id', $assignedAccountIds)
                             ->orderBy('name', 'asc')
                             ->get();
             }
         }
 
-        // Build query with shop filter
-        $query = BankingChip::with(['shop', 'transfer'])
-                        ->whereHas('shop', function($q) use ($accountName) {
-                            $q->where('account', $accountName);
-                        });
+        // Build query - filter by selected account or default to session account
+        $query = BankingChip::with(['shop', 'transfer'])->whereHas('shop');
+
+        // Determine which account to filter by
+        $selectedAccountId = $req->has('account_id') && $req->account_id ? $req->account_id : $sessionAccountId;
+
+        // Apply account filter to the query
+        $query->where('account', $selectedAccountId);
 
         // If user cannot view all chips, restrict to assigned shops only
         if (strtolower(trim($user->levelStatus)) !== 'admin' && !$canViewAllChips) {
             if (!empty($assignedAccountIds)) {
                 $query->whereIn('shop_id', $assignedAccountIds);
             } else {
-                // No assigned shops, return empty result
                 $query->whereRaw('1 = 0');
             }
         }
 
-        // Apply shop filter from request: only if a specific shop is selected
+        // Apply shop filter from request
         if ($req->has('shop_id') && $req->shop_id) {
             $query->where('shop_id', $req->shop_id);
         }
@@ -886,7 +924,16 @@ class bankingController extends Controller
         // Calculate total deposits (sum of chip_amount)
         $totalDeposit = $chips->sum('chip_amount');
 
-        $data = compact('chips', 'shops', 'totalDeposit');
+        // Determine shops for filter dropdown
+        // For admins: always show all accounts as shop options (since shops = accounts in this system)
+        // For regular users: show only their assigned accounts
+        if (strtolower(trim($user->levelStatus)) === 'admin' || $canViewAllChips) {
+            $shops = accountModel::orderBy('name', 'asc')->get();
+        } else {
+            $shops = $allAccounts;
+        }
+
+        $data = compact('chips', 'shops', 'allAccounts', 'totalDeposit', 'selectedAccountId');
 
         if (strtolower(trim($user->levelStatus)) === 'admin') {
             return view('admin.banking-chips', $data)->with($req->all());
@@ -922,8 +969,9 @@ class bankingController extends Controller
             }
         }
 
-        // Get the last chip entry for this shop to calculate cumulative total
+        // Get the last chip entry for this shop and account to calculate cumulative total
         $lastChip = BankingChip::where('shop_id', $req->shop_id)
+                    ->where('account', $Account)
                     ->orderBy('id', 'desc')
                     ->first();
         
@@ -967,9 +1015,7 @@ class bankingController extends Controller
         ]);
 
         $chip = BankingChip::where('id', $id)
-                ->whereHas('shop', function($q) use ($Account) {
-                    $q->where('account', $Account);
-                })
+                ->where('account', $Account)
                 ->first();
 
         if (!$chip) {
@@ -1018,9 +1064,7 @@ class bankingController extends Controller
     {
         $Account = getSessionAccountId();
         $chip = BankingChip::where('id', $id)
-                ->whereHas('shop', function($q) use ($Account) {
-                    $q->where('account', $Account);
-                })
+                ->where('account', $Account)
                 ->first();
 
         if (!$chip) {
@@ -1033,6 +1077,7 @@ class bankingController extends Controller
 
         // Recalculate cumulative available_chip for all entries after deletion
         $remainingChips = BankingChip::where('shop_id', $shopId)
+                            ->where('account', $Account)
                             ->orderBy('id', 'asc')
                             ->get();
         
@@ -1051,5 +1096,306 @@ class bankingController extends Controller
         $log->save();
 
         return redirect()->back()->with('success', 'Chip entry deleted successfully');
+    }
+
+    /**
+     * Display supplier deposit report grouped by supplier
+     */
+    public function supplierDepositReport(Request $req)
+    {
+        $user = Auth::user();
+        
+        // Date range filter
+        $dateFrom = $req->input('date_from', date('Y-m-d')); // Default to first day of current month
+        $dateTo = $req->input('date_to', date('Y-m-d')); // Default to today
+        $shopId = $req->input('shop_id');
+        
+        // Get all shops (accounts) for filter dropdown based on permission
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            $shops = accountModel::orderBy('name', 'asc')->get();
+        } else {
+            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
+            if (empty($assignedAccountIds)) {
+                $shops = collect();
+            } else {
+                $shops = accountModel::whereIn('id', $assignedAccountIds)
+                            ->orderBy('name', 'asc')
+                            ->get();
+            }
+        }
+        
+        // Build query with filters - NO account filter to show all data across accounts
+        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
+                        ->orderBy('transfer_date', 'desc');
+        
+        if ($dateFrom) {
+            $query->whereDate('transfer_date', '>=', $dateFrom);
+        }
+        
+        if ($dateTo) {
+            $query->whereDate('transfer_date', '<=', $dateTo);
+        }
+        
+        // Apply shop filter
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
+        }
+
+        // Apply supplier filter
+        if ($req->has('supplier_id') && $req->supplier_id) {
+            $query->where('supplier_id', $req->supplier_id);
+        }
+        
+        $transfers = $query->get();
+        
+        // Group transfers by supplier
+        $supplierGroups = $transfers->groupBy('supplier_id');
+        
+        // Calculate totals per supplier
+        $supplierTotals = [];
+        foreach ($supplierGroups as $supplierId => $group) {
+            $supplier = $group->first()->supplier;
+            $supplierTotals[$supplierId] = (object)[
+                'supplier' => $supplier,
+                'total_amount' => $group->sum('amount'),
+                'transfer_count' => $group->count(),
+                'transfers' => $group,
+            ];
+        }
+        
+        // Sort by total amount descending
+        uasort($supplierTotals, function($a, $b) {
+            return $b->total_amount <=> $a->total_amount;
+        });
+        
+        // Grand totals
+        $grandTotal = $transfers->sum('amount');
+        $grandCount = $transfers->count();
+        $averageDeposit = $grandCount > 0 ? $transfers->avg('amount') : 0;
+        
+        // Get suppliers for filter dropdown based on active filters
+        // Build a single query that applies ALL current filters (shop + dates) - NO account filter
+        $relevantSupplierQuery = BankingTransfer::where('supplier_id', '!=', null);
+        
+        // Apply same filters as the main report query
+        if ($shopId) {
+            $relevantSupplierQuery->where('shop_id', $shopId);
+        }
+        if ($dateFrom) {
+            $relevantSupplierQuery->whereDate('transfer_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $relevantSupplierQuery->whereDate('transfer_date', '<=', $dateTo);
+        }
+        
+        $supplierIds = $relevantSupplierQuery->distinct()->pluck('supplier_id')->toArray();
+        
+        $allSuppliers = BankingSupplier::whereIn('id', $supplierIds)
+                            ->orderBy('name')
+                            ->get();
+        
+        $data = compact(
+            'supplierTotals',
+            'grandTotal',
+            'grandCount',
+            'averageDeposit',
+            'allSuppliers',
+            'dateFrom',
+            'dateTo',
+            'shops',
+            'shopId'
+        );
+        
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            return view('admin.banking-supplier-deposit-report', $data);
+        }
+        
+        if (!empty($user->levelStatus)) {
+            return view('user.banking-supplier-deposit-report', $data);
+        }
+    }
+
+    /**
+     * Get suppliers filtered by shop (AJAX endpoint)
+     */
+    public function getSuppliersByShop(Request $req)
+    {
+        $shopId = $req->input('shop_id');
+        
+        // Build query to get suppliers that have transfers for the selected shop
+        // NO account filter to show all suppliers across all accounts
+        $query = BankingTransfer::where('supplier_id', '!=', null);
+        
+        // Apply shop filter if provided
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
+        }
+        
+        // Apply date filters if provided (optional - to match current report filters)
+        if ($req->has('date_from') && $req->date_from) {
+            $query->whereDate('transfer_date', '>=', $req->date_from);
+        }
+        if ($req->has('date_to') && $req->date_to) {
+            $query->whereDate('transfer_date', '<=', $req->date_to);
+        }
+        
+        // Get distinct supplier IDs
+        $supplierIds = $query->distinct()->pluck('supplier_id')->toArray();
+        
+        // Get suppliers - NO account filter
+        $suppliers = BankingSupplier::whereIn('id', $supplierIds)
+                            ->orderBy('name', 'asc')
+                            ->get(['id', 'name', 'bank_name', 'account_number', 'branch']);
+        
+        return response()->json([
+            'success' => true,
+            'suppliers' => $suppliers
+        ]);
+    }
+
+    /**
+     * Export supplier deposit report to Excel
+     */
+    public function exportSupplierDepositReport(Request $req)
+    {
+        // Date range filter
+        $dateFrom = $req->input('date_from');
+        $dateTo = $req->input('date_to');
+        $shopId = $req->input('shop_id');
+        $supplierId = $req->input('supplier_id');
+        
+        // Build query with filters - NO account filter to show all data
+        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
+        
+        if ($dateFrom) {
+            $query->whereDate('transfer_date', '>=', $dateFrom);
+        }
+        
+        if ($dateTo) {
+            $query->whereDate('transfer_date', '<=', $dateTo);
+        }
+        
+        // Apply shop filter - admins can filter by shop, non-admins already restricted by their access
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
+        }
+        
+        // Apply supplier filter
+        if ($supplierId) {
+            $query->where('supplier_id', $supplierId);
+        }
+        
+        $transfers = $query->get();
+        
+        // Group transfers by supplier
+        $supplierGroups = $transfers->groupBy('supplier_id');
+        
+        $supplierTotals = [];
+        foreach ($supplierGroups as $supplierId => $group) {
+            $supplier = $group->first()->supplier;
+            $supplierTotals[$supplierId] = (object)[
+                'supplier' => $supplier,
+                'total_amount' => $group->sum('amount'),
+                'transfer_count' => $group->count(),
+                'transfers' => $group,
+            ];
+        }
+        
+        // Sort by total amount descending
+        uasort($supplierTotals, function($a, $b) {
+            return $b->total_amount <=> $a->total_amount;
+        });
+        
+        // Prepare data for export
+        $exportData = [];
+        $rowNum = 1;
+        
+        foreach ($supplierTotals as $supplierTotal) {
+            $supplier = $supplierTotal->supplier;
+            
+            // First row for supplier header
+            $exportData[] = [
+                'row' => $rowNum++,
+                'supplier' => $supplier->name ?? 'N/A',
+                'bank_name' => $supplier->bank_name ?? 'N/A',
+                'account_number' => $supplier->account_number ?? 'N/A',
+                'branch' => $supplier->branch ?? 'N/A',
+                'transfer_date' => '',
+                'beneficiary' => '',
+                'shop' => '',
+                'amount' => number_format($supplierTotal->total_amount, 2),
+                'reference' => '',
+                'description' => "Total Deposits: {$supplierTotal->transfer_count} transaction(s)",
+            ];
+            
+            // Individual transfer rows
+            foreach ($supplierTotal->transfers as $transfer) {
+                $exportData[] = [
+                    'row' => $rowNum++,
+                    'supplier' => '',
+                    'bank_name' => '',
+                    'account_number' => '',
+                    'branch' => '',
+                    'transfer_date' => $transfer->transfer_date ? $transfer->transfer_date->format('Y-m-d') : 'N/A',
+                    'beneficiary' => $transfer->beneficiary->name ?? 'N/A',
+                    'shop' => $transfer->shop->name ?? 'N/A',
+                    'amount' => number_format($transfer->amount, 2),
+                    'reference' => $transfer->reference_number ?? 'N/A',
+                    'description' => $transfer->description ?? '',
+                ];
+            }
+            
+            // Add blank row between suppliers
+            $exportData[] = [
+                'row' => '',
+                'supplier' => '',
+                'bank_name' => '',
+                'account_number' => '',
+                'branch' => '',
+                'transfer_date' => '',
+                'beneficiary' => '',
+                'shop' => '',
+                'amount' => '',
+                'reference' => '',
+                'description' => '',
+            ];
+        }
+        
+        // Generate CSV
+        $fileName = 'supplier-deposit-report-' . now()->format('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+        
+        $callback = function() use ($exportData) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Header row
+            fputcsv($file, [
+                '#',
+                'Supplier Name',
+                'Bank Name',
+                'Account Number',
+                'Branch',
+                'Transfer Date',
+                'Beneficiary',
+                'Shop',
+                'Amount (Tsh)',
+                'Reference',
+                'Description'
+            ]);
+            
+            foreach ($exportData as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }

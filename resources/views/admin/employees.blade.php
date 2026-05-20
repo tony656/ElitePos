@@ -696,7 +696,7 @@
                                         <form action="employeeView" method="post" style="display: inline;">
                                             @csrf
                                             <button class="btn-view" name="employeeId" value="{{$user->id}}">
-                                                <i class="bi bi-eye"></i> View
+                                                <i class="bi bi-eye"></i> View 
                                             </button>
                                         </form>
                                     </td>

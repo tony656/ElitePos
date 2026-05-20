@@ -320,7 +320,7 @@
 
         .cart-prod-name {
             font-weight: 600; color: var(--navy);
-            max-width: 140px; overflow: hidden; white-space: nowrap;
+            max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
 
         .tbl-input {
@@ -498,6 +498,16 @@
                         Make <span>Receiving</span>
                     </div>
                     <div class="header-actions">
+                        <div class="field" style="min-width: 200px; margin-right: 0.5rem;">
+                            <select id="shopSelector" class="field-input" style="padding: 0.4rem 2rem 0.4rem 0.7rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: white; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 16 16\"%3E%3Cpath fill=\"%23ffffff\" d=\"M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\"/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.6rem center;' onchange="changeShop(this.value)">
+                                <option value="" disabled>Select shop</option>
+                                @foreach($allShops as $shop)
+                                    <option value="{{ $shop->id }}" {{ $shop->id == $selectedShopId ? 'selected' : '' }}>
+                                        {{ $shop->name }} ({{ $shop->location ?? 'Main' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <a href="{{ url('admin/view-receivings') }}" class="hbtn hbtn-outline">
                             <i class="bi bi-list-check"></i> View Receivings
                         </a>
@@ -588,49 +598,25 @@
                                         <label class="field-label" for="supplier">
                                             <i class="bi bi-shop"></i> Supplier
                                         </label>
-                                        <select name="supplier" id="supplier" class="field-input" required onchange="loadSupplierUsers()">
+                                        <select name="supplier" id="supplier" class="field-input" required>
                                             <option value="" disabled selected>Select supplier</option>
                                             @foreach (DB::table('vendors')->get() as $vendor)
                                                 <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                             @endforeach
                                         </select>
-                                      
                                     </div>
                                     <div class="field">
                                         <label class="field-label" for="served">
                                             <i class="bi bi-person-check"></i> Allocation
                                         </label>
-                                        <select name="served" id="served" class="field-input" required onchange="loadUserSuppliers()">
+                                        <select name="served" id="served" class="field-input" required>
                                             <option value="" disabled selected>Select staff</option>
-                                            @php
-                                                // Get all accessible users based on admin role
-                                                if (Auth::user()->levelStatus === 'Admin') {
-                                                    $allUsers = \App\Models\User::where('levelStatus', '!=', 'Admin')->orderBy('name')->get();
-                                                } else {
-                                                    $accountIds = \App\Models\UserAccount::where('user_id', Auth::id())->pluck('account')->toArray();
-                                                    if (Auth::user()->account) {
-                                                        $accountIds[] = Auth::user()->account;
-                                                    }
-                                                    $accountIds = array_unique($accountIds);
-                                                    
-                                                    $allUsers = \App\Models\User::where(function($q) use ($accountIds) {
-                                                        $q->whereIn('account', $accountIds)
-                                                          ->orWhereIn('id', function($sub) use ($accountIds) {
-                                                              $sub->select('user_id')
-                                                                  ->from('user_accounts')
-                                                                  ->whereIn('account', $accountIds);
-                                                          });
-                                                    })
-                                                    ->where('levelStatus', '!=', 'Admin')
-                                                    ->orderBy('name')
-                                                    ->get();
-                                                }
-                                            @endphp
-                                            @foreach($allUsers as $u)
-                                                <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->levelStatus }})</option>
+                                            @foreach (DB::table('users')->get() as $user)
+                                                @if($user->account === getSessionAccountDisplayName() || $user->levelStatus != 'Admin')
+                                                    <option value="{{ $user->name }}">{{ $user->name }} ({{ $user->levelStatus }})</option>
+                                                @endif
                                             @endforeach
                                         </select>
-                                    
                                     </div>
                                 </div>
 
@@ -645,7 +631,16 @@
                                     </select>
                                 </div>
 
-                                <!-- Date picker removed - always using today's date -->
+                                @if(canUser('set_restock_date'))
+                                <div class="field">
+                                    <label class="field-label" for="receivingDate">
+                                        <i class="bi bi-calendar3"></i> Receiving Date
+                                    </label>
+                                    <input type="date" name="receivingDate" id="receivingDate"
+                                        class="field-input" max="{{ date('Y-m-d') }}">
+                                    <div class="field-hint">Leave blank to use today's date</div>
+                                </div>
+                                @endif
 
                             </form>
                         </div>
@@ -699,12 +694,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
     // ════════════════════════════════════════════
+    // Shop change handler
+    // ════════════════════════════════════════════
+    function changeShop(shopId) {
+        if (!shopId) return;
+        const url = new URL('{{ route("admin.make-receiving") }}');
+        url.searchParams.set('shop_id', shopId);
+        window.location.href = url.toString();
+    }
+
+    // ════════════════════════════════════════════
     // Data
     // ════════════════════════════════════════════
     const allProducts = [
-        @if(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountId())->count() > 0)
-            @foreach(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountId())->get() as $product)
-            { id:"{{ $product->product_id }}", name:"{{ addslashes($product->name01) }}", cost:{{ $product->bPrice ?? 0 }}, wholesale:{{ $product->wholesale ?? 0 }}, retail:{{ $product->sPrice ?? 0 }}, stock:{{ $product->quantity ?? 0 }} },
+        @if(DB::table('products')->whereNotNull('name01')->where('name01','!=','')->where('account',session('selected_shop_id'))->count() > 0)
+            @foreach(DB::table('products')->whereNotNull('name01')->where('name01','!=','')->where('account',session('selected_shop_id'))->get() as $product)
+            {
+                id:"{{ $product->product_id }}",
+                name:"{{ addslashes($product->name01) }}",
+                cost:{{ (float)($product->bPrice ?? 0) }},
+                wholesale:{{ (float)($product->wholesale ?? 0) }},
+                retail:{{ (float)($product->sPrice ?? 0) }},
+                stock:{{ (int)($product->quantity ?? 0) }}
+            },
             @endforeach
         @else
             { id:'demo1', name:'Sugar 1kg',  cost:2500,  wholesale:2800,  retail:3000,  stock:100 },
@@ -781,7 +793,7 @@
 
         if (!term) { dd.classList.remove('open'); return; }
 
-        const results = allProducts.filter(p => p.name.toLowerCase().includes(term) && !inCart.has(p.id));
+        const results = allProducts.filter(p => p && p.name && p.name.toLowerCase().includes(term) && !inCart.has(p.id));
         renderDropdown(results);
         dd.classList.add('open');
     }
@@ -962,6 +974,7 @@
     function submitOrder() {
         const supplier = document.getElementById('supplier').value;
         const served   = document.getElementById('served').value;
+        const dateEl   = document.getElementById('receivingDate');
 
         if (!cart.length)         { toast('Add at least one product to the cart.', 'error'); return; }
         if (!supplier || !served) { toast('Please select supplier and allocation.', 'error'); return; }
@@ -970,7 +983,7 @@
         fd.append('_token', '{{ csrf_token() }}');
         fd.append('supplier', supplier);
         fd.append('served', served);
-        // Note: receivingDate is not sent - server always uses today
+        if (dateEl?.value) fd.append('receivingDate', dateEl.value);
 
         cart.forEach(item => {
             fd.append('product_id[]',      item.productId);
@@ -985,46 +998,6 @@
         const btn = document.getElementById('submitBtn');
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving…';
         btn.disabled = true;
-    // ════════════════════════════════════════════
-    // Load allocated suppliers for selected user
-    // ════════════════════════════════════════════
-    function loadUserSuppliers() {
-        const servedSelect = document.getElementById('served');
-        const userId = servedSelect.value;
-        const allocatedSection = document.getElementById('allocatedSuppliers');
-        const allocatedList = document.getElementById('allocatedSuppliersList');
-        
-        if (!userId) {
-            allocatedSection.style.display = 'none';
-            return;
-        }
-        
-        fetch('{{ route("admin.get-user-suppliers") }}?user_id=' + userId, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.suppliers && data.suppliers.length > 0) {
-                const suppliersList = data.suppliers.map(s => 
-                    `<div style="padding: 0.2rem 0; display: flex; align-items: center; gap: 0.4rem;">
-                        <i class="bi bi-shop-fill" style="color: var(--violet); font-size: 0.9rem;"></i>
-                        <span>${s.name}</span>
-                    </div>`
-                ).join('');
-                allocatedList.innerHTML = suppliersList;
-                allocatedSection.style.display = 'block';
-            } else {
-                allocatedList.innerHTML = '<div style="color: var(--slate-500); font-style: italic;">No suppliers assigned to this staff</div>';
-                allocatedSection.style.display = 'block';
-            }
-        })
-        .catch(err => {
-            console.error('Error loading user suppliers:', err);
-            allocatedList.innerHTML = '<div style="color: var(--rose);">Error loading suppliers</div>';
-            allocatedSection.style.display = 'block';
-        });
-    }
-
 
         fetch('{{ route("admin.process-receiving") }}', {
             method: 'POST', body: fd,
@@ -1047,50 +1020,6 @@
     }
 
     // ════════════════════════════════════════════
-    // Load allocated users for selected supplier
-    // ════════════════════════════════════════════
-    function loadSupplierUsers() {
-        const supplierSelect = document.getElementById('supplier');
-        const supplierId = supplierSelect.value;
-        const allocatedSection = document.getElementById('allocatedUsers');
-        const allocatedList = document.getElementById('allocatedUsersList');
-        const hint = document.getElementById('allocatedUsersHint');
-        
-        if (!supplierId) {
-            allocatedSection.style.display = 'none';
-            return;
-        }
-        
-        fetch('{{ route("admin.get-supplier-users") }}?supplier_id=' + supplierId, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.users && data.users.length > 0) {
-                const usersList = data.users.map(u =>
-                    `<div style="padding: 0.2rem 0; display: flex; align-items: center; gap: 0.4rem;">
-                        <i class="bi bi-person-fill" style="color: var(--navy-light); font-size: 0.9rem;"></i>
-                        <span>${u.name} <small style="color: var(--slate-500); font-weight: 500;">(${u.levelStatus})</small></span>
-                    </div>`
-                ).join('');
-                allocatedList.innerHTML = usersList;
-                allocatedSection.style.display = 'block';
-                if (hint) hint.textContent = 'These staff members are assigned to this supplier\'s account';
-            } else {
-                allocatedList.innerHTML = '<div style="color: var(--slate-500); font-style: italic;">No staff assigned to this supplier</div>';
-                allocatedSection.style.display = 'block';
-                if (hint) hint.textContent = 'No staff found for this supplier';
-            }
-        })
-        .catch(err => {
-            console.error('Error loading supplier users:', err);
-            allocatedList.innerHTML = '<div style="color: var(--rose);">Error loading staff</div>';
-            allocatedSection.style.display = 'block';
-            if (hint) hint.textContent = 'Error loading staff assignments';
-        });
-    }
-
-    // ════════════════════════════════════════════
     // Toast
     // ════════════════════════════════════════════
     function toast(msg, type = 'success') {
@@ -1105,69 +1034,6 @@
             setTimeout(() => el.remove(), 280);
         }, 3000);
     }
-    // ════════════════════════════════════════════
-    // Allocation display
-    // ════════════════════════════════════════════
-    const supplierSelect = document.getElementById('supplier');
-    const servedSelect = document.getElementById('served');
-    const allocatedUsersDiv = document.getElementById('allocatedUsers');
-    const allocatedUsersList = document.getElementById('allocatedUsersList');
-    const allocatedSuppliersDiv = document.getElementById('allocatedSuppliers');
-    const allocatedSuppliersList = document.getElementById('allocatedSuppliersList');
-
-    // Fetch and display users assigned to supplier's account
-    supplierSelect?.addEventListener('change', async function() {
-        const supplierId = this.value;
-        if (!supplierId) {
-            allocatedUsersDiv.style.display = 'none';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/admin/get-supplier-users?supplier_id=${supplierId}`);
-            const data = await response.json();
-            
-            if (data.success && data.users && data.users.length > 0) {
-                const userNames = data.users.map(u =>
-                    `<span style="display:inline-block; padding:0.15rem 0.5rem; margin:0.2rem; background:var(--emerald-pale); color:var(--emerald); border-radius:4px; font-size:0.75rem;">${u.name} (${u.levelStatus})</span>`
-                ).join('');
-                allocatedUsersList.innerHTML = userNames;
-                allocatedUsersDiv.style.display = 'block';
-            } else {
-                allocatedUsersList.innerHTML = '<span style="color:var(--slate-400); font-size:0.75rem;">No staff assigned to this supplier</span>';
-                allocatedUsersDiv.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error fetching supplier users:', error);
-        }
-    });
-
-    // Fetch and display suppliers assigned to user's account
-    servedSelect?.addEventListener('change', async function() {
-        const userId = this.value;
-        if (!userId) {
-            allocatedSuppliersDiv.style.display = 'none';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/admin/get-user-suppliers?user_id=${userId}`);
-            const data = await response.json();
-            
-            if (data.success && data.suppliers && data.suppliers.length > 0) {
-                const supplierNames = data.suppliers.map(s =>
-                    `<span style="display:inline-block; padding:0.15rem 0.5rem; margin:0.2rem; background:var(--violet-pale); color:var(--violet); border-radius:4px; font-size:0.75rem;">${s.name}</span>`
-                ).join('');
-                allocatedSuppliersList.innerHTML = supplierNames;
-                allocatedSuppliersDiv.style.display = 'block';
-            } else {
-                allocatedSuppliersList.innerHTML = '<span style="color:var(--slate-400); font-size:0.75rem;">No suppliers assigned to this staff</span>';
-                allocatedSuppliersDiv.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error fetching user suppliers:', error);
-        }
-    });
     </script>
 </body>
 </html>

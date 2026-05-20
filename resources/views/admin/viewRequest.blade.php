@@ -271,6 +271,44 @@
         .pill-submitted{ background: var(--blue-soft);  color: var(--blue);  }
         .pill-mixed   { background: var(--purple-soft); color: var(--purple);}
         .pill-stock   { background: var(--amber-soft);  color: var(--amber); }
+        
+        /* ── STOCK AVAILABILITY BADGES ─────────────────── */
+        .stock-available {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: var(--green-soft);
+            color: var(--green);
+        }
+        .stock-available::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .7;
+        }
+        .stock-unavailable {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .25rem .65rem;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: var(--red-soft);
+            color: var(--red);
+        }
+        .stock-unavailable::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .7;
+        }
 
         /* dot indicator before status */
         .pill::before {
@@ -413,7 +451,20 @@
                 <span class="page-title">Requested Items</span>
             </div>
             <div class="header-actions">
-                <input type="date" id="dateFilter" class="date-input" title="Filter by date">
+                <form method="GET" action="{{ url('admin/viewRequest') }}" class="d-flex align-items-center gap-2 flex-wrap" id="filter-form">
+                    <input type="date" name="date_from" id="dateFrom" class="date-input" value="{{ $dateFrom ?? '' }}" title="From date">
+                    <input type="date" name="date_to" id="dateTo" class="date-input" value="{{ $dateTo ?? '' }}" title="To date">
+                    <select name="shop" id="shopFilter" class="date-input" title="Filter by shop">
+                        <option value="">All Shops</option>
+                        @foreach($shops ?? [] as $s)
+                            <option value="{{ $s->id }}" {{ ($shopFilter ?? '') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+                    @if($dateFrom || $dateTo || ($shopFilter ?? ''))
+                    <a href="{{ url('admin/viewRequest') }}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Clear</a>
+                    @endif
+                </form>
                 <a href="{{ url('user/itemRequest') }}" class="btn btn-outline">
                     <i class="bi bi-list-ul"></i> Item Requests
                 </a>
@@ -475,6 +526,7 @@
                             <th><i class="bi bi-arrow-left-circle me-1"></i>To Shop</th>
                             <th>Items</th>
                             <th>Qty</th>
+                            <th>Price</th>
                             <th>Total</th>
                             <th>Payment</th>
                             <th>Assigned To</th>
@@ -500,12 +552,14 @@
                                 @php
                                     /* ── Per-row variables ── */
                                     $requesterAccount = $items[0]->account      ?? '';
-                                    $supplierAccount  = $items[0]->supplierName ?? '';
+                                    $supplierAccount  = $items[0]->supplierId ?? '';
 
                                     /* Who am I? */
-                                    $iAmRequester = (getSessionAccountDisplayName() === $requesterAccount);
-                                    $iAmReceiver  = (getSessionAccountDisplayName() === $supplierAccount);
+                                    $iAmRequester = (getCurrentShopId() === (int)$requesterAccount);
+                                    $iAmReceiver  = (getCurrentShopId() === (int)$supplierAccount);
 
+                                    $requesterAccountName = DB::table('accounts')->where('id', $requesterAccount)->value('name');
+                                    
                                     /* Totals */
                                     $totalQuantity = 0;
                                     $totalPrice    = 0;
@@ -543,7 +597,7 @@
                                         @if($iAmRequester)
                                             <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
                                         @else
-                                            <span class="pill pill-shop">{{ $requesterAccount ?: 'N/A' }}</span>
+                                            <span class="pill pill-shop">{{ $requesterAccountName ?: 'N/A' }}</span>
                                         @endif
                                     </td>
 
@@ -552,7 +606,7 @@
                                         @if($iAmReceiver)
                                             <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
                                         @elseif($supplierAccount)
-                                            <span class="pill pill-shop">{{ $supplierAccount }}</span>
+                                            <span class="pill pill-shop">{{ $requesterAccountName }}</span>
                                         @else
                                             <span style="color:var(--ink-light); font-size:.8rem;">—</span>
                                         @endif
@@ -560,13 +614,14 @@
 
                                     <td><strong>{{ count($items) }}</strong></td>
                                     <td>{{ number_format($totalQuantity) }}</td>
+                                    <td><strong>{{ number_format($item->price) }}</strong></td>
                                     <td style="white-space:nowrap;">Tsh {{ number_format($totalPrice) }}</td>
                                     <td>
                                         <span class="pill {{ $items[0]->payment_type === 'cash' ? 'bg-success' : 'bg-info' }}">
                                             {{ $items[0]->payment_type ? ucfirst($items[0]->payment_type) : 'Cash' }}
                                         </span>
                                     </td>
-                                    <td>{{ $items[0]->assigned_to ?? 'N/A' }}</td>
+                                    <td>{{ $items[0]->assignedToName ?? ($items[0]->assigned_to ?? 'N/A') }}</td>
 
                                     {{-- STATUS --}}
                                     <td>
@@ -597,8 +652,8 @@
                                             <i class="bi bi-eye"></i> Details 
                                         </button>
 
-                                        {{-- RECEIVER (Shop 2) or ADMIN — Approve All --}}
-                                        @if(($iAmReceiver || (Auth::check() && Auth::user()->levelStatus === 'Admin')) && $overallStatus !== 'Approved')
+                                        {{-- RECEIVER (Shop 2 / Supplier) — Approve All --}}
+                                        @if($iAmReceiver && $overallStatus !== 'Approved')
                                             <form method="post" class="d-inline"
                                                   action="{{ route('admin.request.approveAll') }}">
                                                 @csrf
@@ -643,7 +698,7 @@
 
 {{-- ── REQUEST DETAILS MODAL ── --}}
 <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -676,9 +731,10 @@
                                 <th>#</th>
                                 <th>Product</th>
                                 <th>Qty</th>
+                                <th>Price</th>
                                 <th>Total</th>
+                                <th>Stock</th>
                                 <th>Payment</th>
-                                <th>Assigned To</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -723,13 +779,9 @@ $(document).ready(function () {
         });
     });
 
-    /* ── Date filter ── */
-    $('#dateFilter').on('change', function () {
-        var d = $(this).val();
-        if (!d) { $('.request-row').show(); return; }
-        $('.request-row').each(function () {
-            $(this).toggle($(this).data('date') === d);
-        });
+    /* ── Date / Shop filter: submit GET form ── */
+    $('#filter-form').on('submit', function (e) {
+        // allow normal GET submission so controller handles filtering server-side
     });
 
     /* ── View-details modal ── */
@@ -740,12 +792,13 @@ $(document).ready(function () {
         var totalPrice   = $(this).data('total-price');
         var isReceiver   = $(this).attr('data-is-receiver') === 'true';
         var isAdmin      = $(this).attr('data-is-admin') === 'true';
-        var sessionAcct  = "{{ getSessionAccountDisplayName() }}";
+        var sessionAcct  = "{{ getCurrentShopId() }}";
+        var csrfToken    = "{{ csrf_token() }}";
         console.log('Modal opened - isReceiver:', isReceiver, 'isAdmin:', isAdmin, 'sessionAccount:', sessionAcct);
 
         /* Header */
         $('#modal-request-id').text(requestId);
-        $('#modal-supplier-name').text(items[0].supplierName || '—');
+        $('#modal-supplier-name').text(items[0].supplierId || '—');
         $('#modal-request-date').text(items[0].created_at
             ? new Date(items[0].created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})
             : '—');
@@ -777,46 +830,59 @@ $(document).ready(function () {
             var pillCls = pillMap[item.status] || 'pill-mixed';
             var itemTotal = item.quantity * item.price;
 
-            /* Action buttons: show to RECEIVER (supplier) or ADMIN */
+            /* Action buttons: show to RECEIVER (supplier) only */
             var actionsHtml = '';
-            console.log('Processing item:', item.productName || item.productId, '| Status:', item.status, '| isReceiver:', isReceiver, '| isAdmin:', isAdmin, '| Show buttons?', (isReceiver || isAdmin) && item.status !== 'Approved');
-            if ((isReceiver || isAdmin) && item.status !== 'Approved') {
+            console.log('Processing item:', item.productName || item.productId, '| Status:', item.status, '| isReceiver:', isReceiver, '| Show buttons?', isReceiver && item.status !== 'Approved');
+            if (isReceiver && item.status !== 'Approved') {
                 actionsHtml = `
                     <form method="post" class="d-inline">
                         @csrf
                         <input type="hidden" name="requestName" value="${requestId}">
                         <input type="hidden" name="product_id" value="${item.productId}">
-                        <button class="btn btn-success btn-sm" name="product_id"
+                        <input type="hidden" name="supplierId" value="${sessionAcct}">
+                        <button class="btn btn-success btn-sm" name="product_id" title="Approve this item"
                                 formaction="/admin/approveRequest" value="${item.productId}">
                             <i class="bi bi-check-circle"></i>
                         </button>
                         <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);"
-                                name="product_id" formaction="/admin/rejectRequest" value="${item.productId}">
+                                name="product_id" title="Reject this item" formaction="/admin/rejectRequest" value="${item.productId}">
                             <i class="bi bi-x-circle"></i>
                         </button>
+                        
+                        </button>
                         <button class="btn btn-sm" style="background:var(--amber-soft);color:var(--amber);"
-                                name="product_id" formaction="/admin/outOfStockRequest" value="${item.productId}">
+                                name="product_id" title="Mark as Out of Stock" formaction="/admin/outOfStockRequest" value="${item.productId}">
                             <i class="bi bi-slash-circle"></i>
                         </button>
+                        <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);border:none;"
+                                data-item-id="${item.productId}" data-req-name="${requestId}"
+                                title="Delete this item" onclick="deleteItem(this)" formaction="/admin/dltItemReq">
+                            <i class="bi bi-trash"></i>
                     </form>`;
             }
+
+            /* ── Stock availability ── */
+            var stockQty    = item.stockQty    != null ? item.stockQty    : 0;
+            var inStock     = item.inStock     != null ? item.inStock     : false;
+            var stockDiff   = stockQty - item.quantity;
+            var stockBadge  = inStock
+                ? `<span class="stock-available">In Stock (${stockQty.toLocaleString()} avail, -${item.quantity.toLocaleString()} req)</span>`
+                : `<span class="stock-unavailable">Out of Stock (${stockQty.toLocaleString()} avail, ${stockDiff.toLocaleString()} short)</span>`;
 
             $('#modal-request-items').append(`
                 <tr>
                     <td style="color:var(--ink-light);font-size:.8rem;">${i + 1}</td>
                     <td><strong>${item.productName || 'Unknown'}</strong></td>
                     <td>${Number(item.quantity).toLocaleString()}</td>
+                    <td>${Number(item.price).toLocaleString()}</td>
                     <td style="white-space:nowrap;">Tsh ${Number(itemTotal).toLocaleString()}</td>
+                    <td>${stockBadge}</td>
                     <td>
                         <span class="badge ${item.payment_type === 'cash' ? 'bg-success' : 'bg-info'}">
                             ${item.payment_type ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1) : 'Cash'}
                         </span>
                     </td>
-                    <td>
-                        <span class="badge bg-secondary">
-                            ${item.assigned_to || 'N/A'}
-                        </span>
-                    </td>
+                 
                     <td><span class="pill ${pillCls}">${item.status}</span></td>
                     <td>${actionsHtml}</td>
                 </tr>
@@ -825,6 +891,18 @@ $(document).ready(function () {
 
         new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
     });
+
+    /* ── Delete single item via AJAX ── */
+    function deleteItem(btn) {
+        var itemId  = $(btn).data('item-id');
+        var reqName = $(btn).data('req-name');
+        if (!confirm('Are you sure you want to delete this item?')) return;
+        $.post('/dltItemReq', { _token: csrfToken, itemId: itemId, reqName: reqName }, function (res) {
+            location.reload();
+        }).fail(function () {
+            alert('Failed to delete item. Please try again.');
+        });
+    }
 
 });
 </script>

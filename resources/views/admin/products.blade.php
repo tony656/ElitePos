@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{config("app.name")}} - Product Management</title>
     @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -43,7 +43,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             background: #EEF2F9;
             color: var(--slate-800);
             min-height: 100vh;
@@ -174,7 +174,7 @@
         }
 
         .search-input {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.9rem;
             width: 100%;
             padding: 0.6rem 0.75rem 0.6rem 2.4rem;
@@ -216,7 +216,7 @@
         .sort-wrap { display: flex; align-items: center; gap: 0.4rem; }
         .sort-label { font-size: 0.78rem; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
         .sort-select {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.82rem;
             padding: 0.45rem 2rem 0.45rem 0.7rem;
             border: 1.5px solid var(--slate-200);
@@ -479,7 +479,7 @@
         .per-page { display: flex; align-items: center; gap: 0.5rem; }
         .per-page-label { font-size: 0.82rem; color: var(--slate-500); font-weight: 500; white-space: nowrap; }
         .per-page-select {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.82rem;
             padding: 0.45rem 2rem 0.45rem 0.7rem;
             border: 1.5px solid var(--slate-200);
@@ -517,7 +517,7 @@
         .field:last-child { margin-bottom: 0; }
         .field-label { font-size: 0.8rem; font-weight: 600; color: var(--slate-600); }
         .field-input {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.875rem;
             padding: 0.5rem 0.75rem;
             border: 1.5px solid var(--slate-200);
@@ -766,9 +766,8 @@
             <div class="panel">
                 <div class="panel-head">
                     <h2 class="panel-title">
-                        Product List @php
-                            echo session('account_id');
-                        @endphp
+                        Product List 
+                     
                         @if(request('search'))
                             <small>— search results</small>
                         @endif
@@ -809,8 +808,8 @@
                                 </th>
                                 <th>Product</th>
                                 <th>Stock</th>
-                                <th>Cost Price</th>
-                                <th>Selling Price</th>
+                                <th>Cost Price (Tsh.)</th>
+                                <th>Selling Price (Tsh.)</th>
                                 <th>Discount</th>
                                 <th>Category</th>
                                 <th>Actions</th>
@@ -844,6 +843,9 @@
                             </tr>
                             @else
                                 @foreach ($products as $product)
+                                @php
+                                    $loss = $product->bPrice > $product->sPrice;
+                                @endphp
                                 <form method="post">
                                     @csrf
                                     <tr data-product-id="{{ $product->product_id }}"
@@ -877,9 +879,14 @@
                                                 {{ number_format($product->quantity) }} {{ $product->unit }}
                                             </span>
                                         </td>
-                                        <td><span class="price cost">Tsh {{ number_format($product->bPrice) }}</span></td>
-                                        <td><span class="price">Tsh {{ number_format($product->sPrice) }}</span></td>
-                                        <td><span class="price">{{ number_format($product->discount) }}</span></td>
+                                        <td><span class="price cost">{{ number_format($product->bPrice, 2) }}</span></td>
+                                        <td>
+                                            <span class="price">{{ number_format($product->sPrice, 2) }}</span>
+                                            @if ($loss)
+                                                <span class="badge bg-warning text-light" title="Loss(Buying Price is greater than selling Price)"><i class="bi bi-exclamation-triangle"></i></span>
+                                            @endif
+                                        </td>
+                                        <td><span class="price">{{ number_format($product->discount, 2) }}</span></td>
                                         <td><span class="cat-badge">{{ $product->category }}</span></td>
                                         <td>
                                             <div class="action-cell">
@@ -1521,8 +1528,51 @@ let currentOfferProductId = null;
 let currentOfferId = null;
 let allProductsList = [];
 
-// Load all products from the table for search
+// Load all products from server (bypasses pagination)
 function loadAllProductsForSearch() {
+    $.ajax({
+        url: '{{ route("admin.searchProductsForOffer") }}',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            allProductsList = [];
+            
+            if (response.results && response.results.length > 0) {
+                response.results.forEach(product => {
+                    allProductsList.push({
+                        id: product.id,
+                        name: product.text, // Use the formatted text from server
+                        stock: product.stock || 0,
+                        displayText: product.text
+                    });
+                });
+            }
+            
+            // Populate datalist options
+            const datalist = document.getElementById('productOptionsList');
+            if (datalist) {
+                datalist.innerHTML = '';
+                allProductsList.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.displayText;
+                    option.setAttribute('data-id', product.id);
+                    option.setAttribute('data-name', product.name);
+                    datalist.appendChild(option);
+                });
+            }
+            
+            console.log('Loaded ' + allProductsList.length + ' products from server for search');
+        },
+        error: function(xhr) {
+            console.error('Error loading products for search:', xhr);
+            // Fallback to page products only
+            loadProductsFromPageOnly();
+        }
+    });
+}
+
+// Fallback: load only from current page (old behavior)
+function loadProductsFromPageOnly() {
     const rows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
     allProductsList = [];
     rows.forEach(row => {
@@ -1530,7 +1580,6 @@ function loadAllProductsForSearch() {
         const nameEl = row.querySelector('.prod-name');
         let name = '';
         if (nameEl) {
-            // Get text without the offer tag
             const clone = nameEl.cloneNode(true);
             const offerTag = clone.querySelector('.offer-tag');
             if (offerTag) offerTag.remove();
@@ -1538,7 +1587,6 @@ function loadAllProductsForSearch() {
         }
         const subEl = row.querySelector('.prod-sub');
         const sub = subEl ? subEl.textContent.trim() : '';
-        const category = row.querySelector('.cat-badge') ? row.querySelector('.cat-badge').textContent : '';
         const stockSpan = row.querySelector('.stock-badge');
         let stock = 0;
         if (stockSpan) {
@@ -1551,7 +1599,6 @@ function loadAllProductsForSearch() {
                 id: id,
                 name: name,
                 description: sub,
-                category: category,
                 stock: stock,
                 displayText: `${name} ${sub ? '('+sub+')' : ''} [Stock: ${stock}] - ID: ${id}`
             });
@@ -1571,7 +1618,7 @@ function loadAllProductsForSearch() {
         });
     }
     
-    console.log('Loaded ' + allProductsList.length + ' products for search');
+    console.log('Loaded ' + allProductsList.length + ' products from current page only');
 }
 
 // Setup the search input with datalist

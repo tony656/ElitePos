@@ -498,6 +498,16 @@
                         Make <span>Receiving</span>
                     </div>
                     <div class="header-actions">
+                        <div class="field" style="min-width: 200px; margin-right: 0.5rem;">
+                            <select id="shopSelector" class="field-input" style="padding: 0.4rem 2rem 0.4rem 0.7rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: white; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 16 16\"%3E%3Cpath fill=\"%23ffffff\" d=\"M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z\"/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.6rem center;" onchange="changeShop(this.value)">
+                                <option value="" disabled>Select shop</option>
+                                @foreach($allShops as $shop)
+                                    <option value="{{ $shop->id }}" {{ $shop->id == $selectedShopId ? 'selected' : '' }}>
+                                        {{ $shop->name }} ({{ $shop->location ?? 'Main' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <a href="{{ url('admin/view-receivings') }}" class="hbtn hbtn-outline">
                             <i class="bi bi-list-check"></i> View Receivings
                         </a>
@@ -641,7 +651,16 @@
                                     </select>
                                 </div>
 
-                                <!-- Date picker removed - always using today's date -->
+                                <div class="field" style="margin-bottom:0.65rem;">
+                                    <label class="field-label" for="receivingDate">
+                                        <i class="bi bi-calendar-check"></i> Receiving Date
+                                    </label>
+                                    <input type="date" name="receivingDate" id="receivingDate" class="field-input"
+                                        value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}">
+                                    <div class="field-hint">
+                                        <i class="bi bi-info-circle-fill"></i> Defaults to today. You can select a past date if needed.
+                                    </div>
+                                </div>
 
                             </form>
                         </div>
@@ -695,12 +714,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
     // ════════════════════════════════════════════
+    // Shop change handler
+    // ════════════════════════════════════════════
+    function changeShop(shopId) {
+        if (!shopId) return;
+        const url = new URL('{{ route("user.make-receiving") }}');
+        url.searchParams.set('shop_id', shopId);
+        window.location.href = url.toString();
+    }
+
+    // ════════════════════════════════════════════
     // Data
     // ════════════════════════════════════════════
     const allProducts = [
-        @if(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountId())->count() > 0)
-            @foreach(DB::table('products')->where('name01','!=','')->where('account',getSessionAccountId())->get() as $product)
-            { id:"{{ $product->product_id }}", name:"{{ addslashes($product->name01) }}", cost:{{ $product->bPrice ?? 0 }}, wholesale:{{ $product->wholesale ?? 0 }}, retail:{{ $product->sPrice ?? 0 }}, stock:{{ $product->quantity ?? 0 }} },
+        @if(DB::table('products')->whereNotNull('name01')->where('name01','!=','')->where('account',session('selected_shop_id'))->count() > 0)
+            @foreach(DB::table('products')->whereNotNull('name01')->where('name01','!=','')->where('account',session('selected_shop_id'))->get() as $product)
+            {
+                id:"{{ $product->product_id }}",
+                name:"{{ addslashes($product->name01) }}",
+                cost:{{ (float)($product->bPrice ?? 0) }},
+                wholesale:{{ (float)($product->wholesale ?? 0) }},
+                retail:{{ (float)($product->sPrice ?? 0) }},
+                stock:{{ (int)($product->quantity ?? 0) }}
+            },
             @endforeach
         @else
             { id:'demo1', name:'Sugar 1kg',  cost:2500,  wholesale:2800,  retail:3000,  stock:100 },
@@ -777,7 +813,7 @@
 
         if (!term) { dd.classList.remove('open'); return; }
 
-        const results = allProducts.filter(p => p.name.toLowerCase().includes(term) && !inCart.has(p.id));
+        const results = allProducts.filter(p => p && p.name && p.name.toLowerCase().includes(term) && !inCart.has(p.id));
         renderDropdown(results);
         dd.classList.add('open');
     }
@@ -966,7 +1002,7 @@
         fd.append('_token', '{{ csrf_token() }}');
         fd.append('supplier', supplier);
         fd.append('served', served);
-        // Note: receivingDate is not sent - server always uses today
+        fd.append('receivingDate', document.getElementById('receivingDate').value);
 
         cart.forEach(item => {
             fd.append('product_id[]',      item.productId);
@@ -988,6 +1024,20 @@
         })
         .then(r => r.text())
         .then(() => {
+            cart = []; inCart.clear(); clearStorage();
+            renderCart(); updateSummary();
+            document.getElementById('orderForm').reset();
+            clearSearch();
+            toast('Receiving saved successfully!', 'success');
+            setTimeout(() => { window.location.href = '{{ url("admin/view-receivings") }}'; }, 1600);
+        })
+        .catch(() => toast('Something went wrong. Please try again.', 'error'))
+        .finally(() => {
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Save Receiving';
+            btn.disabled = false;
+        });
+    }
+
     // ════════════════════════════════════════════
     // Load allocated suppliers for selected user
     // ════════════════════════════════════════════
@@ -1008,7 +1058,7 @@
         .then(r => r.json())
         .then(data => {
             if (data.success && data.suppliers && data.suppliers.length > 0) {
-                const suppliersList = data.suppliers.map(s => 
+                const suppliersList = data.suppliers.map(s =>
                     `<div style="padding: 0.2rem 0; display: flex; align-items: center; gap: 0.4rem;">
                         <i class="bi bi-shop-fill" style="color: var(--violet); font-size: 0.9rem;"></i>
                         <span>${s.name}</span>
@@ -1049,7 +1099,7 @@
         .then(r => r.json())
         .then(data => {
             if (data.success && data.users && data.users.length > 0) {
-                const usersList = data.users.map(u => 
+                const usersList = data.users.map(u =>
                     `<div style="padding: 0.2rem 0; display: flex; align-items: center; gap: 0.4rem;">
                         <i class="bi bi-person-fill" style="color: var(--navy-light); font-size: 0.9rem;"></i>
                         <span>${u.name} <small style="color: var(--slate-500); font-weight: 500;">(${u.levelStatus})</small></span>
@@ -1069,20 +1119,6 @@
             allocatedList.innerHTML = '<div style="color: var(--rose);">Error loading staff</div>';
             allocatedSection.style.display = 'block';
             if (hint) hint.textContent = 'Error loading staff assignments';
-        });
-    }
-
-            cart = []; inCart.clear(); clearStorage();
-            renderCart(); updateSummary();
-            document.getElementById('orderForm').reset();
-            clearSearch();
-            toast('Receiving saved successfully!', 'success');
-            setTimeout(() => { window.location.href = '{{ url("admin/view-receivings") }}'; }, 1600);
-        })
-        .catch(() => toast('Something went wrong. Please try again.', 'error'))
-        .finally(() => {
-            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Save Receiving';
-            btn.disabled = false;
         });
     }
 

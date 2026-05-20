@@ -330,10 +330,20 @@
                                 <div class="panel-head-icon"><i class="bi bi-table"></i></div>
                                 <span class="panel-title">Supplier Directory</span>
                             </div>
-                            <div class="search-wrap">
-                                <i class="bi bi-search"></i>
-                                <input type="text" class="search-input" placeholder="Search suppliers…"
-                                       oninput="filterTable(this, 'suppliersBody')">
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                <div class="search-wrap">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" class="search-input" placeholder="Search suppliers…"
+                                           oninput="filterTable(this, 'suppliersBody')">
+                                </div>
+                                <form method="GET" action="" style="display:flex; gap:0; align-items:center;">
+                                    <select name="shop_id" class="search-input" style="width:auto; padding-left:10px; cursor:pointer;" onchange="this.form.submit()">
+                                        <option value="">All shops</option>
+                                        @foreach($shops as $shop)
+                                            <option value="{{ $shop->id }}" {{ (isset($shopId) && $shopId == $shop->id) ? 'selected' : '' }}>{{ $shop->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
                             </div>
                         </div>
                         <div class="tbl-wrap">
@@ -485,10 +495,20 @@
                                 <div class="panel-head-icon"><i class="bi bi-table"></i></div>
                                 <span class="panel-title">Beneficiary Directory</span>
                             </div>
-                            <div class="search-wrap">
-                                <i class="bi bi-search"></i>
-                                <input type="text" class="search-input" placeholder="Search beneficiaries…"
-                                       oninput="filterTable(this, 'beneficiariesBody')">
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                <div class="search-wrap">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" class="search-input" placeholder="Search beneficiaries…"
+                                           oninput="filterTable(this, 'beneficiariesBody')">
+                                </div>
+                                <form method="GET" action="" style="display:flex; gap:0; align-items:center;">
+                                    <select name="shop_id" class="search-input" style="width:auto; padding-left:10px; cursor:pointer;" onchange="this.form.submit()">
+                                        <option value="">All shops</option>
+                                        @foreach($shops as $shop)
+                                            <option value="{{ $shop->id }}" {{ (isset($shopId) && $shopId == $shop->id) ? 'selected' : '' }}>{{ $shop->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </form>
                             </div>
                         </div>
                         <div class="tbl-wrap">

@@ -866,6 +866,13 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="/user/banking/supplier-deposit-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Supplier Deposit Report</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
@@ -925,6 +932,13 @@
                             </div>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="/user/items-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Items Report</span>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             @endif
@@ -965,6 +979,13 @@
                         <a href="/user/view-returns" class="nav-link">
                             <div class="nav-content">
                                 <span class="nav-text">View Returns</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/user/receiving-report" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Report</span>
                             </div>
                         </a>
                     </li>

@@ -242,6 +242,9 @@
                     </div>
                 </div>
                 <div class="pg-right">
+                    <a href="{{ url('user/customer-kpi') }}" class="btn-amber" style="margin-right: 10px;">
+                        <i class="bi bi-graph-up"></i> KPI
+                    </a>
                     <button class="btn-amber" data-bs-toggle="modal" data-bs-target="#editCustomer">
                         <i class="bi bi-pencil-square"></i> Edit
                     </button>

@@ -19,3 +19,7 @@
 @endauth
 <script src="{{ asset('js/face-recognition.js') }}"></script>
 @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+<!-- Aos Animations -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
