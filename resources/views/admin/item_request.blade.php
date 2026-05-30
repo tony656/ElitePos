@@ -349,52 +349,6 @@
 </head>
 <body>
 
-{{-- ================================================================
-     ALL DATA COMPUTED ONCE HERE — shared by both left and right columns
-     ================================================================ --}}
-@php
-    $lastOrder = DB::table('item_requests')
-        ->where('account', getCurrentShopId())
-        ->where('status', 'Pending')
-        ->orderBy('id', 'desc')
-        ->first();
-
-    $requestName  = $lastOrder->requestName  ?? null;
-    $orderDate    = $lastOrder
-                    ? date('d-M-Y h:i A', strtotime($lastOrder->created_at))
-                    : 'N/A';
-    $servedBy     = $lastOrder->served_by    ?? 'N/A';
-    $Status       = $lastOrder->status       ?? 'Pending';
-    $supplirtId = $lastOrder->supplierId ?? 'Not Selected';
-    $Allocate = $lastOrder->assigned_to ?? 'Not Selected';
-    $supplirtName = DB::table('accounts')->where('id', $supplirtId)->value('name');
-    
-    $Allocation = DB::table('users')->where('id', $Allocate)->value('name');
-    
-    $orderItems = $requestName
-        ? DB::table('item_requests')->where('requestName', $requestName)->where('account', getCurrentShopId())->orderBy('id', 'desc')->get()
-        : collect();
-
-    $grandTotal    = 0;
-    $enrichedItems = [];
-
-    foreach ($orderItems as $item) {
-        $prod      = DB::table('products')->where('product_id', $item->productId)->first();
-        $unitPrice = $prod && !empty($prod->sPrice) ? (float) $prod->sPrice : 1;
-        $qty       = max((int) ($item->quantity ?? 0), 1);
-        $lineTotal = $qty * $unitPrice;
-        $grandTotal += $lineTotal;
-
-        $enrichedItems[] = [
-            'item'      => $item,
-            'product'   => $prod,
-            'unitPrice' => $unitPrice,
-            'lineTotal' => $lineTotal,
-        ];
-    }
-
-    $subtotal  = $grandTotal;
-@endphp
 
 <div class="layout">
     @include("admin/sidenav")
@@ -457,10 +411,27 @@
                         <span class="card-title">Add new item</span>
                     </div>
                     <div class="card-body">
+                        <form action="/storeSession" method="post">
+                            @csrf
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                        <label class="form-label" style="margin-bottom:0;">Select shop</label>
+                                    </div>
+                                    <select class="form-select" name="shopId" id="shopId" onchange="this.form.submit()">
+                                        <option value="">— Choose shop —</option>
+                                        @foreach ($shops as $shop)
+                                            <option value="{{ $shop->id }}"
+                                                {{ ((getCurrentShopId()) == $shop->id ) ? 'selected' : '' }}>
+                                                {{ $shop->name }} — ID: {{ $shop->id }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                        </form>
                         <form action="/admin/itemRequest" method="post" autocomplete="off" id="addItemForm">
                             @csrf
                             <input type="hidden" name="OrderName" value="{{ $orders->orderName ?? '' }}">
-
+                                
                             {{-- Product search --}}
                             <div class="form-group search-wrap">
                                 <label class="form-label">Search product</label>
@@ -526,15 +497,15 @@
                             </svg>
                         </div>
                         <span class="card-title">Current items
-                            @if(count($enrichedItems) > 0)
+                            @if(count($carts) > 0)
                                 <span style="margin-left:6px; background:var(--navy); color:#fff; font-size:10px; padding:1px 7px; border-radius:20px;">
-                                    {{ count($enrichedItems) }}
+                                    {{ count($carts) }}
                                 </span>
                             @endif
                         </span>
                     </div>
                     <div class="card-body" style="padding: 0;">
-                        @if(count($enrichedItems) > 0)
+                        @if(count($carts) > 0)
                         <div class="table-wrap">
                             <table>
                                 <thead>
@@ -547,36 +518,39 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($enrichedItems as $row)
+                                    @foreach ($carts as $row)
+                                    @php
+                                        $name = DB::table('products')->where('product_id', $row->productId)->value('name01');
+                                    @endphp
                                     <tr>
                                         <td>
-                                            <div class="prod-name">{{ $row['product']->name01 ?? 'Product not found' }}</div>
-                                            <div class="prod-id">ID: {{ $row['item']->productId }}</div>
+                                            <div class="prod-name">{{ $name ?? 'Product not found' }}</div>
+                                            <div class="prod-id">ID: {{ $row->productId }}</div>
                                         </td>
                                         <td>
                                             <form action="/admin/requpdQuant" method="post">
                                                 @csrf
-                                                <input type="hidden" name="OrdersIds" value="{{ $row['item']->requestName }}">
-                                                <input type="hidden" name="prodId"    value="{{ $row['item']->productId }}">
+                                                <input type="hidden" name="OrdersIds" value="{{ $row->requestName ?? 'NEW-ORDER' }}">
+                                                <input type="hidden" name="prodId"    value="{{ $row->productId }}">
                                                 <input type="number" class="qty-input"
                                                        name="prodQuantity"
-                                                       value="{{ $row['item']->quantity }}"
+                                                       value="{{ $row->quantity }}"
                                                        min="1"
                                                        onchange="this.form.submit()">
                                             </form>
                                         </td>
                                         <td class="text-right">
-                                            <span class="price-val">{{ number_format($row['unitPrice'], 2) }}</span>
+                                            <span class="price-val">{{ number_format($row->price, 2) }}</span>
                                         </td>
                                         <td class="text-right">
-                                            <span class="total-val">{{ number_format($row['lineTotal'], 2) }}</span>
+                                            <span class="total-val">{{ number_format($row->totalPrice, 2) }}</span>
                                         </td>
                                         <td class="text-right">
                                             <form action="/admin/dltItemReq" method="post" style="display:inline;">
                                                 @csrf
-                                                <input type="hidden" name="itemId"       value="{{ $row['item']->productId }}">
-                                                <input type="hidden" name="reqName"      value="{{ $row['item']->requestName }}">
-                                                <input type="hidden" name="prodQuantity" value="{{ $row['item']->quantity }}">
+                                                <input type="hidden" name="itemId"       value="{{ $row->productId }}">
+                                                <input type="hidden" name="reqName"      value="{{ $row->requestName ?? 'NEW-ORDER' }}">
+                                                <input type="hidden" name="prodQuantity" value="{{ $row->quantity }}">
                                                 <button type="submit" class="btn-del"
                                                         onclick="return confirm('Remove this item?')">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -592,7 +566,7 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="3" class="tfoot-label">Grand total</td>
-                                        <td colspan="2" class="tfoot-total">{{ number_format($grandTotal, 2) }} TZS</td>
+                                        <td colspan="2" class="tfoot-total">{{ number_format($carts->sum('totalPrice'), 2) }} TZS</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -633,35 +607,39 @@
                         <div class="order-info">
                             <div class="order-info-row">
                                 <span class="info-label">Request ID</span>
-                                <span class="info-val">{{ $requestName ?? 'NEW-ORDER' }}</span>
+                                <span class="info-val">{{ $orders->requestName ?? 'NEW-ORDER' }}</span>
                             </div>
                             <div class="order-info-row">
                                 <span class="info-label">Date</span>
-                                <span class="info-val" style="font-size:12px;">{{ $orderDate }}</span>
+                                <span class="info-val" style="font-size:12px;">{{ $orders->created_at ?? '' }}</span>
                             </div>
                             <div class="order-info-row">
                                 <span class="info-label">Status</span>
-                                <span class="badge badge-pending">{{ $Status }}</span>
+                                <span class="badge badge-pending">Pending</span>
                             </div>
                             <div class="order-info-row">
                                 <span class="info-label">Served by</span>
-                                <span class="info-val">{{ $servedBy }}</span>
+                                <span class="info-val">{{ $orders->served_by ?? '' }}</span>
                             </div>
                         </div>
+
+                       
+                    
 
                         {{-- Supplier --}}
                         <div style="margin-bottom:1.25rem;">
                             <div class="section-label">Supplier</div>
                             <form action="/admin/saveInfo" method="post">
                                 @csrf
-                                <input type="hidden" name="requestName" value="{{ $requestName }}">
+                                <input type="hidden" name="requestName" value="{{ $orders->requestName ?? 'NEW-ORDER' }}">
                                 <div class="form-group" style="margin-bottom:0;">
                                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
                                         <label class="form-label" style="margin-bottom:0;">Select supplier</label>
-                                        <span style="font-size:12px; color:var(--slate-500);">Current: <strong>{{ $supplirtName }}</strong></span>
+                                        <span style="font-size:12px; color:var(--slate-500);">Current: <strong>{{ $supplierName }}</strong></span>
                                     </div>
                                     <select class="form-select" name="selectedCustomer" onchange="this.form.submit()">
                                         <option value="">— Choose supplier —</option>
+                                        <option value="7">Main Store</option>
                                         @foreach ($Customers as $customer)
                                             <option value="{{ $customer->id }}">
                                                 {{ $customer->name }} — {{ $customer->id }}
@@ -674,7 +652,7 @@
 
                             <form action="/admin/saveInfo" method="post">
                                 @csrf
-                                <input type="hidden" name="requestName" value="{{ $requestName }}">
+                                <input type="hidden" name="requestName" value="{{ $orders->requestName ?? 'NEW-ORDER' }}">
                                   {{-- Assign to --}}
                             <div class="form-group">
                                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
@@ -687,7 +665,7 @@
                                     <option value="">— Select user / location —</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}"
-                                            {{ (old('assignedTo') == $user->id || ($lastOrder && $lastOrder->assigned_to == $user->id)) ? 'selected' : '' }}>
+                                            {{ (old('assignedTo') == $user->id || ($orders && $orders->assigned_to == $user->id)) ? 'selected' : '' }}>
                                             {{ $user->name }} ({{ $user->levelStatus ?? 'User' }})
                                         </option>
                                     @endforeach
@@ -701,25 +679,31 @@
                         <div class="pricing-block">
                             <div class="price-row">
                                 <span>Subtotal</span>
-                                <span class="price-num">{{ number_format($subtotal, 2) }} TZS</span>
+                                <span class="price-num">{{ number_format($carts->sum('totalPrice'), 2) }} TZS</span>
                             </div>
                             <div class="price-row grand">
                                 <span>Grand total</span>
-                                <span class="price-num">{{ number_format($grandTotal, 2) }} TZS</span>
+                                <span class="price-num">{{ number_format($carts->sum('totalPrice'), 2) }} TZS</span>
                             </div>
                         </div>
 
                         {{-- Submit --}}
-                        @if($requestName)
+                        @if($orders->requestName ?? '')
                         <form action="/admin/requestSubmit" method="POST">
                             @csrf
+                                <div style="margin-bottom:1.25rem;">
+                            <div class="section-label">Request Shop</div>
+   
+                                <input type="hidden" name="requestName" value="{{ $orders->requestName ?? 'NEW-ORDER' }}">
+                            
+                        </div>
                             <div class="form-group">
                                 <label class="form-label" for="requestDate">Request date</label>
                                 <input type="date" class="form-control" id="requestDate"
                                        name="requestDatePicker"
                                        value="{{ old('requestDate', date('Y-m-d')) }}">
                             </div>
-                            <input type="hidden" name="OrdersIds" value="{{ $requestName }}">
+     
                             <button type="submit" class="btn-submit">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <polyline points="20 6 9 17 4 12"/>

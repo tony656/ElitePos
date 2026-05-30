@@ -516,7 +516,21 @@
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
         <div class="main-wrap">
+  @if(session('success'))
+      <div class="alert alert-success  d-flex justify-content-between">
+          {{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 
+      </div>
+  @endif
+  
+  @if(session('error'))
+      <div class="alert alert-danger d-flex justify-content-between">
+          {{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
             <div class="pg-header">
                 <div class="pg-header-content">
                     <a href="javascript:history.back()" class="back-btn">

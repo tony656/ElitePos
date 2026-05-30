@@ -1218,9 +1218,6 @@
             </div>
         </div>
 
-        <div class="sidebar-footer-brand">
-            {{ getSessionAccountDisplayName() }}
-        </div>
     </nav>
 
     <script>

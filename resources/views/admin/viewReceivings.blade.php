@@ -553,6 +553,8 @@
                             </form>
                             <form method="POST" action="{{ route('admin.delete-selected-receivings') }}" id="deleteSelectedForm">
                                 @csrf
+                            <input type="hidden" name="shop" value="{{ $shopFilter ?? '' }}">
+
                                 <button type="submit" class="tbtn tbtn-danger" onclick="return confirm('Delete selected receivings? Only pending receivings can be deleted.')">
                                     <i class="bi bi-trash3"></i> Delete Selected
                                 </button>
@@ -735,6 +737,8 @@
                                                 @if($item->status != 'Approved' && $item->status != 'Returned')
                                                 <form method="post">
                                                     @csrf
+                                                                                                                                                <input type="hidden" name="receiving_id" value="{{ $item->id }}">
+
                                                     <input type="hidden" name="product_id" value="{{ $item->productId }}">
                                                     <input type="hidden" name="shop" value="{{ $shopFilter ?? '' }}">
                                                     <button formaction="{{ url('admin/restockProd') }}" class="act-btn act-approve" title="Approve">

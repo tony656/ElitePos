@@ -749,7 +749,7 @@
                 </div>
                 <div class="detail-cell">
                     <div class="dc-label">Product Code</div>
-                    <div class="dc-value mono">{{$products->code}}</div>
+                    <div class="dc-value mono">{{$products->product_id}}</div>
                 </div>
                 <div class="detail-cell">
                     <div class="dc-label">Category</div>

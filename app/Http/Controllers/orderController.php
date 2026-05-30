@@ -919,7 +919,7 @@ public function resumeOrder(Request $req)
 
 
 
-   public function payout(Request $req)
+public function payout(Request $req)
 {
    $OrdersIds    = $req->input('orderId');
    $orderType    = $req->input('orderType');
@@ -936,11 +936,10 @@ public function resumeOrder(Request $req)
        ->get();
         
     if(!empty($saleDate)) {
-    foreach($orders as $ordez) {
-    $ordez->created_at = $saleDate;
-    $ordez->save();
-    }
-    
+        foreach($orders as $ordez) {
+            $ordez->created_at = $saleDate;
+            $ordez->save();
+        }
     }
 
     if ($orders->isEmpty()) {
@@ -1025,11 +1024,9 @@ public function resumeOrder(Request $req)
     ============================ */
 
     if ($orderType === 'Suspended') {
-
         foreach ($orders as $order) {
             $order->status = 'Suspended';
             $order->save();
-           
         }
 
         logModal::create([
@@ -1054,8 +1051,6 @@ public function resumeOrder(Request $req)
             $order->status = 'Return';
             $order->paid = 0;
             $order->credit = 0;
-            // For returns, totalPrice is already negative from cart, return_amount is positive
-            // No need to modify - just ensure they're set correctly
             $order->save();
             
             // Restore product quantity
@@ -1077,16 +1072,16 @@ public function resumeOrder(Request $req)
                 'productId'      => $order->productId,
                 'pQuantity'      => $order->pQuantity,
                 'productPrice'   => $order->productPrice,
-                'totalPrice'     => $order->totalPrice, // Negative value for returns
-                'return_amount'  => $order->return_amount ?? 0, // Positive return amount
+                'totalPrice'     => $order->totalPrice,
+                'return_amount'  => $order->return_amount ?? 0,
                 'paid'           => 0,
                 'credit'         => 0,
                 'transactionType' => $paymentMethod,
                 'status'          => 'Return',
-                'discount'        => 0, // Discounts are cleared for returns
+                'discount'        => 0,
                 'discount_increase' => 0,
-                'offered_items'     => $order->offered_items,
-                'offer_parent_product' => $order->offer_parent_product,
+                'offered_items'     => $order->offered_items ?? 0,
+                'offer_parent_product' => $order->offer_parent_product ?? null,
                 'served_by'       => $served ?? session('username'),
                 'account'         => $order->account,
                 'created_at'      => $saleDate ?? Carbon::now(),
@@ -1104,48 +1099,48 @@ public function resumeOrder(Request $req)
     /* ============================
        DEBT LIMIT CHECK (CREDIT ONLY)
     ============================ */
-if($orderType === 'Debt') {
-    $existingDebt = \DB::query()
-    ->fromSub(
-        ordersModel::where('account', getCurrentShopId())
-            ->where('cName', $firstOrder->cName)
-            ->where('cPhone', $firstOrder->cPhone)
-            ->whereIn('status', ['Debt', 'Partial'])
-            ->selectRaw('order_id, MAX(credit) as credit')
-            ->groupBy('order_id'),
-        'o'
-    )
-    ->sum('credit');
+    if($orderType === 'Debt') {
+        $existingDebt = \DB::query()
+        ->fromSub(
+            ordersModel::where('account', getCurrentShopId())
+                ->where('cName', $firstOrder->cName)
+                ->where('cPhone', $firstOrder->cPhone)
+                ->whereIn('status', ['Debt', 'Partial'])
+                ->selectRaw('order_id, MAX(credit) as credit')
+                ->groupBy('order_id'),
+            'o'
+        )
+        ->sum('credit');
 
-    $paidinv = debtsModel::where('account', getCurrentShopId())
-        ->where('cId', $firstOrder->cPhone)
-        ->sum('amount');
+        $paidinv = debtsModel::where('account', getCurrentShopId())
+            ->where('cId', $firstOrder->cPhone)
+            ->sum('amount');
 
-  if (!$customer) {
-    return back()->with('error', 'Customer not found');
-}
+        if (!$customer) {
+            return back()->with('error', 'Customer not found');
+        }
 
-$limit = (float) ($customer->limits ?? 0);
-$newDebt = (float) $credit;
+        $limit = (float) ($customer->limits ?? 0);
+        $newDebt = (float) $credit;
 
-if ((($existingDebt + $newDebt) - $paidinv) > $limit) {
-    return back()->with(
-        'error',
-        'Credit ' . $newDebt . ' exceeds limit. Current debt ' .
-        $existingDebt . ' / ' . $limit
-    );
-}
+        if ((($existingDebt + $newDebt) - $paidinv) > $limit) {
+            return back()->with(
+                'error',
+                'Credit ' . $newDebt . ' exceeds limit. Current debt ' .
+                $existingDebt . ' / ' . $limit
+            );
+        }
+
+        $paid = 0;
+        $credit = $totalAmount;
+    }
 
     /* ============================
        FINAL STATUS DERIVATION
     ============================ */
-       $paid = 0;
-        $credit = $totalAmount;
-    }
-
-    if ($paid == $totalAmount) {
+    if ($paid == $totalAmount && $totalAmount > 0) {
         $finalStatus = 'Paid';
-    } elseif ($credit == $totalAmount) {
+    } elseif ($credit == $totalAmount && $totalAmount > 0) {
         $finalStatus = 'Debt';
     } else {
         $finalStatus = 'Partial';
@@ -1154,36 +1149,34 @@ if ((($existingDebt + $newDebt) - $paidinv) > $limit) {
     /* ============================
        UPDATE ORDERS
     ============================ */
-$firstOrderId = $orders->first()->id;
-
-  foreach ($orders as $order) {
-    $order->status = $finalStatus;
-
-    // only first row stores totals
-    if ($order->id == $firstOrderId) {
-        $order->paid   = $paid;
-        $order->credit = $credit ?? 0;
-    } else {
-        // optional: keep others zero to avoid confusion
-        $order->paid   = 0;
-        $order->credit = 0;
+    $isFirstOrderRow = true;
+    foreach ($orders as $order) {
+        $order->status = $finalStatus;
+        if ($isFirstOrderRow) {
+            $order->paid = $paid;
+            $order->credit = $credit;
+            $isFirstOrderRow = false;
+        } else {
+            $order->paid = 0;
+            $order->credit = 0;
+        }
+        $order->save();
     }
 
-    $order->save();
-}
-
-
     /* ============================
-        INSERT SALES
+       INSERT SALES FOR REGULAR ITEMS
     ============================ */
 
     \Log::info('Starting sales creation for order ' . $OrdersIds . ' with ' . $orders->count() . ' items');
 
+    // First, process regular items (non-offered)
+    $isFirstSaleRow = true;
     foreach ($orders as $order) {
-        // Skip free/offered items - stock is deducted in the dedicated offered items loop below
-        $isOfferedItem = $order->offered_items ?? false;
+        // Skip offered/free items in this loop - they will be processed separately
+        $isOfferedItem = ($order->offered_items == 1 || $order->offered_items === true);
         if ($isOfferedItem) {
-            continue; // Skip all offered/free items in this loop
+            \Log::info('Skipping offered item in regular loop: ' . $order->productId);
+            continue;
         }
         
         // Deduct stock for regular items only
@@ -1200,22 +1193,24 @@ $firstOrderId = $orders->first()->id;
             'productPrice'   => $order->productPrice,
             'totalPrice'     => $order->totalPrice,
             'return_amount'  => $order->return_amount ?? 0,
-            'paid'           => ($order->id == $firstOrderId) ? $paid : 0,
-            'credit'         => ($order->id == $firstOrderId) ? $credit : 0,
+            'paid'           => $isFirstSaleRow ? $paid : 0, 
+            'credit'         => $isFirstSaleRow ? $credit : 0,
             'transactionType' => $paymentMethod,
             'status'          => $finalStatus,
             'discount'        => $order->discount,
             'discount_increase' => $order->discount_increase ?? 0,
             'served_by'       => $served ?? session('username'),
             'account'         => $order->account,
-            'offered_items'   => $order->offered_items ?? 0,
-            'offer_parent_product' => $order->offer_parent_product ?? null,
+            'offered_items'   => 0, // Regular item
+            'offer_parent_product' => null,
             'created_at'      => $saleDate ?? Carbon::now(),
         ]);
+
+        $isFirstSaleRow = false;
     }
 
     /* ============================
-       SAVE OFFERED ITEMS (FREE ITEMS)
+       SAVE OFFERED ITEMS (FREE ITEMS) - FIXED
        Fetch from orders table where offered_items = 1
     ============================ */
     
@@ -1224,31 +1219,32 @@ $firstOrderId = $orders->first()->id;
         ->where('offered_items', 1)
         ->get();
     
-        if($offeredOrders) {
+    \Log::info('Found ' . $offeredOrders->count() . ' offered items for order ' . $OrdersIds);
     
-    foreach ($offeredOrders as $offerOrder) {
-        $offerProductId = $offerOrder->productId;
-        $offerQuantity = $offerOrder->pQuantity;
-        
-        // Get the product details
-        $offerProduct = productsModel::where('account', getCurrentShopId())
-            ->where('product_id', $offerProductId)
-            ->first();
-        
-        if ($offerProduct) {
+    if ($offeredOrders->count() > 0) {
+        foreach ($offeredOrders as $offerOrder) {
+            $offerProductId = $offerOrder->productId;
+            $offerQuantity = $offerOrder->pQuantity;
+            
+            \Log::info('Processing offered item: Product ID ' . $offerProductId . ', Quantity: ' . $offerQuantity);
+            
+            // Get the product details
+            $offerProduct = productsModel::where('account', getCurrentShopId())
+                ->where('product_id', $offerProductId)
+                ->first();
+            
+            if (!$offerProduct) {
+                \Log::warning('Offered product not found: ' . $offerProductId);
+                session()->flash('warning', 'Offered product "' . $offerProductId . '" was not found in inventory.');
+                continue;
+            }
+            
             // Use the product's actual selling price for the sales record
             $offerProductPrice = $offerProduct->sPrice ?? 0;
             
             // Check if enough stock available for the free item
             if ($offerProduct->quantity < $offerQuantity) {
-                // Insufficient stock - skip this free item but continue with the order
-                \Log::warning('Insufficient stock for offered item - skipped', [
-                    'product' => $offerProduct->name01 ?? $offerProductId,
-                    'requested' => $offerQuantity,
-                    'available' => $offerProduct->quantity,
-                    'order_id' => $OrdersIds,
-                    'user' => session('username')
-                ]);
+                \Log::warning('Insufficient stock for offered item: ' . $offerProduct->name01 . ' (needed: ' . $offerQuantity . ', available: ' . $offerProduct->quantity . ')');
                 
                 // Add a warning message to be shown to the user
                 session()->flash('warning', 'Free item "' . ($offerProduct->name01 ?? $offerProductId) . '" was skipped due to insufficient stock (needed: ' . $offerQuantity . ', available: ' . $offerProduct->quantity . ').');
@@ -1258,41 +1254,47 @@ $firstOrderId = $orders->first()->id;
             }
             
             // Reduce stock for offered items (deduct now that order is finalized)
-             $this->reduceProductQuantity($offerProductId, $offerQuantity);
-
+            $this->reduceProductQuantity($offerProductId, $offerQuantity);
             
             // Create sales record (FREE item - totalPrice is 0 but productPrice stores original price)
-            salsModel::create([
-                'sales_id'       => $OrdersIds . '_OFFER',
-                'salesName'      => $firstOrder->orderName ?? 'N/A',
-                'stockId'        => 'OFFER',
-                'cName'          => $firstOrder->cName ?? 'N/A',
-                'cPhone'         => $firstOrder->cPhone ?? 'N/A',
-                'productId'      => $offerProductId,
-                'pQuantity'      => $offerQuantity,
-                'productPrice'   => $offerProductPrice, // Store original product price
-                'totalPrice'     => 0, // Free item - no charge
-                'return_amount'  => 0,
-                'paid'           => 0,
-                'credit'         => 0,
-                'transactionType' => $paymentMethod,
-                'status'          => $finalStatus,
-                'discount'        => 0,
-                'discount_increase' => 0,
-                'served_by'       => $served ?? session('username'),
-                'account'         => getCurrentShopId(),
-                'offered_items'   => 1, // Mark as offered item
-                'offer_parent_product' => $offerOrder->offer_parent_product ?? null,
-                'created_at'      => $saleDate ?? Carbon::now(),
-            ]);
-            
-            logModal::create([
-                'title' => 'Offer Logs',
-                'description' => 'Offered item: ' . $offerProduct->name01 . ' x' . $offerQuantity . ' added to order ' . $OrdersIds . ' by ' . session('username'),
-            ]);
+            try {
+                $salesRecord = salsModel::create([
+                    'sales_id'       => $OrdersIds,
+                    'salesName'      => $firstOrder->orderName ?? 'N/A',
+                    'stockId'        => $offerOrder->stockId ?? 'OFFER',
+                    'cName'          => $firstOrder->cName ?? 'N/A',
+                    'cPhone'         => $firstOrder->cPhone ?? 'N/A',
+                    'productId'      => $offerProductId,
+                    'pQuantity'      => $offerQuantity,
+                    'productPrice'   => $offerProductPrice,
+                    'totalPrice'     => 0, // Free item - no charge
+                    'return_amount'  => 0,
+                    'paid'           => 0,
+                    'credit'         => 0,
+                    'transactionType' => $paymentMethod,
+                    'status'          => $finalStatus,
+                    'discount'        => 0,
+                    'discount_increase' => 0,
+                    'served_by'       => $served ?? session('username'),
+                    'account'         => getCurrentShopId(),
+                    'offered_items'   => 1, // Mark as offered item
+                    'offer_parent_product' => $offerOrder->offer_parent_product ?? null,
+                    'created_at'      => $saleDate ?? Carbon::now(),
+                ]);
+                
+                \Log::info('Successfully created sales record for offered item: ' . $salesRecord->id);
+                
+                logModal::create([
+                    'title' => 'Offer Logs',
+                    'description' => 'Offered item: ' . ($offerProduct->name01 ?? $offerProductId) . ' x' . $offerQuantity . ' added to order ' . $OrdersIds . ' by ' . session('username'),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create sales record for offered item: ' . $e->getMessage());
+                session()->flash('error', 'Failed to process offered item: ' . ($offerProduct->name01 ?? $offerProductId));
+            }
         }
     }
-}
+
     /* ============================
        DELETE ONLY FULL SALES
     ============================ */
@@ -1301,16 +1303,13 @@ $firstOrderId = $orders->first()->id;
         ordersModel::where('account', getCurrentShopId())
             ->where('order_id', $OrdersIds)
             ->delete();
-    } else if ($finalStatus === 'Debt') {
-        $paid = 0;
-        $credit = $totalAmount;
     }
 
     /* ============================
         LOGGING
     ============================ */
 
-    \Log::info('Order processing completed for ' . $OrdersIds . '. Final status: ' . $finalStatus);
+    \Log::info('Order processing completed for ' . $OrdersIds . '. Final status: ' . $finalStatus . ', Paid: ' . $paid . ', Credit: ' . $credit);
 
     logModal::create([
         'title' => 'Order Logs',

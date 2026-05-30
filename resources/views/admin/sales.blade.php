@@ -701,7 +701,21 @@
                     </div>
                 </div>
             </div>
+ @if(session('success'))
+      <div class="alert alert-success  d-flex justify-content-between">
+          {{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 
+      </div>
+  @endif
+  
+  @if(session('error'))
+      <div class="alert alert-danger d-flex justify-content-between">
+          {{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
             {{-- ── Stat Cards ── --}}
             <div class="stats-grid">
                 <div class="stat-card s1">

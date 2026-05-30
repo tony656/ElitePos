@@ -13,6 +13,7 @@ use App\Models\UserAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use App\Models\logModal;
 use function getSessionAccountId;
 
@@ -474,8 +475,8 @@ class bankingController extends Controller
         $maxDeposit = $transfers->max('amount') ?? 0;
         $minDeposit = $transfers->min('amount') ?? 0;
 
-        $suppliers = BankingSupplier::where('account', $accountName)->with('accounts')->get();
-        $beneficiaries = BankingBeneficiary::where('account', $accountName)->with('accounts')->get();
+        $suppliers = BankingSupplier::with('accounts')->get();
+        $beneficiaries = BankingBeneficiary::with('accounts')->get();
         
         // Get all shops (accounts) for allocation dropdown
         if (strtolower(trim($user->levelStatus)) === 'admin') {
@@ -535,9 +536,9 @@ class bankingController extends Controller
 
         // Verify supplier and beneficiary belong to the same account
         $supplier = BankingSupplier::where('id', $req->supplier_id)
-                        ->where('account', $Account)->first();
+                        ->first();
         $beneficiary = BankingBeneficiary::where('id', $req->beneficiary_id)
-                        ->where('account', $Account)->first();
+                        ->first();
 
         if (!$supplier || !$beneficiary) {
             return redirect()->back()->with('error', 'Invalid supplier or beneficiary selected');
@@ -586,7 +587,7 @@ class bankingController extends Controller
             $transfer->amount = $req->amount;
             $transfer->description = $req->description;
             $transfer->shop_id = $req->shop_id;
-            $transfer->created_by = session('username');
+            $transfer->created_by = auth::user()->name;
             $transfer->account = $Account;
             $transfer->save();
 
@@ -598,7 +599,7 @@ class bankingController extends Controller
                 $chipEntry->transfer_id = $transfer->id;
                 $chipEntry->chip_amount = $chipAmount;
                 $chipEntry->transfer_date = $req->transfer_date;
-                $chipEntry->created_by = session('username');
+                $chipEntry->created_by = auth::user()->name;
                 $chipEntry->account = $Account;
                 
                 // Calculate available_chip as cumulative sum
@@ -617,7 +618,7 @@ class bankingController extends Controller
         $log->description = 'Transfer of ' . number_format($req->amount, 2) .
                           ' from ' . $supplier->name . ' to ' . $beneficiary->name .
                           ' allocated to shop ID: ' . $req->shop_id .
-                          ' created by ' . session('username');
+                          ' created by ' . auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Banking transfer created successfully with shop allocation');
@@ -1258,33 +1259,43 @@ class bankingController extends Controller
      */
     public function exportSupplierDepositReport(Request $req)
     {
+        $user = Auth::user();
+
         // Date range filter
         $dateFrom = $req->input('date_from');
         $dateTo = $req->input('date_to');
         $shopId = $req->input('shop_id');
         $supplierId = $req->input('supplier_id');
-        
-        // Build query with filters - NO account filter to show all data
-        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
-        
+
+        // Determine which accounts the user can access
+        if (strtolower(trim($user->levelStatus)) === 'admin') {
+            $accountIds = accountModel::pluck('id')->toArray();
+        } else {
+            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
+        }
+
+        // Build query with filters - restrict to user's accessible accounts
+        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
+                        ->whereIn('account', $accountIds);
+
         if ($dateFrom) {
             $query->whereDate('transfer_date', '>=', $dateFrom);
         }
-        
+
         if ($dateTo) {
             $query->whereDate('transfer_date', '<=', $dateTo);
         }
-        
+
         // Apply shop filter - admins can filter by shop, non-admins already restricted by their access
         if ($shopId) {
             $query->where('shop_id', $shopId);
         }
-        
+
         // Apply supplier filter
         if ($supplierId) {
             $query->where('supplier_id', $supplierId);
         }
-        
+
         $transfers = $query->get();
         
         // Group transfers by supplier

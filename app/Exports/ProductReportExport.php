@@ -9,9 +9,20 @@ use App\Models\productsModel;
 
 class ProductReportExport implements FromCollection, WithHeadings, WithMapping
 {
+    protected $accountIds;
+
+    public function __construct($accountIds = null)
+    {
+        $this->accountIds = $accountIds;
+    }
+
     public function collection()
     {
-        return productsModel::all();
+        $query = productsModel::query();
+        if ($this->accountIds && is_array($this->accountIds) && count($this->accountIds) > 0) {
+            $query->whereIn('account', $this->accountIds);
+        }
+        return $query->get();
     }
 
     public function headings(): array

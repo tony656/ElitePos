@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\usersModel;
 use App\Models\accountModel;
-use function getSessionAccountId;
+use function getCurrentShopId;
 
 class customerController extends Controller
 {
@@ -23,11 +23,11 @@ class customerController extends Controller
 
         // For admin: allow account filtering from request, otherwise use session account name
         if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $selectedAccount = $request->query('account', getSessionAccountId());
+            $selectedAccount = $request->query('account', getCurrentShopId());
             // Fetch all accounts for admin dropdown
             $accounts = accountModel::all();
         } else {
-            $selectedAccount = getSessionAccountId();
+            $selectedAccount = getCurrentShopId();
             $accounts = collect(); // Empty collection for non-admin
         }
 
@@ -69,7 +69,7 @@ class customerController extends Controller
         ]);
 
         // Determine which account to use: admin can select, others use session account name
-        $selectedAccount = $request->input('account', getSessionAccountId());
+        $selectedAccount = $request->input('account', getCurrentShopId());
 
         $look = customerModel::where('name', $request->input('name')
                              )->where('account', $selectedAccount)->get();
@@ -116,50 +116,78 @@ class customerController extends Controller
 
  public function searchCustomer(Request $request)
 {
-  
-   $query = $request->query('query', '');
-   $user = Auth::user();
-   
-   if (strlen($query) < 1) {
-       return response()->json([]);
-   }
+    $query = $request->query('query', '');
+    $accountId = $request->query('account', ''); // Get the account parameter
+    $user = Auth::user();
+    
+    if (strlen($query) < 1) {
+        return response()->json([]);
+    }
 
-   // Get selected shop from session
-   $selectedShopId = session('selected_shop_id');
-   
-   // If no shop selected, fallback to session account
-   if (!$selectedShopId) {
-       $selectedShopId = getSessionAccountId();
-   }
-   
-   // For non-admin users, verify they have access to the selected shop
-   if (strtolower(trim($user->levelStatus)) !== 'admin') {
-       $assignedAccountIds = $user->accounts()->pluck('account')->toArray();
-       // Fallback to the account field in users table if no pivot records
-       if (empty($assignedAccountIds)) {
-           $assignedAccountIds = [$user->account];
-       }
-       if (!in_array($selectedShopId, $assignedAccountIds)) {
-           // User doesn't have access to this shop, return empty results
-           return response()->json([]);
-       }
-       // Use only the selected shop (not all assigned shops)
-       $accountIds = [$selectedShopId];
-   } else {
-       // Admin: use selected shop or fallback
-       $accountIds = [$selectedShopId];
-   }
-   
-   $customers = customerModel::whereIn('account', $accountIds)
-           ->where(function ($q) use ($query) {
-               $q->where('name', 'LIKE', "%{$query}%")
-                 ->orWhere('phone', 'LIKE', "%{$query}%");
-           })
-           ->select('id', 'name', 'phone', 'limits', 'account')
-           ->limit(15)
-           ->get();
+    // If account parameter is provided, use it directly (from modal selection)
+    if ($accountId) {
+        // For non-admin users, verify they have access to the selected shop
+        if (strtolower(trim($user->levelStatus)) !== 'admin') {
+            $assignedAccountIds = $user->accounts()->pluck('account')->toArray();
+            // Fallback to the account field in users table if no pivot records
+            if (empty($assignedAccountIds)) {
+                $assignedAccountIds = [$user->account];
+            }
+            if (!in_array($accountId, $assignedAccountIds)) {
+                // User doesn't have access to this shop, return empty results
+                return response()->json([]);
+            }
+        }
+        
+        $customers = customerModel::where('account', $accountId)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%");
+            })
+            ->select('id', 'name', 'phone', 'limits', 'account')
+            ->limit(15)
+            ->get();
+            
+        return response()->json($customers);
+    }
+    
+    // Fallback to session-based logic (for other parts of the application)
+    // Get selected shop from session
+    $selectedShopId = session('selected_shop_id');
+    
+    // If no shop selected, fallback to session account
+    if (!$selectedShopId) {
+        $selectedShopId = getCurrentShopId();
+    }
+    
+    // For non-admin users, verify they have access to the selected shop
+    if (strtolower(trim($user->levelStatus)) !== 'admin') {
+        $assignedAccountIds = $user->accounts()->pluck('account')->toArray();
+        // Fallback to the account field in users table if no pivot records
+        if (empty($assignedAccountIds)) {
+            $assignedAccountIds = [$user->account];
+        }
+        if (!in_array($selectedShopId, $assignedAccountIds)) {
+            // User doesn't have access to this shop, return empty results
+            return response()->json([]);
+        }
+        // Use only the selected shop (not all assigned shops)
+        $accountIds = [$selectedShopId];
+    } else {
+        // Admin: use selected shop or fallback
+        $accountIds = [$selectedShopId];
+    }
+    
+    $customers = customerModel::whereIn('account', $accountIds)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%");
+            })
+            ->select('id', 'name', 'phone', 'limits', 'account')
+            ->limit(15)
+            ->get();
 
-   return response()->json($customers);
+    return response()->json($customers);
 }
  public function getCustomerDetails($customerId)
  {
@@ -170,7 +198,7 @@ class customerController extends Controller
          // Admins: get all account IDs (not just session account)
          $accountIds = $user->accounts()->pluck('account')->toArray();
          if (empty($accountIds)) {
-             $accountIds = [getSessionAccountId()];
+             $accountIds = [getCurrentShopId()];
          }
      } else {
          // Regular users: get from user_accounts relationship
@@ -227,7 +255,7 @@ class customerController extends Controller
         ]);
 
         $get = customerModel::where('id', $req->input('customerId')
-                             )->where('account', getSessionAccountId())->first();
+                             )->first();
 
         if (!$get) {
             $create = new logModal();
@@ -249,7 +277,7 @@ class customerController extends Controller
         $get->limits = $req->input('credit', 0);
         $get->business = $req->input('type', '');
         $get->description = $req->input('description', 'No description');
-        $get->account = getSessionAccountId();
+        $get->account = getCurrentShopId();
 
         // Save the customer to the database
         if ($get->save()) {
@@ -274,8 +302,8 @@ class customerController extends Controller
 
         $prodId = $req->input('name');
 
-        $dlts = customerModel::where('account', getSessionAccountId())->where('name', $prodId)->first();
-        $dlt = customerModel::where('account', getSessionAccountId())->where('name', $prodId)->delete();
+        $dlts = customerModel::where('account', getCurrentShopId())->where('name', $prodId)->first();
+        $dlt = customerModel::where('account', getCurrentShopId())->where('name', $prodId)->delete();
         if ($dlt) {
             $create = new logModal();
             $create->title = 'Customer Log';
@@ -296,7 +324,7 @@ class customerController extends Controller
 
   public function details($id)
 {
-    $accountId = getSessionAccountId();
+    $accountId = getCurrentShopId();
     $customers = salsModel::where('account', $accountId)->where('cName', $id)->get();
 
     if ($customers->isEmpty()) {
@@ -321,14 +349,14 @@ class customerController extends Controller
 public function customerView(Request $req) {
     $user = auth()->user();
     $products = [];
-    $get = customerModel::where('name', $req->input('name'))->first();
+    $get = customerModel::where('id', $req->input('id'))->first();
 
     // If customer not found, redirect back with error
     if (!$get) {
         return redirect()->back()->with('error', 'Customer not found.');
     }
 
-    $accountId = getSessionAccountId();
+    $accountId = getCurrentShopId();
     
     // Handle date filtering - default to today
     $selectedDate = $req->input('selectedDate');

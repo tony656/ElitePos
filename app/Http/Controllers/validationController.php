@@ -274,7 +274,7 @@ class validationController extends Controller
     if ($primaryAccount) {
         $accountId = $primaryAccount->account;
     } elseif ($user->account) {
-        $accountId = $user->account;
+        
     } else {
         // Fallback: use first available account from user's accounts
         $firstAccount = $userAccounts->first();
@@ -295,15 +295,7 @@ class validationController extends Controller
         'username' => $user->name,
     ]);
 
-    // Handle multiple accounts - show selection UI but keep account set
-    if ($userAccounts->count() > 1) {
-        session([
-            'available_accounts' => $userAccounts->pluck('account')->toArray(),
-            'needs_account_selection' => true,
-        ]);
-
-        return view('account-select', ['accounts' => $userAccounts]);
-    }
+   
 
     // Role-based redirect for single account users (case-insensitive)
     if (strtolower(trim($user->levelStatus)) === 'admin') {
@@ -553,4 +545,17 @@ public function logoutAndRedirect()
         $create->save();
         return redirect()->back()->with('success', 'Account Switched to ' . $account->name);
     }
+    
+    public function storeSession(Request $request)
+{
+    $shopId = $request->input('shopId');
+
+    session([
+        'selected_shop_id' => $shopId,
+    ]);
+
+    return redirect()->back();
 }
+}
+
+

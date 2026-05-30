@@ -67,6 +67,8 @@ Route::middleware(['auth'])->prefix('face')->name('face.')->group(function () {
     Route::get('/logs', [FaceRecognitionController::class, 'getVerificationLogs'])->name('logs');
 });
 
+Route::post('/storeSession', [validationController::class, 'storeSession'])->name('storeSession');
+
 //Admin group starts here
 
 // System status API (accessible to all authenticated users)
@@ -139,6 +141,9 @@ Route::middleware(['system.security'])->group(function () {
 
     Route::get('/viewRequest', [itemRequestController::class, 'viewRequest']);
 
+    Route::get('/viewRequestDetails/{requestId}', [itemRequestController::class, 'viewRequestDetails'])->name('admin.viewRequestDetails');
+
+
     Route::post('/itemRequest', [itemRequestController::class, 'itemRequest']);
 
     Route::post('/removeFromCart', [orderController::class, 'dltProdOrdcart']);
@@ -189,6 +194,8 @@ Route::middleware(['system.security'])->group(function () {
     Route::get('/fullReport', [salsController::class, 'fullReport']);
 
     Route::get('/shopReport', [salsController::class, 'AllShopReport']);
+
+    Route::get('/mainStoreReport', [itemRequestController::class, 'mainStoreReport'])->name('mainStoreReport');
 
     Route::get('/kpi', [salsController::class, 'kpiDashboard'])->name('kpi');
     Route::get('/customer-kpi', [salsController::class, 'customerKPI'])->name('customer.kpi');
@@ -322,6 +329,10 @@ Route::middleware(['system.security'])->group(function () {
 
     Route::post('/request/approve-all', [itemRequestController::class, 'approveAll'])->name('request.approveAll');
 
+    Route::post('/request/pay', [itemRequestController::class, 'payInterShopRequest'])->name('request.pay');
+
+    Route::post('/request/redoRequest', [itemRequestController::class, 'redoRequest'])->name('request.redoRequest');
+
     Route::post('/request/delete', [itemRequestController::class, 'deleteRequest'])->name('request.delete');
 
     Route::get('/coupons', [couponController::class, 'index']);
@@ -428,11 +439,11 @@ Route::middleware(['system.security'])->group(function () {
 
     Route::post('saveInfo', [itemRequestController::class, 'saveInfo']);
 
-    Route::post('/approveRequest', [itemRequestController::class, 'approveRequest']);
+    Route::post('/approveRequest', [itemRequestController::class, 'approveRequest'])->name('admin.approveRequest');
 
-    Route::post('/rejectRequest', [itemRequestController::class, 'rejectRequest']);
+    Route::post('/rejectRequest', [itemRequestController::class, 'rejectRequest'])->name('admin.rejectRequest');
 
-    Route::post('/outOfStockRequest', [itemRequestController::class, 'outOfStockRequest']);
+    Route::post('/outOfStockRequest', [itemRequestController::class, 'outOfStockRequest'])->name('admin.outOfStockRequest');
 
     Route::post('cashSubmit', action: [salsController::class, 'cashSubmit']);
     Route::post('cashDelete', action: [salsController::class, 'cashDelete']);
@@ -583,11 +594,15 @@ Route::get('/itemRequest', [itemRequestController::class, 'index']);
 
 Route::get('/viewRequest', [itemRequestController::class, 'viewRequest']);
 
+Route::get('/viewRequest/{requestId}', [itemRequestController::class, 'viewRequestDetails'])->name('admin.viewRequestDetails');
+
+
 Route::post('/itemRequest', [itemRequestController::class, 'itemRequest']);
 
 Route::post('/dltProdOrd', [orderController::class, 'dltProdOrd']);
 
 Route::post('/dltItemReq', [itemRequestController::class, 'dltItemReq']);
+Route::post('/clearCart', [itemRequestController::class, 'clearCart'])->name('user.clearCart');
 
 Route::post('/saveInfo', [itemRequestController::class, 'saveInfo']);
 
@@ -877,4 +892,3 @@ Route::post('updateAccountProducts', [systemController::class, 'updateAccountPro
 });
 
 });
-

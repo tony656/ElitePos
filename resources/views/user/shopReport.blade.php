@@ -501,7 +501,7 @@
 </head>
 <body>
 <div class="row">
-        @include('admin/sidenav')
+        @include('user/sidenav')
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
 
@@ -656,8 +656,11 @@
                                 $totalSale  = $shop->total_sales;
                                 $cashAmount = $shop->cash_amount;
                                 $cashSubmit = $shop->cash_submitted;
-                                $diff       = $cashAmount - $cashSubmit;
+                                $bankDiff = $shop->bank_diff < 1 && $shop->bank_diff > -1;
 
+                                $diff       = $cashAmount - $cashSubmit;
+                
+                                
                                 $profitVal = $totalSale
                                     - ($shop->expenses ?? 0)
                                     - ($shop->cash_receivings ?? 0)
@@ -667,8 +670,8 @@
 
                                 $salesBalanced = abs(($cashSale + $creditSale) - $totalSale) < 0.01;
                                 $cashBalanced  = abs($diff) < 0.01;
-                                $isBalanced    = $salesBalanced && $cashBalanced;
-
+                                $isBalanced    = $salesBalanced && $cashBalanced && $bankDiff;
+                                
                                 $isDiffZero = abs($diff) < 0.1;
                                 $statusBadge = $isDiffZero ? 'badge-ok'
                                                      : ($diff > 0  ? 'badge-bad' : 'badge-over');

@@ -1118,6 +1118,15 @@
                         </a>
                     </li>
                     @endif
+                     @if (canUser('view_shops_report'))
+                    <li class="nav-item">
+                        <a href="/admin/mainStoreReport" class="nav-link">
+                            <div class="nav-content">
+                                <span class="nav-text">Main Store Report</span>
+                            </div>
+                        </a>
+                    </li>
+                    @endif
                     @if (canUser('view_sales_report'))
                     <li class="nav-item">
                         <a href="/admin/sales" class="nav-link">
@@ -1260,10 +1269,6 @@
                     @endif
                 </div>
             </div>
-        </div>
-
-        <div class="sidebar-footer-brand">
-            {{ getSessionAccountDisplayName() }}
         </div>
     </nav>
 

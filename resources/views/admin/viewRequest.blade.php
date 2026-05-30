@@ -8,6 +8,7 @@
     @include("links")
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Your existing styles remain exactly the same */
         :root {
             --ink:        #0f1117;
             --ink-light:  #6b7280;
@@ -37,7 +38,6 @@
             color: var(--ink);
         }
 
-        /* ── PAGE HEADER ───────────────────────────── */
         .page-header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -83,7 +83,6 @@
             flex-wrap: wrap;
         }
 
-        /* ── BUTTONS ───────────────────────────────── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -108,7 +107,6 @@
         .btn-ghost:hover { background: var(--blue-soft); }
         .btn-sm        { padding: .35rem .75rem; font-size: .8rem; }
 
-        /* ── STAT CARDS ────────────────────────────── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -154,7 +152,6 @@
         .stat-icon-amber  { background: var(--amber-soft);  color: var(--amber); }
         .stat-icon-green  { background: var(--green-soft);  color: var(--green); }
 
-        /* ── TOOLBAR ───────────────────────────────── */
         .toolbar {
             margin: 0 2rem 1rem;
             display: flex;
@@ -208,7 +205,6 @@
             box-shadow: 0 0 0 3px rgba(59,91,219,.1);
         }
 
-        /* ── TABLE CARD ────────────────────────────── */
         .table-card {
             margin: 0 2rem 2rem;
             background: var(--surface);
@@ -252,7 +248,6 @@
 
         .td-actions { text-align: right; white-space: nowrap; }
 
-        /* ── BADGES / PILLS ────────────────────────── */
         .pill {
             display: inline-flex;
             align-items: center;
@@ -272,7 +267,6 @@
         .pill-mixed   { background: var(--purple-soft); color: var(--purple);}
         .pill-stock   { background: var(--amber-soft);  color: var(--amber); }
         
-        /* ── STOCK AVAILABILITY BADGES ─────────────────── */
         .stock-available {
             display: inline-flex;
             align-items: center;
@@ -310,7 +304,6 @@
             opacity: .7;
         }
 
-        /* dot indicator before status */
         .pill::before {
             content: '';
             width: 6px; height: 6px;
@@ -334,7 +327,6 @@
         .empty-state h5 { font-size: 1rem; font-weight: 600; color: var(--ink-light); margin-bottom: .4rem; }
         .empty-state p  { font-size: .85rem; color: var(--ink-light); }
 
-        /* ── MODAL ─────────────────────────────────── */
         .modal-content {
             border: none;
             border-radius: 14px;
@@ -416,7 +408,6 @@
             background: var(--surface);
         }
 
-        /* ── RESPONSIVE ────────────────────────────── */
         @media (max-width: 900px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
             .stats-grid .stat-card:last-child { grid-column: span 2; }
@@ -442,7 +433,6 @@
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-0 pt-3 bg-light">
 
-        {{-- ── PAGE HEADER ── --}}
         <div class="page-header">
             <div class="page-header-left">
                 <a href="#" onclick="history.back()" class="back-btn">
@@ -474,7 +464,6 @@
             </div>
         </div>
 
-        {{-- ── STAT CARDS ── --}}
         <div class="stats-grid">
             <div class="stat-card">
                 <div>
@@ -505,7 +494,6 @@
             </div>
         </div>
 
-        {{-- ── TOOLBAR ── --}}
         <div class="toolbar">
             <div class="search-wrap">
                 <i class="bi bi-search"></i>
@@ -513,7 +501,6 @@
             </div>
         </div>
 
-        {{-- ── TABLE ── --}}
         <div class="table-card">
             <div class="table-responsive">
                 <table class="tbl">
@@ -538,7 +525,7 @@
 
                         @if(empty($groupedRequests))
                         <tr>
-                            <td colspan="10">
+                            <td colspan="13">
                                 <div class="empty-state">
                                     <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
                                     <h5>No requests found</h5>
@@ -550,17 +537,15 @@
                             @php $index = 1; @endphp
                             @foreach ($groupedRequests as $requestId => $items)
                                 @php
-                                    /* ── Per-row variables ── */
-                                    $requesterAccount = $items[0]->account      ?? '';
+                                    $requesterAccount = $items[0]->account ?? '';
                                     $supplierAccount  = $items[0]->supplierId ?? '';
 
-                                    /* Who am I? */
                                     $iAmRequester = (getCurrentShopId() === (int)$requesterAccount);
                                     $iAmReceiver  = (getCurrentShopId() === (int)$supplierAccount);
 
                                     $requesterAccountName = DB::table('accounts')->where('id', $requesterAccount)->value('name');
-                                    
-                                    /* Totals */
+                                    $supplierAccountName = DB::table('accounts')->where('id', $supplierAccount)->value('name');
+
                                     $totalQuantity = 0;
                                     $totalPrice    = 0;
                                     foreach ($items as $item) {
@@ -568,11 +553,9 @@
                                         $totalPrice    += $item->quantity * $item->price;
                                     }
 
-                                    /* Date */
                                     $requestDate          = $items[0]->created_at ?? now();
                                     $requestDateFormatted = date('Y-m-d', strtotime($requestDate));
 
-                                    /* Overall status */
                                     $statuses = array_unique(array_column($items->toArray(), 'status'));
                                     if (count($statuses) === 1) {
                                         $overallStatus = $statuses[0];
@@ -583,6 +566,60 @@
                                     } else {
                                         $overallStatus = 'Mixed';
                                     }
+                                    
+                                    // Prepare the items data properly with product names from products table
+                                    $formattedItems = [];
+                                    foreach ($items as $item) {
+                                        // IMPORTANT: The productId is stored as a string (UUID) in request_items
+                                        $productId = $item->productId;
+                                        
+                                        $productName = 'Unknown Product';
+                                        $stockQty = 0;
+                                        
+                                        if (!empty($productId)) {
+                                            // Try to find product by 'id' column (most common)
+                                            $product = DB::table('products')->where('id', $productId)->first();
+                                            
+                                            // If not found, try by 'product_id' column
+                                            if (!$product) {
+                                                $product = DB::table('products')->where('product_id', $productId)->first();
+                                            }
+                                            
+                                            // If still not found, try by 'product_id' column
+                                            if (!$product) {
+                                                $product = DB::table('products')->where('product_id', $productId)->first();
+                                            }
+                                            
+                                            if ($product) {
+                                                $productName = $product->name ?? 'Unknown Product';
+                                                $stockQty = $product->stock ?? $product->quantity ?? 0;
+                                            }
+                                        }
+                                        
+                                        // Debug log to Laravel log file
+                                        \Log::info('Processing item:', [
+                                            'request_id' => $requestId,
+                                            'product_id_from_request' => $productId,
+                                            'found_product_name' => $productName,
+                                            'stock_qty' => $stockQty,
+                                            'quantity' => $item->quantity,
+                                            'price' => $item->price,
+                                            'product_found' => isset($product) ? 'yes' : 'no'
+                                        ]);
+                                        
+                                        $formattedItems[] = [
+                                            'productId' => $productId,
+                                            'productName' => $productName,
+                                            'quantity' => (int)$item->quantity,
+                                            'price' => (float)$item->price,
+                                            'status' => $item->status,
+                                            'payment_type' => $item->payment_type ?? 'cash',
+                                            'supplierId' => $item->supplierId ?? null,
+                                            'created_at' => $item->created_at,
+                                            'stockQty' => $stockQty,
+                                            'inStock' => $stockQty >= $item->quantity,
+                                        ];
+                                    }
                                 @endphp
 
                                 <tr class="request-row" data-date="{{ $requestDateFormatted }}">
@@ -592,7 +629,6 @@
                                     </td>
                                     <td><span class="req-id">{{ $requestId }}</span></td>
 
-                                    {{-- FROM SHOP (requester) --}}
                                     <td>
                                         @if($iAmRequester)
                                             <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
@@ -601,12 +637,11 @@
                                         @endif
                                     </td>
 
-                                    {{-- TO SHOP (supplier/receiver) --}}
                                     <td>
                                         @if($iAmReceiver)
                                             <span class="pill pill-you"><i class="bi bi-person-fill"></i> You</span>
                                         @elseif($supplierAccount)
-                                            <span class="pill pill-shop">{{ $requesterAccountName }}</span>
+                                            <span class="pill pill-shop">{{ $supplierAccountName }}</span>
                                         @else
                                             <span style="color:var(--ink-light); font-size:.8rem;">—</span>
                                         @endif
@@ -614,7 +649,7 @@
 
                                     <td><strong>{{ count($items) }}</strong></td>
                                     <td>{{ number_format($totalQuantity) }}</td>
-                                    <td><strong>{{ number_format($item->price) }}</strong></td>
+                                    <td><strong>{{ number_format($items[0]->price) }}</strong></td>
                                     <td style="white-space:nowrap;">Tsh {{ number_format($totalPrice) }}</td>
                                     <td>
                                         <span class="pill {{ $items[0]->payment_type === 'cash' ? 'bg-success' : 'bg-info' }}">
@@ -623,7 +658,6 @@
                                     </td>
                                     <td>{{ $items[0]->assignedToName ?? ($items[0]->assigned_to ?? 'N/A') }}</td>
 
-                                    {{-- STATUS --}}
                                     <td>
                                         @php
                                             $pillMap = [
@@ -639,42 +673,40 @@
                                         <span class="pill {{ $pillClass }}">{{ $overallStatus }}</span>
                                     </td>
 
-                                    {{-- ACTIONS --}}
                                     <td class="td-actions">
-                                        {{-- View details (everyone) --}}
-                                        <button class="btn btn-ghost btn-sm view-request-btn"
-                                                data-request-id="{{ $requestId }}"
-                                                data-items='@json($items)'
-                                                data-total-quantity="{{ $totalQuantity }}"
-                                                data-total-price="{{ $totalPrice }}"
-                                                data-is-receiver="{{ $iAmReceiver ? 'true' : 'false' }}"
-                                                data-is-admin="{{ $isAdmin ? 'true' : 'false' }}">
-                                            <i class="bi bi-eye"></i> Details 
-                                        </button>
+                                        <a href="{{ url('admin/viewRequestDetails/' . $requestId) }}" class="btn btn-ghost btn-sm">
+    <i class="bi bi-eye"></i> Details
+</a>
 
-                                        {{-- RECEIVER (Shop 2 / Supplier) — Approve All --}}
-                                        @if($iAmReceiver && $overallStatus !== 'Approved')
-                                            <form method="post" class="d-inline"
-                                                  action="{{ route('admin.request.approveAll') }}">
+                                        @if(Auth::user()->levelStatus === 'Admin' && $overallStatus == 'Submitted')
+                                            <form method="post" class="d-inline" action="{{ route('admin.request.redoRequest') }}">
                                                 @csrf
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                <button type="submit" class="btn btn-warning btn-sm">
+                                                    <i class="bi bi-arrow-clockwise"></i> Redo
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        @if(Auth::user()->levelStatus === 'Admin' && $overallStatus !== 'Approved')
+                                            <form method="post" class="d-inline" action="{{ route('admin.request.approveAll') }}">
+                                                @csrf
+                                                <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                <input type="hidden" name="supplierId" value="{{ $supplierAccount }}">
                                                 <button type="submit" class="btn btn-success btn-sm">
                                                     <i class="bi bi-check2-all"></i> Approve All
                                                 </button>
                                             </form>
                                         @endif
 
-                                        {{-- REQUESTER (Shop 1) — View Receiving when approved --}}
-                                        @if($iAmRequester && $overallStatus === 'Approved')
-                                            <a href="{{ url('user/view-receivings') }}"
-                                               class="btn btn-primary btn-sm">
+                                        @if(Auth::user()->levelStatus === 'Admin' && $overallStatus === 'Approved')
+                                            <a href="{{ url('user/view-receivings') }}" class="btn btn-primary btn-sm">
                                                 <i class="bi bi-box-arrow-in-right"></i> View Receiving
                                             </a>
                                         @endif
 
-                                        {{-- ADMIN — Delete Request --}}
                                         @if($isAdmin)
-                                            <form method="post" class="d-inline" action="{{ route('admin.request.delete') }}" onsubmit="return confirm('Are you sure you want to delete this entire request? This action cannot be undone.');">
+                                            <form method="post" class="d-inline" action="{{ route('admin.request.delete') }}" onsubmit="return confirm('Are you sure you want to delete this entire request?');">
                                                 @csrf
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
                                                 <button type="submit" class="btn btn-sm" style="background: var(--red-soft); color: var(--red); border: none;">
@@ -682,7 +714,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                        </td>
+                                    </td>
                                 </tr>
                             @endforeach
                         @endif
@@ -696,7 +728,7 @@
   </div>
 </div>
 
-{{-- ── REQUEST DETAILS MODAL ── --}}
+{{-- REQUEST DETAILS MODAL --}}
 <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -770,8 +802,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 $(document).ready(function () {
-
-    /* ── Search ── */
+    var csrfToken = "{{ csrf_token() }}";
+    
     $('#search-input').on('input', function () {
         var q = $(this).val().toLowerCase();
         $('.request-row').each(function () {
@@ -779,41 +811,38 @@ $(document).ready(function () {
         });
     });
 
-    /* ── Date / Shop filter: submit GET form ── */
-    $('#filter-form').on('submit', function (e) {
-        // allow normal GET submission so controller handles filtering server-side
-    });
-
-    /* ── View-details modal ── */
     $(document).on('click', '.view-request-btn', function () {
         var requestId    = $(this).data('request-id');
+        var supplierId   = $(this).data('supplier-id');
         var items        = $(this).data('items');
         var totalQty     = $(this).data('total-quantity');
         var totalPrice   = $(this).data('total-price');
         var isReceiver   = $(this).attr('data-is-receiver') === 'true';
         var isAdmin      = $(this).attr('data-is-admin') === 'true';
-        var sessionAcct  = "{{ getCurrentShopId() }}";
-        var csrfToken    = "{{ csrf_token() }}";
-        console.log('Modal opened - isReceiver:', isReceiver, 'isAdmin:', isAdmin, 'sessionAccount:', sessionAcct);
-
-        /* Header */
+        
+        console.log('=== MODAL DEBUG ===');
+        console.log('Request ID:', requestId);
+        console.log('Items received:', items);
+        if (items && items[0]) {
+            console.log('First item - Product ID:', items[0].productId);
+            console.log('First item - Product Name:', items[0].productName);
+            console.log('First item - Stock Qty:', items[0].stockQty);
+            console.log('First item - Quantity requested:', items[0].quantity);
+        }
+        
         $('#modal-request-id').text(requestId);
-        $('#modal-supplier-name').text(items[0].supplierId || '—');
-        $('#modal-request-date').text(items[0].created_at
-            ? new Date(items[0].created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})
-            : '—');
-        $('#modal-total-items').text(items.length);
+        $('#modal-supplier-name').text(supplierId || '—');
+        
+        if (items && items[0] && items[0].created_at) {
+            $('#modal-request-date').text(new Date(items[0].created_at).toLocaleDateString('en-GB'));
+        } else {
+            $('#modal-request-date').text('—');
+        }
+        
+        $('#modal-total-items').text(items ? items.length : 0);
         $('#modal-total-quantity').text(Number(totalQty).toLocaleString());
         $('#modal-total-price').text('Tsh ' + Number(totalPrice).toLocaleString());
 
-        /* Status */
-        var statuses = items.map(i => i.status);
-        var all = v => statuses.every(s => s === v);
-        var overall = all('Pending') ? 'Pending'
-                    : all('Approved') ? 'Approved'
-                    : all('Rejected') ? 'Rejected'
-                    : all('Submitted') ? 'Submitted'
-                    : 'Mixed';
         var pillMap = {
             Pending  : 'pill-pending',
             Approved : 'pill-approved',
@@ -821,90 +850,93 @@ $(document).ready(function () {
             Submitted: 'pill-submitted',
             Mixed    : 'pill-mixed'
         };
-        $('#modal-request-status')
-            .html(`<span class="pill ${pillMap[overall] || 'pill-mixed'}">${overall}</span>`);
+        
+        if (items && items.length > 0) {
+            var statuses = items.map(i => i.status);
+            var all = v => statuses.every(s => s === v);
+            var overall = all('Pending') ? 'Pending'
+                        : all('Approved') ? 'Approved'
+                        : all('Rejected') ? 'Rejected'
+                        : all('Submitted') ? 'Submitted'
+                        : 'Mixed';
+            $('#modal-request-status').html(`<span class="pill ${pillMap[overall] || 'pill-mixed'}">${overall}</span>`);
+        }
 
-        /* Rows */
         $('#modal-request-items').empty();
-        $.each(items, function (i, item) {
-            var pillCls = pillMap[item.status] || 'pill-mixed';
-            var itemTotal = item.quantity * item.price;
+        
+        if (items) {
+            $.each(items, function (i, item) {
+                var pillCls = pillMap[item.status] || 'pill-mixed';
+                var itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0);
 
-            /* Action buttons: show to RECEIVER (supplier) only */
-            var actionsHtml = '';
-            console.log('Processing item:', item.productName || item.productId, '| Status:', item.status, '| isReceiver:', isReceiver, '| Show buttons?', isReceiver && item.status !== 'Approved');
-            if (isReceiver && item.status !== 'Approved') {
-                actionsHtml = `
-                    <form method="post" class="d-inline">
-                        @csrf
-                        <input type="hidden" name="requestName" value="${requestId}">
-                        <input type="hidden" name="product_id" value="${item.productId}">
-                        <input type="hidden" name="supplierId" value="${sessionAcct}">
-                        <button class="btn btn-success btn-sm" name="product_id" title="Approve this item"
-                                formaction="/admin/approveRequest" value="${item.productId}">
-                            <i class="bi bi-check-circle"></i>
-                        </button>
-                        <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);"
-                                name="product_id" title="Reject this item" formaction="/admin/rejectRequest" value="${item.productId}">
-                            <i class="bi bi-x-circle"></i>
-                        </button>
-                        
-                        </button>
-                        <button class="btn btn-sm" style="background:var(--amber-soft);color:var(--amber);"
-                                name="product_id" title="Mark as Out of Stock" formaction="/admin/outOfStockRequest" value="${item.productId}">
-                            <i class="bi bi-slash-circle"></i>
-                        </button>
-                        <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);border:none;"
-                                data-item-id="${item.productId}" data-req-name="${requestId}"
-                                title="Delete this item" onclick="deleteItem(this)" formaction="/admin/dltItemReq">
-                            <i class="bi bi-trash"></i>
-                    </form>`;
-            }
+                var actionsHtml = '';
+                if (isAdmin && item.status !== 'Approved') {
+                    actionsHtml = `
+                        <form method="post" class="d-inline" style="display: inline-flex; gap: 5px;">
+                            @csrf
+                            <input type="hidden" name="requestName" value="${requestId}">
+                            <input type="hidden" name="product_id" value="${item.productId}">
+                            <input type="hidden" name="supplierId" value="${supplierId}">
+                            <button class="btn btn-success btn-sm" title="Approve this item" formaction="/admin/approveRequest">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button class="btn btn-sm" style="background:var(--red-soft);color:var(--red);" title="Reject this item" formaction="/admin/rejectRequest">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button class="btn btn-sm" style="background:var(--amber-soft);color:var(--amber);" title="Mark as Out of Stock" formaction="/admin/outOfStockRequest">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        </form>`;
+                }
 
-            /* ── Stock availability ── */
-            var stockQty    = item.stockQty    != null ? item.stockQty    : 0;
-            var inStock     = item.inStock     != null ? item.inStock     : false;
-            var stockDiff   = stockQty - item.quantity;
-            var stockBadge  = inStock
-                ? `<span class="stock-available">In Stock (${stockQty.toLocaleString()} avail, -${item.quantity.toLocaleString()} req)</span>`
-                : `<span class="stock-unavailable">Out of Stock (${stockQty.toLocaleString()} avail, ${stockDiff.toLocaleString()} short)</span>`;
+                // Handle stock display - convert "Available" to a large number
+                var stockQty = 0;
+                if (item.stockQty === "Available" || item.stockQty === "In Stock") {
+                    stockQty = 999999; // Treat as available
+                } else {
+                    stockQty = parseInt(item.stockQty) || 0;
+                }
+                
+                var requestedQty = parseFloat(item.quantity) || 0;
+                var isInStock = stockQty >= requestedQty;
+                var stockBadge = '';
+                
+                if (stockQty === 999999) {
+                    stockBadge = `<span class="stock-available">✓ Stock Available</span>`;
+                } else if (isInStock) {
+                    stockBadge = `<span class="stock-available">In Stock (${stockQty.toLocaleString()} avail)</span>`;
+                } else {
+                    stockBadge = `<span class="stock-unavailable">Out of Stock (Need ${(requestedQty - stockQty).toLocaleString()} more)</span>`;
+                }
 
-            $('#modal-request-items').append(`
-                <tr>
-                    <td style="color:var(--ink-light);font-size:.8rem;">${i + 1}</td>
-                    <td><strong>${item.productName || 'Unknown'}</strong></td>
-                    <td>${Number(item.quantity).toLocaleString()}</td>
-                    <td>${Number(item.price).toLocaleString()}</td>
-                    <td style="white-space:nowrap;">Tsh ${Number(itemTotal).toLocaleString()}</td>
-                    <td>${stockBadge}</td>
-                    <td>
-                        <span class="badge ${item.payment_type === 'cash' ? 'bg-success' : 'bg-info'}">
-                            ${item.payment_type ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1) : 'Cash'}
-                        </span>
-                    </td>
-                 
-                    <td><span class="pill ${pillCls}">${item.status}</span></td>
-                    <td>${actionsHtml}</td>
-                </tr>
-            `);
-        });
+                $('#modal-request-items').append(`
+                    <tr>
+                        <td style="color:var(--ink-light);font-size:.8rem;">${i + 1}</td>
+                        <td>
+                            <strong style="color: var(--blue);">${item.productName || 'Unknown Product'}</strong>
+                            <br>
+                            <small style="color:var(--ink-light);">ID: ${item.productId || 'N/A'}</small>
+                        </td>
+                        <td>${requestedQty.toLocaleString()}</td>
+                        <td>Tsh ${parseFloat(item.price || 0).toLocaleString()}</td>
+                        <td style="white-space:nowrap;">Tsh ${itemTotal.toLocaleString()}</td>
+                        <td>${stockBadge}</td>
+                        <td>
+                            <span class="badge ${item.payment_type === 'cash' ? 'bg-success' : 'bg-info'}">
+                                ${item.payment_type ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1) : 'Cash'}
+                            </span>
+                        </td>
+                        <td><span class="pill ${pillCls}">${item.status}</span></td>
+                        <td>${actionsHtml}</td>
+                    </tr>
+                `);
+            });
+        }
 
         new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
     });
-
-    /* ── Delete single item via AJAX ── */
-    function deleteItem(btn) {
-        var itemId  = $(btn).data('item-id');
-        var reqName = $(btn).data('req-name');
-        if (!confirm('Are you sure you want to delete this item?')) return;
-        $.post('/dltItemReq', { _token: csrfToken, itemId: itemId, reqName: reqName }, function (res) {
-            location.reload();
-        }).fail(function () {
-            alert('Failed to delete item. Please try again.');
-        });
-    }
-
 });
 </script>
+
 </body>
 </html>

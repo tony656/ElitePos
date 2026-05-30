@@ -565,10 +565,10 @@
                                     </td>
                                     <td>
                                         <div class="action-btns">
-                                            <a href="{{ url('admin/customerView') }}?name={{ urlencode($customer->name) }}" class="act-btn act-btn-view"><i class="bi bi-eye"></i> View</a>
+                                            <a href="{{ url('admin/customerView') }}?id={{ urlencode($customer->id) }}" class="act-btn act-btn-view"><i class="bi bi-eye"></i> View</a>
                                             <form action="dltCustomer" method="post" style="display:contents;">
                                                 @csrf
-                                                <button class="act-btn act-btn-delete" name="name" value="{{ $customer->name }}" 
+                                                <button class="act-btn act-btn-delete" name="name" value="{{ $customer->id }}" 
                                                     type="submit" onclick="return confirm('Remove this customer?')">
                                                     <i class="bi bi-trash"></i> Remove
                                                 </button>

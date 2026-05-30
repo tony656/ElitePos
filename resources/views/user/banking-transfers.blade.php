@@ -512,9 +512,24 @@
 
 <div class="container-fluid">
   <div class="row">
-    @include("admin.sidenav")
+    @include("user.sidenav")
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
+          @if(session('success'))
+      <div class="alert alert-success  d-flex justify-content-between">
+          {{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
+  
+  @if(session('error'))
+      <div class="alert alert-danger d-flex justify-content-between">
+          {{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
         <div class="main-wrap">
 
             <div class="pg-header">
@@ -706,7 +721,7 @@
                                         <td data-label="Actions">
                                             <div class="action-row">
                                                 @if(canUser("delete_banking_transfer"))
-                                                <form action="/admin/banking-transfer/delete/{{ $transfer->id }}" 
+                                                <form action="/user/banking-transfer/delete/{{ $transfer->id }}" 
                                                     method="POST" 
                                                     style="display: inline;"
                                                     onsubmit="return confirm('Delete this deposit? This action cannot be undone.');">
@@ -726,12 +741,116 @@
                     </div>
                 </div>
             </div>
-
-            </div>
         </div>
     </main>
   </div>
 </div>
+
+@if(canUser("add_banking_transfer"))
+<div class="modal fade" id="addBankingTransfer" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-navy">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Add Banking Deposit
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/user/banking-transfer/store" method="post">
+                    @csrf
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Transfer Date <span class="required">*</span>
+                            </label>
+                            <input type="date" class="form-control" name="transfer_date"
+                                value="{{ date('Y-m-d') }}" required>
+                        </div>
+
+                         <div class="form-group">
+                        <label class="form-label">
+                            Allocate to Shop <span class="required">*</span>
+                        </label>
+                        <select class="form-select" name="shop_id" required>
+                            <option value="">Select Shop</option>
+                            @foreach($shops as $shop)
+                            <option value="{{ $shop->id }}">
+                                {{ $shop->name }} ({{ $shop->location ?? 'N/A' }})
+                            </option>
+                            @endforeach
+                        </select>
+                        <div class="form-hint">The full transfer amount will be allocated to this shop</div>
+                    </div>
+                        
+                    </div>
+
+                    <div class="row-grid">
+                        
+ <div class="form-group">
+                            <label class="form-label">
+                                Supplier <span class="required">*</span>
+                            </label>
+                            <select class="form-select" name="supplier_id" id="supplier_id" required>
+                                <option value="">Select Supplier</option>
+                                @foreach($suppliers as $supplier)
+                                <option value="{{ $supplier->id }}">
+                                    {{ $supplier->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                      
+                         <div class="form-group">
+                            <label class="form-label">
+                                Beneficiary <span class="required">*</span>
+                            </label>
+                            <select class="form-select" name="beneficiary_id" id="beneficiary_id" required>
+                                <option value="">Select Beneficiary</option>
+                                @foreach($beneficiaries as $beneficiary)
+                                <option value="{{ $beneficiary->id }}">
+                                    {{ $beneficiary->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row-grid">
+                      
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                Beneficiary Account <span class="required">*</span>
+                            </label>
+                            <select class="form-select" name="beneficiary_account_id" id="beneficiary_account_id" required>
+                                <option value="">Select Beneficiary Account</option>
+                            </select>
+                            <div class="form-hint">Select which bank account to credit</div>
+                        </div>
+
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                Amount <span class="required">*</span>
+                            </label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" 
+                                name="amount" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                  
+
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-send"></i> Create Deposit
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>

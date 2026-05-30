@@ -102,6 +102,7 @@ class salsController extends Controller
         
             if (strtolower(trim($user->levelStatus)) === 'admin') {
                 $sales = DB::table('sales')->where('account', $accountId)
+                    ->where('offered_items', '!=', 1)
                     ->select(
                         'sales_id',
                         'account',
@@ -989,91 +990,94 @@ class salsController extends Controller
     }
 
     public function undoSales(Request $req) {
-        $user = Auth::user();
-        
-        if (!canUser('manage_sales') && !canUser('manage_full_report')) {
-            return redirect()->back()->with('error', 'You do not have permission to undo sales.');
-        }
-
-        $salesId = $req->input('salesName') ?? $req->input('sales_id');
-        
-        if (empty($salesId)) {
-            return redirect()->back()->with('error', 'Invalid sales identifier.');
-        }
-
-        // Determine accessible accounts for the user based on role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
-        
-        if (empty($accountIds)) {
-            return redirect()->back()->with('error', 'No shops assigned to your account.');
-        }
-
-        DB::beginTransaction();
-        
-        try {
-            $sales = salsModel::whereIn('account', $accountIds)
-                ->where('salesName', $salesId)
-                ->get();
-
-            if ($sales->isEmpty()) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'No sales found to undo or you do not have permission.');
-            }
-
-            foreach ($sales as $sale) {
-                $product = productsModel::whereIn('account', $accountIds)
-                    ->where('product_id', $sale->productId)
-                    ->first();
-                
-                if ($product) {
-                    $product->quantity = $product->quantity + $sale->pQuantity;
-                    $product->save();
-                }
-
-                $stockRecord = stock::where('productId', $sale->productId)
-                    ->whereIn('account', $accountIds)
-                    ->where('quantity', '>', 0)
-                    ->orderBy('id', 'desc')
-                    ->first();
-                
-                if ($stockRecord) {
-                    $stockRecord->quantity = $stockRecord->quantity + $sale->pQuantity;
-                    $stockRecord->save();
-                } else {
-                    $newStock = new stock();
-                    $newStock->productId = $sale->productId;
-                    $newStock->quantity = $sale->pQuantity;
-                    $newStock->account = $sale->account;
-                    $newStock->save();
-                }
-
-                $sale->delete();
-            }
-            
-            DB::commit();
-            
-            $log = new logModal();
-            $log->title = 'Sales Undone';
-            $log->description = 'Sale ' . $salesId . ' undone by ' . session('username');
-            $log->save();
-
-            return redirect()->back()->with('success', 'Sale undone successfully. Stock quantities have been restored.');
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Undo Sales Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'An error occurred while undoing the sale. Please try again.');
-        }
+        $account = $req->input('account');
+    $user = Auth::user();
+    
+    if (!canUser('manage_sales') && !canUser('manage_full_report')) {
+        return redirect()->back()->with('error', 'You do not have permission to undo sales.');
     }
+
+    $salesId = $req->input('salesName') ?? $req->input('sales_id');
+    
+    if (empty($salesId)) {
+        return redirect()->back()->with('error', 'Invalid sales identifier.');
+    }
+
+    if (empty($account)) {
+        return redirect()->back()->with('error', 'No shops assigned to your account.');
+    }
+
+    DB::beginTransaction();
+    
+    try {
+        // Fetch all item rows belonging to this single order/sale ID
+        $sales = salsModel::where('account', $account)
+            ->where('salesName', $salesId)
+            ->get();
+
+        if ($sales->isEmpty()) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'No sales found to undo or you do not have permission.');
+        }
+
+        // Keep inside foreach: Loop through each item in the order to restore stock
+        foreach ($sales as $sale) {
+            // 1. Restore Product Master Quantity
+            $product = productsModel::where('account', $account)
+                ->where('product_id', $sale->productId)
+                ->first();
+            
+            if ($product) {
+                $product->quantity += $sale->pQuantity;
+                $product->save();
+            }
+
+            // 2. Restore Batch/Stock Ledger Quantity
+            $stockRecord = stock::where('productId', $sale->productId)
+                ->where('account', $account)
+                ->orderBy('id', 'desc') // Removed physical '>' 0 check to find the actual last batch
+                ->first();
+            
+            if ($stockRecord) {
+                $stockRecord->quantity += $sale->pQuantity;
+                $stockRecord->save();
+            } else {
+                // Fallback: Create entry if history is completely missing
+                $newStock = new stock();
+                $newStock->productId = $sale->productId;
+                $newStock->quantity = $sale->pQuantity;
+                $newStock->account = $sale->account;
+                $newStock->save();
+            }
+        }
+        
+        // Fix: Delete via query builder to safely delete all rows matching the ID
+        salsModel::where('account', $account)
+            ->where('salesName', $salesId)
+            ->delete();
+
+        DB::commit();
+        
+        $log = new logModal();
+        $log->title = 'Sales Undone';
+        $log->description = 'Sale ' . $salesId . ' undone by ' . session('username');
+        $log->save();
+
+        return redirect()->back()->with('success', 'Sale undone successfully. Stock quantities have been restored.');
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Undo Sales Error: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while undoing the sale.');
+    }
+}
+
 
     public function viewSales(Request $req) {
         $user = Auth::user();
         $salesId = $req->input(key: 'sales_id');
-        
+        $account = $req->input('account');
+
         if (empty($salesId)) {
             return redirect()->back()->with('error', 'Invalid sales identifier.');
         }
