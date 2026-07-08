@@ -193,11 +193,11 @@ Supplier deposit reports
 
 KPI dashboards
 
-📊 Available Reports
+## 📊 Available Reports
 Report	Description
-Sales Report	Daily, monthly, and custom date ranges
-Stock Report	Current stock levels and low stock alerts
-Shops Report	Performance across different shops
+- Sales Report	Daily, monthly, and custom date ranges
+- Stock Report	Current stock levels and low stock alerts
+- Shops Report	Performance across different shops
 Receiving Report	Inventory receiving history
 Supplier Deposit Report	Banking deposits by supplier
 KPI Dashboard	Key performance indicators
