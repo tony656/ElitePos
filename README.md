@@ -127,7 +127,7 @@ Manager	Manage inventory, sales, reports, employees (limited), receiving/returns
 Seller	Create sales, view inventory, create invoices, basic customer management
 
 ## 📱 Modules
-📊 Dashboard
+# 📊 Dashboard
 Real-time statistics
 
 Sales overview
@@ -136,7 +136,7 @@ Quick access to key features
 
 Performance metrics
 
-📦 Inventory
+# 📦 Inventory
 Product management (CRUD)
 
 Stock tracking
@@ -147,7 +147,7 @@ Return processing
 
 Stock reports
 
-💰 Sales
+# 💰 Sales
 Create new orders
 
 Apply discounts and coupons
@@ -158,7 +158,7 @@ Process payments
 
 Sales history
 
-👥 Customers
+# 👥 Customers
 Customer profiles
 
 Credit management
@@ -169,7 +169,7 @@ Debt tracking
 
 KPI dashboard
 
-🏦 Banking
+# 🏦 Banking
 Supplier management
 
 Beneficiary management
@@ -180,7 +180,7 @@ Chip management
 
 Deposit reports
 
-📈 Reports
+# 📈 Reports
 Sales reports
 
 Stock reports
@@ -198,15 +198,16 @@ Report	Description
 - Sales Report	Daily, monthly, and custom date ranges
 - Stock Report	Current stock levels and low stock alerts
 - Shops Report	Performance across different shops
-Receiving Report	Inventory receiving history
-Supplier Deposit Report	Banking deposits by supplier
-KPI Dashboard	Key performance indicators
-Offered Products Report	Products with active offers
-Full Report	Comprehensive business report
-🎨 Color Scheme
-Color	Hex Code	Usage
-Navy Blue	#0B1E3D	Primary / Headers
-Amber/Gold	#F59E0B	Secondary / Accents
-Emerald	#059669	Success / Positive
-Rose	#E11D48	Danger / Errors
-Sky Blue	#0284C7	Info / Highlights
+- Receiving Report	Inventory receiving history
+- Supplier Deposit Report	Banking deposits by supplier
+- KPI Dashboard	Key performance indicators
+- Offered Products Report	Products with active offers
+- Full Report	Comprehensive business report
+
+## 🎨 Color Scheme
+- Color	Hex Code	Usage
+- Navy Blue	#0B1E3D	Primary / Headers
+- Amber/Gold	#F59E0B	Secondary / Accents
+- Emerald	#059669	Success / Positive
+- Rose	#E11D48	Danger / Errors
+- Sky Blue	#0284C7	Info / Highlights
