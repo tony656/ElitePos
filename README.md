@@ -1,4 +1,4 @@
-# 🏪 LERUMA POS System
+# 🏪 ELITE POS System
 
 A comprehensive Point of Sale (POS) system built with **Laravel** for retail and inventory management.
 
