@@ -2,6 +2,8 @@
 
 A comprehensive Point of Sale (POS) system built with **Laravel** for retail and inventory management.
 
+You can donate for the progress of this Pos, I am available on whatsapp through +255 627 781 324
+
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-10.x-red.svg)](https://laravel.com)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange.svg)](https://mysql.com)
