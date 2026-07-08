@@ -40,7 +40,7 @@ for ($i = 0; $i < $quantity; $i++) {
     if($coupon) {
          $create = new logModal();
             $create->title = 'Coupon Log';
-            $create->description = $quantity .'(Coupons) Created  Successfully By '.session('username');
+            $create->description = $quantity .'(Coupons) Created  Successfully By '.Auth::user()->name;
             $create->save();
     }
 $data = couponModel::where('account', getSessionAccountName())->get();
@@ -57,7 +57,7 @@ public function deltCoupon(Request $req) {
         $dlt->delete();
          $create = new logModal();
             $create->title = 'Coupon Log';
-            $create->description = $coupId .'(Coupons) Deleted  Successfully By '.session('username');
+            $create->description = $coupId .'(Coupons) Deleted  Successfully By '.Auth::user()->name;
             $create->save();
 
         return redirect()->back()->with('success', 'Coupon Deleted');

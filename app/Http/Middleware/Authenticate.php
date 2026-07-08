@@ -42,7 +42,7 @@ class Authenticate extends Middleware
            now()->greaterThan(\Carbon\Carbon::parse(session('emergency_expires_at')))) {
            // Emergency access expired or missing
            Auth::logout();
-           return redirect()->route('admin.emergency.login')
+           return redirect()->route('emergency.login')
                ->with('error', 'Your emergency session has expired. Please login again.');
        }
    }

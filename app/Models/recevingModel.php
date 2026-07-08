@@ -12,6 +12,7 @@ class recevingModel extends Model
     protected $table = 'receivings';
 
     protected $fillable = [
+        'receivingName',
         'receivingId',
         'productId',
         'quantity',

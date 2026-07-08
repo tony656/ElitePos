@@ -32,12 +32,8 @@ class expensesController extends Controller
         'expense'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.expenses', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.expenses', $data);
-    }
+        return view('expenses', $data);
+  
     }
   
     public function expenseInsert(Request $req) {
@@ -59,11 +55,11 @@ class expensesController extends Controller
 
         if($expenses->save()) {
               $create = new logModal();
-            $create->title = 'Expense Log';
-            $create->description = $exName .'(expense) Added  Successfully By '.session('username');
+            $create->title = trans('messages.expense');
+            $create->description = $exName .' ('.trans('messages.expense').') imeongezwa kwa mafanikio na '.Auth::user()->name;
             $create->save();
         }
-        return redirect()->back()->with('success', 'Expense is added successfully');
+        return redirect()->back()->with('success', trans('messages.expense_added_successfully'));
 
 
     }
@@ -74,15 +70,15 @@ class expensesController extends Controller
 
         if($delt) {
                    $create = new logModal();
-            $create->title = 'Expense Log';
-            $create->description = $delt->expenseName .'(expense) Deleted  Successfully By '.session('username');
+            $create->title = trans('messages.expense');
+            $create->description = $delt->expenseName .' ('.trans('messages.expense').') imefutwa kwa mafanikio na '.Auth::user()->name;
             $create->save();
 
             $delt->delete();
 
-            return redirect()->back()->with('success', 'Expense deleted successfuly');
+            return redirect()->back()->with('success', trans('messages.expense_deleted_successfully'));
         } else {
-            return redirect()->back()->with('success', 'Expense failed to delete');
+            return redirect()->back()->with('success', trans('messages.expense_delete_failed'));
         }
         
     }

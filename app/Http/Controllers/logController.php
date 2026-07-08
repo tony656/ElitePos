@@ -23,11 +23,7 @@ class logController extends Controller
 
         $data = compact('fetch');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.logs', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.logs', $data);
-        }
+            return view('logs', $data);
+     
     }
 }

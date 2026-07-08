@@ -9,8 +9,7 @@ class ActiveSession extends Model
     protected $fillable = [
         'user_id', 'session_id', 'ip_address', 'user_agent',
         'device_name', 'browser', 'os', 'device_type',
-        'is_authorized', 'is_blocked', 'status', 'last_activity',
-        'face_verified', 'last_face_check', 'failed_face_attempts', 'face_verification_expires_at'
+        'is_authorized', 'is_blocked', 'status', 'last_activity'
     ];
 
     protected $casts = [

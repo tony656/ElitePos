@@ -12,16 +12,19 @@ use App\Models\salsModel;
 use  App\Models\usersModel;
 use App\Models\accountModel;
 use App\Models\UserAccount;
+use App\Models\madeni;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use function getCurrentShopId;
-
+use function getUserAccounts;
 class itemRequestController extends Controller
 {
     public function index() {
-        $user = Auth::user();
-        $isAdmin = strtolower(trim($user->levelStatus)) === 'admin';
+        if (!canUser('item_request')) {
+        abort(403, 'Unauthorized access');
+    }
+        $isAdmin = in_array(strtolower(trim(Auth::user()->levelStatus)), ['admin', 'admin2']);
 
         $products = productsModel::where('account', getCurrentShopId())->get();
 
@@ -38,54 +41,28 @@ class itemRequestController extends Controller
 
         $supplierName = accountModel::where('id', $orders->supplierId ?? '')->value('name');
         $Allocation = usersModel::where('id', $orders->assigned_to ?? '')->value('name');
-
-        // ── Shops for the shop selector ───────────────────────────────────────
-        // Admin: all shops; User: only shops assigned to them
-        if ($isAdmin) {
-            $shops = DB::table('accounts')->orderBy('name', 'asc')->get();
-        } else {
-            $myShopIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($myShopIds)) {
-                $shops = DB::table('accounts')->where('id', '=', 0)->get();
-            } else {
-                $shops = DB::table('accounts')->whereIn('id', $myShopIds)->orderBy('name', 'asc')->get();
-            }
-        }
+        $shops = getUserAccounts();
+        $shopIds = array_column($shops, 'id');
 
         // ── Suppliers (Customers / Accounts) ──────────────────────────────────
         // Admin: see all accounts except the current session account
         // User:  see only the accounts they are assigned to via user_accounts
         if ($isAdmin) {
             $Customers = DB::table('accounts')
-                ->where('id', '!=', getCurrentShopId())
+                ->whereIn('id', $shopIds)
                 ->get();
         } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $Customers = DB::table('accounts')->where('id', '=', 0)->get(); // empty
-            } else {
-                $Customers = DB::table('accounts')->whereIn('id', $assignedAccountIds)->get();
+                $Customers = DB::table('accounts')->whereIn('id', $shopIds)->get();
             }
-        }
 
-        // ── Users for "Assign to" dropdown ────────────────────────────────────
-        // Admin: see all non-Admin users
-        // User:  see only users who share at least one assigned account with the
-        //        currently logged-in user (i.e. users they have access to)
         if ($isAdmin) {
             $users = DB::table('users')
                 ->where('levelStatus', '!=', 'Admin')
                 ->orderBy('name', 'asc')
                 ->get();
         } else {
-            // Get ALL account IDs the current user is assigned to
-            $myAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($myAccountIds)) {
-                $users = DB::table('users')->where('id', '=', 0)->get();
-            } else {
-                // Find all user IDs assigned to any of the current user's accounts (including self)
                 $accessibleUserIds = DB::table('user_accounts')
-                    ->whereIn('account', $myAccountIds)
+                    ->whereIn('account', $shopIds)
                     ->pluck('user_id')
                     ->unique()
                     ->toArray();
@@ -100,81 +77,242 @@ class itemRequestController extends Controller
                         ->get();
                 }
             }
-        }
+
 
         $data = compact('products', 'orders', 'Customers','supplierName','Allocation','carts', 'users', 'shops');
 
-        if ($isAdmin) {
-            return view('admin.item_request', $data);
-        }
-        if (!empty($user->levelStatus)) {
-            return view('user.item_request', $data);
-        }
+            return view('item_request', $data);
+   
     }
 
     /**
      * Main Store Report
      * Tracks all items requested from Main Store (account 7) by other shops.
-     */
-    public function mainStoreReport(Request $req)
-    {
-        $user = Auth::user();
-        if (strtolower(trim($user->levelStatus)) !== 'admin' && !canUser('view_full_report')) {
-            return redirect()->back()->with('error', 'Unauthorized access');
-        }
-
-        $dateFrom = $req->input('date_from', date('Y-m-d'));
-        $dateTo = $req->input('date_to', date('Y-m-d'));
-        $mainStoreId = 7;
-
-        // Fetch requests where Main Store is the supplier
-        $query = itemRequestModel::where('supplierId', $mainStoreId);
-
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
-        }
-
-        $allRequests = $query->orderBy('created_at', 'desc')->get();
-
-        // Get requester names
-        $requesterIds = $allRequests->pluck('account')->unique();
-        $requestersMap = DB::table('accounts')->whereIn('id', $requesterIds)->pluck('name', 'id');
-
-        // Group by Date and Requester Shop
-        $reportRows = $allRequests->groupBy(function ($item) {
-            return Carbon::parse($item->created_at)->toDateString() . '_' . $item->account;
-        })->map(function ($group) use ($requestersMap) {
-            $first = $group->first();
-            $shopId = $first->account;
-            $date = Carbon::parse($first->created_at)->toDateString();
-            
-            return (object)[
-                'date' => $date,
-                'shop_id' => $shopId,
-                'shop_name' => $requestersMap[$shopId] ?? 'Unknown Shop',
-                'total_qty' => $group->sum('quantity'),
-                'total_value' => $group->sum('totalPrice'),
-                'approved_value' => $group->where('status', 'Approved')->sum('totalPrice'),
-                'credit_value' => $group->where('payment_type', 'credit')->sum('totalPrice'),
-                'cash_value' => $group->where('payment_type', 'cash')->sum('totalPrice'),
-                'pending_value' => $group->where('status', 'Submitted')->sum('totalPrice'),
-                'items' => $group
-            ];
-        })->sortByDesc('date');
-    
-    /**
-     * Mark inter-shop credit requests as paid.
-     */
-   
-
-        $grandTotals = (object)[
-            'value' => $allRequests->sum('totalPrice'),
-            'approved' => $allRequests->where('status', 'Approved')->sum('totalPrice'),
-            'credit' => $allRequests->where('payment_type', 'credit')->sum('totalPrice'),
-        ];
-
-        return view('admin.mainStoreReport', compact('reportRows', 'grandTotals', 'dateFrom', 'dateTo'));
+     */public function mainStoreReport(Request $req)
+{
+    $user = Auth::user();
+    if (strtolower(trim($user->levelStatus)) !== 'admin' && !canUser('view_full_report')) {
+        return redirect()->back()->with('error', 'Unauthorized access');
     }
+
+    $dateFrom = $req->input('date_from', date('Y-m-d'));
+    $dateTo = $req->input('date_to', date('Y-m-d'));
+    $mainStoreId = 7;
+
+    // Fetch requests where Main Store is the supplier
+    $query = itemRequestModel::where('supplierId', $mainStoreId);
+
+    if ($dateFrom && $dateTo) {
+        $query->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+    }
+
+    $allRequests = $query->orderBy('created_at', 'desc')->get();
+
+    // Get requester names
+    $requesterIds = $allRequests->pluck('account')->unique();
+    $requestersMap = DB::table('accounts')->whereIn('id', $requesterIds)->pluck('name', 'id');
+
+    // Get sales data for each shop
+    $shopSales = [];
+    foreach ($requesterIds as $shopId) {
+        $baseQuery = DB::table('sales')
+            ->where('account', $shopId);
+        
+        if ($dateFrom && $dateTo) {
+            $baseQuery->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+        }
+        
+        $shopSales[$shopId] = (object)[
+            'total_sales' => (clone $baseQuery)->sum('totalPrice'), 
+            'total_items_sold' => (clone $baseQuery)->sum('pQuantity'),
+            'cash_sales' => (clone $baseQuery)->where('status', 'Paid')->sum('totalPrice'),
+            'credit_sales' => (clone $baseQuery)->where('status', 'Debt')->sum('totalPrice'),
+            'discount' => (clone $baseQuery)->sum('discount'),
+        ];
+    }
+
+    // ===== FIXED CODE: Handle both receivingId and requestName in madeni =====
+    // Get all unique requestNames from the requests
+    $requestNames = $allRequests->pluck('requestName')->filter()->unique()->values();
+    
+    // Fetch receivings where receivingName matches requestName
+    $receivingsMap = DB::table('receivings')
+        ->whereIn('receivingName', $requestNames)
+        ->get()
+        ->keyBy('receivingName'); // Key by receivingName for easy lookup
+    
+    // Get receiving IDs from the receivings table
+    $receivingIds = $receivingsMap->pluck('receivingId')->filter()->unique()->values();
+    
+    // ===== IMPORTANT: Fetch madeni records where receivingsId matches EITHER:
+    // 1. receivingId from receivings table, OR
+    // 2. requestName directly from itemRequestModel =====
+    $madeniRecords = DB::table('madeni')
+        ->where(function($query) use ($receivingIds, $requestNames) {
+            // Match by receivingId from receivings table
+            if ($receivingIds->isNotEmpty()) {
+                $query->whereIn('receivingsId', $receivingIds);
+            }
+            // OR match by requestName directly
+            if ($requestNames->isNotEmpty()) {
+                $query->orWhereIn('receivingsId', $requestNames);
+            }
+        })
+        ->get();
+    
+    // Group madeni records by receivingsId for easy lookup
+    $madeniGrouped = $madeniRecords->groupBy('receivingsId');
+    
+    // Calculate paid amounts per receivingsId
+    $madeniPaidMap = $madeniRecords
+        ->groupBy('receivingsId')
+        ->map(function($group) {
+            return $group->sum('amount');
+        });
+    // ===== END FIXED CODE =====
+
+    // Get return receivings from shops back to Main Store
+    $returnReceivings = DB::table('receivings')
+        ->where('is_return', 1)
+        ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+        ->get()
+        ->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->toDateString() . '_' . $item->account;
+        })
+        ->map(function ($group) {
+            return $group->sum(function ($item) {
+                return $item->sellingPrice * $item->quantity;
+            });
+        });
+
+    // Get approved receivings per shop (what shops actually received from Main Store)
+    $approvedReceivingMap = DB::table('receivings')
+        ->where('status', 'Approved')
+        ->where('is_return', '!=', 1)
+        ->where('supplier', 7)
+        ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+        ->get()
+        ->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->toDateString() . '_' . $item->account;
+        })
+        ->map(function ($group) {
+            return (object)[
+                'qty' => $group->sum('quantity'),
+                'value' => $group->sum(function ($item) {
+                    return $item->price * $item->quantity;
+                }),
+            ];
+        });
+
+    // Group by Date and Requester Shop
+    $reportRows = $allRequests->groupBy(function ($item) {
+        return Carbon::parse($item->created_at)->toDateString() . '_' . $item->account;
+    })->map(function ($group) use ($requestersMap, $shopSales, $dateFrom, $dateTo, $receivingsMap, $madeniGrouped, $madeniPaidMap, $returnReceivings, $approvedReceivingMap) {
+        $first = $group->first();
+        $shopId = $first->account;
+        $requestName = $first->requestName;
+        $date = Carbon::parse($first->created_at)->toDateString();
+        $is_return = $group->firstWhere('is_return', 1) ? 1 : 0;
+        
+        // ===== UPDATED: Get paid amount from madeni =====
+        $Paid = 0;
+        $receivingId = null;
+        $receiving = null;
+        
+        // First, try to find if there's a receiving record for this requestName
+        $receiving = $receivingsMap->get($requestName);
+        
+        if ($receiving) {
+            // If receiving exists, use its receivingId
+            $receivingId = $receiving->receivingId;
+            
+            // Check if there are madeni records with this receivingId
+            if ($madeniPaidMap->has($receivingId)) {
+                $Paid = $madeniPaidMap->get($receivingId, 0);
+            }
+        }
+        
+        // If no receiving found OR no madeni found with receivingId,
+        // check if requestName is directly used as receivingsId in madeni
+        if ($Paid == 0 && $madeniPaidMap->has($requestName)) {
+            $Paid = $madeniPaidMap->get($requestName, 0);
+            $receivingId = null; // No receiving ID, using requestName directly
+        }
+        
+        // If you need the actual madeni records for debugging
+        $madeniRecords = collect();
+        if ($receivingId && $madeniGrouped->has($receivingId)) {
+            $madeniRecords = $madeniGrouped->get($receivingId, collect());
+        } elseif ($madeniGrouped->has($requestName)) {
+            $madeniRecords = $madeniGrouped->get($requestName, collect());
+        }
+        // ===== END UPDATED =====
+        
+        $date = Carbon::parse($first->created_at)->toDateString();
+        
+        // Get sales data for this shop
+        $salesData = $shopSales[$shopId] ?? (object)[
+            'total_sales' => 0,
+            'total_items_sold' => 0,
+            'cash_sales' => 0,
+            'credit_sales' => 0,
+            'discount' => 0
+        ];
+        
+        // Daily sales for this specific shop and date
+        $dailySales = DB::table('sales')
+            ->where('account', $shopId)
+            ->whereDate('created_at', $date)
+            ->sum('totalPrice');
+        
+        $approvedRequestQty = $group->where('status', 'Approved')->sum('quantity');
+        $approvedRequestValue = $group->where('status', 'Approved')->sum('totalPrice');
+        $approvedReceiving = $approvedReceivingMap[$date . '_' . $shopId] ?? null;
+        
+        return (object)[
+            'date' => $date,
+            'shop_id' => $shopId,
+            'paidcash_value' => $Paid,
+            'receiving_id' => $receivingId, // Will be null if using requestName directly
+            'receiving_name' => $requestName, // Store requestName for reference
+            'is_direct_request' => ($receivingId === null && $Paid > 0), // Flag to show if using direct requestName
+            'receiving' => $receiving,
+            'madeni_records' => $madeniRecords, // Optional: include madeni records
+            'shop_name' => $requestersMap[$shopId] ?? 'Unknown Shop',
+            'is_return' => $is_return,
+            'total_qty' => $group->sum('quantity'),
+            'total_value' => $group->sum('totalPrice'),
+            'approved_request_qty' => $approvedRequestQty,
+            'approved_request_value' => $approvedRequestValue,
+            'approved_receiving_qty' => $approvedReceiving->qty ?? 0,
+            'approved_receiving_value' => $approvedReceiving->value ?? 0,
+            'approved_qty_diff' => max(0, $approvedRequestQty - ($approvedReceiving->qty ?? 0)),
+            'approved_value_diff' => max(0, $approvedRequestValue - ($approvedReceiving->value ?? 0)),
+            'returned_value' => $returnReceivings[$date . '_' . $shopId] ?? 0,
+            'credit_value' => $group->where('payment_type', 'credit')->sum('totalPrice'),
+            'cash_value' => $group->where('payment_type', 'cash')->sum('totalPrice'),
+            'pending_value' => $group->where('status', 'Submitted')->sum('totalPrice'),
+            'items' => $group,
+            // Sales data
+            'shop_total_sales' => $salesData->total_sales,
+            'shop_total_items_sold' => $salesData->total_items_sold,
+            'shop_cash_sales' => $salesData->cash_sales,
+            'shop_credit_sales' => $salesData->credit_sales,
+            'shop_discount' => $salesData->discount,
+            'daily_sales' => $dailySales,
+        ];
+    })->sortByDesc('date');
+
+    $grandTotals = (object)[
+        'value' => $allRequests->sum('totalPrice'),
+        'approved' => $allRequests->where('status', 'Approved')->sum('totalPrice'),
+        'credit' => $allRequests->where('payment_type', 'credit')->sum('totalPrice'),
+        'total_sales' => collect($shopSales)->sum('total_sales'),
+        'total_items_sold' => collect($shopSales)->sum('total_items_sold'),
+    ];
+
+    return view('mainStoreReport', compact('reportRows', 'grandTotals', 'dateFrom', 'dateTo'));
+}
  public function payInterShopRequest(Request $request) {
         $shopId = $request->input('shop_id');
         $date = $request->input('date');
@@ -204,75 +342,86 @@ class itemRequestController extends Controller
     }
 
   public function viewRequest(Request $request) {
-    $user    = Auth::user();
+    if (!canUser('view_item_requests')) {
+        abort(403, 'Unauthorized access');
+    }
+    $user = Auth::user();
 
     // ── Filter inputs ─────────────────────────────────────────────────────
-    $dateFrom  = $request->query('date_from', date('Y-m-d'));
-    $dateTo    = $request->query('date_to', date('Y-m-d'));
-    $shopFilter = $request->query('shop'); 
+    // Get the actual values from request
+    $dateFrom   = $request->query('date_from', date('Y-m-d'));  // This gets the actual date string
+    $dateTo     = $request->query('date_to', date('Y-m-d'));    // This gets the actual date string
+    $shopFilter = $request->query('shop');       // This gets the actual shop ID
     
-    session([
+    
+    if(!empty($shopFilter)) {
+        session([
         'selected_shop_id' => $shopFilter,
     ]);
-    $account = getCurrentShopId();
+    }
+     /*$itemsr = itemRequestModel::where('created_at', null)->orderBy('id', 'desc')->get();
+
+     foreach($itemsr as $items) {
+
+     $items->created_at = $items->updated_at;
+     $items->save();
+
+     } */
+    $account = getCurrentShopId(); // This should be your current logged-in shop
 
     // Base query: requests where this shop is either the requester OR the supplier
-    $query = itemRequestModel::where(function ($q) use ($account) {
-            $q->where('account', $account);
-        })
-        ->orWhere(function ($q) use ($account) {
-            $q->where('supplierId', $account);
-        });
+    $query = itemRequestModel::query();
 
-    // ── Date range filter (server-side) ───────────────────────────────────
-    if ($dateFrom) {
-        $query->whereDate('created_at', '>=', $dateFrom);
-    }
-    if ($dateTo) {
-        $query->whereDate('created_at', '<=', $dateTo);
-    }
-
-    // ── Shop filter ───────────────────────────────────────────────────────
-    if ($shopFilter) {
+    // ── Shop filter (if selected in dropdown) ─────────────────────────────
+    if (!empty($shopFilter)) {
         $query->where(function ($q) use ($shopFilter) {
             $q->where('account', $shopFilter)
               ->orWhere('supplierId', $shopFilter);
         });
     }
 
+    // ── Date range filter (FIXED) ────────────────────────────────────────
+    if (!empty($dateFrom) && !empty($dateTo)) {
+        // For a single day or date range
+        $query->whereDate('created_at', '>=', $dateFrom)
+              ->whereDate('created_at', '<=', $dateTo);
+    } elseif (!empty($dateFrom)) {
+        $query->whereDate('created_at', '>=', $dateFrom);
+    } elseif (!empty($dateTo)) {
+        $query->whereDate('created_at', '<=', $dateTo);
+    }
+    // If both are empty, no date filter is applied
+
+    // Execute the query
     $requests = $query->orderBy('created_at', 'desc')->get();
+
+    // Debug - check what dates were returned
+    \Log::info('Query returned:', ['count' => $requests->count()]);
+    if ($requests->count() > 0) {
+        \Log::info('Date range in results:', [
+            'min_date' => $requests->min('created_at'),
+            'max_date' => $requests->max('created_at')
+        ]);
+    }
 
     // Attach user names for assigned_to
     $assignedToIds = $requests->pluck('assigned_to')->filter()->unique();
-    $users         = \App\Models\User::whereIn('id', $assignedToIds)->get()->keyBy('id');
+    $users = \App\Models\User::whereIn('id', $assignedToIds)->get()->keyBy('id');
 
     foreach ($requests as $request) {
-        // FIXED: Look up the product by ID properly
         $product = null;
         
         if (!empty($request->productId)) {
-            // Try multiple column names that might contain the product ID
-            $product = productsModel::where('product_id', $request->productId)
-                        ->first();
-            
-            // Debug: Log what we found
-            \Log::info('Product lookup:', [
-                'searching_for' => $request->productId,
-                'found' => $product ? 'yes' : 'no',
-                'product_data' => $product ? $product->toArray() : null
-            ]);
+            $product = productsModel::where('product_id', $request->productId)->first();
         }
         
-        // Get product name - check all possible name fields
         $productName = 'Unknown Product';
         if ($product) {
             $productName = $product->name ?? $product->name01 ?? $product->product_name ?? $product->title ?? 'Unknown Product';
         }
         
-        // Get stock quantity - check all possible stock fields
         $stockQty = 0;
         if ($product) {
-            // Try numeric stock fields first
             if (isset($product->quantity) && is_numeric($product->quantity)) {
                 $stockQty = (int)$product->quantity;
             } elseif (isset($product->stock) && is_numeric($product->stock)) {
@@ -280,14 +429,13 @@ class itemRequestController extends Controller
             } elseif (isset($product->stock_quantity) && is_numeric($product->stock_quantity)) {
                 $stockQty = (int)$product->stock_quantity;
             } else {
-                // If stock is a string like "Available", set to a large number or 0
                 $stockQty = ($product->stock === 'Available' || $product->quantity === 'Available') ? 999999 : 0;
             }
         }
         
         $request->productName = $productName;
-        $request->stockQty    = $stockQty;
-        $request->inStock     = $stockQty >= $request->quantity;
+        $request->stockQty = $stockQty;
+        $request->inStock = $stockQty >= $request->quantity;
         $request->assignedToName = $users[$request->assigned_to]->name ?? null;
     }
 
@@ -297,15 +445,12 @@ class itemRequestController extends Controller
         $groupedRequests[$request->requestName][] = $request;
     }
 
-    // ── Shops list for filter dropdown ───────────────────────────────────
-    $shops = DB::table('accounts')->orderBy('name', 'asc')->get();
-
-    // ── Statistics ──────────────────────────────────────────────────────
+    // Statistics based on GROUPED requests (unique request names)
     $totalRequest = count($groupedRequests);
-
-    $pendingRequestIds   = [];
+    
+    $pendingRequestIds = [];
     $submittedRequestIds = [];
-
+    
     foreach ($requests as $req) {
         if ($req->status === 'Pending') {
             $pendingRequestIds[$req->requestName] = true;
@@ -314,14 +459,17 @@ class itemRequestController extends Controller
             $submittedRequestIds[$req->requestName] = true;
         }
     }
-
+    
     $totalPednding = count($pendingRequestIds);
-    $totalSub      = count($submittedRequestIds);
+    $totalSub = count($submittedRequestIds);
 
     // Convert inner arrays to collections
     foreach ($groupedRequests as $key => $itemArray) {
         $groupedRequests[$key] = collect($itemArray);
     }
+
+    // ── Shops list for filter dropdown ───────────────────────────────────
+    $shops = getUserAccounts();
 
     $data = compact(
         'groupedRequests',
@@ -336,12 +484,8 @@ class itemRequestController extends Controller
         'shopFilter'
     );
 
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.viewRequest', $data);
-    }
-    if (!empty($user->levelStatus)) {
-        return view('user.viewRequest', $data);
-    }
+        return view('viewRequest', $data);
+ 
 }
 
 public function viewRequestDetails($requestId)
@@ -431,7 +575,7 @@ public function viewRequestDetails($requestId)
     $iAmRequester = (getCurrentShopId() === (int)$requesterAccount);
     $iAmReceiver = (getCurrentShopId() === (int)$supplierAccount);
     
-    return view('admin.viewRequestDetails', compact(
+    return view('viewRequestDetails', compact(
         'requestId',
         'items',
         'formattedItems',
@@ -450,15 +594,13 @@ public function viewRequestDetails($requestId)
         public function redoRequest(Request $request) {
         $requestName = $request->input('requestName');
 
-        $items = itemRequestModel::where('requestName', $requestName)
-            ->where('status', 'Submitted')
-            ->update(
-                ['status' => 'Pending']
-            );
+        $items = itemRequestModel::where('requestName', $requestName);
+$items->update(['status' => 'Pending']);
+
         if ($items) {
             $log              = new logModal();
             $log->title       = 'Item Request Logs';
-            $log->description = 'Request ' . $requestName . ' set back to Pending by ' . session('username');
+            $log->description = 'Request ' . $requestName . ' set back to Pending by ' . Auth::user()->name;
             $log->save();
             return redirect()->back()->with('success', 'Request set back to Pending');
         }
@@ -469,6 +611,7 @@ public function viewRequestDetails($requestId)
     public function approveAll(Request $request) {
         $requestName = $request->input('requestName');
         $supplierId  = $request->input('supplierId');
+        $status  = $request->input('status');
 
         $items = itemRequestModel::where('requestName', $requestName)
             ->where('supplierId', $supplierId)
@@ -476,10 +619,25 @@ public function viewRequestDetails($requestId)
             ->get();
 
         $approvedCount = 0;
+        $rejectedCount = 0;
         $skippedCount = 0;
         $skippedItems = [];
 
         foreach ($items as $item) {
+
+        if($status === 'reject') {
+            $item->status = 'Rejected';
+            $item->save();
+
+            $rejectedCount++;
+            }
+    if($status === 'approve') {
+        
+    if ($item->status === 'Approved') {
+            $duplicateCount++;
+            continue;
+        }
+        
             // ✅ Check stock availability FIRST
             $get = productsModel::where('product_id', $item->productId)
                 ->where('account', $supplierId)
@@ -490,20 +648,22 @@ public function viewRequestDetails($requestId)
                 $skippedItems[] = $get->name01 ?? 'Unknown Product';
                 continue; // skip out of stock items
             }
-
+            
+            
             $item->status = 'Approved';
             $item->save();
 
             $get->quantity -= $item->quantity;
             $get->save();
 
+            
             $productPrice = $get->sPrice ?? 0;
             $wholesalePrice = $get->wPrice ?? 0;
 
             $log              = new logModal();
             $log->title       = 'Stock Log';
             $log->description = $get->name01 . ' Stock Deducted ' . $item->quantity
-                . ' by ' . session('username') . ' — inter-shop transfer';
+                . ' by ' . Auth::user()->name . ' — inter-shop transfer';
             $log->save();
 
             // Sales record
@@ -517,6 +677,7 @@ public function viewRequestDetails($requestId)
             $sale->pQuantity    = $item->quantity;
             $sale->productPrice = $productPrice;
             $sale->totalPrice   = $item->price;
+            $sale->created_at = $item->created_at;
             $sale->served_by    = Auth::user()->name;
             $sale->account      = getCurrentShopId();
             $sale->save();
@@ -537,6 +698,7 @@ public function viewRequestDetails($requestId)
 
 
             $receiving           = new recevingModel();
+            $receiving->receivingName = $item->requestName;
             $receiving->receivingId = $receivingId;
             $receiving->productId = $item->productId;
             $receiving->quantity  = $item->quantity;
@@ -549,23 +711,29 @@ public function viewRequestDetails($requestId)
             $receiving->account   = $item->account;
             $receiving->served_by = $item->assigned_to ?? Auth::user()->name;
             $receiving->supplier  = $item->supplierId;
+            $receiving->created_at = $item->created_at;
             $receiving->status    = 'Not Approved';
             $receiving->save();
             
             $approvedCount++;
+            }
+            
+
         }
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
         if ($skippedCount > 0) {
-            $log->description = 'Approved ' . $approvedCount . ' items, skipped ' . $skippedCount . ' out-of-stock items: ' . implode(', ', $skippedItems) . ' in request ' . $requestName . ' approved by ' . session('username');
+            $log->description = 'Approved ' . $approvedCount . ' items, skipped ' . $skippedCount . ' out-of-stock items: ' . implode(', ', $skippedItems) . ' in request ' . $requestName . ' approved by ' . Auth::user()->name;
+        } else if ($rejectedCount > 0) {
+            $log->description = 'All items in request ' . $requestName . ' Rejected by ' . Auth::user()->name;
         } else {
-            $log->description = 'All items in request ' . $requestName . ' approved by ' . session('username');
+            $log->description = 'All items in request ' . $requestName . ' approved by ' . Auth::user()->name;
         }
         $log->save();
 
         if ($skippedCount > 0) {
-            return redirect()->back()->with('warning', 'Approved ' . $approvedCount . ' items. Skipped ' . $skippedCount . ' out-of-stock items: ' . implode(', ', $skippedItems));
+            return redirect()->back()->with('error', 'Approved ' . $approvedCount . ' items. Skipped ' . $skippedCount . ' out-of-stock items: ' . implode(', ', $skippedItems));
         } else {
             return redirect()->back()->with('success', 'All items approved successfully');
         }
@@ -597,18 +765,33 @@ public function viewRequestDetails($requestId)
             $requestName = $activeRequest->requestName;
             $createdAt   = !empty($requestDate)
                 ? $requestDate . ' ' . date('H:i:s')
-                : $activeRequest->created_at;
+                : date('Y-m-d H:i:s');
 
             if (!empty($requestDate)) {
                 $activeRequest->created_at = $createdAt;
                 $activeRequest->save();
+            }
+            $activeRequestProd = itemRequestModel::where('productId', $pId)
+        ->where('account', getCurrentShopId())
+            ->where('status', 'Pending')
+            ->orderBy('id', 'desc')
+            ->first();
+
+            if($activeRequestProd) {
+                $activeRequestProd->update(([
+                    'quantity' => ($activeRequestProd->quantity + $quantity)
+                ]));
+
+                return redirect()->back()->with('success', 'Item Request Updated');
             }
         } else {
             $requestName = date('Ymd') . '-' . str_pad(
                 itemRequestModel::whereDate('created_at', date('Y-m-d'))->count() + 1,
                 4, '0', STR_PAD_LEFT
             );
-            $createdAt = $requestDate ? $requestDate . ' ' . date('H:i:s') : now();
+            $createdAt   = !empty($requestDate)
+                ? $requestDate . ' ' . date('H:i:s')
+                : date('Y-m-d H:i:s');
         }
 
         $username = Auth::user()->name;
@@ -627,8 +810,8 @@ public function viewRequestDetails($requestId)
             'payment_type'  => $paymentType,
             'assigned_to'   => $assignedTo,
             'assigned_by'   => $username,
+            'supplierId'    => 7,
             'account'       => getCurrentShopId(),
-            'shop_id'       => getCurrentShopId(),
             'served_by'     => $username,
             'status'        => 'Pending',
             'created_at'    => $createdAt,
@@ -638,7 +821,7 @@ public function viewRequestDetails($requestId)
         if ($insert) {
             $log              = new logModal();
             $log->title       = 'Item Request Logs';
-            $log->description = $insert->requestName . ' Item Request Created By ' . session('username') . ' (' . $paymentType . ') - Assigned to: ' . ($assignedTo ?? 'Unassigned');
+            $log->description = $insert->requestName . ' Item Request Created By ' . Auth::user()->name . ' (' . $paymentType . ') - Assigned to: ' . ($assignedTo ?? 'Unassigned');
             $log->save();
             return redirect()->back()->with('success', 'Item Request Created');
         }
@@ -667,7 +850,7 @@ public function viewRequestDetails($requestId)
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
-        $log->description = 'Quantity updated for item ' . $prodId . ' in request ' . $requestName . ' by ' . session('username');
+        $log->description = 'Quantity updated for item ' . $prodId . ' in request ' . $requestName . ' by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Quantity updated successfully');
@@ -691,7 +874,7 @@ public function viewRequestDetails($requestId)
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
-        $log->description = 'Item ' . $prodId . ' deleted from request ' . $requestName . ' by ' . session('username');
+        $log->description = 'Item ' . $prodId . ' deleted from request ' . $requestName . ' by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Item removed successfully');
@@ -724,12 +907,10 @@ public function viewRequestDetails($requestId)
             $saved = true;
         }
 
-      
-
         if ($saved) {
             $log              = new logModal();
             $log->title       = 'Item Request Logs';
-            $log->description = 'Info saved for request ' . $requestName . ' by ' . session('username')
+            $log->description = 'Info saved for request ' . $requestName . ' by ' . Auth::user()->name
                 . ' - Supplier: ' . ($SupllierId ?? 'N/A')
                 . ', Assigned: ' . ($assignedTo ?? 'N/A')
                 . ', Shop: ' . ($shopId ?? 'N/A');
@@ -744,7 +925,10 @@ public function viewRequestDetails($requestId)
     public function payout(Request $request) {
         $requestName      = $request->input('requestName');
         $requestDatePicker = $request->input('requestDatePicker');
-
+        
+        if (empty($requestDatePicker)) {
+            $requestDatePicker = date('Y-m-d H:i:s');
+        }
         // Get all items in this request to update their prices to current values
         $items = itemRequestModel::where('account', getCurrentShopId())
             ->where('requestName', $requestName)
@@ -773,7 +957,7 @@ public function viewRequestDetails($requestId)
         if ($updated > 0) {
             $log              = new logModal();
             $log->title       = 'Item Request Logs';
-            $log->description = 'Item request ' . $requestName . ' submitted by ' . session('username');
+            $log->description = 'Item request ' . $requestName . ' submitted by ' . Auth::user()->name;
             $log->save();
             return redirect()->back()->with('success', 'Item request submitted successfully');
         }
@@ -820,7 +1004,7 @@ public function viewRequestDetails($requestId)
             $log              = new logModal();
             $log->title       = 'Stock Log';
             $log->description = $get->name01 . ' Stock Deducted ' . $item->quantity
-                . ' by ' . session('username') . ' — inter-shop transfer';
+                . ' by ' . Auth::user()->name . ' — inter-shop transfer';
             $log->save();
 
             // Sales record
@@ -853,6 +1037,7 @@ public function viewRequestDetails($requestId)
             }
             
             $receiving  = new recevingModel();
+            $receiving->receivingName = $item->requestName;
             $receiving->receivingId = $receivingId;
             $receiving->productId = $item->productId;
             $receiving->quantity  = $item->quantity;
@@ -872,7 +1057,7 @@ public function viewRequestDetails($requestId)
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
-        $log->description = 'Item ' . $productId . ' approved by ' . session('username');
+        $log->description = 'Item ' . $productId . ' approved by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Item approved successfully');
@@ -882,8 +1067,10 @@ public function viewRequestDetails($requestId)
     public function rejectRequest(Request $request) {
         $productId  = $request->input('product_id');
         $supplierId = $request->input('supplierId', getCurrentShopId());
+        $requestName = $request->input('requestName');
 
-        $item = itemRequestModel::where('supplierId', $supplierId)
+        $item = itemRequestModel::where('requestName', $requestName)
+            ->where('supplierId', $supplierId)
             ->where('productId', $productId)
             ->where('status', 'Submitted')
             ->first();
@@ -897,7 +1084,7 @@ public function viewRequestDetails($requestId)
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
-        $log->description = 'Item ' . $productId . ' rejected by ' . session('username');
+        $log->description = 'Item ' . $productId . ' rejected by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Item rejected');
@@ -922,7 +1109,7 @@ public function viewRequestDetails($requestId)
 
         $log              = new logModal();
         $log->title       = 'Item Request Logs';
-        $log->description = 'Item ' . $productId . ' marked as out of stock by ' . session('username');
+        $log->description = 'Item ' . $productId . ' marked as out of stock by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Item marked as out of stock');
@@ -943,6 +1130,65 @@ public function viewRequestDetails($requestId)
         return redirect()->back()->with('error', 'Item not removed');
     }
 
+    // ── Bulk item request from products page ────────────────────────────────
+    public function bulkRequest(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'required|exists:products,product_id',
+            'quantities' => 'required|array|min:1',
+            'quantities.*' => 'required|integer|min:1',
+            'supplier_id' => 'nullable|integer|exists:accounts,id',
+        ]);
+
+        $productIds = $request->input('product_ids', []);
+        $quantities = $request->input('quantities', []);
+        $supplierId = $request->input('supplier_id');
+
+        if (count($productIds) !== count($quantities)) {
+            return redirect()->back()->with('error', 'Invalid request payload');
+        }
+
+        $username = Auth::user()->name ?? 'Unknown';
+
+        $requestName = date('Ymd') . '-' . str_pad(
+            itemRequestModel::whereDate('created_at', date('Y-m-d'))->count() + 1,
+            4, '0', STR_PAD_LEFT
+        );
+
+        foreach ($productIds as $index => $productId) {
+            $qty = (int) ($quantities[$index] ?? 1);
+            if ($qty <= 0) continue;
+
+            $price = productsModel::where('product_id', $productId)
+                ->where('account', '7')
+                ->value('sPrice');
+
+            $totalPrice = $qty * ($price ?? 0);
+
+            itemRequestModel::create([
+                'requestName' => $requestName,
+                'productId'   => $productId,
+                'quantity'    => $qty,
+                'price'       => $price ?? 0,
+                'totalPrice'  => $totalPrice,
+                'account'     => getCurrentShopId(),
+                'supplierId'  => $supplierId,
+                'status'      => 'Pending',
+                'served_by'   => $username,
+                'assigned_by' => $username,
+            ]);
+        }
+
+        $log = new logModal();
+        $log->title = 'Item Request Logs';
+        $log->description = 'Bulk item request ' . $requestName . ' created by ' . $username
+            . ' (' . count($productIds) . ' items)';
+        $log->save();
+
+        return redirect()->back()->with('success', 'Item request submitted successfully');
+    }
+
     // ── Delete entire request (Admin only) ───────────────────────────────────
     public function deleteRequest(Request $request) {
         $requestName = $request->input('requestName');
@@ -953,7 +1199,7 @@ public function viewRequestDetails($requestId)
         if ($deleted) {
             $log = new logModal();
             $log->title = 'Item Request Logs';
-            $log->description = 'Request ' . $requestName . ' deleted entirely by ' . session('username');
+            $log->description = 'Request ' . $requestName . ' deleted entirely by ' . Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Request deleted successfully');

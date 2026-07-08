@@ -23,6 +23,7 @@ use App\Models\accountModel;
 use App\Models\BankingChip;
 use Carbon\Carbon;
 use function getCurrentShopId;
+use function getuseraccount;
 
 class orderController extends Controller
 {
@@ -62,31 +63,43 @@ class orderController extends Controller
         'orders','paid'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-       return view('admin.ordersList', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.ordersList', $data);
-    }
+       return view('ordersList', $data);
+
 }
   
    public function saveInfo(Request $req)
 {
 
     $orderId = $req->input('orderId');
-    $served = $req->input('served');
+    $served  = $req->input('served');
 
-    $selected = $req->input('selectedCustomer'); // e.g., "John Doe|123456789"
+    $cname  = '';
+    $cphone = '';
+
+    $selected = $req->input('selectedCustomer');
     if (!empty($selected)) {
-        list($cname, $cphone) = explode('|', $selected);
-    
-}
-
-    if (empty($orderId)) {
-        return redirect()->back()->with('error', 'No order specified');
+        list($cname, $cphone) = explode('|', $selected, 2);
     }
 
-    // Update all orders with the same order_id
+    if (empty($orderId)) {
+         $OrdersIds = Uuid::uuid4();
+         $OrdersNames =
+     salsModel::distinct('sales_id')->count('sales_id')
+   + ordersModel::where('status', 'Suspended')->distinct('order_id')->count('order_id')
+   + 1;
+
+         $new = new ordersModel();
+         $new->order_id    = $OrdersIds;
+         $new->orderName   = $OrdersNames;
+         $new->cName       = $cname ?: 'Customer-' . strtoupper(Str::random(5));
+         $new->status      = 'Pending';
+         $new->cPhone      = $cphone;
+         $new->account     = getCurrentShopId();
+         $new->save();
+
+         return redirect()->back()->with('success', 'Order Created Successfully');
+    }
+
     $updated = ordersModel::where('account', getCurrentShopId())->where('order_id', $orderId)
                 ->update([
                     'cName' => $cname,
@@ -98,7 +111,7 @@ class orderController extends Controller
         return redirect()->back()->with('success', 'Customer info saved');
         
     } else {
-        return redirect()->back()->with('error', 'Failed to save Customer info (maybe no records matched)');
+        return redirect()->back()->with('error', 'Failed');
     }
 }
 
@@ -137,9 +150,17 @@ public function saveSeller(Request $req)
 
 public function newOrder(Request $req)
 {
+if (!canUser('create_sales')) {
+        abort(403, 'Unauthorized access');
+    }
   $orderType = $req->input('orderType', '');
-$pId = $req->input('pId');
-$served = $req->input('served');
+  $pId = $req->input('pId');
+  $served = $req->input('served');
+  $user = Auth::user();
+
+  if (!empty($orderType)) {
+      $req->session()->put('orderType', $orderType);
+  }
 
 if (empty($served)) {
     $seller = Auth::user()->name;
@@ -151,49 +172,30 @@ if (empty($served)) {
     }
     
     // Get all accessible shops for the user
-    $user = Auth::user();
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        $allShops = accountModel::select('id', 'name', 'location')->orderBy('created_at', 'desc')->get();
-    } else {
-        $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        if (empty($assignedAccountIds)) {
-            $allShops = collect();
-        } else {
-            $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-        }
-    }
+    
+    $shops = getUserAccounts();
+    $shopIds = array_column($shops, 'id');
 
     // Determine which shop/account to use for this order
     // Priority: 1. selected_shop_id from session, 2. account_id from session, 3. fallback to user's primary shop
     $selectedShopId = getCurrentShopId();
     
     // Validate user has access to selected shop
-    if (strtolower(trim($user->levelStatus)) !== 'admin') {
-        $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        if (!in_array($selectedShopId, $assignedAccountIds)) {
-            // Fallback to primary or first assigned account
-            $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-            if ($primaryAccount) {
-                $selectedShopId = $primaryAccount->account;
-            } else {
-                $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-            }
-        }
-    }
-    
-    // Update session to keep account_id in sync with selected_shop_id
-    session(['account_id' => $selectedShopId]);
+        $assignedAccountIds = $shopIds;
 
-    // Check for existing active order using the resolved seller and selected shop
-    $activeOrder = ordersModel::where('account', $selectedShopId)->where('served_by', $seller)
-        ->whereNotIn('status', ['Debt', 'Partial', 'Suspended','Return'])
-        ->orderBy('id', 'desc')
-        ->first();
+
+     // Check for existing active order - must match productsController::newOrder() statuses
+     $activeOrder = ordersModel::where('account', $selectedShopId)
+         ->whereIn('status', ['Sell', 'Pending'])
+         ->orderBy('id', 'desc')
+         ->first();
 
     if ($activeOrder) {
         $OrdersIds = $activeOrder->order_id;
         $OrdersNames = $activeOrder->orderName;
+        $cName = $activeOrder->cName;
+        $cPhone = $activeOrder->cPhone;
+
         // Ensure the active order uses the current seller (in case it was changed)
         $activeOrder->served_by = $seller;
         $activeOrder->save();
@@ -201,7 +203,7 @@ if (empty($served)) {
         
     // Generate random customer name if empty
     $cName = empty($cName) ? 'Customer-' . strtoupper(Str::random(5)) : $cName;
-
+    $cPhone = '';
         $OrdersIds = Uuid::uuid4();
         $OrdersNames =
     salsModel::distinct('sales_id')->count('sales_id')
@@ -210,13 +212,14 @@ if (empty($served)) {
 
     }
 
-    $userName = session('username');
+    $userName = Auth::user()->name;
     $userId = usersModel::where('account', getCurrentShopId())->where('name', $userName)->first();
     $check = productsModel::where('account', getCurrentShopId())->where('id', $pId)->first();
 
     if (!$check) {
         return redirect()->back()->with('error', 'Product not found in selected shop');
     }
+
 
     /*if (!$check || $check->quantity <= 0) {
         $this->handleLowStock($check->product_id ?? $pId);
@@ -244,11 +247,37 @@ if (empty($served)) {
             'sPrice' => $check->sPrice ?? 0,
         ]);
     }
-    
+     
+    if($activeOrder) {
+        $existingCartItem = ordersModel::where('account', $selectedShopId)
+            ->where('order_id', $activeOrder->order_id)
+            ->where('productId', $pId)
+            ->where(function($q) {
+                $q->where('offered_items', 0)
+                  ->orWhereNull('offered_items');
+            })
+            ->first();
+
+        if($existingCartItem) {
+            $existingCartItem->pQuantity += 1;
+            $existingCartItem->totalPrice = ($existingCartItem->pQuantity * $existingCartItem->productPrice);
+            $existingCartItem->save();
+
+            $this->updateStock($stoc, $check, 1, $check->sPrice ?? 0);
+
+            $create = new logModal();
+            $create->title = 'Order Logs';
+            $create->description = $OrdersNames.'(OrderId) Order Updated By '.Auth::user()->name;
+            $create->save();
+            return redirect()->back()->with('success', 'Item quantity updated');
+        }
+    }
     $this->createOrderRecord(
         $OrdersIds,
         $OrdersNames,
         $stoc->name,
+        $cName,
+        $cPhone,
         $check->product_id,
         $quantity,
         $check->sPrice ?? 0,
@@ -260,10 +289,10 @@ if (empty($served)) {
 
     $this->updateStock($stoc, $check, $quantity, $totalAmount);
 
-
+    
     $create = new logModal();
             $create->title = 'Order Logs';
-            $create->description = $OrdersNames.'(OrderId) Order Created By '.session('username');
+            $create->description = $OrdersNames.'(OrderId) Order Created By '.Auth::user()->name;
             $create->save();
             
 
@@ -290,7 +319,7 @@ public function updateCartItem(Request $req)
             return response()->json(['error' => 'Missing required parameters'], 400);
         }
 
-        if (!in_array($field, ['pQuantity', 'discount', 'discount_increase', 'adjustment'])) {
+        if (!in_array($field, ['pQuantity', 'discount', 'discount_increase', 'adjustment', 'productPrice'])) {
             return response()->json(['error' => 'Invalid field'], 422);
         }
 
@@ -343,10 +372,6 @@ public function updateCartItem(Request $req)
         // The stock has already been adjusted in the cart at order creation time
     }
 
-    // Allow negative quantities for returns (stock is restored above)
-    if ($field === 'pQuantity' && $value > 0 && $value > ($product->quantity + $cartItem->pQuantity)) {
-        return response()->json(['error' => 'Insufficient stock'], 400);
-    }
 
     // Handle adjustment field - merge discount and increase into one
     if ($field === 'adjustment') {
@@ -394,20 +419,36 @@ public function updateCartItem(Request $req)
     // AUTO-APPLY OFFERS: Add free items when quantity meets requirement
     // ============================================================
     if ($field === 'pQuantity' && $quantity > 0) {
-        // Check if there's an offer for this product
         $offer = \App\Models\Offer::where('account', getCurrentShopId())
-            ->where('product_id', $pId)
+            ->whereHas('requiredItems', function ($q) use ($pId) {
+                $q->where('product_id', $pId);
+            })
             ->where('is_active', true)
+            ->with('requiredItems')
             ->first();
 
         if ($offer) {
-            // Calculate how many times the offer applies
-            $timesOfferApplies = floor($quantity / $offer->required_quantity);
-            
-            if ($timesOfferApplies > 0) {
-                $freeItemsCount = $timesOfferApplies * $offer->offer_quantity;
-                
-                // Check if free items already exist in cart
+            $requiredItems = $offer->requiredItems;
+            $bundleCount = null;
+
+            foreach ($requiredItems as $reqItem) {
+                $cartQty = ordersModel::where('account', getCurrentShopId())
+                    ->where('order_id', $orderId)
+                    ->where('productId', $reqItem->product_id)
+                    ->where('offered_items', '!=', 1)
+                    ->sum('pQuantity');
+
+                $times = (int) floor($cartQty / $reqItem->required_quantity);
+                if ($times === 0) {
+                    $bundleCount = 0;
+                    break;
+                }
+                $bundleCount = $bundleCount === null ? $times : min($bundleCount, $times);
+            }
+
+            if ($bundleCount !== null && $bundleCount > 0) {
+                $freeItemsCount = $bundleCount * $offer->offer_quantity;
+
                 $existingFreeItem = ordersModel::where('account', getCurrentShopId())
                     ->where('order_id', $orderId)
                     ->where('productId', $offer->offer_product_id)
@@ -415,20 +456,15 @@ public function updateCartItem(Request $req)
                     ->first();
 
                 if ($existingFreeItem) {
-                    // Update the free items quantity
                     $existingFreeItem->pQuantity = $freeItemsCount;
-                    $existingFreeItem->totalPrice = 0; // Free items have 0 price
+                    $existingFreeItem->totalPrice = 0;
                     $existingFreeItem->save();
                 } else {
-                    // Find any stock entry for this product (sQuantity is cumulative sold, not available)
-                    // We just need a stock record for reference; actual stock validation happens at payout
                     $stoc = stock::where('account', getCurrentShopId())
                         ->where('productId', $offer->offer_product_id)
                         ->orderBy('id', 'asc')
                         ->first();
-                    
-                    // Only create the free item order record if we have a stock entry
-                    // Stock validation will happen at payout time
+
                     if ($stoc) {
                         ordersModel::create([
                             'order_id' => $orderId,
@@ -436,37 +472,41 @@ public function updateCartItem(Request $req)
                             'orderName' => $cartItem->orderName,
                             'productId' => $offer->offer_product_id,
                             'pQuantity' => $freeItemsCount,
-                            'productPrice' => $cartItem->productPrice ?? 0, // Free
-                            'totalPrice' => 0, // Free
+                            'productPrice' => $cartItem->productPrice ?? 0,
+                            'totalPrice' => 0,
                             'served_by' => $cartItem->served_by,
                             'status' => 'Sell',
                             'account' => getCurrentShopId(),
-                            'offered_items' => 1, // Mark as free item
-                            'offer_parent_product' => $pId, // Link to parent product
+                            'offered_items' => 1,
+                            'offer_parent_products' => $pId,
                         ]);
                     } else {
-                        // No stock entry found, but still add the free item to cart
-                        // Stock validation will happen at payout time
                         ordersModel::create([
                             'order_id' => $orderId,
                             'stockId' => 'NO-STOCK-' . $offer->offer_product_id,
                             'orderName' => $cartItem->orderName,
                             'productId' => $offer->offer_product_id,
                             'pQuantity' => $freeItemsCount,
-                            'productPrice' => $cartItem->productPrice ?? 0, // Free
-                            'totalPrice' => 0, // Free
+                            'productPrice' => $cartItem->productPrice ?? 0,
+                            'totalPrice' => 0,
                             'served_by' => $cartItem->served_by,
                             'status' => 'Sell',
                             'account' => getCurrentShopId(),
-                            'offered_items' => 1, // Mark as free item
-                            'offer_parent_product' => $pId, // Link to parent product
+                            'offered_items' => 1,
+                            'offer_parent_products' => $pId,
                         ]);
                     }
                 }
+            } else {
+                $existingFreeItem = ordersModel::where('account', getCurrentShopId())
+                    ->where('order_id', $orderId)
+                    ->where('productId', $offer->offer_product_id)
+                    ->where('offered_items', 1)
+                    ->first();
 
-                // NOTE: Stock for free items is NOT deducted here anymore.
-                // It will be deducted in payout() when the order is finalized.
-                // This prevents stock validation errors when adjusting cart quantities.
+                if ($existingFreeItem) {
+                    $existingFreeItem->delete();
+                }
             }
         }
     }
@@ -500,12 +540,18 @@ public function resumeOrder(Request $req)
     logModal::create([
         'title' => 'Order Logs',
         'description' => $orders->first()->orderName .
-            ' (OrderId) Order Resumed By ' . session('username'),
+            ' (OrderId) Order Resumed By ' . Auth::user()->name,
     ]);
 
     return redirect()->back()->with('success', 'Order Resumed Successfully');
 }
 
+
+    public function setOrderType(Request $req)
+    {
+        session(['orderType' => $req->input('orderType', 'Sell')]);
+        return response()->json(['success' => true]);
+    }
 
     private function handleLowStock($productId)
     {
@@ -522,13 +568,15 @@ public function resumeOrder(Request $req)
     }
 
     private function createOrderRecord(
-    $orderId, $orderName, $stockId,
+    $orderId, $orderName, $stockId, $cName, $cPhone,
     $productId, $pQuantity, $pPrice, $tPrice, $servedBy, $orderType, $account
 )
  {
   ordersModel::create([
      'order_id' => $orderId,
      'stockId' => $stockId,
+     'cName'    =>$cName,
+     'cPhone'   => $cPhone,
      'orderName' => $orderName,
      'productId' => $productId,
      'pQuantity' => $pQuantity,
@@ -557,7 +605,7 @@ public function resumeOrder(Request $req)
 
              $create = new logModal();
             $create->title = 'Stock Logs';
-            $create->description = $quantity.'(Qty) Stock Updated By '.session('username');
+            $create->description = $quantity.'(Qty) Stock Updated By '.Auth::user()->name;
             $create->save();
         }
     }
@@ -571,7 +619,7 @@ public function resumeOrder(Request $req)
 
             $create = new logModal();
             $create->title = 'Product Log';
-            $create->description = $productId .' (Product) deducted to '. $reduce->quantity .'  Successfully By '.session('username');
+            $create->description = $productId .' (Product) deducted to '. $reduce->quantity .'  Successfully By '.Auth::user()->name;
             $create->save();
         }
 
@@ -599,29 +647,15 @@ public function resumeOrder(Request $req)
             'served_by' => '',
             'status' => '',
         ];
-       
-        // Get all accessible shops for the user
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('created_at', 'desc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-            }
-        }
+       $allShops = getUserAccounts();
+    $shopIds = array_column($allShops, 'id');
        
         $data = compact(
             'newOrder','orders', 'allShops'
         );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.newOrder', $data);
-     }
-     if(!empty($user->levelStatus)) {
-         return view('user.newOrder', $data);
-     }
+        return view('newOrder', $data);
+ 
      }
 
       public function updQuant(Request $req)
@@ -642,7 +676,7 @@ public function resumeOrder(Request $req)
 
         $create = new logModal();
             $create->title = 'Product Logs';
-            $create->description = $look->name01.' Product Updated By '.session('username');
+            $create->description = $look->name01.' Product Updated By '.Auth::user()->name;
             $create->save();
 
         return redirect()->back()->with('success', 'Product Quantity Updated Successfully');
@@ -662,36 +696,86 @@ public function resumeOrder(Request $req)
 
         $create = new logModal();
             $create->title = 'Product Logs';
-            $create->description = $look->name01.' Product Updated By '.session('username');
+            $create->description = $look->name01.' Product Updated By '.Auth::user()->name;
             $create->save();
             
         return redirect()->back()->with('success', 'Product Discount Updated Successfully');
     }
 
-    public function dltProdOrdcart(Request $req)
+    public function removeOfferItem(Request $req)
     {
-        $OrdersIds = $req->input('orderId');
-        $prodId = $req->input('itemId');
-        $prodQuantit = $req->input('prodQuantity');
-        
-        $deltProduct = ordersModel::where('account', getCurrentShopId())->where('order_id', $OrdersIds)
-                               ->where('productId', $prodId)
-                               ->first();
+        $orderId = $req->input('orderId');
+        $productId = $req->input('productId');
+        $quantity = $req->input('quantity', 0);
 
-        if (!$deltProduct) {
+        $offerItem = ordersModel::where('account', getCurrentShopId())
+            ->where('order_id', $orderId)
+            ->where('productId', $productId)
+            ->where('offered_items', 1)
+            ->first();
+
+        if (!$offerItem) {
+            return response()->json(['success' => false, 'message' => 'Offer item not found']);
+        }
+
+        $restoredQty = $q = (int) ($offerItem->pQuantity ?? 0);
+
+        $this->restoreProductQuantity($productId, $restoredQty);
+
+        $offerItem->delete();
+
+        return response()->json(['success' => true, 'restoredQty' => $restoredQty]);
+    }
+
+    public function dltProdOrdcart(Request $req)
+{
+    $OrdersIds = $req->input('orderId');
+    $prodId = $req->input('itemId');
+    $prodQuantit = $req->input('prodQuantity');
+    
+    try {
+        // Get the IDs first
+        $productIds = ordersModel::where('account', getCurrentShopId())
+                                ->where('order_id', $OrdersIds)
+                                ->where('productId', $prodId)
+                                ->pluck('id');
+                
+        if ($productIds->isEmpty()) {
             return redirect()->back()->with('error', 'Product Not Found');
         }
-        $this->reverseStockUpdate($deltProduct);
-
-        $deltProduct->delete();
-
         
+        // Try direct delete using query builder
+        $deletedCount = ordersModel::whereIn('id', $productIds)->delete();
+        
+        
+        if ($deletedCount > 0) {
+            return redirect()->back()->with('success', $deletedCount . ' Product(s) Deleted Successfully');
+        } else {
+            return redirect()->back()->with('error', 'Failed to delete products');
+        }
+        
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
 
-        $create = new logModal();
-            $create->title = 'Product Logs';
-            $create->description = $deltProduct->name01.' Product Deleted By '.session('username');
-            $create->save();
-        return redirect()->back()->with('success', 'Product Deleted Successfully');
+    public function clearCart(Request $req)
+    {
+        $orderId = $req->input('orderId');
+        if (empty($orderId)) {
+            return redirect()->back()->with('error', 'Order not found');
+        }
+
+        try {
+            ordersModel::where('account', getCurrentShopId())
+                ->where('order_id', $orderId)
+                ->where('offered_items', '!=', 1)
+                ->delete();
+
+            return redirect()->back()->with('success', 'Cart cleared successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 
     public function dltProdOrd(Request $req)
@@ -724,7 +808,7 @@ public function resumeOrder(Request $req)
 
         $create = new logModal();
             $create->title = 'Product Logs';
-            $create->description = $deltProduct->name01.' Product Deleted By '.session('username');
+            $create->description = $deltProduct->name01.' Product Deleted By '.Auth::user()->name;
             $create->save();
         return redirect()->back()->with('success', 'Product Deleted Successfully');
     }
@@ -737,7 +821,7 @@ public function resumeOrder(Request $req)
 
             $create = new logModal();
             $create->title = 'Product Logs';
-            $create->description = $updt->name01.' Product Quantity Restored '. $quantity .' By '.session('username');
+            $create->description = $updt->name01.' Product Quantity Restored '. $quantity .' By '.Auth::user()->name;
             $create->save();
             $updt->save();
         }
@@ -745,7 +829,9 @@ public function resumeOrder(Request $req)
 
     private function reverseStockUpdate($order)
     {
-        $stoc = stock::where('account', getCurrentShopId())->where('productId', $order->productId)
+        $prodId = $order->productId;
+        $stoc = stock::where('account', getCurrentShopId())
+                    ->where('productId', $prodId)
                    ->where('name', $order->stockId)
                    ->first();
 
@@ -756,10 +842,11 @@ public function resumeOrder(Request $req)
 
              $create = new logModal();
             $create->title = 'Stock Logs';
-            $create->description = $stoc->name.' Stock Restored By '.session('username');
+            $create->description = $stoc->name.' Stock Restored By '.Auth::user()->name;
             $create->save();
             $stoc->save();
         }
+        
     }
 
  public function debt(Request $req)
@@ -773,8 +860,8 @@ public function resumeOrder(Request $req)
       return back()->with('error', 'Invalid customer or amount');
   }
 
-  $userName = session('username');
-  $shopName = getSessionAccountDisplayName();
+  $userName = Auth::user()->name;
+  $shopName = getCurrentShopId();
 
   // Handle chip payment validation and deduction
   if ($paymentMethod === 'chip') {
@@ -786,7 +873,7 @@ public function resumeOrder(Request $req)
       }
       
       // Get available chip from last chip entry (cumulative total)
-      $shop = accountModel::where('name', $shopName)->first();
+      $shop = accountModel::where('id', $shopName)->first();
       if (!$shop) {
           return back()->with('error', 'Shop not found');
       }
@@ -909,7 +996,7 @@ public function resumeOrder(Request $req)
 
   // Recalculate customer debt after payment
 
-  return redirect('admin/ordersList')
+  return redirect('ordersList')
       ->with('success', 'Payment distributed successfully');
 }
 /**
@@ -921,19 +1008,21 @@ public function resumeOrder(Request $req)
 
 public function payout(Request $req)
 {
-   $OrdersIds    = $req->input('orderId');
+   return DB::transaction(function () use ($req) {
+       $OrdersIds    = $req->input('orderId');
    $orderType    = $req->input('orderType');
    $paymentMethod = $req->input('paymentMethod');
    $served = $req->input('served');
-   $saleDate = $req->input('saleDate');
-   
+   $saleDate = $req->input('saleDate'); 
+   $saletype = session('orderType');
    /* ============================
       FETCH ORDERS
    ============================ */
 
-   $orders = ordersModel::where('account', getCurrentShopId())
-       ->where('order_id', $OrdersIds)
-       ->get();
+    $orders = ordersModel::where('account', getCurrentShopId())
+        ->where('order_id', $OrdersIds)
+        ->lockForUpdate()
+        ->get();
         
     if(!empty($saleDate)) {
         foreach($orders as $ordez) {
@@ -942,11 +1031,20 @@ public function payout(Request $req)
         }
     }
 
-    if ($orders->isEmpty()) {
-        return back()->with('error', 'Order not found');
-    }
+     if ($orders->isEmpty()) {
+         return back()->with('error', 'Order not found');
+     }
 
-    $firstOrder = $orders->first();
+     $existingSale = salsModel::where('sales_id', $OrdersIds)
+         ->where('account', getCurrentShopId())
+         ->where('status', '!=', 'Return')
+         ->exists();
+
+     if ($existingSale) {
+         return back()->with('error', 'This order has already been processed');
+     }
+
+     $firstOrder = $orders->first();
 
     if (empty($firstOrder->cName)) {
         return back()->with('error', 'Select customer first');
@@ -1016,9 +1114,9 @@ public function payout(Request $req)
 
     $customer = customerModel::where('id', $firstOrder->cPhone)
         ->where('name', $firstOrder->cName)
-        ->where('account', getCurrentShopId())
         ->first();
 
+    
     /* ============================
        SUSPEND LOGIC
     ============================ */
@@ -1031,7 +1129,7 @@ public function payout(Request $req)
 
         logModal::create([
             'title' => 'Order Logs',
-            'description' => $OrdersIds . ' Order Suspended By ' . session('username'),
+            'description' => $OrdersIds . ' Order Suspended By ' . Auth::user()->name,
         ]);
 
         return back()->with('success', 'Order Suspended');
@@ -1041,16 +1139,16 @@ public function payout(Request $req)
        RETURN LOGIC
     ============================ */
     
-    if ($orderType === 'Return') {
+    if ($saletype === 'Return') {
         // For returns: amount goes to return column, not paid or credit
-        $paid = 0;
-        $credit = 0;
+        $return_amount = $paid + $credit;
         $finalStatus = 'Return';
 
         foreach ($orders as $order) {
             $order->status = 'Return';
             $order->paid = 0;
             $order->credit = 0;
+            $order->return_amount = $return_amount;
             $order->save();
             
             // Restore product quantity
@@ -1081,8 +1179,8 @@ public function payout(Request $req)
                 'discount'        => 0,
                 'discount_increase' => 0,
                 'offered_items'     => $order->offered_items ?? 0,
-                'offer_parent_product' => $order->offer_parent_product ?? null,
-                'served_by'       => $served ?? session('username'),
+                'offer_parent_products' => $order->offer_parent_products ?? null,
+                'served_by'       => $served ?? Auth::user()->name,
                 'account'         => $order->account,
                 'created_at'      => $saleDate ?? Carbon::now(),
             ]);
@@ -1090,16 +1188,34 @@ public function payout(Request $req)
 
         logModal::create([
             'title' => 'Order Logs',
-            'description' => $OrdersIds . ' Order Returned By ' . session('username'),
+            'description' => $OrdersIds . ' Order Returned By ' . Auth::user()->name,
         ]);
-
+         //forget this session
+   session()->forget('orderType');
         return back()->with('success', 'Return processed successfully');
     }
+
+    if($paymentMethod === 'Credit') {
+        $paid = 0;
+        $credit = $totalAmount;
+    }
+      /* ============================
+       FINAL STATUS DERIVATION
+    ============================ */
+    if ($paid == $totalAmount && $totalAmount > 0) {  
+        
+        $finalStatus = 'Paid';
+    } elseif ($credit == $totalAmount && $totalAmount > 0) {
+        $finalStatus = 'Debt';
+    } else {
+        $finalStatus = 'Partial';
+    }
+
 
     /* ============================
        DEBT LIMIT CHECK (CREDIT ONLY)
     ============================ */
-    if($orderType === 'Debt') {
+    if($finalStatus === 'Debt' || $finalStatus === 'Partial') {
         $existingDebt = \DB::query()
         ->fromSub(
             ordersModel::where('account', getCurrentShopId())
@@ -1123,6 +1239,9 @@ public function payout(Request $req)
         $limit = (float) ($customer->limits ?? 0);
         $newDebt = (float) $credit;
 
+        if($limit < 1) {
+           return back()->with('error', 'Customer has no credit limit set. Please set a credit limit to proceed with debt payment.');
+        }
         if ((($existingDebt + $newDebt) - $paidinv) > $limit) {
             return back()->with(
                 'error',
@@ -1131,21 +1250,11 @@ public function payout(Request $req)
             );
         }
 
-        $paid = 0;
-        $credit = $totalAmount;
     }
 
-    /* ============================
-       FINAL STATUS DERIVATION
-    ============================ */
-    if ($paid == $totalAmount && $totalAmount > 0) {
-        $finalStatus = 'Paid';
-    } elseif ($credit == $totalAmount && $totalAmount > 0) {
-        $finalStatus = 'Debt';
-    } else {
-        $finalStatus = 'Partial';
-    }
+  
 
+   
     /* ============================
        UPDATE ORDERS
     ============================ */
@@ -1163,6 +1272,8 @@ public function payout(Request $req)
         $order->save();
     }
 
+
+
     /* ============================
        INSERT SALES FOR REGULAR ITEMS
     ============================ */
@@ -1178,6 +1289,7 @@ public function payout(Request $req)
             \Log::info('Skipping offered item in regular loop: ' . $order->productId);
             continue;
         }
+        
         
         // Deduct stock for regular items only
         $this->reduceProductQuantity($order->productId, $order->pQuantity);
@@ -1199,10 +1311,10 @@ public function payout(Request $req)
             'status'          => $finalStatus,
             'discount'        => $order->discount,
             'discount_increase' => $order->discount_increase ?? 0,
-            'served_by'       => $served ?? session('username'),
+            'served_by'       => $served ?? Auth::user()->name,
             'account'         => $order->account,
             'offered_items'   => 0, // Regular item
-            'offer_parent_product' => null,
+            'offer_parent_products' => null,
             'created_at'      => $saleDate ?? Carbon::now(),
         ]);
 
@@ -1275,18 +1387,18 @@ public function payout(Request $req)
                     'status'          => $finalStatus,
                     'discount'        => 0,
                     'discount_increase' => 0,
-                    'served_by'       => $served ?? session('username'),
+                    'served_by'       => $served ?? Auth::user()->name,
                     'account'         => getCurrentShopId(),
-                    'offered_items'   => 1, // Mark as offered item
-                    'offer_parent_product' => $offerOrder->offer_parent_product ?? null,
-                    'created_at'      => $saleDate ?? Carbon::now(),
+                     'offered_items'   => 1, // Mark as offered item
+                     'offer_parent_products' => $offerOrder->offer_parent_products ?? null,
+                     'created_at'      => $saleDate ?? Carbon::now(),
                 ]);
                 
                 \Log::info('Successfully created sales record for offered item: ' . $salesRecord->id);
                 
                 logModal::create([
                     'title' => 'Offer Logs',
-                    'description' => 'Offered item: ' . ($offerProduct->name01 ?? $offerProductId) . ' x' . $offerQuantity . ' added to order ' . $OrdersIds . ' by ' . session('username'),
+                    'description' => 'Offered item: ' . ($offerProduct->name01 ?? $offerProductId) . ' x' . $offerQuantity . ' added to order ' . $OrdersIds . ' by ' . Auth::user()->name,
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Failed to create sales record for offered item: ' . $e->getMessage());
@@ -1308,19 +1420,24 @@ public function payout(Request $req)
     /* ============================
         LOGGING
     ============================ */
-
-    \Log::info('Order processing completed for ' . $OrdersIds . '. Final status: ' . $finalStatus . ', Paid: ' . $paid . ', Credit: ' . $credit);
+ //forget this session
+   session()->forget('orderType');
 
     logModal::create([
         'title' => 'Order Logs',
-        'description' => $OrdersIds . ' Order Sold Successfully By ' . session('username'),
+        'description' => $OrdersIds . ' Order Sold Successfully By ' . Auth::user()->name,
     ]);
-
+    //play sound
+     session()->flash('play_sound', true);
+     
     return back()->with(
         'success',
         'Processed: Paid ' . $paid . ' | Credit ' . $credit
     );
+    
+   });
 }
+
     public function viewOrder(Request $req)
     {
         $user = Auth::user();
@@ -1357,7 +1474,7 @@ public function payout(Request $req)
         $cDebt = $totalCredit;
 
         // Get available chip from last chip entry (cumulative total)
-        $shop = accountModel::where('name', getSessionAccountDisplayName())->first();
+        $shop = accountModel::where('id', getCurrentShopId())->first();
         $availableChip = 0;
         if ($shop) {
             $lastChip = BankingChip::where('shop_id', $shop->id)
@@ -1373,12 +1490,8 @@ public function payout(Request $req)
             'paidSoFar', 'totalCredit', 'cDebt', 'firstOrder', 'availableChip'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.viewOrder', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.viewOrder', $data);
-        }
+            return view('viewOrder', $data);
+   
     }
 
     public function coupon(Request $req)
@@ -1410,7 +1523,7 @@ public function payout(Request $req)
 
          $create = new logModal();
             $create->title = 'Coupon Logs';
-            $create->description = $updt->coupons.' Coupon Accepted to order '.$updt->orderName.'  By '.session('username');
+            $create->description = $updt->coupons.' Coupon Accepted to order '.$updt->orderName.'  By '.Auth::user()->name;
             $create->save();
 
         return redirect()->back()->with('success', 'Coupon is accepted');
@@ -1428,7 +1541,7 @@ public function payout(Request $req)
 
              $create = new logModal();
             $create->title = 'Discount Logs';
-            $create->description = $updt->orderName.' Discount added to order  By '.session('username');
+            $create->description = $updt->orderName.' Discount added to order  By '.Auth::user()->name;
             $create->save();
 
             return redirect()->back()->with('success', 'Discount is Added');
@@ -1449,34 +1562,16 @@ public function payout(Request $req)
         'invoices'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-     return view('admin.viewInvoice', $data);
- }
- if(!empty($user->levelStatus)) {
-     return view('user.viewInvoice', $data);
- }
+     return view('viewInvoice', $data);
+
     }
 
 public function changeShop(Request $request)
 {
     $shopId = $request->query('shop_id');
     $user = Auth::user();
-    $selectedShopId = null;
+    $selectedShopId = $shopId;
     
-    // Validate user has access to this shop
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        // Admin can switch to any shop that exists
-        $shop = accountModel::find($shopId);
-        if ($shop) {
-            $selectedShopId = $shopId;
-        }
-    } else {
-        // Regular users can only switch to their assigned accounts
-        $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        if (in_array($shopId, $assignedAccountIds)) {
-            $selectedShopId = $shopId;
-        }
-    }
     
     // If shop is valid, set it in session
     if ($selectedShopId) {
@@ -1517,6 +1612,7 @@ public function changeShop(Request $request)
         // Get all order items with this order_id
         $orders = ordersModel::where('account', getCurrentShopId())
             ->where('order_id', $orderId)
+            ->orWhere('orderName', $orderId)
             ->get();
             
         if ($orders->isEmpty()) {
@@ -1547,7 +1643,7 @@ public function changeShop(Request $request)
         
         $create = new logModal();
         $create->title = 'Order Logs';
-        $create->description = 'Order ' . $orderId . ' deleted by ' . session('username');
+        $create->description = 'Order ' . $orderId . ' deleted by ' . Auth::user()->name;
         $create->save();
         
         return redirect()->back()->with('success', 'Order deleted successfully');

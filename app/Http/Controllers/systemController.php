@@ -23,7 +23,8 @@ use App\Models\UserAccount;
 use App\Models\BankingChip;
 use Carbon\Carbon;
 use App\Models\salsModel;
-use function getSessionAccountId;
+use function getCurrentShopId;
+use function getUserAccounts;
 
 class systemController extends Controller
 {
@@ -31,8 +32,7 @@ class systemController extends Controller
     {
         $user = Auth::user();
 
-        // Allow if user is Admin OR has valid emergency access
-        $isAdmin = $user && strtolower(trim($user->levelStatus)) === 'admin';
+        $isAdmin = $user && in_array(strtolower(trim($user->levelStatus)), ['admin', 'admin2']);
         $hasEmergencyAccess = session('emergency_access') &&
                               session('emergency_expires_at') &&
                               now()->lessThan(\Carbon\Carbon::parse(session('emergency_expires_at')));
@@ -52,45 +52,45 @@ class systemController extends Controller
 
         $getData = systemModel::first();
         
-        // For Admin: show all shops
-        // For regular users: show only assigned shops
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $fetch = accountModel::orderBy('name', 'asc')->get();
+        $fetchId = array_column(getuserAccounts(), 'id');
+
+        if (!empty($fetchId)) {
+            $customers = customerModel::whereIn('account', $fetchId)->selectRaw('account, COUNT(*) as count')->groupBy('account')->get()->keyBy('account');
+            $users = usersModel::whereIn('account', $fetchId)->selectRaw('account, COUNT(*) as count')->groupBy('account')->get()->keyBy('account');
+            $products = productsModel::whereIn('account', $fetchId)->selectRaw('account, COUNT(*) as count')->groupBy('account')->get()->keyBy('account');
         } else {
-            // Get the accounts this user is assigned to via UserAccount pivot
-            $assignedAccounts = UserAccount::where('user_id', $user->id)
-                ->pluck('account')
-                ->toArray();
-            
-            if (empty($assignedAccounts)) {
-                $fetch = collect(); // No assigned shops
-            } else {
-                // Get shops where account name matches the assigned accounts
-                $fetch = accountModel::whereIn('name', $assignedAccounts)
-                    ->orderBy('name', 'asc')
-                    ->get();
-            }
+            $customers = collect();
+            $users = collect();
+            $products = collect();
         }
 
-        foreach($fetch as $shops) {
-            $shops->users = usersModel::where('account', $shops->id)->count();
-            $shops->products = productsModel::where('account', $shops->id)->count();
-            $shops->customers = customerModel::where('account', $shops->id)->count();
-        }
-        
+        $fetch = accountModel::whereIn('id', $fetchId)->get()->each(function ($shop) use ($customers, $users, $products) {
+            $acc = (string) $shop->id;
+            $shop->customers = $customers[$acc]->count ?? 0;
+            $shop->users = $users[$acc]->count ?? 0;
+            $shop->products = $products[$acc]->count ?? 0;
+        });
         // Get current shop details for the active session account
-        $currentShop = accountModel::where('name', getSessionAccountDisplayName())->first();
+        $currentShop =  getCurrentShopId();
 
         $data = compact(
-            'getData', 'fetch', 'currentShop'
+            'getData', 'fetch', 'currentShop', 'customers', 'users', 'products'
         );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.settings', $data);
+
+        return view('settings', $data);
+  
+
     }
-    if(!empty($user->levelStatus)) {
-        return view('user.settings', $data);
-    }
+
+    public function mainCustomers() {
+        $accounts = accountModel::get();
+
+        $data = compact(
+            'accounts'
+        );
+        return view('main-customers', $data);
+  
 
     }
 
@@ -149,13 +149,13 @@ class systemController extends Controller
     if($update) {
         $create = new logModal();
         $create->title = 'Business Information';
-        $create->description = 'Business Information Updated By '.session('username');
+        $create->description = 'Business Information Updated By '.Auth::user()->name;
         $create->save();
         return redirect()->back()->with('success', 'Information Updated Successfully');
     } else {
         $create = new logModal();
         $create->title = 'Business Information';
-        $create->description = 'Business Information Failed to Update By '.session('username');
+        $create->description = 'Business Information Failed to Update By '.Auth::user()->name;
         $create->save();
         return redirect()->back()->with('error', 'Failed to update information');
     }
@@ -183,13 +183,13 @@ public function personalData(Request $req) {
     if($update) {
         $create = new logModal();
         $create->title = 'Personal Information';
-        $create->description = 'Personal Information Updated By '.session('username');
+        $create->description = 'Personal Information Updated By '.Auth::user()->name;
         $create->save();
         return redirect()->back()->with('success', 'Personal Information Updated Successfully');
     } else {
         $create = new logModal();
         $create->title = 'Personal Information';
-        $create->description = 'Personal Information Failed to Update By '.session('username');
+        $create->description = 'Personal Information Failed to Update By '.Auth::user()->name;
         $create->save();
         return redirect()->back()->with('error', 'Failed to update personal information');
     }
@@ -231,13 +231,13 @@ public function uploadProfilePicture(Request $req) {
         if($inst) {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Created successfully By '.session('username');
+            $create->description = 'Account Created successfully By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('success', 'Account Added');
         } else {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Created Failed By '.session('username');
+            $create->description = 'Account Created Failed By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('error', 'Account Creation Failed');
         }
@@ -246,7 +246,7 @@ public function uploadProfilePicture(Request $req) {
     // Fixed method name - was "getAccountProducts" in routes but "getAccountProducts" in controller
     public function getAccountProducts($accountId) {
         // Check if user is authenticated
-        if (!getSessionAccountId()) {
+        if (!getCurrentShopId()) {
             return response()->json(['error' => 'Unauthorized', 'redirect' => '/login'], 401);
         }
 
@@ -257,7 +257,7 @@ public function uploadProfilePicture(Request $req) {
         }
 
         // Get all products from current account for selection
-        $allProducts = productsModel::where('account', getSessionAccountId())->get();
+        $allProducts = productsModel::where('account', getCurrentShopId())->get();
 
         // Get currently assigned product IDs for this account
         $assignedProductIds = json_decode($account->products, true) ?? [];
@@ -286,13 +286,13 @@ public function uploadProfilePicture(Request $req) {
         if($account) {
             $create = new logModal();
             $create->title = 'Account Products';
-            $create->description = 'Account products updated for ' . $account->name . ' By '.session('username');
+            $create->description = 'Account products updated for ' . $account->name . ' By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('success', 'Account products updated successfully');
         } else {
             $create = new logModal();
             $create->title = 'Account Products';
-            $create->description = 'Failed to update account products for ' . $account->name . ' By '.session('username');
+            $create->description = 'Failed to update account products for ' . $account->name . ' By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('error', 'Failed to update account products');
         }
@@ -300,7 +300,7 @@ public function uploadProfilePicture(Request $req) {
 
     // New method to fetch all products (for AJAX)
     public function getAllProducts() {
-        $products = productsModel::where('account', getSessionAccountId())->get();
+        $products = productsModel::where('account', getCurrentShopId())->get();
         return response()->json(['products' => $products]);
     }
 
@@ -312,13 +312,13 @@ public function uploadProfilePicture(Request $req) {
         if($dlt) {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Deleted successfully By '.session('username');
+            $create->description = 'Account Deleted successfully By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('success', 'Account Deleted');
         } else {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Delete Failed By '.session('username');
+            $create->description = 'Account Delete Failed By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('error', 'Account Delete Failed');
         }
@@ -342,13 +342,13 @@ public function uploadProfilePicture(Request $req) {
         if($update) {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Updated successfully By '.session('username');
+            $create->description = 'Account Updated successfully By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('success', 'Account Updated');
         } else {
             $create = new logModal();
             $create->title = 'Account Log';
-            $create->description = 'Account Update Failed By '.session('username');
+            $create->description = 'Account Update Failed By '.Auth::user()->name;
             $create->save();
             return redirect()->back()->with('error', 'Account Update Failed');
         }
@@ -361,12 +361,11 @@ public function uploadProfilePicture(Request $req) {
         if ($permissionCheck = $this->ensureUserPermission('view_all_shops', 'You do not have permission to view all shop invoices.')) {
             return $permissionCheck;
         }
-        
-        // Get all shops
-        $shops = accountModel::orderBy('name', 'asc')->get();
+        $shops = getuserAccounts();
+        $shopsId = array_column($shops, 'id');
         
         // Get selected shop or default to first
-        $selectedShop = $req->input('shop') ?? ($shops->first()->name ?? getSessionAccountDisplayName());
+        $selectedShop = $req->input('shop') ?? getCurrentShopId();
         
         // Get invoices for selected shop
         $invoices = ordersModel::where('account', $selectedShop)
@@ -390,12 +389,9 @@ public function uploadProfilePicture(Request $req) {
         
         $data = compact('shops', 'selectedShop', 'invoices', 'shopDetails');
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.allInvoices', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.allInvoices', $data);
-        }
+
+            return view('allInvoices', $data);
+     
     }
 
     public function security() {
@@ -408,18 +404,14 @@ public function uploadProfilePicture(Request $req) {
         $systemSettings = systemModel::first();
         $blockSignins = $systemSettings ? $systemSettings->block_signins : false;
         $systemShutdown = $systemSettings ? $systemSettings->system_shutdown : false;
-        $faceRecognitionEnabled = $systemSettings ? (bool)$systemSettings->face_recognition_enabled : false;
 
         $data = compact(
-            'getOnline', 'getOffline', 'blockSignins', 'systemShutdown', 'faceRecognitionEnabled'
+            'getOnline', 'getOffline', 'blockSignins', 'systemShutdown'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.security', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.security', $data);
-        }
+ 
+            return view('security', $data);
+   
 
     }
     /**
@@ -430,8 +422,6 @@ public function uploadProfilePicture(Request $req) {
         $system = systemModel::first();
         
         return response()->json([
-            'face_recognition_enabled' => $system ? (bool)$system->face_recognition_enabled : false,
-            'face_verification_timeout' => $system ? $system->face_verification_timeout : 5,
             'system_shutdown' => $system ? (bool)$system->system_shutdown : false,
             'block_signins' => $system ? (bool)$system->block_signins : false,
         ]);
@@ -474,14 +464,14 @@ public function uploadProfilePicture(Request $req) {
         
         \Log::info('Block signins updated', [
             'new_value' => $system->block_signins,
-            'username' => session('username')
+            'username' => Auth::user()->name
         ]);
         
         $action = $system->block_signins ? 'BLOCKED' : 'UNBLOCKED';
         logModal::create([
             'title' => 'Sign-in Control',
-            'description' => 'All user sign-ins have been ' . $action . ' by ' . (session('username') ?? 'Unknown User'),
-            'user' => session('username') ?? 'Unknown',
+            'description' => 'All user sign-ins have been ' . $action . ' by ' . (Auth::user()->name ?? 'Unknown User'),
+            'user' => Auth::user()->name ?? 'Unknown',
             'status' => 'done'
         ]);
         
@@ -515,8 +505,8 @@ public function uploadProfilePicture(Request $req) {
         $action = $system->system_shutdown ? 'SHUTDOWN' : 'RESTORED';
         logModal::create([
             'title' => 'System Control',
-            'description' => 'System has been ' . $action . ' by ' . session('username'),
-            'user' => session('username'),
+            'description' => 'System has been ' . $action . ' by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
             'status' => 'done'
         ]);
         
@@ -526,43 +516,44 @@ public function uploadProfilePicture(Request $req) {
         ]);
     }
 
-    public function toggleFaceRecognition(Request $request)
-    {
+    public function toggleSystemMode(Request $request) {
         $user = Auth::user();
-        
-        // Only admin can toggle this, but allow if user has valid emergency access
+
         $isAdmin = strtolower(trim($user->levelStatus)) === 'admin';
         $hasEmergencyAccess = session('emergency_access') &&
                               session('emergency_expires_at') &&
                               now()->lessThan(\Carbon\Carbon::parse(session('emergency_expires_at')));
-        
+
         if (!$isAdmin && !$hasEmergencyAccess) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-        
+
         $system = systemModel::first();
         if (!$system) {
             $system = new systemModel();
         }
-        
-        $system->face_recognition_enabled = $request->boolean('enabled') ? 1 : 0;
+
+        $mode = strtolower(trim((string) $request->input('mode', 'live')));
+        $allowed = ['backup', 'live'];
+        if (!in_array($mode, $allowed, true)) {
+            $mode = 'live';
+        }
+
+        $system->system_mode = $mode;
         $system->save();
-        
-        $action = $system->face_recognition_enabled ? 'ENABLED' : 'DISABLED';
+
         logModal::create([
-            'title' => 'Face Recognition Control',
-            'description' => 'Face recognition has been ' . $action . ' by ' . session('username'),
-            'user' => session('username'),
+            'title' => 'System Mode',
+            'description' => 'System mode switched to ' . strtoupper($mode) . ' by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
             'status' => 'done'
         ]);
-        
+
         return response()->json([
-            'message' => 'Face recognition status updated',
-            'enabled' => (bool)$system->face_recognition_enabled
+            'message' => 'System mode updated successfully',
+            'system_mode' => $system->system_mode
         ]);
     }
-
-    
 
 
     public function getActiveSessions() {
@@ -576,8 +567,8 @@ public function uploadProfilePicture(Request $req) {
             $session->delete();
             $create = new logModal();
             $create->title = 'User Removed';
-            $create->description = 'User session removed by ' . session('username');
-            $create->user = session('username');
+            $create->description = 'User session removed by ' . Auth::user()->name;
+            $create->user = Auth::user()->name;
             $create->status = 'done';
             $create->save();
             return response()->json(['message' => 'User removed successfully']);
@@ -592,8 +583,8 @@ public function uploadProfilePicture(Request $req) {
             $user->save();
             $create = new logModal();
             $create->title = 'User Suspended';
-            $create->description = 'User suspended by ' . session('username');
-            $create->user = session('username');
+            $create->description = 'User suspended by ' . Auth::user()->name;
+            $create->user = Auth::user()->name;
             $create->status = 'done';
             $create->save();
             return response()->json(['message' => 'User suspended successfully']);
@@ -615,11 +606,23 @@ public function uploadProfilePicture(Request $req) {
         ActiveSession::where('status', '!=', 'Blocked')->update(['status' => 'Blocked']);
         $create = new logModal();
         $create->title = 'All Access Blocked';
-        $create->description = 'All access blocked by ' . session('username');
-        $create->user = session('username');
+        $create->description = 'All access blocked by ' . Auth::user()->name;
+        $create->user = Auth::user()->name;
         $create->status = 'done';
         $create->save();
         return response()->json(['message' => 'All access blocked']);
+    }
+
+    public function getActiveUsersCount()
+    {
+        $inactivityLimit = now()->subMinutes(10);
+        $count = ActiveSession::where('status', 'active')
+            ->where('last_activity', '>=', $inactivityLimit)
+            ->whereNotNull('user_id')
+            ->distinct('user_id')
+            ->count('user_id');
+
+        return response()->json(['active_users' => (int) $count]);
     }
 
     public function getSecurityAlerts() {
@@ -680,12 +683,9 @@ public function uploadProfilePicture(Request $req) {
                     'ads'
                 );
 
-                if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.ads', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.ads', $data);
-    }
+  
+        return view('ads', $data);
+ 
 
     }
     
@@ -797,11 +797,11 @@ public function uploadProfilePicture(Request $req) {
             
             $ad->delete();
             
-            return redirect()->route('admin.ads')
+            return redirect()->back()
                 ->with('success', 'Advertisement deleted successfully!');
                 
         } catch (\Exception $e) {
-            return redirect()->route('admin.ads')
+            return redirect()->back()
                 ->with('error', 'Failed to delete ad.');
         }
     }
@@ -809,24 +809,24 @@ public function uploadProfilePicture(Request $req) {
     // New method: Show shops with invoices (grouped by shop)
     public function shopInvoices(Request $request)
     {
+        if (!canUser('view_shop_debts')) {
+        abort(403, 'Unauthorized access');
+    }
         $user = Auth::user();
-
-        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to view shop debts.')) {
-            return $permissionCheck;
-        }
         
         // Get date filter parameters
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         
         // Get all shops with their invoice counts and total amounts
-        $shops = accountModel::orderBy('name', 'asc')->get();
+        $shops = getuserAccounts();
+        $shopsId = array_column($shops, 'id');
         
         $shopsWithInvoices = [];
         
         foreach ($shops as $shop) {
             // Build query for invoices
-            $invoiceQuery = ordersModel::where('account', $shop->id)
+            $invoiceQuery = ordersModel::where('account', $shop['id'])
                 ->where('orderName', '!=', '')
                 ->whereIn('status', ['Debt', 'Partial', 'Paid']);
             
@@ -847,7 +847,7 @@ public function uploadProfilePicture(Request $req) {
             $invoiceCount = $invoices->count();
             
             // Calculate total remaining debt (for Debt and Partial only) with date filter
-            $debtQuery = ordersModel::where('account', $shop->id)
+            $debtQuery = ordersModel::where('account', $shop['id'])
                 ->where('orderName', '!=', '')
                 ->whereIn('status', ['Debt', 'Partial']);
             
@@ -856,12 +856,12 @@ public function uploadProfilePicture(Request $req) {
             }
             if (!empty($endDate)) {
                 $debtQuery->whereDate('created_at', '<=', Carbon::parse($endDate)->toDateString());
-            }
+            }        
             
-            $totalDebt = $debtQuery->sum('totalPrice');
-            
+            $totalDebt = $debtQuery->sum('totalPrice') - $debtQuery->sum('paid');
+ 
             // Count actual debt records (Debt + Partial) with date filter
-            $debtCountQuery = ordersModel::where('account', $shop->id)
+            $debtCountQuery = ordersModel::where('account', $shop['id'])
                 ->where('orderName', '!=', '')
                 ->whereIn('status', ['Debt', 'Partial']);
             
@@ -880,9 +880,8 @@ public function uploadProfilePicture(Request $req) {
             // Only include shops that have invoices (including fully paid)
             if ($invoiceCount > 0) {
                 $shopsWithInvoices[] = [
-                    'id' => $shop->id,
-                    'name' => $shop->name,
-                    'location' => $shop->location,
+                    'id' => $shop['id'],
+                    'name' => $shop['name'],
                     'invoice_count' => $invoiceCount,
                     'total_amount' => $totalDebt,
                     'debt_count' => $debtCount,
@@ -901,12 +900,9 @@ public function uploadProfilePicture(Request $req) {
         // Convert to collection for view methods
         $data['shopsWithInvoices'] = collect($shopsWithInvoices);
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.shopInvoices', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.shopInvoices', $data);
-        }
+  
+            return view('shopInvoices', $data);
+      
     }
     
     // New method: Show customers with debts for a specific shop
@@ -947,7 +943,7 @@ public function uploadProfilePicture(Request $req) {
             ->selectRaw('
                 cName,
                 orderName,
-                SUM(totalPrice) as total_debt,
+                SUM(totalPrice - paid) as total_debt,
                 MAX(status) as status,
                 MAX(created_at) as last_order_date
             ')
@@ -997,7 +993,7 @@ public function uploadProfilePicture(Request $req) {
             
             $debtors->push((object)[
                 'cName' => $customerName,
-                'cPhone' => $customer->contact ?? 'N/A',
+                'cPhone' => $customer->id ?? 'N/A',
                 'total_debt' => $totalDebt,
                 'total_paid' => $totalPaid,
                 'remaining' => $remaining,
@@ -1013,12 +1009,9 @@ public function uploadProfilePicture(Request $req) {
         
         $data = compact('shop', 'debtors');
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.shopDebtors', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.shopDebtors', $data);
-        }
+
+            return view('shopDebtors', $data);
+     
     }
     
     // New method: Show products for a specific customer debt
@@ -1076,7 +1069,7 @@ public function uploadProfilePicture(Request $req) {
             
             // Get total debt - always use sum of totalPrice as the actual invoice total
             // The credit field might be 0 or null for some records
-            $totalDebt = $items->sum('totalPrice');
+            $totalDebt = $items->sum(fn($i) => ($i->totalPrice ?? 0) - ($i->paid ?? 0));
             
             // Get amount already paid from debtsModel table
             // Also check account to ensure we're looking at the right shop's payments
@@ -1111,12 +1104,9 @@ public function uploadProfilePicture(Request $req) {
             'startDate', 'endDate', 'availableChip'
         );
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.customerDebtProducts', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.customerDebtProducts', $data);
-        }
+
+            return view('customerDebtProducts', $data);
+     
     }
     
     // Undo latest debt payment for a specific invoice
@@ -1155,167 +1145,318 @@ public function uploadProfilePicture(Request $req) {
 
         logModal::create([
             'title' => 'Debt Payment Undo',
-            'description' => 'Payment undo of '.$undoneAmount.' for invoice '.$invoiceName.' by '.session('username')
+            'description' => 'Payment undo of '.$undoneAmount.' for invoice '.$invoiceName.' by '.Auth::user()->name
         ]);
 
         return redirect()->back()->with('success', 'Last payment of ' . number_format($undoneAmount) . ' has been undone.');
     }
 
-    // New method: Pay debt for a specific invoice
-    public function payInvoiceDebt(Request $request)
+    public function editDebtProduct(Request $request)
     {
-        if ($permissionCheck = $this->ensureUserPermission('pay_debts', 'You do not have permission to pay debts.')) {
+        $user = Auth::user();
+
+        if (!canUser('pay_debts') && !canUser('manage_paid_invoice')) {
+            return redirect()->back()->with('error', 'You do not have permission to edit debt products.');
+        }
+
+        $request->validate([
+            'productId' => 'required|integer|exists:orders,id',
+            'pQuantity' => 'required|integer|min:1',
+            'productPrice' => 'required|numeric|min:0',
+        ]);
+
+        $order = ordersModel::where('id', $request->input('productId'))
+            ->where('account', $request->input('shopName'))
+            ->whereIn('status', ['Debt', 'Partial'])
+            ->first();
+
+        if (!$order) {
+            return redirect()->back()->with('error', 'Product not found.');
+        }
+
+        $newQty     = $request->input('pQuantity');
+        $newPrice   = $request->input('productPrice');
+        $newTotal   = $newQty * $newPrice;
+
+        $order->pQuantity   = $newQty;
+        $order->productPrice = $newPrice;
+        $order->totalPrice  = $newTotal;
+        $order->save();
+
+        logModal::create([
+            'title' => 'Debt Product Edit',
+            'description' => 'Product ' . ($order->name01 ?? $order->productId) .
+                ' on invoice #' . $order->orderName .
+                ' updated to qty ' . $newQty . ' @ ' . $newPrice .
+                ' by ' . Auth::user()->name
+        ]);
+
+        return redirect()->back()->with('success', 'Product updated successfully (new total: ' . number_format($newTotal) . ' Tsh).');
+    }
+
+    public function deleteDebtProduct(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('delete_orders', 'You do not have permission to delete debt products.')) {
             return $permissionCheck;
         }
 
-        $invoiceName = $request->input('invoiceName');
-        $shopName = $request->input('shopName');
-        $paymentMethod = $request->input('payment_method', 'cash'); // 'cash' or 'chip'
-        $chipAmount = $request->input('chip_amount', 0); // Only used if payment_method is 'chip'
-        $paymentAmount = (float) $request->input('paymentAmount', 0);
-        $paymentDate = $request->input('payment_date');
-  
-        
-        if (!$invoiceName || $paymentAmount < 0) {
-            return redirect()->back()->with('error', 'Invalid invoice or amount');
+        $productId = $request->input('productId');
+        $shopName  = $request->input('shopName');
+        $orderId   = $request->input('orderId');
+
+        if (!$productId || !$shopName || !$orderId) {
+            return redirect()->back()->with('error', 'Invalid request.');
         }
-        
-        $userName = session('username');
-        
-        // Get the first order item for this invoice
-        $firstOrder = ordersModel::where('account', $shopName)
-            ->where('orderName', $invoiceName)
-            ->first();
-        
-        if (!$firstOrder) {
-            return redirect()->back()->with('error', 'Invoice not found');
-        }
-        
-        // Get total debt - get from orders table's totalPrice sum for this invoice
-        $allOrderItems = ordersModel::where('account', $shopName)
-            ->where('orderName', $invoiceName)
-            ->get();
-        $totalDebt = $allOrderItems->sum('totalPrice');
-        
-        // Get amount already paid - also check account to match the shop
-        $paidAmount = debtsModel::where('orderId', $firstOrder->order_id)
+
+        $item = ordersModel::where('id', $productId)
             ->where('account', $shopName)
-            ->sum('amount');
-        $remainingDebt = max(0, $totalDebt - $paidAmount);
-        
-        if ($remainingDebt <= 0) {
-            return redirect()->back()->with('error', 'This invoice is already fully paid');
-        }
-        
-        if ($paymentAmount > $remainingDebt) {
-            $paymentAmount = $remainingDebt; // Cap at remaining amount
+            ->whereIn('status', ['Debt', 'Partial'])
+            ->first();
+
+        if (!$item) {
+            return redirect()->back()->with('error', 'Product not found.');
         }
 
-        // Handle chip payment validation and deduction
-        if ($paymentMethod === 'chip') {
-    $chipPayment = (float) $chipAmount;
+        $restoreQty  = $item->pQuantity ?? 0;
+        $productId_  = $item->productId;
+        $invoiceName = $item->orderName;
 
-    if ($chipPayment <= 0) {
-        return redirect()->back()->with('error', 'Chip amount is required when payment method is chip');
-    }
+        DB::transaction(function () use ($item, $shopName) {
+            $item->delete();
+        });
 
-    // Get shop
-    $shop = accountModel::find($shopName);
-    if (!$shop) {
-        return redirect()->back()->with('error', 'Shop not found');
-    }
+        $product = productsModel::where('account', $shopName)
+            ->where('product_id', $productId_)
+            ->first();
 
-    // Get latest chip entry (LAST ROW ONLY)
-    $chipEntry = BankingChip::where('shop_id', $shop->id)
-        ->orderBy('id', 'desc')
-        ->first();
-
-    if (!$chipEntry) {
-        return redirect()->back()->with('error', 'No chip record found for this shop');
-    }
-
-    // Get current available chip from LAST entry
-    $availableChip = $chipEntry->available_chip ?? 0;
-
-    if ($availableChip <= 0) {
-        return redirect()->back()->with('error', 'No chip balance available');
-    }
-
-    if ($chipPayment > $availableChip) {
-        return redirect()->back()->with(
-            'error',
-            'Insufficient chip balance. Available: ' . number_format($availableChip) . ' Tsh'
-        );
-    }
-
-    // Deduct from chip_amount on the last entry
-    // The model's observer will automatically recalculate available_chip for all entries
-    $chipEntry->chip_amount -= $chipPayment;
-    $chipEntry->save(); // triggers recalculation automatically
-
-    // Total payment
-    $TotalPayment = $paymentAmount + $chipPayment;
-
-} else {
-    $chipPayment = 0;
-    $TotalPayment = $paymentAmount;
-}
-        // Record payment ONLY in debtsModel table - use shopName for reports to work
-        // Fallback to getSessionAccountDisplayName() if shopName is empty
-        $accountName = !empty($shopName) ? $shopName : getSessionAccountId();
-        
-        // Create payment record with custom created_at date if provided
-        $payment = new debtsModel();
-        $payment->cName   = $firstOrder->cName;
-        $payment->debtId  = $firstOrder->id;
-        $payment->cId     = $firstOrder->cPhone;
-        $payment->orderId = $firstOrder->order_id;
-        $payment->amount  = $TotalPayment;
-        $payment->account = $accountName;
-        $payment->payment_method = $paymentMethod;
-        $payment->chip_amount = $chipPayment;
-        
-        // Set custom created_at if payment_date is provided
-        if (!empty($paymentDate)) {
-            $payment->created_at = Carbon::parse($paymentDate)->toDateString() . ' 23:59:59';
+        if ($product) {
+            $product->quantity += $restoreQty;
+            $product->save();
         }
-        
-        $payment->save();
 
-        // Log the payment
-        $logDescription = 'Payment of ' . number_format($paymentAmount);
-        if ($paymentMethod === 'chip' && $chipPayment > 0) {
-            $logDescription .= ' (Cash: ' . number_format($TotalPayment - $chipPayment) . ', Chip: ' . number_format($chipPayment) . ')';
-        }
-        $logDescription .= ' for invoice ' . $invoiceName . ' by ' . $userName;
-        
+        $remaining = ordersModel::where('order_id', $orderId)
+            ->where('account', $shopName)
+            ->whereIn('status', ['Debt', 'Partial'])
+            ->count();
+
+        $logTitle  = $remaining > 0 ? 'Debt Product Deleted' : 'Debt Invoice Cleared';
+        $logDesc   = 'Product ' . ($item->name01 ?? $productId_) .
+            ' deleted from invoice #' . $invoiceName .
+            ' by ' . Auth::user()->name .
+            ($remaining === 0 ? '. Invoice fully cleared.' : '. ' . $remaining . ' items remaining.');
+
         logModal::create([
-            'title' => 'Debt Payment',
-            'description' => $logDescription
+            'title' => $logTitle,
+            'description' => $logDesc
         ]);
-        
-        // Recalculate remaining after payment
-        $newPaidAmount = $paidAmount + $paymentAmount;
-        $newRemaining = $totalDebt - $newPaidAmount;
-        
-        if ($newRemaining <= 0) {
-            return redirect()->back()->with('success', 'Invoice fully paid!');
-        } else {
-            return redirect()->back()->with('success', 'Payment of ' . number_format($paymentAmount) . ' recorded. Remaining: ' . number_format($newRemaining));
-        }
+
+        return redirect()->back()->with('success', 'Product deleted. ' .
+            ($remaining > 0 ? $remaining . ' items remaining on this invoice.' : 'Invoice fully cleared.'));
     }
+
+    // New method: Pay debt for a specific invoice
+    public function payInvoiceDebt(Request $request)
+{
+    if ($permissionCheck = $this->ensureUserPermission('pay_debts', 'You do not have permission to pay debts.')) {
+        return $permissionCheck;
+    }
+
+    $invoiceName = $request->input('invoiceName');
+    $shopName = $request->input('shopName');
+    $customerName = $request->input('customerName'); // Get customer name
+    $paymentMethod = $request->input('payment_method', 'cash');
+    $chipAmount = (float) $request->input('chip_amount', 0);
+    $paymentAmount = (float) $request->input('paymentAmount', 0);
+    $paymentDate = $request->input('payment_date');
+    
+    // Get filter parameters to preserve them after redirect
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $reset = $request->input('reset');
+    
+    if ($reset) {
+        $startDate = $endDate = null;
+    }
+    
+    if (!$invoiceName || $paymentAmount < 0) {
+        return redirect()->back('customerDebtProducts', [
+            'customer' => $customerName,
+            'shop' => $shopName,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ])->with('error', 'Invalid invoice or amount');
+    }
+    
+    $userName = Auth::user()->name;
+    
+    // Get the first order item for this invoice
+    $firstOrder = ordersModel::where('account', $shopName)
+        ->where('orderName', $invoiceName)
+        ->first();
+    
+    if (!$firstOrder) {
+        return redirect()->route('customerDebtProducts', [
+            'customer' => $customerName,
+            'shop' => $shopName,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ])->with('error', 'Invoice not found');
+    }
+    
+    // Get total debt
+    $allOrderItems = ordersModel::where('account', $shopName)
+        ->where('orderName', $invoiceName)
+        ->get();
+
+    $totalDebt = $allOrderItems->sum('totalPrice') - $allOrderItems->sum('paid');
+
+    // Get amount already paid
+    $paidAmount = debtsModel::where('orderId', $firstOrder->order_id)
+        ->where('account', $shopName)
+        ->sum('amount');
+    $remainingDebt = max(0, $totalDebt - $paidAmount);
+    
+    if ($remainingDebt < 1) {
+        return redirect()->route('customerDebtProducts', [
+            'customer' => $customerName,
+            'shop' => $shopName,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ])->with('error', 'This invoice is already fully paid');
+    }
+    
+ 
+
+    // Handle chip payment validation and deduction
+    if ($paymentMethod === 'chip') {
+        $chipPayment = (float) $chipAmount;
+
+        if ($chipPayment <= 0) {
+            return redirect()->route('customerDebtProducts', [
+                'customer' => $customerName,
+                'shop' => $shopName,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ])->with('error', 'Chip amount is required when payment method is chip');
+        }
+
+        $shop = accountModel::find($shopName);
+        if (!$shop) {
+            return redirect()->route('customerDebtProducts', [
+                'customer' => $customerName,
+                'shop' => $shopName,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ])->with('error', 'Shop not found');
+        }
+
+        $chipEntry = BankingChip::where('shop_id', $shop->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$chipEntry) {
+            return redirect()->route('customerDebtProducts', [
+                'customer' => $customerName,
+                'shop' => $shopName,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ])->with('error', 'No chip record found for this shop');
+        }
+
+        $availableChip = $chipEntry->available_chip ?? 0;
+
+        if ($availableChip <= 0) {
+            return redirect()->route('customerDebtProducts', [
+                'customer' => $customerName,
+                'shop' => $shopName,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ])->with('error', 'No chip balance available');
+        }
+
+        if ($chipPayment > $availableChip) {
+            return redirect()->route('customerDebtProducts', [
+                'customer' => $customerName,
+                'shop' => $shopName,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ])->with('error', 'Insufficient chip balance. Available: ' . number_format($availableChip) . ' Tsh');
+        }
+
+        $chipEntry->available_chip -= $chipPayment;
+        $chipEntry->save();
+
+        $TotalPayment = $paymentAmount + $chipPayment;
+    } else {
+        $chipPayment = 0;
+        $TotalPayment = $paymentAmount;
+    }
+    
+    // Record payment
+    $accountName = !empty($shopName) ? $shopName : getCurrentShopId();
+    
+    $payment = new debtsModel();
+    $payment->cName   = $firstOrder->cName;
+    $payment->debtId  = $firstOrder->id;
+    $payment->cId     = $firstOrder->cPhone;
+    $payment->orderId = $firstOrder->order_id;
+    $payment->amount  = $TotalPayment;
+    $payment->account = $accountName;
+    $payment->payment_method = $paymentMethod;
+    $payment->chip_amount = $chipPayment;
+    
+    if (!empty($paymentDate)) {
+        $payment->created_at = Carbon::parse($paymentDate)->toDateString() . ' 23:59:59';
+    }
+    
+    $payment->save();
+
+    // Log the payment
+    $logDescription = 'Payment of ' . number_format($TotalPayment);
+    if ($paymentMethod === 'chip' && $chipPayment > 0) {
+        $logDescription .= ' (Cash: ' . number_format($paymentAmount) . ', Chip: ' . number_format($chipPayment) . ')';
+    }
+    $logDescription .= ' for invoice ' . $invoiceName . ' by ' . $userName;
+    
+    logModal::create([
+        'title' => 'Debt Payment',
+        'description' => $logDescription
+    ]);
+    
+    // Recalculate remaining
+    $newPaidAmount = $paidAmount + $TotalPayment;
+    $newRemaining = $totalDebt - $newPaidAmount;
+    
+    // Prepare redirect parameters
+    $redirectParams = [
+        'customer' => $customerName,
+        'shop' => $shopName,
+        'start_date' => $startDate,
+        'end_date' => $endDate
+    ];
+    
+    if ($newRemaining <= 0) {
+            return redirect()->route('customerDebtProducts', $redirectParams)
+            ->with('success', 'Invoice fully paid!');
+
+        
+    } else {
+        
+            return redirect()->route('customerDebtProducts', $redirectParams)
+            ->with('success', 'Payment of ' . number_format($TotalPayment) . ' recorded. Remaining: ' . number_format($newRemaining));
+
+    }
+}
     
     
     // New method: Show all paid debt payments with summary
     public function paidInvoices(Request $request)
     {
         $user = Auth::user();
-
-        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to view paid invoices.')) {
-            return $permissionCheck;
-        }
         
-        $shopName = $request->input('shop', getSessionAccountDisplayName());
+        $shopName = $request->input('shop', getCurrentShopId());
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         
@@ -1353,7 +1494,8 @@ public function uploadProfilePicture(Request $req) {
         $shop = accountModel::where('id', $shopName)->first();
         
         // Get all shops for filter (for admin view)
-        $shops = accountModel::orderBy('name', 'asc')->get();
+        $shops = getuserAccounts();
+        $shopsId = array_column($shops, 'id');
         
         $data = compact(
             'payments', 'shopName', 'startDate', 'endDate',
@@ -1361,12 +1503,9 @@ public function uploadProfilePicture(Request $req) {
             'paymentsByCustomer', 'shop', 'shops'
         );
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.paidInvoices', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.paidInvoices', $data);
-        }
+
+            return view('paidInvoices', $data);
+    
     }
 
     /**
@@ -1376,9 +1515,6 @@ public function uploadProfilePicture(Request $req) {
     {
         $user = Auth::user();
 
-        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to delete paid invoices.')) {
-            return $permissionCheck;
-        }
 
         $paymentId = $request->input('payment_id');
 
@@ -1393,13 +1529,8 @@ public function uploadProfilePicture(Request $req) {
             return redirect()->back()->with('error', 'Payment not found');
         }
 
-        // Verify shop access for non-admin users
-        if ($user->levelStatus !== 'Admin') {
-            $shopName = $request->input('shop', getSessionAccountDisplayName());
-            if ($payment->account !== $shopName) {
-                return redirect()->back()->with('error', 'You do not have permission to delete this payment');
-            }
-        }
+            $shopName = $request->input('shop', getCurrentShopId());
+
 
         $deletedAmount = $payment->amount;
         $invoiceId = $payment->orderId;
@@ -1411,10 +1542,103 @@ public function uploadProfilePicture(Request $req) {
         // Log the deletion
         logModal::create([
             'title' => 'Payment Deleted',
-            'description' => 'Payment of Tsh ' . number_format($deletedAmount) . ' for invoice ' . $invoiceId . ' deleted by ' . session('username')
+            'description' => 'Payment of Tsh ' . number_format($deletedAmount) . ' for invoice ' . $invoiceId . ' deleted by ' . Auth::user()->name
         ]);
 
         return redirect()->back()->with('success', 'Payment deleted successfully');
+    }
+
+    public function fixCustomerRefs(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array(strtolower(trim($user->levelStatus)), ['admin', 'admin2'])) {
+            return redirect()->back()->with('error', 'Unauthorized - Admin access required');
+        }
+
+        try {
+            $customerNames = ordersModel::whereRaw("cPhone REGEXP '[0-9]{4,}'")
+                ->whereNotNull('cName')
+                ->where('cName', '!=', '')
+                ->distinct('cName')
+                ->pluck('cName')
+                ->merge(
+                    salsModel::whereRaw("cPhone REGEXP '[0-9]{4,}'")
+                        ->whereNotNull('cName')
+                        ->where('cName', '!=', '')
+                        ->distinct('cName')
+                        ->pluck('cName')
+                )
+                ->merge(
+                    debtsModel::whereRaw("cId REGEXP '[0-9]{4,}'")
+                        ->whereNotNull('cName')
+                        ->where('cName', '!=', '')
+                        ->distinct('cName')
+                        ->pluck('cName')
+                )
+                ->unique()
+                ->values();
+
+            if ($customerNames->isEmpty()) {
+                return redirect()->back()->with('success', 'No records with phone numbers found in orders, sales, or debts tables.');
+            }
+
+            $customerIdMap = customerModel::whereIn('name', $customerNames)
+                ->get(['name', 'id'])
+                ->keyBy('name');
+
+            if ($customerIdMap->isEmpty()) {
+                return redirect()->back()->with('success', 'Matching customers not found for any of the names in orders/sales/debts. Nothing updated.');
+            }
+
+            $ordersUpdated = ordersModel::whereRaw("cPhone REGEXP '[0-9]{4,}'")
+                ->whereNotNull('cName')
+                ->where('cName', '!=', '')
+                ->get()
+                ->filter(function ($order) use ($customerIdMap) {
+                    return $customerIdMap->has($order->cName);
+                })
+                ->each(function ($order) use ($customerIdMap) {
+                    $order->cPhone = $customerIdMap[$order->cName]->id;
+                    $order->save();
+                });
+
+            $salesUpdated = salsModel::whereRaw("cPhone REGEXP '[0-9]{4,}'")
+                ->whereNotNull('cName')
+                ->where('cName', '!=', '')
+                ->get()
+                ->filter(function ($sale) use ($customerIdMap) {
+                    return $customerIdMap->has($sale->cName);
+                })
+                ->each(function ($sale) use ($customerIdMap) {
+                    $sale->cPhone = $customerIdMap[$sale->cName]->id;
+                    $sale->save();
+                });
+
+            $debtsUpdated = debtsModel::whereRaw("cId REGEXP '[0-9]{4,}'")
+                ->whereNotNull('cName')
+                ->where('cName', '!=', '')
+                ->get()
+                ->filter(function ($debt) use ($customerIdMap) {
+                    return $customerIdMap->has($debt->cName);
+                })
+                ->each(function ($debt) use ($customerIdMap) {
+                    $debt->cId = $customerIdMap[$debt->cName]->id;
+                    $debt->save();
+                });
+
+            $totalUpdated = $ordersUpdated->count() + $salesUpdated->count() + $debtsUpdated->count();
+
+            logModal::create([
+                'title'   => 'Customer Reference Fix',
+                'description' => "Fixed {$totalUpdated} records (Orders: {$ordersUpdated->count()}, Sales: {$salesUpdated->count()}, Debts: {$debtsUpdated->count()}) by replacing phone numbers with customer IDs. Executed by " . Auth::user()->name,
+            ]);
+
+            return redirect()->back()->with('success', "Fix complete. {$totalUpdated} records updated (Orders: {$ordersUpdated->count()}, Sales: {$salesUpdated->count()}, Debts: {$debtsUpdated->count()}).");
+        } catch (\Throwable $e) {
+            \Log::error('fixCustomerRefs error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error', 'Fix failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -1482,7 +1706,7 @@ public function uploadProfilePicture(Request $req) {
                     'stockId' => 'MANUAL',
                     'orderName' => $orderName,
                     'cName' => $validated['customer_name'],
-                    'cPhone' => $customer->phone ?? $customer->id,
+                    'cPhone' => $customer->id,
                     'productId' => 'MANUAL',
                     'pQuantity' => 1,
                     'productPrice' => $validated['amount'],
@@ -1492,7 +1716,7 @@ public function uploadProfilePicture(Request $req) {
                     'paid' => 0,
                     'transactionType' => 'Credit',
                     'status' => 'Debt',
-                    'served_by' => $user->name ?? session('username'),
+                    'served_by' => $user->name ?? Auth::user()->name,
                     'account' => $validated['account'],
                     'coupons' => null,
                     'discount' => 0,
@@ -1505,7 +1729,7 @@ public function uploadProfilePicture(Request $req) {
                 // Log the manual invoice creation
                 logModal::create([
                     'title' => 'Manual Invoice',
-                    'description' => "Manual invoice {$orderName} created for {$validated['customer_name']} - Tsh " . number_format($validated['amount']) . " by " . ($user->name ?? session('username')),
+                    'description' => "Manual invoice {$orderName} created for {$validated['customer_name']} - Tsh " . number_format($validated['amount']) . " by " . ($user->name ?? Auth::user()->name),
                 ]);
             });
 

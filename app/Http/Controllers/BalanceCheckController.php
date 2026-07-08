@@ -18,6 +18,7 @@ use App\Models\BankingChip;
 use App\Models\madeni;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use function getUserAccounts;
 
 class BalanceCheckController extends Controller
 {
@@ -78,10 +79,8 @@ class BalanceCheckController extends Controller
         
         $data = compact('shop', 'balance', 'discrepancies', 'groupedDiscrepancies', 'date', 'summary', 'transactions');
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.balance-discrepancies', $data);
-        }
-        return view('user.balance-discrepancies', $data);
+            return view('balance-discrepancies', $data);
+
     }
     
     /**
@@ -120,10 +119,8 @@ class BalanceCheckController extends Controller
         
         $data = compact('discrepancy', 'relatedTransactions');
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.discrepancy-detail', $data);
-        }
-        return view('user.discrepancy-detail', $data);
+            return view('discrepancy-detail', $data);
+     
     }
     
     /**
@@ -269,7 +266,7 @@ class BalanceCheckController extends Controller
             'statusFilter'
         );
         
-        return view('admin.all-discrepancies', $data);
+        return view('all-discrepancies', $data);
     }
     
     /**
@@ -279,13 +276,9 @@ class BalanceCheckController extends Controller
     {
         $user = Auth::user();
         $date = $req->input('date', date('Y-m-d'));
-        
-        // Determine which shops to include
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shopIds = accountModel::pluck('id')->toArray();
-        } else {
-            $shopIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
+        $shops = getUserAccounts();
+        $shopIds = array_column($shops, 'id');
+ 
         
         if (empty($shopIds)) {
             return response()->json([

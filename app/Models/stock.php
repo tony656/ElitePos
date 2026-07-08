@@ -9,4 +9,17 @@ class stock extends Model
 {
     use HasFactory;
     protected $table = "stock";
+
+        protected $fillable = [
+            'account',
+            'productId',
+            'name',
+            'sQuantity',
+            'amount',
+            'profit',
+            'bPrice',
+            'sPrice',
+            'created_at',
+            'profit'
+        ];
 }

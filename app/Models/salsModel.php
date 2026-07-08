@@ -31,7 +31,9 @@ class salsModel extends Model
             'discount_increase',
             'offered_items',
             'offer_parent_product',
+            'offer_parent_products',
             'account',
+            'status',
             'created_at'
         ];
 }

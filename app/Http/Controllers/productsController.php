@@ -12,177 +12,155 @@ use App\Models\usersModel;
 use App\Models\vendorModal;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Facades\Cache;
 use App\Models\stock;
 use Illuminate\Support\Facades\DB;
 use App\Models\madeni;
 use App\Models\UserAccount;
 use App\Models\accountModel;
 use App\Models\itemRequestModel;
+use App\Models\OfferItem;
 use App\Models\salsModel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
 use function getCurrentShopId;
+use function getuserAccounts;
 
 class productsController extends Controller
 {
-    public function index() {
-        $vendor = null;
-        $user = Auth::user();
-        $perPage = request('per_page', 10000);
-        $search = request('search', '');
-        $sort = request('sort', 'name_asc');
-        $shopFilter = request('shop', getCurrentShopId()); // Default to session account
+      // Cache durations
+    const CACHE_TTL = 86400; // 1 day
+    const STATS_CACHE_TTL = 3600; // 1 hour for stats
+    
+    public function index()
+{
+    if (!canUser('view_items')) {
+        abort(403, 'Unauthorized access');
+    }
+
+    $shopFilter = request('shop');
+    if(!empty($shopFilter)) {
         
-        session(
-            ['selected_shop_id' => $shopFilter] 
-        );
-        // Get user's assigned accounts (for both admin and user, but used differently)
-        $userAccounts = $user->accounts()->pluck('account')->toArray();
+        session([
+            'selected_shop_id' => $shopFilter
+        ]);
 
-        // Build base query based on user role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin can see all products, optionally filtered by selected shop
-            $baseQuery = productsModel::where('name01', '!=', null);
-            
-            // If a specific shop is selected, filter by that shop
-            if (!empty($shopFilter)) {
-                $baseQuery->where('account', $shopFilter);
-            }
-        } else {
-            // Regular users can only see products from their assigned shops
-            if (empty($userAccounts)) {
-                // If user has no assigned shops, show no products
-                $baseQuery = productsModel::where('id', '=', 0); // Empty result
-            } else {
-                $baseQuery = productsModel::whereIn('account', $userAccounts)
-                    ->where('name01', '!=', null);
-                
-                // If a specific shop is selected and user has access to it, filter further
-                if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                    $baseQuery->where('account', $shopFilter);
-                }
-            }
-        }
+    }
+        $shopFilter = getCurrentShopId();
 
-        // When searching, don't apply pagination or sorting - show all results
-        if ($search) {
-            $productsQuery = $baseQuery->where(function($q) use ($search) {
-                $q->where('name01', 'LIKE', "%{$search}%")
-                  ->orWhere('name02', 'LIKE', "%{$search}%")
-                  ->orWhere('category', 'LIKE', "%{$search}%")
-                  ->orWhere('product_id', 'LIKE', "%{$search}%");
-                });
-            
-            // Get all matching products without pagination
-            $products = $productsQuery->get();
-            
-            // Convert to a LengthAwarePaginator-like object for compatibility
-            $products = new \Illuminate\Pagination\LengthAwarePaginator(
-                $products,
-                $products->count(),
-                max($products->count(), 1),
-                1,
-                ['path' => request()->url(), 'query' => request()->query()]
-            );
-        } else {
-            // Normal view — show ALL products (no pagination) but wrap in paginator for view compatibility
-            $productsQuery = $this->applySorting($baseQuery, $sort);
-            $allProducts = $productsQuery->get();
-            $products = new \Illuminate\Pagination\LengthAwarePaginator(
-                $allProducts,
-                $allProducts->count(),
-                max($allProducts->count(), 1),
-                1,
-                ['path' => request()->url(), 'query' => request()->query()]
-            );
-        }
+$shops = getuserAccounts();
 
-        foreach($products as $product) {
+    
+    $query = productsModel::query();
 
-        $vendor = vendorModal::where('account', getCurrentShopId())->where('id', '=', $product->supplier)->first();
-        }
-          // Calculate stats based on filtered products
-          $accountIds = strtolower(trim($user->levelStatus)) === 'admin'
-              ? ($shopFilter ? [$shopFilter] : accountModel::where('id', '!=', getCurrentShopId())->pluck('id')->toArray())
-              : ($shopFilter ? [$shopFilter] : $user->accounts()->pluck('account')->toArray());
-          
-          $TProducts = DB::table('products')
-              ->whereIn('account', $accountIds)
-              ->where('name01', '!=', null)
-              ->count();
-
-        // Calculate Inventory Worth based on Cost Price (bPrice)
-        $totalCostWorth = DB::table('products')
-            ->whereIn('account', $accountIds)
-            ->where('name01', '!=', null)
-            ->selectRaw('SUM(quantity * bPrice) as total')
-            ->value('total') ?? 0;
-
-        // Calculate Inventory Worth based on Selling Price (sPrice)
-        $totalSellingWorth = DB::table('products')
-            ->whereIn('account', $accountIds)
-            ->where('name01', '!=', null)
-            ->selectRaw('SUM(quantity * sPrice) as total')
-            ->value('total') ?? 0;
-
-        // Calculate Out of Stock products (quantity <= 0)
-        $ofs = DB::table('products')
-            ->whereIn('account', $accountIds)
-            ->where('name01', '!=', null)
-            ->where('quantity', '<=', 0)
-            ->count();
-
-        // Calculate Expired products
-        $CMofs = DB::table('products')
-            ->whereIn('account', $accountIds)
-            ->where('name01', '!=', null)
-            ->where('expire', '<', date('Y-m'))
-            ->count();
-
-        // Get all shops for admin filter dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $getAllAccounts = accountModel::all();
-        } else {
-            // For regular users, only show their assigned shops in the filter
-            $getAllAccounts = accountModel::whereIn('id', $userAccounts ?? [])->get();
-        }
-
-        // Get all active offers for the current account (to show badge on products)
-        $offers = Offer::where('account', getCurrentShopId())
+    if(!empty($shopFilter)) {
+        $query->where('account', $shopFilter);
+    } 
+    
+    // IMPORTANT: Use paginate() instead of get()
+    $perPage = request('per_page', 600);
+    $products = $query->where('name01', '!=', null)
+                      ->orderBy('name01', 'asc')
+                      ->paginate($perPage)
+                      ->appends(request()->query()); // Preserve query parameters
+    
+    // Extract data
+    $getAllAccounts = $shops;
+    $offers = Offer::where('account', $shopFilter)
             ->where('is_active', true)
             ->pluck('product_id')
             ->toArray();
-
-        $data = compact(
-        'products','getAllAccounts','vendor','TProducts','totalCostWorth','totalSellingWorth','ofs','CMofs','offers'
-    );
-
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-       return view('admin.products', $data);
+    
+    // Stats - these need to be calculated on ALL products, not just current page
+    $allProductsQuery = productsModel::query();
+    if(!empty($shopFilter)) {
+        $allProductsQuery->where('account', $shopFilter);
+    } else {
+        $allProductsQuery->where('account', getCurrentShopId());
     }
-    if(!empty($user->levelStatus)) {
-        return view('user.products', $data);
-    }
-    }
+    $allProducts = $allProductsQuery->where('name01', '!=', null)->get();
+    
+    $TProducts = $products->count();
+  $totalCostWorth = $allProducts->sum(function($product) {
+    return $product->bPrice * $product->quantity;
+});
 
-      public function getAllAccounts()
-    {
-        try {
-            $currentAccount = getCurrentShopId();
-            $accounts = accountModel::all();
-            
-            return response()->json([
-                'success' => true,
-                'accounts' => $accounts
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to load accounts'
-            ], 500);
+$totalSellingWorth = $products->sum(function($product) {
+    return $product->sPrice * $product->quantity;
+});
+$Negative = productsModel::query();
+        if(!empty($shopFilter)) {
+        $Negative->where('account', $shopFilter);
+    } else {
+        $Negative->where('account', getCurrentShopId());
+    }
+        $Negative->where('quantity', '<', 0);
+    $negatives = $Negative->get();
+
+        $query->where('quantity', '<', 0);
+    $available = $query->get();
+
+    $outOfSyncShops = [];
+    $currentShopMismatches = [];
+    $mainStoreId = 7;
+
+    $mainStoreProducts = productsModel::where('account', $mainStoreId)
+        ->get(['product_id', 'bPrice', 'sPrice'])
+        ->keyBy('product_id');
+
+    $otherAccountIds = collect($getAllAccounts)
+        ->pluck('id')
+        ->filter(fn($id) => $id != $mainStoreId && !empty($id))
+        ->toArray();
+
+    if (!empty($otherAccountIds) && $mainStoreProducts->isNotEmpty()) {
+        $allOtherProducts = productsModel::whereIn('account', $otherAccountIds)
+            ->get(['account', 'product_id', 'bPrice', 'sPrice', 'name01']);
+
+        $groupedByShop = $allOtherProducts->groupBy('account');
+
+        foreach ($groupedByShop as $shopId => $shopProducts) {
+            $mismatches = [];
+            foreach ($shopProducts as $shopProduct) {
+                $mainProduct = $mainStoreProducts->get($shopProduct->product_id);
+                if ($mainProduct && ($mainProduct->bPrice != $shopProduct->bPrice || $mainProduct->sPrice != $shopProduct->sPrice)) {
+                    $mismatches[] = [
+                        'product_id' => $shopProduct->product_id,
+                        'name' => $shopProduct->name01,
+                        'main_bPrice' => $mainProduct->bPrice,
+                        'main_sPrice' => $mainProduct->sPrice,
+                        'shop_bPrice' => $shopProduct->bPrice,
+                        'shop_sPrice' => $shopProduct->sPrice,
+                    ];
+                }
+            }
+
+            if (!empty($mismatches)) {
+                $accountName = collect($getAllAccounts)->firstWhere('id', $shopId)['name'] ?? "Shop {$shopId}";
+                $outOfSyncShops[] = [
+                    'name' => $accountName,
+                    'id' => $shopId,
+                    'count' => count($mismatches),
+                ];
+
+                if ($shopId == $shopFilter) {
+                    $currentShopMismatches = $mismatches;
+                }
+            }
         }
     }
+
+    $data = compact('products', 'getAllAccounts', 'negatives', 'available','TProducts', 
+                   'totalCostWorth', 'totalSellingWorth', 'offers', 'outOfSyncShops', 'currentShopMismatches');
+    
+    // Return view based on role
+       return view('products', $data);
+
+
+}
+    
+  
 
     // Method to duplicate products to another account
     public function duplicateProducts(Request $request)
@@ -202,76 +180,67 @@ class productsController extends Controller
             $currentAccount = 7;
             $duplicatedCount = 0;
             
-            // Log for tracking
-            $create = new logModal();
-            $create->title = 'Product Duplication';
-            $create->description = 'Starting product duplication from ' . $currentAccount . ' to ' . $targetAccount;
-            $create->save();
+// Get all accounts except source account
+$accounts = accountModel::where('id', '!=', $currentAccount)->get();
 
-            foreach ($productIds as $productId) {
-                // Get the original product
-                $originalProduct = productsModel::where('product_id', $productId)
-                    ->where('account', $currentAccount)
-                    ->first();
+foreach ($productIds as $productId) {
 
-                if (!$originalProduct) {
-                    continue; // Skip if product not found
-                }
-                    // Check if product already exists in target account
-                    $existingProduct = productsModel::where('product_id', $originalProduct->product_id)
-                        ->where('account', $targetAccount)
-                        ->first();
+    $originalProduct = productsModel::where('product_id', $productId)
+        ->where('account', $currentAccount)
+        ->first();
 
-                    if ($existingProduct) {
-                        // Update existing product
-                        $existingProduct->name01 = $originalProduct->name01;
-                        $existingProduct->name02 = $originalProduct->name02;
-                        $existingProduct->category = $originalProduct->category;
-                        $existingProduct->unit = $originalProduct->unit;
-                        
-                        if ($includePricing) {
-                            $existingProduct->bPrice = $originalProduct->bPrice;
-                            $existingProduct->sPrice = $originalProduct->sPrice;
-                            $existingProduct->wholesale = $originalProduct->wholesale;
-                        }
-                        
-                        if ($includeStock) {
-                            $existingProduct->quantity = ($existingProduct->quantity ?? 0) + ($originalProduct->quantity ?? 0);
+    if (!$originalProduct) {
+        continue;
+    }
 
-                        }
-                        
-                        $existingProduct->save();
-                    } else {
-                        // Create new product in target account
-                        $newProduct = new productsModel();
-                        $newProduct->product_id = $productId;
-                        $newProduct->name01 = $originalProduct->name01;
-                        $newProduct->name02 = $originalProduct->name02;
-                        $newProduct->category = $originalProduct->category;
-                        $newProduct->unit = $originalProduct->unit;
-                        $newProduct->supplier = $originalProduct->supplier;
-                        $newProduct->location = ($targetAccount);
-                        $newProduct->expire = $originalProduct->expire;
-                        $newProduct->description = $originalProduct->description;
+    foreach ($accounts as $account) {
 
-                          if ($includePricing) {
-                            $newProduct->bPrice = $originalProduct->bPrice;
-                            $newProduct->sPrice = $originalProduct->sPrice;
-                            $newProduct->wholesale = $originalProduct->wholesale;
-                        }
-                        
-                        if ($includeStock) {
-                            $newProduct->quantity += ($originalProduct->quantity ?? 0);
-                        } else {
-                            $newProduct->quantity = 0;
-                        }
+        // Skip if product already exists in this account
+        $exists = productsModel::where('product_id', $productId)
+            ->where('account', $account->id)
+            ->exists();
 
-                        $newProduct->account = $targetAccount;
-                        $newProduct->save();
-                    }
-                    
-                    
-            $uuid_short = 'Stock-'.date(format: 'YMd') . '-' . str_pad(stock::where('account', operator: $targetAccount)->whereDate('created_at', date('Y-m-d'))->count() + 1, 4, '0', STR_PAD_LEFT).'-'.$originalProduct->name01.'-'.$originalProduct->name02;
+        if ($exists) {
+            continue;
+        }
+
+        $newProduct = new productsModel();
+        $newProduct->product_id = $originalProduct->product_id;
+        $newProduct->name01 = $originalProduct->name01;
+        $newProduct->name02 = $originalProduct->name02;
+        $newProduct->category = $originalProduct->category;
+        $newProduct->unit = $originalProduct->unit;
+        $newProduct->supplier = $originalProduct->supplier;
+        $newProduct->location = $account->id;
+        $newProduct->expire = $originalProduct->expire;
+        $newProduct->description = $originalProduct->description;
+        $newProduct->bPrice = $originalProduct->bPrice;
+        $newProduct->sPrice = $originalProduct->sPrice;
+        $newProduct->wholesale = $originalProduct->wholesale;
+
+        if ($includeStock) {
+            $newProduct->quantity = $originalProduct->quantity;
+        } else {
+            $newProduct->quantity = 0;
+        }
+
+        $newProduct->account = $account->id;
+        $newProduct->save();
+
+        // Create stock record only if stock is included
+        if ($includeStock && $originalProduct->quantity > 0) {
+
+            $uuid_short = 'Stock-' . date('YMd') . '-' .
+                str_pad(
+                    stock::where('account', $account->id)
+                        ->whereDate('created_at', date('Y-m-d'))
+                        ->count() + 1,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                ) .
+                '-' . $originalProduct->name01 .
+                '-' . $originalProduct->name02;
 
             $restock = new stock();
             $restock->name = $uuid_short;
@@ -280,33 +249,19 @@ class productsController extends Controller
             $restock->tBprice = $originalProduct->quantity * $originalProduct->bPrice;
             $restock->bPrice = $originalProduct->bPrice;
             $restock->sPrice = $originalProduct->sPrice;
-            $restock->account = $targetAccount;
+            $restock->account = $account->id;
             $restock->save();
+        }
 
-            if($restock) {
-                $create = new logModal();
-            $create->title = 'Stock Created';
-            $create->description = $uuid_short.'  Created successfully By '.session('username');
-            $create->save();
-            } else {
-                 $create = new logModal();
-            $create->title = 'Stock Creation Failed';
-            $create->description = $uuid_short.'  Creation Failed By '.session('username');
-            $create->save();
-            }
-                $duplicatedCount++;
-                    // Log individual product duplication
-                    $productLog = new logModal();
-                    $productLog->title = 'Product Duplicated';
-                    $productLog->description = 'Product "' . $originalProduct->name01 . '" duplicated to ' . $targetAccount;
-                    $productLog->save();
-                }
+        $duplicatedCount++;
+    }
+}
             
 
             // Log completion
             $completeLog = new logModal();
             $completeLog->title = 'Product Duplication Complete';
-            $completeLog->description = 'Successfully duplicated ' . $duplicatedCount . ' products from ' . $currentAccount . ' to ' . $targetAccount . ' by ' . session('username');
+            $completeLog->description = 'Successfully duplicated ' . $duplicatedCount . ' products from ' . $currentAccount . ' to ' . $targetAccount . ' by ' . Auth::user()->name;
             $completeLog->save();
 
             return redirect()->back()->with('success', 'Products duplicated successfully! Duplicated ' . $duplicatedCount . ' products.');
@@ -338,39 +293,17 @@ class productsController extends Controller
         
         return 'PID' . str_pad($newId, 4, '0', STR_PAD_LEFT);
     }
+
+    public static function clearOffersCache($account)
+    {
+        Cache::forget("offers:account:{$account}");
+        Cache::forget('active_offers');
+    }
+
     /**
      * Apply sorting to products query based on sort parameter
      */
-    private function applySorting($query, $sort) {
-        switch ($sort) {
-            case 'name_asc':
-                return $query->orderBy('name01', 'asc');
-            case 'name_desc':
-                return $query->orderBy('name01', 'desc');
-            case 'price_asc':
-                return $query->orderBy('sPrice', 'asc');
-            case 'price_desc':
-                return $query->orderBy('sPrice', 'desc');
-            case 'cost_asc':
-                return $query->orderBy('bPrice', 'asc');
-            case 'cost_desc':
-                return $query->orderBy('bPrice', 'desc');
-            case 'stock_asc':
-                return $query->orderBy('quantity', 'asc');
-            case 'stock_desc':
-                return $query->orderBy('quantity', 'desc');
-            case 'category_asc':
-                return $query->orderBy('category', 'asc');
-            case 'category_desc':
-                return $query->orderBy('category', 'desc');
-            case 'newest':
-                return $query->orderBy('created_at', 'desc');
-            case 'oldest':
-                return $query->orderBy('created_at', 'asc');
-            default:
-                return $query->orderBy('name01', 'asc');
-        }
-    }
+    
 
     public function report() {
         $user = Auth::user();
@@ -379,19 +312,15 @@ class productsController extends Controller
 
         $create = new logModal();
             $create->title = 'Products Report';
-            $create->description = 'Report Generated By '.session('username');
+            $create->description = 'Report Generated By '.Auth::user()->name;
             $create->save();
 
             $data = compact(
         'report'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-       return view('admin.stock', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.stock', $data);
-    }
+       return view('stock', $data);
+ 
 
         
     }
@@ -480,14 +409,14 @@ private function handleManualProduct(Request $req) {
     $productsModel->location = $location;
     $productsModel->supplier = $supplier;
     $productsModel->expire = $expiry;
-    $productsModel->account = getCurrentShopId();
+    $productsModel->account = 7;
     $productsModel->save();
 
     if ($productsModel) {
         // Log product creation
         $create = new logModal();
         $create->title = 'Product Created';
-        $create->description = 'Product('. $name01 .') Created successfully By ' . session('username');
+        $create->description = 'Product('. $name01 .') Created successfully By ' . Auth::user()->name;
         $create->save();
 
         // Create stock entry if quantity > 0
@@ -516,12 +445,12 @@ private function handleManualProduct(Request $req) {
             if ($restock) {
                 $create = new logModal();
                 $create->title = 'Stock Created';
-                $create->description = $uuid_short . ' Created successfully By ' . session('username');
+                $create->description = $uuid_short . ' Created successfully By ' . Auth::user()->name;
                 $create->save();
             } else {
                 $create = new logModal();
                 $create->title = 'Stock Creation Failed';
-                $create->description = $uuid_short . ' Creation Failed By ' . session('username');
+                $create->description = $uuid_short . ' Creation Failed By ' . Auth::user()->name;
                 $create->save();
             }
         }
@@ -530,7 +459,7 @@ private function handleManualProduct(Request $req) {
     } else {
         $create = new logModal();
         $create->title = 'Product Creation Failed';
-        $create->description = 'Product Creation Failed By ' . session('username');
+        $create->description = 'Product Creation Failed By ' . Auth::user()->name;
         $create->save();
         return redirect()->back()->with('error', 'Product Failed to save');
     }
@@ -674,7 +603,7 @@ private function handleStoreFormatCsv($file)
             $product->location = '';
             $product->supplier = 'Bulk Import';
             $product->expire = date('Y-m', strtotime('+1 year'));
-            $product->account = getCurrentShopId() ?? getCurrentShopId();
+            $product->account = 7;
             $product->save();
 
             \Log::info("CREATED product: {$itemName} | Qty: {$quantity}");
@@ -844,7 +773,7 @@ private function handleExcelUpload(Request $req) {
         $fileSize = $file->getSize();
         $fileExt = $file->getClientOriginalExtension();
         $sessionAccount = getCurrentShopId() ?? getCurrentShopId();
-        $sessionUsername = session('username');
+        $sessionUsername = Auth::user()->name;
         
         $create = new logModal();
             $create->title = 'Products Report';
@@ -1564,7 +1493,7 @@ private function createProductFromExcelRow($rowData) {
             $product->location = '';
             $product->supplier = $supplier;
             $product->expire = $this->formatExpiryDate($expiry);
-            $product->account = getCurrentShopId() ?? getCurrentShopId();
+            $product->account = 7;
             $product->save();
             
             \Log::info("createProductFromExcelRow: CREATED new product: {$itemName} | ID: {$product->id} | product_id: {$uuid} | qty: {$quantity}");
@@ -2051,7 +1980,7 @@ private function createStockEntry($productId, $itemName, $brand, $quantity, $bPr
 
         $log              = new logModal();
         $log->title       = 'Stock Created (Bulk Import)';
-        $log->description = $uuid_short . ' created from bulk import by ' . session('username');
+        $log->description = $uuid_short . ' created from bulk import by ' . Auth::user()->name;
         $log->save();
 
     } catch (\Exception $e) {
@@ -2241,25 +2170,22 @@ private function createExcelTemplate($filePath) {
         }
     
         $product_id = session('productId');
-        $products = productsModel::where('account', getCurrentShopId())->where('product_id', '=', value: $product_id)->first();
+        $products = productsModel::where('account', getCurrentShopId())->where('product_id', $product_id)->first();
 
-       
+        if (empty($products)) {
+            return redirect()->back()->with('error', 'Product not found');
+        }
 
-
-        $vendor = vendorModal::where('account', getCurrentShopId())->where('id', '=', $products->supplier ?? '')->first();
+        $vendor = vendorModal::where('account', getCurrentShopId())->where('id', $products->supplier ?? '')->first();
          if(!$vendor) {
-            $vendor = vendorModal::where('account', getCurrentShopId())->where('name', '=', $products->supplier ?? '')->first();
+            $vendor = vendorModal::where('account', getCurrentShopId())->where('name', $products->supplier ?? '')->first();
         }
         $data = compact(
         'products','vendor'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-       return view('admin.viewProduct', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.viewProduct', $data);
-    }
+       return view('viewProduct', $data);
+
     }
 
     public function dltProduct(Request $Req) {
@@ -2291,13 +2217,13 @@ private function createExcelTemplate($filePath) {
                 // Log successful deletion
                 $create = new logModal();
                 $create->title = 'Product delete';
-                $create->description = $productName . ' Product deleted successfully By ' . session('username');
+                $create->description = $productName . ' Product deleted successfully By ' . Auth::user()->name;
                 $create->save();
 
                 if ($dltStock) {
                     $create = new logModal();
                     $create->title = 'Stock report deleted';
-                    $create->description = $productName . ' Stock deleted successfully By ' . session('username');
+                    $create->description = $productName . ' Stock deleted successfully By ' . Auth::user()->name;
                     $create->save();
                 }
 
@@ -2328,7 +2254,8 @@ private function createExcelTemplate($filePath) {
         $imageName = '';
     
         $product_id = session('productId');
-     $name01 = $req->input('name01');
+        $name01 = $req->input('name01');
+        $product_id2 = $req->input('product_id2');
         $name02 = $req->input('name02');
         $category = $req->input('category');
         $description = $req->input('description');
@@ -2350,7 +2277,7 @@ private function createExcelTemplate($filePath) {
             
             $create = new logModal();
             $create->title = 'Image Upload';
-            $create->description =  $imageName.' Image moved to images folder By '.session('username');
+            $create->description =  $imageName.' Image moved to images folder By '.Auth::user()->name;
        $create->save();
         }
     
@@ -2360,12 +2287,14 @@ private function createExcelTemplate($filePath) {
         // Check if the product exists
         if ($productsModel) {
             foreach ($productsModel as $product) {
+                if(!empty($product_id2)) {
+                    $product->product_id = $product_id2;
+                }
         $product->name01 = $name01;
         $product->name02 = $name02;
         $product->category = $category;
         $product->description = $description;
         $product->unit = $unit;
-        $product->img = $imageName; // Store the filename in the database
         $product->quantity = $quantity;
         $product->bPrice = $bPrice;
         $product->sPrice = $sPrice;
@@ -2384,24 +2313,26 @@ private function createExcelTemplate($filePath) {
             if($product) {
                   $create = new logModal();
             $create->title = 'Product Update';
-            $create->description =  $name01.' Product Updated By '.session('username');
+            $create->description =  $name01.' Product Updated By '.Auth::user()->name;
             $create->save();
 
                 // If updating from main store, propagate all non-quantity field changes to all accounts
-                if (getSessionAccountDisplayName() === 'Main Store') {
-                    $allAccounts = accountModel::where('name', '!=', 'Main Store')->get();
+                if (getCurrentShopId() == 7) {
+                    $allAccounts = accountModel::where('id', '!=', 7)->get();
 
                     foreach ($allAccounts as $account) {
-                        $otherProduct = productsModel::where('name01', $name01)
+                        $otherProduct = productsModel::where('product_id', $product_id)
                             ->where('account', $account->id)
                             ->first();
 
                         if ($otherProduct) {
                             // Product exists in this account — update all non-quantity fields only
+                            $otherProduct->name01       = $name01;
                             $otherProduct->name02       = $name02;
                             $otherProduct->category     = $category;
                             $otherProduct->description  = $description;
                             $otherProduct->unit         = $unit;
+                            $otherProduct->img          = $product->img;
                             $otherProduct->bPrice       = $bPrice;
                             $otherProduct->sPrice       = $sPrice;
                             $otherProduct->wholesale    = $wholesale;
@@ -2415,7 +2346,7 @@ private function createExcelTemplate($filePath) {
                             // Log the propagation
                             $propagateLog = new logModal();
                             $propagateLog->title       = 'Product Sync';
-                            $propagateLog->description = 'Product "' . $name01 . '" synced in account "' . $account->name . '" from Main Store by ' . session('username');
+                            $propagateLog->description = 'Product "' . $name01 . '" synced in account "' . $account->name . '" from Main Store by ' . Auth::user()->name;
                             $propagateLog->save();
                         } else {
                             // Product does NOT exist in this account — create it with default quantity 0
@@ -2435,13 +2366,13 @@ private function createExcelTemplate($filePath) {
                             $newProduct->location    = $location;
                             $newProduct->supplier    = $supplier;
                             $newProduct->expire      = $expiry;
-                            $newProduct->account     = $account->name;
+                            $newProduct->account     = 7;
                             $newProduct->save();
 
                             // Log the creation
                             $createLog = new logModal();
                             $createLog->title       = 'Product Synced (Created)';
-                            $createLog->description = 'Product "' . $name01 . '" created in account "' . $account->name . '" from Main Store by ' . session('username');
+                            $createLog->description = 'Product "' . $name01 . '" created in account "' . $account->name . '" from Main Store by ' . Auth::user()->name;
                             $createLog->save();
                         }
                     }
@@ -2451,7 +2382,7 @@ private function createExcelTemplate($filePath) {
             } else{
                  $create = new logModal();
             $create->title = 'Product Update';
-            $create->description =  $name01.' Product Update Failed By '.session('username');
+            $create->description =  $name01.' Product Update Failed By '.Auth::user()->name;
 $create->save();
              return redirect()->back()->with('error', 'Product update Failed!');
             }
@@ -2463,81 +2394,30 @@ $create->save();
     }
 
     public function newOrder(Request $request){
+        if (!canUser('create_sales')) {
+            abort(403, 'Unauthorized access');
+        }
         $user = Auth::user();
-        
+
+        // Persist order type across page reloads while creating an order
+        $orderType = $request->session()->get('orderType', 'Sell');
+        if ($request->has('orderType')) {
+            $orderType = $request->input('orderType');
+            $request->session()->put('orderType', $orderType);
+        }
+
         // Get selected shop from request (from shop selector dropdown)
         $requestedShopId = $request->query('shop_id');
-        
+
+        if(!empty($requestedShopId)) {
+            session(['selected_shop_id' => $requestedShopId]);
+        }
         // Get selected shop from session (for both admin and regular users)
-        $selectedShopId = session('selected_shop_id');
+        $selectedShopId = getCurrentShopId();
         
-        // If shop is provided in request, use it (user changed the shop selector)
-        if ($requestedShopId) {
-            // Verify user has access to the requested shop
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                // Admin can access any shop - verify it exists
-                $shopExists = accountModel::where('id', $requestedShopId)->exists();
-                if ($shopExists) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            } else {
-                // Regular users: check if they have access to the requested shop
-                $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-                if (in_array($requestedShopId, $assignedAccountIds)) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            }
-        }
         
-        // If no shop selected, determine default shop
-        if (!$selectedShopId) {
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                // Admin: use first available account or session account
-                $selectedShopId = getCurrentShopId() ?? accountModel::select('id')->first()?->id;
-            } else {
-                // Regular user: use primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-            }
-            if ($selectedShopId) {
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-        
-        // Verify user has access to the selected shop
-        if (strtolower(trim($user->levelStatus)) !== 'admin') {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (!in_array($selectedShopId, $assignedAccountIds)) {
-                // Fallback to primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-        
-        // Get all accessible shops for the user (for the shop selector dropdown)
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('name')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-            }
-        }
+        $allShops = getUserAccounts();
+        $shopIds = array_column($allShops, 'id');
 
          // Get active order - show both user's own orders and returned orders (any seller)
          $orders = ordersModel::where('account', $selectedShopId)
@@ -2553,7 +2433,6 @@ $create->save();
         ];
 
          $Suspended = ordersModel::where('account', $selectedShopId)
-        ->where('served_by', session('username'))
         ->where('status', 'Suspended')
         ->select('cName',DB::raw('MAX(order_id) as order_id'), DB::raw('SUM(totalPrice) as total_price'))
         ->groupBy('cName')
@@ -2562,6 +2441,7 @@ $create->save();
             // Get cart items - show both own orders and returned orders (Pending status)
             $cart = ordersModel::where('account', $selectedShopId)
             ->where('order_id',  $orders->order_id ?? '' )
+            ->where('productId', '!=', null)
             ->orderBy('id', 'desc')
             ->get();
             
@@ -2575,71 +2455,94 @@ $create->save();
             // Get all active offers for the current account
             $offers = Offer::where('account', $selectedShopId)
                 ->where('is_active', true)
+                ->with('requiredItems')
                 ->get();
 
             session(['totalP' => $totalP]);
             $data = compact(
-            'cart','totalP','totalD','totalDI','customers','orders','Suspended','offers','allShops','selectedShopId'
+            'cart','totalP','totalD','totalDI','customers','orders','Suspended','offers','allShops','selectedShopId','orderType'
         );
 
-     if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.newOrder', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.newOrder', $data);
-        }
+            return view('newOrder', $data);
+  
     }
    public function search(Request $request)
-{   
+   {   
 
-  // Check if user is authenticated
-  if (!getCurrentShopId()) {
-      return response()->json(['error' => 'Unauthorized', 'redirect' => '/login'], 401);
-  }
+     $query = trim($request->query('query'));
 
-  $query = trim($request->query('query'));
+     if ($query === '') {
+         return response()->json([]);
+     }
 
-  if ($query === '') {
-      return response()->json([]);
-  }
+     $currentAccount = getCurrentShopId();
 
-  
-  // Search from the current shop account
-  $currentAccount = getCurrentShopId();
+         $products = productsModel::where('account', $currentAccount)
+             ->where(function($q) use ($query) {
+                 $q->where('name01', 'LIKE', "%{$query}%")
+                   ->orWhere('name02', 'LIKE', "%{$query}%");
+             })
+             ->limit(10)
+             ->get([
+                 'id',
+                 'product_id',
+                 'name01',
+                 'bPrice',
+                 DB::raw('COALESCE(sPrice, 0) as sPrice'),
+                 'quantity',
+                 'discount'
+             ]);
 
-  $products = productsModel::where('account', $currentAccount)
-      ->where(function($q) use ($query) {
-          $q->where('name01', 'LIKE', "%{$query}%")
-            ->orWhere('name02', 'LIKE', "%{$query}%");
-      })
-      ->limit(10)
-      ->get([
-          'id',
-          'product_id',
-          'name01',
-          'bPrice',
-          DB::raw('COALESCE(sPrice, 0) as sPrice'),
-          'quantity',
-          'discount'
-      ]);
+         return response()->json($products);
+     
 
-  return response()->json($products);
-}
+ }
+public function requestSearch(Request $request)
+   {   
 
+     $query = trim($request->query('query'));
+
+     if ($query === '') {
+         return response()->json([]);
+     }
+
+     $currentAccount = getCurrentShopId();
+
+         $products = productsModel::where('account', 7)
+             ->where(function($q) use ($query) {
+                 $q->where('name01', 'LIKE', "%{$query}%")
+                   ->orWhere('name02', 'LIKE', "%{$query}%");
+             })
+             ->limit(10)
+             ->get([
+                 'id',
+                 'product_id',
+                 'name01',
+                 'bPrice',
+                 DB::raw('COALESCE(sPrice, 0) as sPrice'),
+                 'quantity',
+                 'discount'
+             ]);
+
+         return response()->json($products);
+     
+
+ }
    /**
     * Search products for offer modal - returns all products without pagination
     */
-   public function searchProductsForOffer(Request $request)
-   {
-       // Check if user is authenticated
-       if (!getCurrentShopId()) {
-           return response()->json(['error' => 'Unauthorized', 'redirect' => '/login'], 401);
-       }
+    public function searchProductsForOffer(Request $request)
+    {
+        // Check if user is authenticated
+        if (!getCurrentShopId()) {
+            return response()->json(['error' => 'Unauthorized', 'redirect' => '/login'], 401);
+        }
 
-       $query = trim($request->query('q'));
+        $query = trim($request->query('q'));
+        $accountId = $request->query('account', getCurrentShopId());
 
-       $productsQuery = productsModel::where('account', getCurrentShopId())
-           ->where('name01', '!=', null);
+        $productsQuery = productsModel::where('account', $accountId)
+            ->where('name01', '!=', null);
 
        // If search query provided, filter by name or product_id
        if ($query !== '') {
@@ -2670,6 +2573,10 @@ $create->save();
 
     public function restock(Request $req)
 {
+    if (!canUser('view_receivings')) {
+        abort(403, 'Unauthorized access');
+    }
+
     $user = Auth::user();
     // Get selected date, default to today
     $selectedDate = $req->input('date', date('Y-m-d'));
@@ -2826,7 +2733,7 @@ $create->save();
                 $returnRec->expiry = $expiry;
                 $returnRec->supplier = $supplier;
                 $returnRec->account = getCurrentShopId();
-                $returnRec->served_by = $served ?? session('username');
+                $returnRec->served_by = $served ?? Auth::user()->name;
                 $returnRec->status = 'Returned';
 
                 if (!empty($receivingDate)) {
@@ -2844,7 +2751,7 @@ $create->save();
 
                 $create = new logModal();
                 $create->title = 'Stock Return';
-                $create->description = 'Stock returned from receiving flow by ' . session('username');
+                $create->description = 'Stock returned from receiving flow by ' . Auth::user()->name;
                 $create->save();
             } else {
                 // Create new receiving record
@@ -2860,7 +2767,7 @@ $create->save();
                 $product->expiry = $expiry;
                 $product->supplier = $supplier;
                 $product->account = getCurrentShopId();
-                $product->served_by = $served ?? session('username');
+                $product->served_by = $served ?? Auth::user()->name;
 
                 if (!empty($receivingDate)) {
                     $product->created_at = $receivingDate . ' ' . date('H:i:s');
@@ -2879,7 +2786,7 @@ $create->save();
                 } else {
                     $create = new logModal();
                     $create->title = 'Stock Log';
-                    $create->description = 'New Stock Added By ' . session('username');
+                    $create->description = 'New Stock Added By ' . Auth::user()->name;
                     $create->save();
                 }
             }
@@ -2906,12 +2813,9 @@ $create->save();
 
     $data = compact('products', 'purchases', 'selectedDate');
 
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.restock', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.restock', $data);
-    }
+
+        return view('restock', $data);
+
 }
 
 
@@ -2982,7 +2886,7 @@ $uuid_short = 'Stock-' . date('Ymd') . '-' . str_pad(
 
                      $create = new logModal();
             $create->title = 'Stock Log';
-            $create->description =  '  New Stock Addedd By '.session('username');
+            $create->description =  '  New Stock Addedd By '.Auth::user()->name;
             $create->save();
 
 
@@ -2991,7 +2895,7 @@ $uuid_short = 'Stock-' . date('Ymd') . '-' . str_pad(
     // Create log
     $create = new logModal();
     $create->title = 'Stock Log';
-    $create->description = $product->name01.' Stock Added to be used By '.session('username');
+    $create->description = $product->name01.' Stock Added to be used By '.Auth::user()->name;
     $create->save();
 
     return redirect()->back()->with('success', 'Product restocked successfully!');
@@ -3017,7 +2921,7 @@ $uuid_short = 'Stock-' . date('Ymd') . '-' . str_pad(
 
             $create = new logModal();
             $create->title = 'Stock Log';
-            $create->description =  $get->name01.' Stock Returned '. $stockQ .' By '.session('username');
+            $create->description =  $get->name01.' Stock Returned '. $stockQ .' By '.Auth::user()->name;
 $create->save();
             return redirect()->back()->with('success', 'Returned Successfully');
 
@@ -3099,46 +3003,43 @@ public function getReceivingsByDate(Request $request)
 public function dltrestock(Request $req)
 {
     $action = $req->input('action', 'return');
-    $productId = $req->input('product_id');
+    $receivingId = $req->input('product_id');
     $quantity = (int) $req->input('quantity', 0);
     $reason = $req->input('reason', '');
     $returnMode = $req->input('return_mode', 'auto'); // auto | receiving_only | stock_and_receiving
 
             $accountId = !empty($shopFilter) ? $shopFilter : getCurrentShopId();
 
-    if (empty($productId)) {
+    if (empty($receivingId)) {
         return redirect()->back()->with('error', 'Product is required');
     }
 
     if ($action === 'delete') {
-    $receivingId = $req->input('receiving_id');
     
-    if($receivingId) {
         // Use exact row ID if provided (fixes deleting only single specific row)
         $receiving = recevingModel::where('id', $receivingId)
             ->first();
-    }
+   
 
         if (!$receiving) {
             return redirect()->back()->with('error', 'Record not found!');
         }
 
-        $receiving->delete();
-
-        stock::where('productId', $productId)
+ 
+        stock::where('productId', $receiving->productId)
             ->where('account', getCurrentShopId())
             ->whereDate('created_at', $receiving->created_at)
             ->delete();
 
         logModal::create([
             'title' => 'Receiving Deleted',
-            'description' => 'Receiving record deleted for product ID: ' . $productId . ' by ' . session('username')
+            'description' => 'Receiving record deleted for product ID: ' . $receiving->productId . ' by ' . Auth::user()->name
         ]);
 
         return redirect()->back()->with('success', 'Receiving record deleted successfully!');
     }
 
-    $receiving = recevingModel::where('productId', $productId)
+    $receiving = recevingModel::where('id', $receivingId)
         ->where('account', getCurrentShopId())
         ->where('quantity', '>', 0)
         ->where('status', '!=', 'Returned')
@@ -3171,7 +3072,7 @@ public function dltrestock(Request $req)
     }
 
     if ($shouldAffectStock) {
-        $product = productsModel::where('product_id', $productId)
+        $product = productsModel::where('product_id', $receiving->productId)
             ->where('account', getCurrentShopId())
             ->first();
 
@@ -3187,7 +3088,7 @@ public function dltrestock(Request $req)
         $receiving->status = 'Returned';
         $receiving->save();
 
-        stock::where('productId', $productId)
+        stock::where('productId', $receiving->productId)
             ->where('account', getCurrentShopId())
             ->whereDate('created_at', $receiving->created_at)
             ->delete();
@@ -3197,7 +3098,7 @@ public function dltrestock(Request $req)
         $receiving->quantity = $currentQuantity - $quantity;
         $receiving->save();
 
-        $stockRow = stock::where('productId', $productId)
+        $stockRow = stock::where('productId', $receiving->productId)
             ->where('account', getCurrentShopId())
             ->whereDate('created_at', $receiving->created_at)
             ->first();
@@ -3213,8 +3114,8 @@ public function dltrestock(Request $req)
 
     logModal::create([
         'title' => 'Product Return',
-        'description' => $quantity . ' units of product ID: ' . $productId .
-            ' returned (' . $returnMode . '). Reason: ' . $reason . ' by ' . session('username')
+        'description' => $quantity . ' units of product ID: ' . $receiving->productId .
+            ' returned (' . $returnMode . '). Reason: ' . $reason . ' by ' . Auth::user()->name
     ]);
 
     return redirect()->back()->with('success', $message);
@@ -3225,81 +3126,23 @@ public function dltrestock(Request $req)
      */
     public function makeReceiving(Request $req)
     {
+        if (!canUser('manage_receivings')) {
+        abort(403, 'Unauthorized access');
+    }
         $user = Auth::user();
         
         // Get selected shop from request (from shop selector dropdown)
         $requestedShopId = $req->query('shop_id');
         
+        if(!empty($requestedShopId)) {
+            session(['selected_shop_id' => $requestedShopId]);
+        }
         // Get selected shop from session (for both admin and regular users)
-        $selectedShopId = session('selected_shop_id');
-        
-        // If shop is provided in request, use it (user changed the shop selector)
-        if ($requestedShopId) {
-            // Verify user has access to the requested shop
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                // Admin can access any shop - verify it exists
-                $shopExists = accountModel::where('id', $requestedShopId)->exists();
-                if ($shopExists) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            } else {
-                // Regular users: check if they have access to the requested shop
-                $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-                if (in_array($requestedShopId, $assignedAccountIds)) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            }
-        }
-        
-        // If no shop selected, determine default shop
-        if (!$selectedShopId) {
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                // Admin: use first available account or session account
-                $selectedShopId = getCurrentShopId() ?? accountModel::select('id')->first()?->id;
-            } else {
-                // Regular user: use primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-            }
-            if ($selectedShopId) {
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-        
-        // Verify user has access to the selected shop
-        if (strtolower(trim($user->levelStatus)) !== 'admin') {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (!in_array($selectedShopId, $assignedAccountIds)) {
-                // Fallback to primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
+        $selectedShopId = $requestedShopId;
         
         // Get all accessible shops for the user (for the shop selector dropdown)
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('name')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-            }
-        }
+        $allShops = getUserAccounts();
+        $shopIds = array_column($allShops, 'id');
 
         // Always use today's date - no date parameter allowed
         $today = date('Y-m-d');
@@ -3326,17 +3169,51 @@ public function dltrestock(Request $req)
 
         $data = compact('products', 'purchases', 'allShops', 'selectedShopId');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.makeReceiving', $data);
+            return view('makeReceiving', $data);
+ 
+    }
+
+
+    public function mainReceiving(Request $req)
+    {
+        $user = Auth::user();
+        
+       
+        $shopIds = 7;
+
+        // Always use today's date - no date parameter allowed
+        $today = date('Y-m-d');
+
+        // Fetch receivings for today only (only non-returns) from selected shop
+        $products = recevingModel::where('account', $shopIds)
+            ->where('is_return', '!=', 1)
+            ->whereDate('created_at', $today)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $productIds = $products->pluck('productId')->unique();
+        $productMap = productsModel::whereIn('product_id', $productIds)
+            ->pluck('name01', 'product_id');
+
+        foreach ($products as $item) {
+            $item->productName = $productMap[$item->productId] ?? 'Unknown';
         }
-        if(!empty($user->levelStatus)) {
-            return view('user.makeReceiving', $data);
-        }
+
+        $purchases = stock::where('account', $shopIds)
+            ->whereDate('created_at', $today)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $data = compact('products', 'purchases');
+
+            return view('main-receiving', $data);
+ 
     }
 
     /**
      * Show page to view all receivings (no returns)
      */
+
     public function viewReceivings(Request $req)
     {
         $user = Auth::user();
@@ -3345,38 +3222,17 @@ public function dltrestock(Request $req)
         $fromDate = $req->input('from_date', '');
         $toDate = $req->input('to_date', '');
         $shopFilter = $req->input('shop', '');
-
-        // Get user's assigned accounts
-        $userAccounts = $user->accounts()->pluck('account')->toArray();
-        if (Auth::user()->account) {
-            $userAccounts[] = Auth::user()->account;
-        }
-        $userAccounts = array_unique($userAccounts);
+        $shops = getUserAccounts();
+        $userAccounts = array_column($shops, 'id');
 
         // Build base query with shop filtering
         $query = recevingModel::where('is_return', '!=', 1);
-
-        // Apply shop/account filter based on user role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin: show all receivings by default, optionally filter by selected shop
+  
             if (!empty($shopFilter)) {
                 // Show only receivings where this shop is the account (receiving shop)
                 $query->where('account', $shopFilter);
             }
-        } else {
-            // Regular user: only show receivings from their assigned shops
-            if (empty($userAccounts)) {
-                $query->where('id', '=', 0);
-            } else {
-                // Show receivings where the account is one of user's assigned shops
-                $query->whereIn('account', $userAccounts);
-            }
-            
-            // Additional shop filter if selected (must be within user's assigned shops)
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $query->where('account', $shopFilter);
-            }
-        }
+      
 
         // Apply status filter
         if ($statusFilter != 'all') {
@@ -3455,27 +3311,116 @@ public function dltrestock(Request $req)
         }
 
         // Get shops list for filter dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            // For regular users, only show their assigned shops
-            $shops = accountModel::whereIn('id', $userAccounts)->get();
-        }
+        
 
         $data = compact('products', 'selectedDate', 'statusFilter', 'fromDate', 'toDate', 'shopFilter', 'shops', 'returnQtyMap', 'totalReturnValue');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.viewReceivings', $data);
+
+            return view('viewReceivings', $data);
+ 
+    }
+
+    public function mainReceivings(Request $req)
+    {
+        $user = Auth::user();
+        $selectedDate = $req->input('date', date('Y-m-d'));
+        $statusFilter = $req->input('status', 'all');
+        $fromDate = $req->input('from_date', '');
+        $toDate = $req->input('to_date', '');
+        $shopFilter = 7;
+        $shops = getUserAccounts();
+        $userAccounts = array_column($shops, 'id');
+
+        // Build base query with shop filtering
+        $query = recevingModel::where('is_return', '!=', 1);
+
+            // Admin: show all receivings by default, optionally filter by selected shop
+            if (!empty($shopFilter)) {
+                // Show only receivings where this shop is the account (receiving shop)
+                $query->where('account', $shopFilter);
+            }
+        
+
+        // Apply status filter
+        if ($statusFilter != 'all') {
+            $query->where('status', $statusFilter);
         }
-        if(!empty($user->levelStatus)) {
-            return view('user.viewReceivings', $data);
+
+        // Apply date range filter
+        if (!empty($fromDate) && !empty($toDate)) {
+            $query->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         }
+        // Only filter by single date if a date is selected and no date range
+        else if (!empty($selectedDate)) {
+            $query->whereDate('created_at', $selectedDate);
+        }
+
+        $products = $query->orderBy('id', 'desc')->get();
+
+        // ── Fetch returns for the same date/date-range scope ──
+        $returnsQuery = recevingModel::where('is_return', 1);
+            if (!empty($shopFilter)) {
+                $returnsQuery->where('account', $shopFilter);
+            }
+      
+        if (!empty($fromDate) && !empty($toDate)) {
+            $returnsQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+        } else if (!empty($selectedDate)) {
+            $returnsQuery->whereDate('created_at', $selectedDate);
+        }
+        $returns = $returnsQuery->get();
+
+        // Build a lookup: productId => total return quantity for this scope
+        $returnQtyMap = [];
+        $totalReturnValue = 0;
+        foreach ($returns as $ret) {
+            $pid = $ret->productId;
+            $qty = (int)($ret->quantity ?? 0);
+            $price = (float)($ret->price ?? 0);
+            if (!isset($returnQtyMap[$pid])) {
+                $returnQtyMap[$pid] = 0;
+            }
+            $returnQtyMap[$pid] += $qty;
+            $totalReturnValue += $qty * $price;
+        }
+
+        // Get unique account IDs and supplier IDs for eager loading
+        $accountIds = $products->pluck('account')->unique()->filter();
+        $supplierIds = $products->pluck('supplier')->unique()->filter();
+        $servedIds = $products->pluck('served_by')->unique()->filter();
+
+        // Fetch account names (shops) and supplier names (vendors)
+        $accountsMap = accountModel::whereIn('id', $accountIds)->pluck('name', 'id');
+        $suppliersMap = vendorModal::whereIn('id', $supplierIds)->pluck('name', 'id');
+        $servedMap = usersModel::whereIn('id', $servedIds)->pluck('name', 'id');
+
+        // Get product names
+        $productIds = $products->pluck('productId')->unique();
+        $productMap = productsModel::whereIn('product_id', $productIds)
+            ->pluck('name01', 'product_id');
+
+        // Process each receiving to add display names
+        foreach ($products as $item) {
+            $item->productName = $productMap[$item->productId] ?? 'Unknown';
+            $item->accountName = $accountsMap[$item->account] ?? 'Unknown Shop';
+            $item->supplierName = $suppliersMap[$item->supplier] ?? 'Unknown Supplier';
+            $item->servedByName = $servedMap[$item->served_by] ?? 'Unknown';
+        }
+
+        // Get shops list for filter dropdown
+        
+
+        $data = compact('products', 'selectedDate', 'statusFilter', 'fromDate', 'toDate', 'shopFilter', 'shops', 'returnQtyMap', 'totalReturnValue');
+
+
+            return view('main-receivings', $data);
+   
     }
 
     /**
      * Show page to make new return
      */
-    public function makeReturn(Request $req)
+      public function makeReturn(Request $req)
     {
         $user = Auth::user();
         $selectedDate = $req->input('date', date('Y-m-d'));
@@ -3487,74 +3432,14 @@ public function dltrestock(Request $req)
         // Get selected shop from request (from shop selector dropdown)
         $requestedShopId = $req->query('shop_id');
 
+        if(!empty($requestedShopId)) {
+            session(['selected_shop_id' => $requestedShopId]);
+        }
         // Get selected shop from session (for both admin and regular users)
-        $selectedShopId = session('selected_shop_id');
+        $selectedShopId = $requestedShopId;
 
-        // If shop is provided in request, use it (user changed the shop selector)
-        if ($requestedShopId) {
-            // Verify user has access to the requested shop
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                // Admin can access any shop - verify it exists
-                $shopExists = accountModel::where('id', $requestedShopId)->exists();
-                if ($shopExists) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            } else {
-                // Regular users: check if they have access to the requested shop
-                $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-                if (in_array($requestedShopId, $assignedAccountIds)) {
-                    $selectedShopId = $requestedShopId;
-                    session(['selected_shop_id' => $selectedShopId]);
-                }
-            }
-        }
-
-        // If no shop selected, determine default shop
-        if (!$selectedShopId) {
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                $selectedShopId = getCurrentShopId() ?? accountModel::select('id')->first()?->id;
-            } else {
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-            }
-            if ($selectedShopId) {
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-
-        // Verify user has access to the selected shop
-        if (strtolower(trim($user->levelStatus)) !== 'admin') {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (!in_array($selectedShopId, $assignedAccountIds)) {
-                // Fallback to primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : getCurrentShopId();
-                }
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-
-        // Get all accessible shops for the user (for the shop selector dropdown)
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('name')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-            }
-        }
+        $allShops = getUserAccounts();
+        $shopIds = array_column($allShops, 'id');
 
         // Fetch returns for the selected date from selected shop
         $products = recevingModel::where('account', $selectedShopId)
@@ -3573,13 +3458,45 @@ public function dltrestock(Request $req)
 
         $data = compact('products', 'selectedDate', 'statusFilter', 'fromDate', 'toDate', 'today', 'allShops', 'selectedShopId');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.makeReturn', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.makeReturn', $data);
-        }
+
+            return view('makeReturn', $data);
+
     }
+
+
+    public function mainReturn(Request $req)
+    {
+        $user = Auth::user();
+        $selectedDate = $req->input('date', date('Y-m-d'));
+        $statusFilter = 'all';
+        $fromDate = '';
+        $toDate = '';
+        $today = date('Y-m-d');
+
+        $shopIds = 7;
+
+        // Fetch returns for the selected date from selected shop
+        $products = recevingModel::where('account', $shopIds)
+            ->where('is_return', 1)
+            ->whereDate('created_at', $selectedDate)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $productIds = $products->pluck('productId')->unique();
+        $productMap = productsModel::whereIn('product_id', $productIds)
+            ->pluck('name01', 'product_id');
+
+        foreach ($products as $item) {
+            $item->productName = $productMap[$item->productId] ?? 'Unknown';
+        }
+
+        $data = compact('products', 'selectedDate', 'statusFilter', 'fromDate', 'toDate', 'today');
+
+
+            return view('main-return', $data);
+
+    }
+    
 
     /**
      * Show page to view all returns
@@ -3587,54 +3504,27 @@ public function dltrestock(Request $req)
     public function viewReturns(Request $req)
     {
         $user = Auth::user();
-        $selectedDate = $req->input('date', '');
         $statusFilter = $req->input('status', 'all');
-        $fromDate = $req->input('from_date', '');
-        $toDate = $req->input('to_date', '');
-        $shopFilter = $req->input('shop', '');
-
+        $fromDate = $req->input('from_date', date('Y-m-d'));
+        $toDate = $req->input('to_date', date('Y-m-d'));
+        $shopFilter = $req->input('shop', getCurrentShopId());
+        $shops = getUserAccounts();
         // Get user's assigned accounts
-        $userAccounts = $user->accounts()->pluck('account')->toArray();
-        if (Auth::user()->account) {
-            $userAccounts[] = Auth::user()->account;
-        }
-        $userAccounts = array_unique($userAccounts);
+        $userAccounts = $shops;
 
         // Build base query — fetch only returns
         $query = recevingModel::where('is_return', 1);
 
-        // Apply shop/account filter based on user role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin: show returns from all shops by default, optionally filter by selected shop
-            if (!empty($shopFilter)) {
+        if (!empty($shopFilter)) {
                 $query->where('account', $shopFilter);
             }
-        } else {
-            // Regular user: only show returns from their assigned shops
-            if (empty($userAccounts)) {
-                $query->where('id', '=', 0);
-            } else {
-                $query->whereIn('account', $userAccounts);
-            }
-            // Additional shop filter if selected (must be within user's assigned shops)
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $query->where('account', $shopFilter);
-            }
-        }
 
-        // Apply status filter
-        if ($statusFilter != 'all') {
-            $query->where('status', $statusFilter);
-        }
 
         // Apply date range filter
         if (!empty($fromDate) && !empty($toDate)) {
             $query->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         }
-        // Only filter by single date if a date is selected and no date range
-        else if (!empty($selectedDate)) {
-            $query->whereDate('created_at', $selectedDate);
-        }
+
 
         $products = $query->orderBy('id', 'desc')->get();
 
@@ -3646,318 +3536,338 @@ public function dltrestock(Request $req)
             $item->productName = $productMap[$item->productId] ?? 'Unknown';
         }
 
-        // Get shops list for filter dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $shops = accountModel::whereIn('id', $userAccounts)->get();
+
+        $data = compact('products', 'statusFilter', 'fromDate', 'toDate', 'shopFilter', 'shops');
+
+
+            return view('viewReturns', $data);
+   
+    }
+    public function mainReturns(Request $req)
+    {
+        $user = Auth::user();
+        $statusFilter = $req->input('status', 'all');
+        $fromDate = $req->input('from_date', date('Y-m-d'));
+        $toDate = $req->input('to_date', date('Y-m-d'));
+        $shopFilter = $req->input('shop', getCurrentShopId());
+        $shops = getUserAccounts();
+        // Get user's assigned accounts
+        $userAccounts = $shops;
+
+        // Build base query — fetch only returns
+        $query = recevingModel::where('is_return', 1);
+
+        if (!empty($shopFilter)) {
+                $query->where('account', 7);
+            }
+
+
+        // Apply date range filter
+        if (!empty($fromDate) && !empty($toDate)) {
+            $query->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         }
 
-        $data = compact('products', 'selectedDate', 'statusFilter', 'fromDate', 'toDate', 'shopFilter', 'shops');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.viewReturns', $data);
+        $products = $query->orderBy('id', 'desc')->get();
+
+        $productIds = $products->pluck('productId')->unique();
+        $productMap = productsModel::whereIn('product_id', $productIds)
+            ->pluck('name01', 'product_id');
+
+        foreach ($products as $item) {
+            $item->productName = $productMap[$item->productId] ?? 'Unknown';
         }
-        if(!empty($user->levelStatus)) {
-            return view('user.viewReturns', $data);
-        }
+
+
+        $data = compact('products', 'statusFilter', 'fromDate', 'toDate', 'shops');
+
+
+            return view('main-returns', $data);
+   
     }
     /**
      * Receiving Report — shows item, requested qty, received qty, difference, approved qty, total price
      */
     public function receivingReport(Request $req)
-    {
-        $user = Auth::user();
-        $selectedDate = $req->input('date', date('Y-m-d'));
-        $fromDate = $req->input('from_date', '');
-        $toDate = $req->input('to_date', '');
-        $shopFilter = $req->input('shop', '');
+{
+    $user = Auth::user();
+    $selectedDate = $req->input('date', date('Y-m-d'));
+    $fromDate = $req->input('from_date', '');
+    $toDate = $req->input('to_date', '');
+    $shopFilter = $req->input('shop', '');
+    $shops = getUserAccounts();
+    // Get user's assigned accounts
+    $userAccounts = array_column($shops, 'id');
 
-        // Get user's assigned accounts
-        $userAccounts = $user->accounts()->pluck('account')->toArray();
-        if (Auth::user()->account) {
-            $userAccounts[] = Auth::user()->account;
-        }
-        $userAccounts = array_unique($userAccounts);
+    // ── 1. Fetch all item requests (requested quantities) ──
+    $requestQuery = itemRequestModel::query();
+    if (!empty($shopFilter)) {
+        $requestQuery->where('account', $shopFilter);
+    }
 
-        // ── 1. Fetch all item requests (requested quantities) ──
-        $requestQuery = itemRequestModel::query();
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if (!empty($shopFilter)) {
-                $requestQuery->where('account', $shopFilter);
-            }
-        } else {
-            if (empty($userAccounts)) {
-                $requestQuery->where('id', '=', 0);
-            } else {
-                $requestQuery->whereIn('account', $userAccounts);
-            }
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $requestQuery->where('account', $shopFilter);
-            }
-        }
-        if (!empty($fromDate) && !empty($toDate)) {
-            $requestQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-        } elseif (!empty($selectedDate)) {
-            $requestQuery->whereDate('created_at', $selectedDate);
-        }
-        $allRequests = $requestQuery->get();
+    if (!empty($fromDate) && !empty($toDate)) {
+        $requestQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+    } elseif (!empty($selectedDate)) {
+        $requestQuery->whereDate('created_at', $selectedDate);
+    }
+    $allRequests = $requestQuery->get();
 
-        // Aggregate requested quantities by productId
-        $requestedMap = [];
-        foreach ($allRequests as $r) {
-            $pid = $r->productId;
-            if (!isset($requestedMap[$pid])) {
-                $requestedMap[$pid] = 0;
-            }
-            $requestedMap[$pid] += (int)($r->quantity ?? 0);
+    // Aggregate requested quantities by productId
+    $requestedMap = [];
+    foreach ($allRequests as $r) {
+        $pid = $r->productId;
+        if (!isset($requestedMap[$pid])) {
+            $requestedMap[$pid] = 0;
         }
+        $requestedMap[$pid] += (int)($r->quantity ?? 0);
+    }
 
-        // ── 2. Fetch receivings (received quantities) ──
-        $receivingQuery = recevingModel::where('is_return', '!=', 1);
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if (!empty($shopFilter)) {
-                $receivingQuery->where('account', $shopFilter);
-            }
-        } else {
-            if (empty($userAccounts)) {
-                $receivingQuery->where('id', '=', 0);
-            } else {
-                $receivingQuery->whereIn('account', $userAccounts);
-            }
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $receivingQuery->where('account', $shopFilter);
-            }
-        }
-        if (!empty($fromDate) && !empty($toDate)) {
-            $receivingQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-        } elseif (!empty($selectedDate)) {
-            $receivingQuery->whereDate('created_at', $selectedDate);
-        }
-        $allReceivings = $receivingQuery->get();
+    // ── 2. Fetch receivings (received quantities) ──
+    $receivingQuery = recevingModel::where('is_return', '!=', 1);
 
-        // Aggregate received quantities by productId
-        $receivedMap = [];
+    if (!empty($shopFilter)) {
+        $receivingQuery->where('account', $shopFilter);
+    }
+
+    if (!empty($fromDate) && !empty($toDate)) {
+        $receivingQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+    } elseif (!empty($selectedDate)) {
+        $receivingQuery->whereDate('created_at', $selectedDate);
+    }
+    $allReceivings = $receivingQuery->get();
+
+    // Aggregate received quantities by productId
+    $receivedMap = [];
+    foreach ($allReceivings as $rec) {
+        $pid = $rec->productId;
+        if (!isset($receivedMap[$pid])) {
+            $receivedMap[$pid] = 0;
+        }
+        $receivedMap[$pid] += (int)($rec->quantity ?? 0);
+    }
+
+    // ── 3. Fetch returns (return quantities) ──
+    $returnQuery = recevingModel::where('is_return', 1);
+
+    if (!empty($shopFilter)) {
+        $returnQuery->where('account', $shopFilter);
+    }
+
+    if (!empty($fromDate) && !empty($toDate)) {
+        $returnQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+    } elseif (!empty($selectedDate)) {
+        $returnQuery->whereDate('created_at', $selectedDate);
+    }
+    $allReturns = $returnQuery->get();
+
+    // Aggregate return quantities by productId
+    $returnMap = [];
+    $totalReturnQty = 0;
+    foreach ($allReturns as $ret) {
+        $pid = $ret->productId;
+        if (!isset($returnMap[$pid])) {
+            $returnMap[$pid] = 0;
+        }
+        $returnMap[$pid] += (int)($ret->quantity ?? 0);
+        $totalReturnQty += (int)($ret->quantity ?? 0);
+    }
+
+    // ── 4. Fetch approved quantities from receivings ──
+    $approvedQuery = recevingModel::where('is_return', '!=', 1)
+        ->where('status', 'Approved');
+
+    if (!empty($shopFilter)) {
+        $approvedQuery->where('account', $shopFilter);
+    }
+
+    if (!empty($fromDate) && !empty($toDate)) {
+        $approvedQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+    } elseif (!empty($selectedDate)) {
+        $approvedQuery->whereDate('created_at', $selectedDate);
+    }
+    $allApproved = $approvedQuery->get();
+
+    // Aggregate approved quantities by productId
+    $approvedMap = [];
+    foreach ($allApproved as $rec) {
+        $pid = $rec->productId;
+        if (!isset($approvedMap[$pid])) {
+            $approvedMap[$pid] = 0;
+        }
+        $approvedMap[$pid] += (int)($rec->quantity ?? 0);
+    }
+
+    // ── 5. Fetch returned approved items (is_return = 1 AND status = 'Returned') ──
+    $returnedApprovedQuery = recevingModel::where('is_return', 1)
+        ->where('status', 'Returned');
+
+    if (!empty($shopFilter)) {
+        $returnedApprovedQuery->where('account', $shopFilter);
+    }
+
+    if (!empty($fromDate) && !empty($toDate)) {
+        $returnedApprovedQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+    } elseif (!empty($selectedDate)) {
+        $returnedApprovedQuery->whereDate('created_at', $selectedDate);
+    }
+    $allReturnedApproved = $returnedApprovedQuery->get();
+
+    // Aggregate returned approved quantities by productId
+    $returnedApprovedMap = [];
+    $totalReturnedApproved = 0;
+    foreach ($allReturnedApproved as $rec) {
+        $pid = $rec->productId;
+        if (!isset($returnedApprovedMap[$pid])) {
+            $returnedApprovedMap[$pid] = 0;
+        }
+        $returnedApprovedMap[$pid] += (int)($rec->quantity ?? 0);
+        $totalReturnedApproved += (int)($rec->quantity ?? 0);
+    }
+
+    // ── 6. Fetch SOLD items from sales table (exclude returns) ──
+    $soldQuery = salsModel::
+        select('productId', DB::raw('SUM(pQuantity) as total_sold'))
+        ->where('status', '!=', 'Return')
+        ->groupBy('productId');
+
+if (!empty($shopFilter)) {
+    $soldQuery->where('account', $shopFilter);
+}
+
+if (!empty($fromDate) && !empty($toDate)) {
+    $soldQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+} elseif (!empty($selectedDate)) {
+    $soldQuery->whereDate('created_at', $selectedDate);
+}
+
+$allSold = $soldQuery->get();
+
+    // Convert to map
+    $soldMap = [];
+    $totalSoldQty = 0;
+    foreach ($allSold as $sold) {
+        $pid = $sold->productId;
+        $soldMap[$pid] = (int)($sold->total_sold ?? 0);
+        $totalSoldQty += (int)($sold->total_sold ?? 0);
+    }
+
+    // ── 7. Fetch customer returns ──
+    $allProductIds = array_unique(array_merge(
+        array_keys($requestedMap),
+        array_keys($receivedMap),
+        array_keys($approvedMap),
+        array_keys($returnMap),
+        array_keys($soldMap),
+    ));
+
+    // Fetch product names
+    $productNames = [];
+    if (!empty($allProductIds)) {
+        $productNames = productsModel::whereIn('product_id', $allProductIds)
+            ->pluck('name01', 'product_id')
+            ->toArray();
+    }
+
+    // Supplier comes from the RECEIVING record (the batch/group)
+    $receivingSupplierMap = [];
+    if (!empty($allReceivings)) {
         foreach ($allReceivings as $rec) {
             $pid = $rec->productId;
-            if (!isset($receivedMap[$pid])) {
-                $receivedMap[$pid] = 0;
+            if (!isset($receivingSupplierMap[$pid])) {
+                $receivingSupplierMap[$pid] = $rec->supplier;
             }
-            $receivedMap[$pid] += (int)($rec->quantity ?? 0);
-        }
-
-        // ── 2b. Fetch returns (return quantities) ──
-        $returnQuery = recevingModel::where('is_return', 1);
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if (!empty($shopFilter)) {
-                $returnQuery->where('account', $shopFilter);
-            }
-        } else {
-            if (empty($userAccounts)) {
-                $returnQuery->where('id', '=', 0);
-            } else {
-                $returnQuery->whereIn('account', $userAccounts);
-            }
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $returnQuery->where('account', $shopFilter);
-            }
-        }
-        if (!empty($fromDate) && !empty($toDate)) {
-            $returnQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-        } elseif (!empty($selectedDate)) {
-            $returnQuery->whereDate('created_at', $selectedDate);
-        }
-        $allReturns = $returnQuery->get();
-
-        // Aggregate return quantities by productId
-        $returnMap = [];
-        $totalReturnQty = 0;
-        foreach ($allReturns as $ret) {
-            $pid = $ret->productId;
-            if (!isset($returnMap[$pid])) {
-                $returnMap[$pid] = 0;
-            }
-            $returnMap[$pid] += (int)($ret->quantity ?? 0);
-            $totalReturnQty += (int)($ret->quantity ?? 0);
-        }
-
-        // ── 3. Fetch approved quantities from receivings ──
-        $approvedQuery = recevingModel::where('is_return', '!=', 1)
-            ->where('status', 'Approved');
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if (!empty($shopFilter)) {
-                $approvedQuery->where('account', $shopFilter);
-            }
-        } else {
-            if (empty($userAccounts)) {
-                $approvedQuery->where('id', '=', 0);
-            } else {
-                $approvedQuery->whereIn('account', $userAccounts);
-            }
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $approvedQuery->where('account', $shopFilter);
-            }
-        }
-        if (!empty($fromDate) && !empty($toDate)) {
-            $approvedQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-        } elseif (!empty($selectedDate)) {
-            $approvedQuery->whereDate('created_at', $selectedDate);
-        }
-        $allApproved = $approvedQuery->get();
-
-        // Aggregate approved quantities by productId
-        $approvedMap = [];
-        foreach ($allApproved as $rec) {
-            $pid = $rec->productId;
-            if (!isset($approvedMap[$pid])) {
-                $approvedMap[$pid] = 0;
-            }
-            $approvedMap[$pid] += (int)($rec->quantity ?? 0);
-        }
-
-        // ── 3b. Fetch returned approved items (is_return = 1 AND status = 'Returned') ──
-        $returnedApprovedQuery = recevingModel::where('is_return', 1)
-            ->where('status', 'Returned');
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if (!empty($shopFilter)) {
-                $returnedApprovedQuery->where('account', $shopFilter);
-            }
-        } else {
-            if (empty($userAccounts)) {
-                $returnedApprovedQuery->where('id', '=', 0);
-            } else {
-                $returnedApprovedQuery->whereIn('account', $userAccounts);
-            }
-            if (!empty($shopFilter) && in_array($shopFilter, $userAccounts)) {
-                $returnedApprovedQuery->where('account', $shopFilter);
-            }
-        }
-        if (!empty($fromDate) && !empty($toDate)) {
-            $returnedApprovedQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-        } elseif (!empty($selectedDate)) {
-            $returnedApprovedQuery->whereDate('created_at', $selectedDate);
-        }
-        $allReturnedApproved = $returnedApprovedQuery->get();
-
-        // Aggregate returned approved quantities by productId
-        $returnedApprovedMap = [];
-        $totalReturnedApproved = 0;
-        foreach ($allReturnedApproved as $rec) {
-            $pid = $rec->productId;
-            if (!isset($returnedApprovedMap[$pid])) {
-                $returnedApprovedMap[$pid] = 0;
-            }
-            $returnedApprovedMap[$pid] += (int)($rec->quantity ?? 0);
-            $totalReturnedApproved += (int)($rec->quantity ?? 0);
-        }
-
-        // ── 4. Build report rows from all unique productIds ──
-        $allProductIds = array_unique(array_merge(
-            array_keys($requestedMap),
-            array_keys($receivedMap),
-            array_keys($approvedMap),
-            array_keys($returnMap)
-        ));
-
-        // Fetch product names
-        $productNames = [];
-        if (!empty($allProductIds)) {
-            $productNames = productsModel::whereIn('product_id', $allProductIds)
-                ->pluck('name01', 'product_id')
-                ->toArray();
-        }
-
-        // ── Supplier comes from the RECEIVING record (the batch/group) ──
-        // All items in the same receivingId share the same supplier.
-        // Build a map: productId => supplierId from receivings (non-returns only)
-        $receivingSupplierMap = [];
-        if (!empty($allReceivings)) {
-            foreach ($allReceivings as $rec) {
-                $pid = $rec->productId;
-                if (!isset($receivingSupplierMap[$pid])) {
-                    $receivingSupplierMap[$pid] = $rec->supplier;
-                }
-            }
-        }
-
-        // Collect unique supplier IDs from the receiving records
-        $supplierIds = array_unique(array_filter(array_values($receivingSupplierMap)));
-        $suppliersMap = [];
-        if (!empty($supplierIds)) {
-            $suppliersMap = vendorModal::whereIn('id', $supplierIds)
-                ->pluck('name', 'id')
-                ->toArray();
-        }
-
-        $reportRows = [];
-        $totalRequested = 0;
-        $totalReceived = 0;
-        $totalReturned = 0;
-        $totalApproved = 0;
-        foreach ($allProductIds as $pid) {
-            $reqQty           = $requestedMap[$pid]        ?? 0;
-            $recQty           = $receivedMap[$pid]         ?? 0;
-            $retQty           = $returnMap[$pid]           ?? 0;
-            $appQty           = $approvedMap[$pid]         ?? 0;
-            $retAppQty        = $returnedApprovedMap[$pid] ?? 0;
-            // Difference = requested - received - returned
-            $diff             = ($reqQty - $recQty) - ($retQty - $retAppQty);
-
-            // Total price = approved qty * price from item_requests
-            $price = 0;
-            foreach ($allRequests as $r) {
-                if ($r->productId === $pid) {
-                    $price = (float)($r->price ?? 0);
-                    break;
-                }
-            }
-            $totalPrice = $appQty * $price;
-
-            // Resolve supplier display name from the receiving record (batch supplier)
-            $supplierId   = $receivingSupplierMap[$pid] ?? null;
-            $supplierName = accountModel::where('id', $supplierId)->value('name') ?? 'Unknown Supplier';
-
-            $reportRows[] = [
-                'productId'          => $pid,
-                'productName'        => $productNames[$pid] ?? 'Unknown',
-                'supplierName'       => $supplierName,
-                'requestedQty'       => $reqQty,
-                'receivedQty'        => $recQty,
-                'returnQty'          => $retQty,
-                'difference'         => $diff,
-                'approvedQty'        => $appQty,
-                'returnedApprovedQty'=> $retAppQty,
-                'totalPrice'         => $totalPrice,
-            ];
-
-            $totalRequested        += $reqQty;
-            $totalReceived         += $recQty;
-            $totalReturned         += $retQty;
-            $totalApproved         += $appQty;
-            $totalReturnedApproved += $retAppQty;
-        }
-
-        // Get shops list for filter dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $shops = accountModel::whereIn('id', $userAccounts)->get();
-        }
-
-        $data = compact(
-            'reportRows', 'selectedDate', 'fromDate', 'toDate', 'shopFilter', 'shops',
-            'totalRequested', 'totalReceived', 'totalReturned', 'totalApproved', 'totalReturnedApproved'
-        );
-
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.receivingReport', $data);
-        }
-        if (!empty($user->levelStatus)) {
-            return view('user.receivingReport', $data);
         }
     }
 
+    // Collect unique supplier IDs from the receiving records
+    $supplierIds = array_unique(array_filter(array_values($receivingSupplierMap)));
+    $suppliersMap = [];
+    if (!empty($supplierIds)) {
+        $suppliersMap = vendorModal::whereIn('id', $supplierIds)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
 
+    $reportRows = [];
+    $totalRequested = 0;
+    $totalReceived = 0;
+    $totalReturned = 0;
+    $totalApproved = 0;
+    $totalSold = 0;
+    $totalCustomerReturned = 0;
+    $totalRemaining = 0;
+
+    foreach ($allProductIds as $pid) {
+        $reqQty           = $requestedMap[$pid]        ?? 0;
+        $recQty           = $receivedMap[$pid]         ?? 0;
+        $retQty           = $returnMap[$pid]           ?? 0;        // Returns to supplier
+        $appQty           = $approvedMap[$pid]         ?? 0;
+        $retAppQty        = $returnedApprovedMap[$pid] ?? 0;
+        $soldQty          = $soldMap[$pid]             ?? 0;        // Items sold to customers
+        $customerRetQty   = $customerReturnMap[$pid]   ?? 0;        // Items returned by customers
+        
+        // Calculate NET received = approved quantity - returns approved
+        $netReceived = $appQty;
+        
+        // Calculate NET sold = sold quantity - customer returns
+        $netSold = $soldQty - $customerRetQty;
+        
+        // Calculate REMAINING STOCK = net received - net sold - returns to supplier
+        $remaining = $netReceived - $netSold - $retAppQty;
+        
+        // Difference for requested vs received (original logic)
+        $diff = ($reqQty - $recQty) - ($retQty - $retAppQty);
+
+        // Total price = approved qty * price from item_requests
+        $price = 0;
+        foreach ($allRequests as $r) {
+            if ($r->productId === $pid) {
+                $price = (float)($r->price ?? 0);
+                break;
+            }
+        }
+        $totalPrice = $appQty * $price;
+
+        // Resolve supplier display name
+        $supplierId   = $receivingSupplierMap[$pid] ?? null;
+        $supplierName = accountModel::where('id', $supplierId)->value('name') ?? 'Unknown Supplier';
+
+        $reportRows[] = [
+            'productId'          => $pid,
+            'productName'        => $productNames[$pid] ?? 'Unknown',
+            'supplierName'       => $supplierName,
+            'requestedQty'       => $reqQty,
+            'receivedQty'        => $recQty,
+            'approvedQty'        => $appQty,
+            'returnedApprovedQty'=> $retAppQty,
+            'returnQty'          => $retQty,
+            'soldQty'            => $soldQty,
+            'customerReturnQty'  => $customerRetQty,
+            'netSold'            => $netSold,
+            'netReceived'        => $netReceived,
+            'remainingStock'     => $remaining,
+            'difference'         => $diff,
+            'totalPrice'         => $totalPrice,
+        ];
+
+        $totalRequested        += $reqQty;
+        $totalReceived         += $recQty;
+        $totalReturned         += $retQty;
+        $totalApproved         += $appQty;
+        $totalReturnedApproved += $retAppQty;
+        $totalSold             += $soldQty;
+        $totalCustomerReturned += $customerRetQty;
+        $totalRemaining        += $remaining;
+    }
+
+    $data = compact(
+        'reportRows', 'selectedDate', 'fromDate', 'toDate', 'shopFilter', 'shops',
+        'totalRequested', 'totalReceived', 'totalReturned', 'totalApproved', 
+        'totalReturnedApproved', 'totalSold', 'totalCustomerReturned', 'totalRemaining'
+    );
+
+    return view('receivingReport', $data);
+}
     /**
      * Process new receiving (called from makeReceiving page)
      */
@@ -4036,7 +3946,7 @@ public function dltrestock(Request $req)
                 $product->expiry = $expiry;
                 $product->supplier = $supplier;
                 $product->account = getCurrentShopId();
-                $product->served_by = $served ?? session('username');
+                $product->served_by = $served ?? Auth::user()->name;
                 $product->is_return = 0; // This is a receiving, not a return
                 
                 // Use provided receivingDate or default to today
@@ -4056,7 +3966,7 @@ public function dltrestock(Request $req)
                 } else {
                     $create = new logModal();
                     $create->title = 'Stock Log';
-                    $create->description = 'New Stock Added By ' . session('username');
+                    $create->description = 'New Stock Added By ' . Auth::user()->name;
                     $create->save();
                 }
             }
@@ -4151,7 +4061,7 @@ public function dltrestock(Request $req)
                 $returnRec->expiry = $expiry;
                 $returnRec->supplier = $supplier;
                 $returnRec->account = getCurrentShopId();
-                $returnRec->served_by = $served ?? session('username');
+                $returnRec->served_by = $served ?? Auth::user()->name;
                 $returnRec->status = 'Pending'; // Pending admin approval
                 $returnRec->is_return = 1; // This is a return
 
@@ -4167,16 +4077,28 @@ public function dltrestock(Request $req)
                 } else {
                     $create = new logModal();
                     $create->title = 'Return Requested';
-                    $create->description = 'Return requested: ' . $quantity . ' items. Reason: ' . $reason . ' by ' . session('username') . '. Awaiting admin approval.';
+                    $create->description = 'Return requested: ' . $quantity . ' items. Reason: ' . $reason . ' by ' . Auth::user()->name . '. Awaiting admin approval.';
                     $create->save();
                 }
             }
 
             if ($allSaved) {
-                return redirect()->back()->with('success', 'Return request submitted successfully! Awaiting admin approval before stock is deducted.');
+                $message = 'Return request submitted successfully! Awaiting admin approval before stock is deducted.';
+                if ($req->expectsJson()) {
+                    return response()->json(['success' => true, 'message' => $message]);
+                }
+                return redirect()->back()->with('success', $message);
             } else {
-                return redirect()->back()->with('error', 'Error saving some return requests. Please try again.');
+                $message = 'Error saving some return requests. Please try again.';
+                if ($req->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect()->back()->with('error', $message);
             }
+        }
+
+        if ($req->expectsJson()) {
+            return response()->json(['success' => false, 'message' => 'Invalid request.'], 422);
         }
 
         return redirect()->route('make-return');
@@ -4216,6 +4138,16 @@ public function dltrestock(Request $req)
             $newStockQty = max(0, ((int) $product->quantity) - $quantity);
             $product->quantity = $newStockQty;
             $product->save();
+
+            $MainStore = productsModel::where('product_id', $productId)
+            ->where('account', 7)
+            ->first();
+
+            if ($MainStore) {
+                $newStockQty = max(0, ((int) $MainStore->quantity) + $quantity);
+                $MainStore->quantity = $newStockQty;
+                $MainStore->save();
+            }
         }
 
         // Mark return as approved/returned
@@ -4225,7 +4157,7 @@ public function dltrestock(Request $req)
         // Log
         $create = new logModal();
         $create->title = 'Return Approved';
-        $create->description = 'Return approved: ' . $quantity . ' items of product ' . $productId . ' by ' . session('username') . '. Stock deducted.';
+        $create->description = 'Return approved: ' . $quantity . ' items of product ' . $productId . ' by ' . Auth::user()->name . '. Stock deducted.';
         $create->save();
 
         return redirect()->back()->with('success', 'Return approved successfully! Stock has been deducted.');
@@ -4262,7 +4194,7 @@ public function dltrestock(Request $req)
         // Log
         $create = new logModal();
         $create->title = 'Return Rejected';
-        $create->description = 'Return rejected: ' . $quantity . ' items of product ' . $productId . ' by ' . session('username') . '. No stock deducted.';
+        $create->description = 'Return rejected: ' . $quantity . ' items of product ' . $productId . ' by ' . Auth::user()->name . '. No stock deducted.';
         $create->save();
 
         return redirect()->back()->with('success', 'Return request rejected. No stock was deducted.');
@@ -4273,26 +4205,27 @@ public function dltrestock(Request $req)
      */
     public function approveSelectedReceivings(Request $req)
     {
-        $productIds = $req->input('product_ids', []);
+        $receiving_id = $req->input('product_ids', []);
         $shopFilter = $req->input('shop', '');
         $user = Auth::user();
 
         // Use shop filter if provided, otherwise fall back to session account
         $accountId = !empty($shopFilter) ? $shopFilter : getCurrentShopId();
 
-        if (empty($productIds)) {
+        if (empty($receiving_id)) {
             return redirect()->back()->with('error', 'No items selected.');
         }
 
         $approvedCount = 0;
         $failedCount = 0;
 
-        foreach ($productIds as $productId) {
+        foreach ($receiving_id as $productId) {
             // Find the pending receiving record for the correct shop
             $receiving = recevingModel::where('account', $accountId)
-                ->where('productId', $productId)
+                ->where('id', $productId)
                 ->whereNotIn('status', ['Approved', 'Returned'])
                 ->where('is_return', '!=', 1)
+                ->orderBy('id', 'desc')
                 ->first();
 
             if (!$receiving) {
@@ -4301,7 +4234,7 @@ public function dltrestock(Request $req)
             }
 
             // Get the product from the correct shop
-            $product = productsModel::where('product_id', $productId)
+            $product = productsModel::where('product_id', $receiving->productId)
                 ->where('account', $accountId)
                 ->first();
 
@@ -4334,7 +4267,7 @@ public function dltrestock(Request $req)
 
             $restock = new stock();
             $restock->name = $uuid_short;
-            $restock->productId = $productId;
+            $restock->productId = $receiving->productId;
             $restock->quantity = $receiving->quantity;
             $restock->bPrice = $receiving->price;
             $restock->sPrice = $receiving->sellingPrice;
@@ -4345,7 +4278,7 @@ public function dltrestock(Request $req)
             // Log
             $create = new logModal();
             $create->title = 'Stock Approved (Selected)';
-            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . session('username');
+            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . Auth::user()->name;
             $create->save();
 
             $approvedCount++;
@@ -4429,7 +4362,7 @@ public function dltrestock(Request $req)
             // Log
             $create = new logModal();
             $create->title = 'Stock Approved (All)';
-            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . session('username');
+            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . Auth::user()->name;
             $create->save();
 
             $approvedCount++;
@@ -4507,7 +4440,7 @@ public function dltrestock(Request $req)
             // Log
             $create = new logModal();
             $create->title = 'Stock Approved (All Dates)';
-            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . session('username');
+            $create->description = 'Stock approved for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . Auth::user()->name;
             $create->save();
 
             $approvedCount++;
@@ -4521,67 +4454,68 @@ public function dltrestock(Request $req)
      */
    public function undoReceivings(Request $req)
 {
-    $productIds   = $req->input('product_ids', []);
-    $shopFilter   = $req->input('shop', '');
-    $accountId    = !empty($shopFilter) ? $shopFilter : getCurrentShopId();
-    $receivingId  = $req->input('receiving_id');
+        $receiving_id = $req->input('product_ids', []);
+        $shopFilter = $req->input('shop', '');
+        $user = Auth::user();
 
-    // Fetch records
-    if ($receivingId) {
-        $receivings = recevingModel::where('id', $receivingId)
-            ->where('status', 'Approved')
-            ->get();
-    } else {
-        $receivings = recevingModel::where('account', $accountId)
-            ->whereIn('productId', $productIds)
-            ->where('status', 'Approved')
-            ->get();
-    }
 
-    if ($receivings->isEmpty()) {
-        return redirect()->back()->with('error', 'No approved receivings to undo.');
-    }
+        // Use shop filter if provided, otherwise fall back to session account
+        $accountId = !empty($shopFilter) ? $shopFilter : getCurrentShopId();
 
-    $undoneCount = 0;
+        if (empty($receiving_id)) {
+            return redirect()->back()->with('error', 'No items selected.');
+        }
 
-    // Use a transaction to ensure all or nothing updates
-    \DB::transaction(function () use ($receivings, $accountId, &$undoneCount) {
-        foreach ($receivings as $receiving) {
+        $undoCount = 0;
+        $failedCount = 0;
+
+        foreach ($receiving_id as $productId) {
+           
+            // Find the pending receiving record for the correct shop
+$receivingQuery = recevingModel::query();
+    $receivingQuery->where('id', $productId);
+
+$receiving = $receivingQuery->first(); // Assign the result here
+
+if (!$receiving) {
+    $failedCount++;
+    continue;
+}
+
+// Get the product from the correct shop
+$product = productsModel::where('product_id', $receiving->productId)
+    ->where('account', $accountId)
+    ->first();
+
+if (!$product) {
+    $failedCount++;
+    continue;
+}
+
+// Update product quantity and details
+$product->quantity -= $receiving->quantity;
+$product->save();
+
+// Update receiving status
+$receiving->status = 'Submitted';
+$receiving->save();
+
             
-            // 1. Update Product Inventory safely
-            $product = productsModel::where('product_id', $receiving->productId)
-                ->where('account', $accountId)
-                ->lockForUpdate() // Prevents race conditions
-                ->first();
-
-            if ($product) {
-                $product->quantity = max(0, ((int) $product->quantity) - $receiving->quantity);
-                $product->save();
-            }
-
-            // 2. Fix: Delete specific stock entry using exact timestamp comparison
-            stock::where('account', $accountId)
-                ->where('productId', $receiving->productId)
-                ->where('created_at', $receiving->created_at) // Removed whereDate to target exact time
-                ->limit(1) // Safety net to delete only one row per entry
-                ->delete();
-
-            // 3. Reset receiving status
-            $receiving->status = 'Pending';
-            $receiving->save();
-
-            // 4. Create log entry
+            // Log
             $create = new logModal();
-            $create->title = 'Receiving Undone';
-            $create->description = 'Receiving undone for product ID: ' . $receiving->productId . ' by ' . session('username');
+            $create->title = 'Stock Undo (Selected)';
+            $create->description = 'Stock Undone for ' . ($productInfo->name01 ?? 'Unknown') . ' by ' . Auth::user()->name;
             $create->save();
 
-            $undoneCount++;
+            $undoCount++;
         }
-    });
 
-    return redirect()->back()->with('success', "{$undoneCount} receiving(s) undone successfully!");
-}
+        if ($undoCount > 0) {
+            return redirect()->back()->with('success', "{$undoCount} item(s) Undone successfully!" . ($failedCount > 0 ? " {$failedCount} failed." : ""));
+        } else {
+            return redirect()->back()->with('error', 'No items could be Undone.');
+        }
+        }
 
 
     /**
@@ -4589,127 +4523,169 @@ public function dltrestock(Request $req)
      */
     public function deleteSelectedReceivings(Request $req)
     {
-        $productIds = $req->input('product_ids', []);
+        $receiving_id = $req->input('product_ids', []);
         $shopFilter  = $req->input('shop', '');
         $user = Auth::user();
 
         $accountId = !empty($shopFilter) ? $shopFilter : getCurrentShopId();
 
-        if (empty($productIds)) {
+        if (empty($receiving_id)) {
             return redirect()->back()->with('error', 'No items selected for deletion.');
         }
 
         $deletedCount = 0;
         $failedCount = 0;
 
-        foreach ($productIds as $productId) {
+            try {
+        DB::beginTransaction(); // Ensure your transaction starts before the loop
+
+        foreach ($receiving_id as $productId) {
             // Build query for pending (non-approved) receiving records
-            $query = recevingModel::where('account', $accountId)
-                ->where('productId', $productId)
-                ->where('is_return', '!=', 1);
-            
-            // Only restrict to pending for non-admin users
-            if(Auth::user()->levelStatus != 'Admin') {
-                $query->whereNotIn('status', ['Approved', 'Returned']);
-            }
-            
+            $query = recevingModel::where('id', $productId)
+                ->where('is_return', '!=', 1)
+                ->whereNotIn('status', ['Approved', 'Returned']);
+            $receivings = $query->first();
+
+            $products = productsModel::where('product_id', $receivings->productId)
+                ->where('account', 7)
+                ->first();
+            $products->quantity += $receivings->quantity;
+            $products->save();
+            if($products) {
+                $request = itemRequestModel::where('requestName', $receivings->receivingName)
+                    ->where('account', $receivings->account)
+                    ->first();
+                if($request) {
+                $request->status = 'Submitted';
+                $request->save();
+                }
             // Delete all matching receiving records for this product
             $deletedForProduct = $query->delete();
-            
+            }
             if ($deletedForProduct > 0) {
-                // Get product name for logging (using first deleted record or fallback)
-                $product = productsModel::where('product_id', $productId)
-                    ->where('account', $accountId)
-                    ->first();
-                $productName = $product->name01 ?? 'Unknown';
-
-                // Log the deletion(s)
-                $create = new logModal();
-                $create->title = 'Receiving Deleted (Selected)';
-                $create->description = 'Receiving deleted for ' . $productName . ' by ' . session('username');
-                $create->save();
-
                 $deletedCount += $deletedForProduct;
             } else {
                 $failedCount++;
             }
         }
 
-        if ($deletedCount > 0) {
-            return redirect()->back()->with('success', "{$deletedCount} receiving(s) deleted successfully!" . ($failedCount > 0 ? " {$failedCount} had no deletable records." : ""));
-        } else {
-            return redirect()->back()->with('error', 'No items could be deleted. Only pending receivings can be deleted.');
-        }
+        DB::commit(); // Commit changes if the loop completes successfully
+
+        return redirect()->back()->with('success',
+            'Quantities cleared successfully for ' . $deletedCount . ' products'); // Fixed variable name from $clearedCount to $deletedCount
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Bulk Clear Quantity Error: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while clearing quantities');
     }
 
-    /**
-     * Save offer for a product
-     */
-    public function saveOffer(Request $req)
+    }
+
+    public function syncPricesToShops(Request $request)
     {
-        $req->validate([
-            'product_id' => 'required|string',
-            'offer_product_id' => 'required|string',
-            'required_quantity' => 'required|integer|min:1',
-            'offer_quantity' => 'required|integer|min:1',
-        ]);
+        $user = $request->user();
 
-        // Convert checkbox value from "on" to boolean
-        $isActive = $req->input('is_active') === 'on' ? true : ($req->input('is_active', true) === true);
+        $accountIds = $request->input('account_ids', []);
+        $productIds = $request->input('product_ids', []);
 
-        $offer = Offer::updateOrCreate(
-            [
-                'account' => getCurrentShopId(),
-                'product_id' => $req->input('product_id'),
-            ],
-            [
-                'offer_product_id' => $req->input('offer_product_id'),
-                'required_quantity' => $req->input('required_quantity'),
-                'offer_quantity' => $req->input('offer_quantity'),
-                'is_active' => $isActive,
-            ]
-        );
-
-        // Log the offer creation/update
-        $product = productsModel::where('product_id', $req->input('product_id'))->first();
-        $offerProduct = productsModel::where('product_id', $req->input('offer_product_id'))->first();
-        
-        $create = new logModal();
-        $create->title = 'Offer Created/Updated';
-        $create->description = 'Offer: Buy ' . $req->input('required_quantity') . ' ' . ($product->name01 ?? 'Unknown') . ' get ' . $req->input('offer_quantity') . ' ' . ($offerProduct->name01 ?? 'Unknown') . ' by ' . session('username');
-        $create->save();
-
-        // Return JSON for AJAX requests
-        if ($req->expectsJson()) {
-            // Reload offer with relationship
-            $offer->load('offeredProduct');
-            return response()->json([
-                'success' => true,
-                'message' => 'Offer saved successfully!',
-                'offer' => $offer
-            ]);
+        if (empty($accountIds) || empty($productIds)) {
+            return redirect()->back()->with('error', 'Invalid request: missing accounts or products');
         }
 
-        return redirect()->back()->with('success', 'Offer saved successfully!');
+        $validAccounts = array_column(getuserAccounts(), 'id');
+        $accountIds = array_values(array_intersect($accountIds, $validAccounts));
+
+        if (empty($accountIds)) {
+            return redirect()->back()->with('error', 'No valid accounts selected');
+        }
+
+        $mainStoreId = 7;
+        $mainStoreProducts = productsModel::where('account', $mainStoreId)
+            ->whereIn('product_id', $productIds)
+            ->get(['product_id', 'bPrice', 'sPrice', 'wholesale', 'discount'])
+            ->keyBy('product_id');
+
+        if ($mainStoreProducts->isEmpty()) {
+            return redirect()->back()->with('error', 'No matching products found in the Main Store to sync from');
+        }
+
+        $syncCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($productIds as $productId) {
+                $mainProduct = $mainStoreProducts->get($productId);
+                if (!$mainProduct) {
+                    continue;
+                }
+
+                $updated = productsModel::where('product_id', $productId)
+                    ->whereIn('account', $accountIds)
+                    ->update([
+                        'bPrice'    => $mainProduct->bPrice,
+                        'sPrice'    => $mainProduct->sPrice,
+                        'wholesale' => $mainProduct->wholesale,
+                        'discount'  => $mainProduct->discount,
+                    ]);
+
+                $syncCount += $updated;
+            }
+
+            DB::commit();
+
+            $log = new logModal();
+            $log->title = 'Bulk Sync Prices';
+            $log->description = 'Synced prices for ' . $syncCount . ' products across ' . count($accountIds) . ' accounts by ' . Auth::user()->name;
+            $log->save();
+
+            return redirect()->back()->with('success',
+                'Prices synced successfully for ' . $syncCount . ' products');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Bulk Sync Prices Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while syncing prices');
+        }
     }
+
 
     /**
      * Get offers for a product (API endpoint)
      */
     public function getOffers($productId)
     {
-        \Log::info('Getting offers for product: ' . $productId . ' in account: ' . getCurrentShopId());
-        
         $offers = Offer::where('account', getCurrentShopId())
-            ->where('product_id', $productId)
             ->where('is_active', true)
-            ->with('offeredProduct:id,product_id,name01')
-            ->get();
-
-        \Log::info('Offers found: ' . $offers->count());
-        foreach ($offers as $offer) {
-            \Log::info('Offer: ' . $offer->id . ' - Product: ' . ($offer->offeredProduct->name01 ?? 'NOT FOUND'));
-        }
+            ->where(function ($q) use ($productId) {
+                $q->where('product_id', $productId)
+                  ->orWhere('offer_product_id', $productId)
+                  ->orWhereHas('requiredItems', function ($q2) use ($productId) {
+                      $q2->where('product_id', $productId);
+                  });
+            })
+            ->with(['requiredItems.product', 'offeredProduct:id,product_id,name01'])
+            ->get()
+            ->map(function ($offer) {
+                $data = [
+                    'id' => $offer->id,
+                    'offer_product_id' => $offer->offer_product_id,
+                    'offer_product_name' => $offer->offeredProduct->name01 ?? 'Unknown',
+                    'offer_quantity' => $offer->offer_quantity,
+                    'requiredItems' => $offer->requiredItems->map(function ($reqItem) {
+                        return [
+                            'product_id' => $reqItem->product_id,
+                            'product_name' => $reqItem->product->name01 ?? 'Unknown',
+                            'required_quantity' => $reqItem->required_quantity,
+                        ];
+                    })->toArray(),
+                ];
+                if ($offer->product_id) {
+                    $data['product_id'] = $offer->product_id;
+                    $primary = $offer->requiredItems->firstWhere('product_id', $offer->product_id);
+                    $data['required_quantity'] = $primary ? $primary->required_quantity : null;
+                }
+                return $data;
+            });
 
         return response()->json($offers);
     }
@@ -4737,26 +4713,60 @@ public function dltrestock(Request $req)
    /**
     * Get all offers for the current account (Page view)
     */
-   public function allOffers()
-   {
-       $offers = Offer::where('account', getCurrentShopId())
-           ->where('is_active', true)
-           ->get();
+    public function allOffers()
+    {
+        $accounts = getUserAccounts();
+        $items = Offer::where('account', getCurrentShopId())
+            ->where('is_active', true)
+            ->get();
 
-       // Get product names
-       $productIds = $offers->pluck('product_id')->merge($offers->pluck('offer_product_id'))->unique();
+        // Get product names
+        $productIds = $items->pluck('product_id')->merge($items->pluck('offer_product_id'))->unique();
+        $products = productsModel::whereIn('product_id', $productIds)
+            ->pluck('name01', 'product_id');
+
+        $data = compact('items', 'products', 'accounts');
+
+        $user = Auth::user();
+
+            return view('offers', $data);
+
+    }
+public function offers(Request $req)
+   {
+    $accounts = getUserAccounts();
+    $shop = $req->input('shop');
+
+       $offers = Offer::query();
+       if(!empty($shop))
+        {
+            session([
+                'selected_shop_id' => $shop
+            ]);
+        $offers->where('account', $shop);
+        } else {
+            $offers->where('account', getCurrentShopId());
+        }
+        $items = $offers->with('requiredItems')->get();
+
+       // Get product names from required items and offered product
+       $productIds = $items->pluck('offer_product_id')->unique();
+       foreach ($items as $offer) {
+           foreach ($offer->requiredItems as $reqItem) {
+               $productIds->push($reqItem->product_id);
+           }
+       }
+       $productIds = $productIds->unique();
        $products = productsModel::whereIn('product_id', $productIds)
            ->pluck('name01', 'product_id');
 
-       $data = compact('offers', 'products');
+       $data = compact('items', 'products','accounts');
 
        $user = Auth::user();
-       if (strtolower(trim($user->levelStatus)) === 'admin') {
-           return view('admin.offers', $data);
-       }
-       return view('user.offers', $data);
-   }
 
+           return view('offers', $data);
+
+   }
     /**
      * Delete an offer
      */
@@ -4774,7 +4784,7 @@ public function dltrestock(Request $req)
             // Log the deletion
             $create = new logModal();
             $create->title = 'Offer Deleted';
-            $create->description = 'Offer deleted by ' . session('username');
+            $create->description = 'Offer deleted by ' . Auth::user()->name;
             $create->save();
 
             // Return JSON for AJAX requests
@@ -4804,49 +4814,62 @@ public function dltrestock(Request $req)
      */
     public function checkOffer($productId, $quantity)
     {
-        $offer = Offer::where('account', getCurrentShopId())
-            ->where('product_id', $productId)
+        $account = getCurrentShopId();
+        $offer = Offer::where('account', $account)
             ->where('is_active', true)
+            ->whereHas('requiredItems', function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
+            ->with(['requiredItems', 'offeredProduct'])
             ->first();
 
-        if ($offer && $quantity >= $offer->required_quantity) {
-            // Calculate how many times the offer applies
-            $offerApplies = floor($quantity / $offer->required_quantity);
-            $offerQuantity = $offerApplies * $offer->offer_quantity;
-            
-            // Get offered product details
-            $offeredProduct = productsModel::where('product_id', $offer->offer_product_id)->first();
+        if (!$offer) {
+            return response()->json(['has_offer' => false]);
+        }
 
-            return response()->json([
-                'has_offer' => true,
-                'offer' => [
-                    'required_quantity' => $offer->required_quantity,
-                    'offer_quantity' => $offerQuantity,
-                    'offer_product_id' => $offer->offer_product_id,
-                    'offer_product_name' => $offeredProduct->name01 ?? 'Unknown',
-                    'offer_product_stock' => $offeredProduct->quantity ?? 0,
-                ]
-            ]);
+        $requiredItems = $offer->requiredItems;
+        if ($requiredItems->count() === 1) {
+            $reqItem = $requiredItems->first();
+            if ($quantity >= $reqItem->required_quantity) {
+                $offerApplies = floor($quantity / $reqItem->required_quantity);
+                $offerQuantity = $offerApplies * $offer->offer_quantity;
+
+                return response()->json([
+                    'has_offer' => true,
+                    'offer' => [
+                        'required_quantity' => $reqItem->required_quantity,
+                        'offer_quantity' => $offerQuantity,
+                        'offer_product_id' => $offer->offer_product_id,
+                        'offer_product_name' => $offer->offeredProduct->name01 ?? 'Unknown',
+                        'offer_product_stock' => $offer->offeredProduct->quantity ?? 0,
+                    ]
+                ]);
+            }
         }
 
         return response()->json(['has_offer' => false]);
     }
 
     /**
-     * Show offered products report with date filtering
+     * Show offered products report with date and shop filtering
      */
     public function offeredProductsReport(Request $request)
     {
         $user = Auth::user();
-        
-        // Get date filter
+
         $startDate = $request->input('start_date', date('Y-m-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
-        
-        // Get offered products from sales table with a join for better performance and reliability
+        $shopFilter = $request->input('shop');
+
+        if (!empty($shopFilter)) {
+            session(['selected_shop_id' => $shopFilter]);
+        }
+
+        $accountIds = !empty($shopFilter) ? [$shopFilter] : array_column(getuserAccounts(), 'id');
+
         $offeredProducts = DB::table('sales')
             ->join('products', 'sales.productId', '=', 'products.product_id')
-            ->where('sales.account', getCurrentShopId())
+            ->whereIn('sales.account', $accountIds)
             ->where('offered_items', 1)
             ->whereBetween('sales.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->selectRaw('
@@ -4858,20 +4881,351 @@ public function dltrestock(Request $req)
             ->groupBy('sales.productId', 'products.name01')
             ->orderByDesc('total_quantity')
             ->get();
-        
-        // Create a map for the view if needed, though the join above is more efficient
+
         $products = $offeredProducts->pluck('productName', 'productId');
-        
-        // Calculate totals
+
         $totalOfferedItems = $offeredProducts->sum('total_quantity');
         $totalOrdersWithOffers = $offeredProducts->sum('order_count');
-        
-        $data = compact('offeredProducts', 'products', 'startDate', 'endDate', 'totalOfferedItems', 'totalOrdersWithOffers');
-        
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.offeredProductsReport', $data);
+
+        $activeOffers = Offer::whereIn('account', $accountIds)
+            ->where('is_active', true)
+            ->with('requiredItems')
+            ->get();
+
+        $totalActiveOffers = $activeOffers->count();
+        $totalProductsWithOffers = $activeOffers->pluck('requiredItems.*.product_id')->flatten()->unique()->count();
+
+        $soldOffers = DB::table('sales')
+            ->join('products', 'sales.productId', '=', 'products.product_id')
+            ->whereIn('sales.account', $accountIds)
+            ->where('offered_items', 1)
+            ->whereBetween('sales.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->select(
+                'sales.*',
+                'products.name01 as productName',
+                'products.name02 as productBrand'
+            )
+            ->orderByDesc('sales.created_at')
+            ->get();
+
+        $shops = getuserAccounts();
+
+        $data = compact(
+            'offeredProducts', 'products', 'startDate', 'endDate',
+            'totalOfferedItems', 'totalOrdersWithOffers', 'shops', 'shopFilter',
+            'activeOffers', 'totalActiveOffers', 'totalProductsWithOffers',
+            'soldOffers'
+        );
+
+        return view('offeredProductsReport', $data);
+    }
+
+    public function fetchActiveOffers(Request $request)
+    {
+        $shopFilter = $request->input('shop');
+        $accountIds = !empty($shopFilter) ? [$shopFilter] : array_column(getuserAccounts(), 'id');
+
+        $offers = Offer::whereIn('account', $accountIds)
+            ->where('is_active', true)
+            ->with(['requiredItems.product', 'offeredProduct'])
+            ->get()
+            ->map(function ($offer) {
+                return [
+                    'id' => $offer->id,
+                    'account' => $offer->account,
+                    'offer_product_id' => $offer->offer_product_id,
+                    'offer_product_name' => $offer->offeredProduct->name01 ?? 'Unknown',
+                    'offer_quantity' => $offer->offer_quantity,
+                    'is_active' => $offer->is_active,
+                    'required_items' => $offer->requiredItems->map(function ($reqItem) {
+                        $product = $reqItem->product;
+                        return [
+                            'product_id' => $reqItem->product_id,
+                            'product_name' => $product->name01 ?? 'Unknown',
+                            'required_quantity' => $reqItem->required_quantity,
+                        ];
+                    })->toArray(),
+                ];
+            });
+
+        return response()->json(['offers' => $offers]);
+    }
+
+    public function fetchSoldOffers(Request $request)
+    {
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate = $request->input('end_date', date('Y-m-d'));
+        $shopFilter = $request->input('shop');
+        $accountIds = !empty($shopFilter) ? [$shopFilter] : array_column(getuserAccounts(), 'id');
+
+        $sales = DB::table('sales')
+            ->join('products', 'sales.productId', '=', 'products.product_id')
+            ->whereIn('sales.account', $accountIds)
+            ->where('offered_items', 1)
+            ->whereBetween('sales.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->select(
+                'sales.*',
+                'products.name01 as productName',
+                'products.name02 as productBrand'
+            )
+            ->orderByDesc('sales.created_at')
+            ->get();
+
+        return response()->json(['sales' => $sales]);
+    }
+
+    public function saveOffer(Request $request)
+    {
+        $isActive = $request->input('is_active') === 'on';
+        $account = $request->input('account', getCurrentShopId());
+
+        $request->validate([
+            'offer_product_id' => 'required|string',
+            'offer_quantity' => 'required|integer|min:1',
+        ]);
+
+        $requiredItems = $request->input('required_items', []);
+        if (empty($requiredItems) && $request->filled('product_id')) {
+            $requiredItems = [[
+                'product_id' => $request->input('product_id'),
+                'required_quantity' => $request->input('required_quantity', 1),
+            ]];
         }
-        return view('user.offeredProductsReport', $data);
+
+        $offer = Offer::create([
+            'account' => $account,
+            'product_id' => $requiredItems[0]['product_id'] ?? null,
+            'offer_product_id' => $request->input('offer_product_id'),
+            'offer_quantity' => $request->input('offer_quantity'),
+            'is_active' => $isActive,
+        ]);
+
+        foreach ($requiredItems as $item) {
+            if (!empty($item['product_id']) && !empty($item['required_quantity'])) {
+                OfferItem::updateOrCreate(
+                    ['offer_id' => $offer->id, 'product_id' => $item['product_id']],
+                    ['required_quantity' => $item['required_quantity'], 'account' => $account]
+                );
+            }
+        }
+
+        $create = new logModal();
+        $create->title = 'Offer Created';
+        $create->description = 'Offer created by ' . Auth::user()->name;
+        $create->save();
+
+        if ($request->expectsJson()) {
+            $offer->load('requiredItems.product', 'offeredProduct');
+            return response()->json([
+                'success' => true,
+                'message' => 'Offer saved successfully!',
+                'offer' => $offer
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Offer saved successfully!');
+    }
+
+    public function updateOffer(Request $request, $id)
+    {
+        $offer = Offer::where('account', getCurrentShopId())->findOrFail($id);
+
+        $rawActive = $request->input('is_active', $offer->is_active);
+        if (is_string($rawActive)) {
+            $isActive = in_array(strtolower($rawActive), ['1', 'true', 'on', 'yes']);
+        } else {
+            $isActive = (bool) $rawActive;
+        }
+        $account = $request->input('account', $offer->account);
+
+        $updateData = [
+            'account' => $account,
+            'is_active' => $isActive,
+        ];
+
+        if ($request->has('offer_product_id')) {
+            $updateData['offer_product_id'] = $request->input('offer_product_id');
+        }
+        if ($request->has('offer_quantity')) {
+            $updateData['offer_quantity'] = $request->input('offer_quantity');
+        }
+
+        $offer->update($updateData);
+
+        $requiredItems = $request->input('required_items', []);
+        if (!empty($requiredItems)) {
+            $existingIds = [];
+            foreach ($requiredItems as $item) {
+                if (!empty($item['product_id']) && !empty($item['required_quantity'])) {
+                    $offerItem = OfferItem::updateOrCreate(
+                        ['offer_id' => $offer->id, 'product_id' => $item['product_id']],
+                        ['required_quantity' => $item['required_quantity'], 'account' => $account]
+                    );
+                    $existingIds[] = $offerItem->id;
+                }
+            }
+
+            OfferItem::where('offer_id', $offer->id)
+                ->whereNotIn('id', $existingIds)
+                ->delete();
+
+            $firstItem = $requiredItems[0] ?? null;
+            if ($firstItem && !empty($firstItem['product_id'])) {
+                $offer->update(['product_id' => $firstItem['product_id']]);
+            }
+        } elseif ($request->has('product_id') && $request->has('required_quantity')) {
+            OfferItem::updateOrCreate(
+                ['offer_id' => $offer->id, 'product_id' => $request->input('product_id')],
+                ['required_quantity' => $request->input('required_quantity'), 'account' => $account]
+            );
+            $offer->update(['product_id' => $request->input('product_id')]);
+        }
+
+        $product = productsModel::where('account', $account)->where('product_id', $offer->offer_product_id)->first();
+
+        $create = new logModal();
+        $create->title = 'Offer Updated';
+        $create->description = 'Offer updated by ' . Auth::user()->name;
+        $create->save();
+
+        if ($request->expectsJson()) {
+            $offer->load('requiredItems.product', 'offeredProduct');
+            return response()->json([
+                'success' => true,
+                'message' => 'Offer updated successfully!',
+                'offer' => $offer
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Offer updated successfully!');
+    }
+
+    public function removeOffer(Request $request)
+    {
+        $offerId = $request->input('offer_id');
+
+        $offer = Offer::where('account', getCurrentShopId())
+            ->where('id', $offerId)
+            ->first();
+
+        if ($offer) {
+            $offer->delete();
+
+            $create = new logModal();
+            $create->title = 'Offer Deleted';
+            $create->description = 'Offer deleted by ' . Auth::user()->name;
+            $create->save();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Offer deleted successfully!'
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Offer deleted successfully!');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Offer not found'
+            ], 404);
+        }
+
+        return redirect()->back()->with('error', 'Offer not found');
+    }
+
+    public function removeSoldOffer(Request $request)
+    {
+        $salesId = $request->input('sales_id');
+
+        $sale = salsModel::where('account', getCurrentShopId())
+            ->where('sales_id', $salesId)
+            ->where('offered_items', 1)
+            ->first();
+
+        if ($sale) {
+            $restoredQty = (int) ($sale->pQuantity ?? 0);
+
+            $product = productsModel::where('account', getCurrentShopId())
+                ->where('productId', $sale->productId)
+                ->first();
+
+            if ($product) {
+                $product->quantity += $restoredQty;
+                $product->save();
+            }
+
+            $sale->delete();
+
+            $create = new logModal();
+            $create->title = 'Sold Offer Removed';
+            $create->description = 'Sold offer record removed by ' . Auth::user()->name;
+            $create->save();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sold offer removed successfully!',
+                    'restoredQty' => $restoredQty
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Sold offer removed successfully!');
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sold offer record not found'
+            ], 404);
+        }
+
+        return redirect()->back()->with('error', 'Sold offer record not found');
+    }
+
+    public function updateSoldOffer(Request $request, $salesId)
+    {
+        $sale = salsModel::where('account', getCurrentShopId())
+            ->where('sales_id', $salesId)
+            ->where('offered_items', 1)
+            ->firstOrFail();
+
+        $request->validate([
+            'pQuantity' => 'required|integer|min:1',
+        ]);
+
+        $oldQty = (int) $sale->pQuantity;
+        $newQty = (int) $request->input('pQuantity');
+        $diff = $newQty - $oldQty;
+
+        $product = productsModel::where('account', getCurrentShopId())
+            ->where('productId', $sale->productId)
+            ->first();
+
+        if ($product) {
+            if ($diff > 0) {
+                if ($product->quantity < $diff) {
+                    return redirect()->back()->with('error', 'Insufficient stock to increase quantity');
+                }
+                $product->quantity -= $diff;
+            } else {
+                $product->quantity += abs($diff);
+            }
+            $product->save();
+        }
+
+        $sale->pQuantity = $newQty;
+        $sale->totalPrice = $newQty * $sale->productPrice;
+        $sale->save();
+
+        $create = new logModal();
+        $create->title = 'Sold Offer Updated';
+        $create->description = 'Sold offer quantity updated by ' . Auth::user()->name;
+        $create->save();
+
+        return redirect()->back()->with('success', 'Sold offer updated successfully!');
     }
 
     public function returnToMainStore(Request $request) {
@@ -4908,7 +5262,7 @@ public function dltrestock(Request $req)
         $receiving->is_return = 1;
         $receiving->sellingPrice = $product->sPrice;
         $receiving->wholesalePrice = $product->wPrice;
-        $receiving->account = 'Main Store';
+        $receiving->account = 7;
         $receiving->served_by = Auth::user()->name;
         $receiving->supplier = getCurrentShopId();
         $receiving->status = 'Not Approved';
@@ -4924,10 +5278,60 @@ public function dltrestock(Request $req)
         // Log the action
         $log = new logModal();
         $log->title = 'Item Return';
-        $log->description = $product->name01 . ' returned to Main Store by ' . session('username');
+        $log->description = $product->name01 . ' returned to Main Store by ' . Auth::user()->name;
         $log->save();
         
         return redirect()->back()->with('success', 'Item successfully sent back to Main Store');
+    }
+
+    public function bulkClearQuantity(Request $request)
+    {
+        $user = $request->user();
+
+        $accountIds = $request->input('account_ids', []);
+        $productIds = $request->input('product_ids', []);
+
+        if (empty($accountIds) || empty($productIds)) {
+            return redirect()->back()->with('error', 'Invalid request: missing accounts or products');
+        }
+
+        $validAccounts = array_column(getuserAccounts(), 'id');
+        $accountIds = array_values(array_intersect($accountIds, $validAccounts));
+
+        if (empty($accountIds)) {
+            return redirect()->back()->with('error', 'No valid accounts selected');
+        }
+
+        $clearedCount = 0;
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($productIds as $productId) {
+                $products = productsModel::where('product_id', $productId)
+                    ->whereIn('account', $accountIds)
+                    ->get();
+
+                foreach ($products as $product) {
+                    $product->quantity = 0;
+                    $product->save();
+                    $clearedCount++;
+                }
+            }
+
+            DB::commit();
+
+            $log = new logModal();
+            $log->title = 'Bulk Clear Quantity';
+            $log->description = 'Cleared quantity for ' . $clearedCount . ' products on ' . count($accountIds) . ' accounts by ' . Auth::user()->name;
+            $log->save();
+
+            return redirect()->back()->with('success', 'Quantities cleared successfully for ' . $clearedCount . ' products');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Bulk Clear Quantity Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while clearing quantities');
+        }
     }
 
     /**
@@ -4940,15 +5344,16 @@ public function dltrestock(Request $req)
         $fromDate = $req->input('from_date');
         $toDate = $req->input('to_date');
         $accountFilter = $req->input('shop', '7');
-
+        $shops = getUserAccounts();
         // Get user's assigned accounts
-        $userAccounts = $user->accounts()->pluck('account')->toArray();
-        if (Auth::user()->account) {
-            $userAccounts[] = Auth::user()->account;
-        }
-        $userAccounts = array_unique($userAccounts);
+        $userAccounts = $shops;
 
         // Build base account filter
+        if(!empty($accountFilter)) {
+            session([
+                'selected_shop_id' => $accountFilter
+            ]);
+        }
         if(empty($accountFilter)) {
             return redirect()->back()->with('error', 'Please select a shop to view the report.');   
         }
@@ -4978,6 +5383,17 @@ public function dltrestock(Request $req)
         }
         $allReceivings = $receivingQuery->get();
 
+        $mainStoreRec = recevingModel::where('is_return', '!=', 1);
+        if (!empty($accountFilter)) {
+            $mainStoreRec->where('supplier', 7);
+        }
+        if (!empty($fromDate) && !empty($toDate)) {
+            $mainStoreRec->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
+        } elseif (!empty($selectedDate)) {
+            $mainStoreRec->whereDate('created_at', $selectedDate);
+        }
+        $mainReceivings = $mainStoreRec->get();
+
         // Aggregate received quantities and total price by productId
         $receivedMap = [];
         $receivedPriceMap = [];
@@ -4991,6 +5407,14 @@ public function dltrestock(Request $req)
             $receivedPriceMap[$pid] += ((int)($rec->quantity ?? 0) * (float)($rec->price ?? 0));
         }
 
+        $mainreceivedMap = [];
+        foreach ($mainReceivings as $mainrec) {
+            $pid = $mainrec->productId;
+            if (!isset($mainreceivedMap[$pid])) {
+                $mainreceivedMap[$pid] = 0;
+            }
+            $mainreceivedMap[$pid] += (int)($mainrec->quantity ?? 0);
+        }
         // ── 3. Fetch returns (returned quantities) ──
         $returnQuery = recevingModel::where('is_return', 1);
         if (!empty($accountFilter)) {
@@ -5034,8 +5458,8 @@ public function dltrestock(Request $req)
                 $soldMap[$pid] = 0;
                 $soldPriceMap[$pid] = 0;
             }
-            $soldMap[$pid] = (int)($sale->pQuantity ?? 0);
-            $soldPriceMap[$pid] = (float)($sale->totalPrice ?? 0);
+            $soldMap[$pid] += (int)($sale->pQuantity ?? 0);
+            $soldPriceMap[$pid] += (float)($sale->totalPrice * $sale->pQuantity);
         }
 
         // ── 5. Build report rows ──
@@ -5049,6 +5473,7 @@ public function dltrestock(Request $req)
         $totalRemainingValue = 0;
 
         foreach ($productMap as $pid => $product) {
+            $mainRecQty = $mainreceivedMap[$pid] ?? 0;
             $receivedQty  = $receivedMap[$pid]  ?? 0;
             $returnedQty  = $returnMap[$pid]    ?? 0;
             $soldQty      = $soldMap[$pid]      ?? 0;
@@ -5064,6 +5489,7 @@ public function dltrestock(Request $req)
                 'productBrand'   => $product->name02 ?? '',
                 'category'       => $product->category ?? '',
                 'unit'           => $product->unit ?? '',
+                'mainQty'        => $mainRecQty,
                 'receivedQty'    => $receivedQty,
                 'returnedQty'    => $returnedQty,
                 'soldQty'        => $soldQty,
@@ -5103,12 +5529,6 @@ public function dltrestock(Request $req)
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        // Get shops list for filter dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $shops = accountModel::where('id', $userAccounts)->get();
-        }
 
         $data = compact(
             'reportRows', 'selectedDate', 'fromDate', 'toDate', 'accountFilter', 'shops',
@@ -5117,12 +5537,116 @@ public function dltrestock(Request $req)
             'totalRemainingQty', 'totalRemainingValue'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.itemsReport', $data);
+            return view('itemsReport', $data);
+   
+    }
+
+    public function mostSoldProducts(Request $req)
+    {
+        $user = Auth::user();
+        $fromDate = $req->input('from_date');
+        $toDate = $req->input('to_date');
+        $accountFilter = $req->input('shop', '');
+        $sortBy = $req->input('sort_by', 'qty');
+
+        $shops = getUserAccounts();
+        $accountIds = array_column($shops, 'id');
+
+        if (!empty($accountFilter)) {
+            session(['selected_shop_id' => $accountFilter]);
+            $queryAccountIds = [$accountFilter];
+        } else {
+            $queryAccountIds = $accountIds;
         }
-        if (!empty($user->levelStatus)) {
-            return view('user.itemsReport', $data);
+
+        $dateFilter = [];
+        if (!empty($fromDate) && !empty($toDate)) {
+            $dateFilter = [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'];
         }
+
+        $query = salsModel::query()
+            ->whereIn('account', $queryAccountIds)
+            ->where('offered_items', '!=', 1)
+            ->where('status', '!=', 'Return')
+            ->where(function($q) {
+                $q->where('salesName', '!=', '')->orWhereNull('salesName');
+            })
+            ->select('productId')
+            ->selectRaw('SUM(pQuantity) as total_qty')
+            ->selectRaw('SUM(totalPrice) as total_price')
+            ->groupBy('productId');
+
+        if (!empty($dateFilter)) {
+            $query->whereBetween('created_at', $dateFilter);
+        }
+
+        if ($sortBy == 'price') {
+            $query->orderByDesc('total_price')->orderByDesc('total_qty');
+        } else {
+            $query->orderByDesc('total_qty')->orderByDesc('total_price');
+        }
+
+        $salesData = $query->get();
+
+        $productIds = $salesData->pluck('productId')->toArray();
+        $products = productsModel::whereIn('product_id', $productIds)->get();
+
+        $productMap = [];
+        foreach ($products as $p) {
+            $productMap[$p->product_id] = $p;
+        }
+
+        $reportRows = [];
+        $totalQty = 0;
+        $totalPrice = 0;
+        $rank = 1;
+
+        foreach ($salesData as $sale) {
+            $pid = $sale->productId;
+            $product = $productMap[$pid] ?? null;
+            $productName = $product ? ($product->name01 ?? 'Unknown') : 'Unknown (deleted)';
+            $qty = $sale->total_qty;
+            $price = $sale->total_price;
+
+            $totalQty += $qty;
+            $totalPrice += $price;
+
+            $reportRows[] = [
+                'rank' => $rank++,
+                'productId' => $pid,
+                'productName' => $productName,
+                'totalQty' => $qty,
+                'totalPrice' => $price,
+                'avgPrice' => $qty > 0 ? $price / $qty : 0,
+                'percentage' => 0,
+            ];
+        }
+
+        $grandTotalQty = $totalQty;
+        foreach ($reportRows as &$row) {
+            $row['percentage'] = $grandTotalQty > 0 ? ($row['totalQty'] / $grandTotalQty) * 100 : 0;
+        }
+
+        // Paginate report rows
+        $perPage = 100;
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
+        $currentPage = max(1, (int) $currentPage);
+        $totalItems = count($reportRows);
+        $lastPage = max(1, (int) ceil($totalItems / $perPage));
+        $currentPage = min($currentPage, $lastPage);
+        $offset = ($currentPage - 1) * $perPage;
+        $reportRows = new \Illuminate\Pagination\LengthAwarePaginator(
+            array_slice($reportRows, $offset, $perPage),
+            $totalItems,
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        $data = compact(
+            'reportRows', 'totalQty', 'totalPrice', 'fromDate', 'toDate', 'accountFilter', 'shops', 'sortBy'
+        );
+
+        return view('mostSoldProducts', $data);
     }
 }
-

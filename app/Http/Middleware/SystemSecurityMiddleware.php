@@ -22,20 +22,19 @@ class SystemSecurityMiddleware
         // Check if system is shut down
         if ($system && $system->system_shutdown) {
             // Allow emergency login route (bypasses shutdown)
-            if ($request->is('admin/emergency-login') ||
-                $request->is('admin/emergency-login/*')) {
+            if ($request->is('emergency-login') ||
+                $request->is('emergency-login/*')) {
                 return $next($request);
             }
             
-            // Allow access to authentication routes, assets, and face recognition
+            // Allow access to authentication routes, assets
             if ($request->is('login') ||
                 $request->is('logout') ||
                 $request->is('signout') ||
                 $request->is('assets/*') ||
                 $request->is('css/*') ||
                 $request->is('js/*') ||
-                $request->is('images/*') ||
-                $request->is('face/*')) {
+                $request->is('images/*')) {
                 return $next($request);
             }
             
@@ -65,7 +64,7 @@ class SystemSecurityMiddleware
                         'requires_emergency' => true
                     ], 503);
                 }
-                return redirect()->route('admin.emergency.login')
+                return redirect()->route('emergency.login')
                     ->with('error', 'The system is currently shut down. Emergency access required.');
             }
             
@@ -87,13 +86,13 @@ class SystemSecurityMiddleware
         // Check if sign-ins are blocked (only for login attempts)
         if ($system && $system->block_signins) {
             // Allow emergency login route (bypasses block)
-            if ($request->is('admin/emergency-login') ||
-                $request->is('admin/emergency-login/*')) {
+            if ($request->is('emergency-login') ||
+                $request->is('emergency-login/*')) {
                 return $next($request);
             }
             
             // Only intercept login attempts
-            if ($request->is('login') || $request->is('user/login') || $request->is('admin/login')) {
+            if ($request->is('login') || $request->is('user/login') || $request->is('login')) {
                 // Check if it's a POST request (actual login attempt)
                 if ($request->isMethod('post')) {
                     // For API/JSON requests, return JSON error

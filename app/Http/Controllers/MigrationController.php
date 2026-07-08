@@ -41,7 +41,7 @@ class MigrationController extends Controller
         \Log::info("Migration: Account map: " . json_encode($accountMap));
         \Log::info("Migration: Tables with account: " . json_encode(array_column($tablesWithAccount, 'name')));
         
-        return view('admin.migration', compact('tablesWithAccount', 'accountMap'));
+        return view('migration', compact('tablesWithAccount', 'accountMap'));
     }
 
     /**
@@ -215,7 +215,7 @@ class MigrationController extends Controller
         // Log the migration
         $log = new logModal();
         $log->title = 'Account Migration';
-        $log->description = "Migrated table '$tableName': replaced $updatedCount account name(s) with IDs by " . session('username');
+        $log->description = "Migrated table '$tableName': replaced $updatedCount account name(s) with IDs by " . Auth::user()->name;
         $log->save();
 
         return response()->json([
@@ -292,7 +292,7 @@ class MigrationController extends Controller
         if (!$dryRun) {
             $log = new logModal();
             $log->title = 'Mass Account Migration';
-            $log->description = "Migrated all tables: $totalUpdated total records updated by " . session('username');
+            $log->description = "Migrated all tables: $totalUpdated total records updated by " . Auth::user()->name;
             $log->save();
         }
 

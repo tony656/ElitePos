@@ -37,7 +37,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SessionSecurityMiddleware::class,
-            \App\Http\Middleware\FaceRecognitionMiddleware::class,
+            \App\Http\Middleware\SetLocale::class,
         ],
 
         'api' => [
@@ -66,6 +66,5 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'system.security' => \App\Http\Middleware\SystemSecurityMiddleware::class,
-        'face.recognition' => \App\Http\Middleware\FaceRecognitionMiddleware::class,
     ];
 }

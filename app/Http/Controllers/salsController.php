@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use App\Models\salsModel;
 use App\Models\couponModel;
 use App\Models\expensesModel;
+use App\Models\itemRequestModel;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\MonthlyReportExport;
@@ -24,83 +25,35 @@ use App\Models\madeni;
 use App\Models\UserAccount;
 use App\Models\BankingChip;
 use App\Models\Offer;
-
+use function getuserAccounts;
 use function getSessionAccountName;
 
 class salsController extends Controller
 {
     public function index(Request $req) {
         $user = Auth::user();
-        
+        if (!canUser('view_sales_report')) {
+            abort(403,'Unauthorized Access');
+        }
         // Handle shop selection
         if ($req->has('shop_id')) {
             $shopId = $req->input('shop_id');
             // Verify user has access to this shop
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
+         
                 session(['selected_shop_id' => $shopId]);
-            } else {
-                $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-                if (in_array($shopId, $assignedAccountIds)) {
-                    session(['selected_shop_id' => $shopId]);
-                }
-            }
-        }
+    
+        } 
+
         
-        // Determine which shop to use
-        $selectedShopId = session('selected_shop_id');
-        if (!$selectedShopId) {
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                $selectedShopId = accountModel::select('id')->orderBy('created_at', 'desc')->first()?->id;
-            } else {
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : null;
-                }
-            }
-            if ($selectedShopId) {
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-        
-        // For non-admin users, ensure the selected shop is one they have access to
-        if (strtolower(trim($user->levelStatus)) !== 'admin' && $selectedShopId) {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (!in_array($selectedShopId, $assignedAccountIds)) {
-                // If selected shop is not assigned, fall back to primary or first assigned account
-                $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-                if ($primaryAccount) {
-                    $selectedShopId = $primaryAccount->account;
-                } else {
-                    $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                    $selectedShopId = $firstAccount ? $firstAccount->account : null;
-                }
-                session(['selected_shop_id' => $selectedShopId]);
-            }
-        }
-        
-        $accountId = $selectedShopId;
+        $accountId = session('selected_shop_id');
         
         // Get all accessible shops for the user
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('created_at', 'desc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)->select('id', 'name', 'location')->get();
-            }
-        }
-
-        if(!empty($req->input('selectedDate'))) {
-            $thedate = $req->input('selectedDate');
+        $allShops = getuserAccounts();
+        $shopsId = array_column($allShops, 'id');
+            $thedate = $req->input('selectedDate', date('Y-m-d'));
             $start_date = $thedate . ' 00:00:00';
             $end_date = $thedate . ' 23:59:59';
         
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
                 $sales = DB::table('sales')->where('account', $accountId)
                     ->where('offered_items', '!=', 1)
                     ->select(
@@ -124,30 +77,7 @@ class salsController extends Controller
                     ->groupBy('sales_id', 'account')
                     ->orderByDesc(DB::raw('MAX(id)'))
                     ->get();
-            } else {
-                $sales = DB::table('sales')->where('account', $accountId)
-                    ->select(
-                        'sales_id',
-                        'account',
-                        DB::raw('MAX(salesName) as salesName'),
-                        DB::raw('MAX(cName) as cName'),
-                        DB::raw('MAX(cPhone) as cPhone'),
-                        DB::raw('MAX(status) as status'),
-                        DB::raw('MAX(served_by) as served_by'),
-                        DB::raw('MAX(created_at) as created_at'),
-                        DB::raw('MAX(totalPrice) as totalPrice'),
-                        DB::raw('SUM(pQuantity) as totalQuantity'),
-                        DB::raw('SUM(paid) as totalPaid'),
-                        DB::raw('SUM(credit) as totalCredit')
-                    )
-                    ->whereBetween('created_at', [$start_date, $end_date])
-                    ->where(function($query) {
-                        $query->where('salesName', '!=', '')->orWhereNull('salesName');
-                    })
-                    ->groupBy('sales_id', 'account')
-                    ->orderByDesc(DB::raw('MAX(id)'))
-                    ->get();
-            }
+            
 
             $Tdiscount = salsModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('discount');
             $TdiscountIncrease = salsModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('discount_increase');
@@ -172,80 +102,7 @@ class salsController extends Controller
             $sumBuyingPrice = $sumBuyingPrice->total_cost ?? 0;
             $TNetProfit = $Tsale - $sumBuyingPrice - $additionalExpenses;
 
-        } else {
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                $sales = salsModel::selectRaw('
-                    sales_id,
-                    MAX(account) as account,
-                    MAX(salesName) as salesName,
-                    MAX(cName) as cName,
-                    MAX(status) as status,
-                    MAX(served_by) as served_by,
-                    MAX(created_at) as created_at,
-                    MAX(totalPrice) as totalAmount,
-                    SUM(pQuantity) as totalQuantity,
-                    SUM(paid) as totalPaid,
-                    SUM(credit) as totalCredit
-                ')
-                ->where('account', $accountId)
-                ->where('offered_items', '!=', 1)
-                ->where(function($query) {
-                    $query->where('salesName', '!=', '')->orWhereNull('salesName');
-                })
-                ->groupBy('sales_id', 'account')
-                ->orderByRaw('MAX(id) DESC')
-                ->take(20)
-                ->get();
-            } else {
-                $sales = salsModel::selectRaw('
-                    sales_id,
-                    MAX(account) as account,
-                    MAX(salesName) as salesName,
-                    MAX(cName) as cName,
-                    MAX(status) as status,
-                    MAX(served_by) as served_by,
-                    MAX(created_at) as created_at,
-                    MAX(totalPrice) as totalAmount,
-                    SUM(pQuantity) as totalQuantity,
-                    SUM(paid) as totalPaid,
-                    SUM(credit) as totalCredit
-                ')
-                ->where('account', $accountId)
-                ->where('offered_items', '!=', 1)
-                ->where(function($query) {
-                    $query->where('salesName', '!=', '')->orWhereNull('salesName');
-                })
-                ->groupBy('sales_id', 'account')
-                ->orderByRaw('MAX(id) DESC')
-                ->take(20)
-                ->get();
-            }
-
-            $start_date = date("Y-m-01") . ' 00:00:00';
-            $end_date = date("Y-m-31") . ' 23:59:59';
-
-            $Tdiscount = salsModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('discount');
-            $TdiscountIncrease = salsModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('discount_increase');
-            
-            $monthlySalesAgg = salsModel::where('account', $accountId)
-                ->whereBetween('created_at', [$start_date, $end_date])
-                ->selectRaw('sales_id, MAX(totalPrice) as totalPrice, MAX(credit) as credit')
-                ->groupBy('sales_id');
-
-            $Tdebt = \DB::query()->fromSub($monthlySalesAgg, 's')->where('credit', '>', 0)->sum('totalPrice');
-            $Tsale = \DB::query()->fromSub($monthlySalesAgg, 's')->sum('totalPrice');
-            $Tproduct = salsModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('pQuantity');
-            $additionalExpenses = expensesModel::where('account', $accountId)->whereBetween('created_at', [$start_date, $end_date])->sum('amount');
-
-            // Optimized: Use separate query with proper indexes
-            $sumBuyingPrice = salsModel::where('sales.account', $accountId)
-                ->whereBetween('sales.created_at', [$start_date, $end_date])
-                ->join('products', 'sales.productId', '=', 'products.product_id')
-                ->selectRaw('SUM(products.bPrice * sales.pQuantity) as total_cost')
-                ->first();
-            $sumBuyingPrice = $sumBuyingPrice->total_cost ?? 0;
-            $TNetProfit = $Tsale - $sumBuyingPrice - $additionalExpenses;
-        }
+        
 
         // Monthly calculations (for current month)
         $Mstart_date = date("Y-m-01") . ' 00:00:00';
@@ -293,12 +150,9 @@ class salsController extends Controller
             'TNetProfit', 'monthlySaleDates', 'Mdebt', 'allShops'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.sales', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.sales', $data);
-        }
+
+            return view('sales', $data);
+   
     }
 
     public function fullReport(Request $req) {
@@ -320,56 +174,12 @@ class salsController extends Controller
         if ($req->has('shop_id')) {
             $shopId = $req->input('shop_id');
             // Verify user has access to this shop
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
+      
                 session(['selected_shop_id' => $shopId]);
-            } else {
-                $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-                if (in_array($shopId, $assignedAccountIds)) {
-                    session(['selected_shop_id' => $shopId]);
-                }
-            }
+   
         }
-        
-        // Determine which account to use for the report (single account only)
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admins can select a shop via session, or use an account that has sales data
-            $selectedShopId = session('selected_shop_id');
-            if (!$selectedShopId) {
-                // Find any account that has sales in the selected month
-                $selectedShopId = salsModel::whereBetween('created_at', [$Mstart_date, $Mend_date])
-                    ->where(function($q) { $q->where('salesName', '!=', '')->orWhereNull('salesName'); })
-                    ->select('account')
-                    ->distinct()
-                    ->first()?->account;
-                
-                // If no account has sales this month, fall back to any account
-                if (!$selectedShopId) {
-                    $selectedShopId = accountModel::select('id')->first()?->id;
-                }
-            }
-            $accountId = $selectedShopId;
-            // For admin, we still need allShops for the shop selector UI
-            $allShops = accountModel::select('id', 'name', 'location')
-                        ->where('created_at', '<=', $Mend_date)
-                        ->orderBy('created_at', 'desc')
-                        ->get();
-        } else {
-            // Non-admins: use only their assigned account (primary or first)
-            // This ensures they only see data from their own account
-            $primaryAccount = UserAccount::where('user_id', $user->id)->where('is_primary', true)->first();
-            if ($primaryAccount) {
-                $accountId = $primaryAccount->account;
-            } else {
-                $firstAccount = UserAccount::where('user_id', $user->id)->first();
-                $accountId = $firstAccount ? $firstAccount->account : null;
-            }
-            // For non-admins, allShops is just their single assigned account (for UI consistency)
-            if ($accountId) {
-                $allShops = accountModel::where('id', $accountId)->select('id', 'name', 'location')->get();
-            } else {
-                $allShops = collect();
-            }
-        }
+
+        $accountId = $shopId;
 
         // Get the selected shop name for display
         $selectedShopName = null;
@@ -626,12 +436,9 @@ class salsController extends Controller
             'report', 'monthlyByServed', 'staffSalesByDate', 'monthParam', 'allShops', 'selectedShopName'
         );
 
-         if (strtolower(trim($user->levelStatus)) === 'admin') {
-             return view('admin.dailyReport', $data);
-         }
-         if(!empty($user->levelStatus)) {
-             return view('user.dailyReport', $data);
-         }
+ 
+             return view('dailyReport', $data);
+
      }
 
     public function kpiDashboard(Request $req) {
@@ -650,16 +457,8 @@ class salsController extends Controller
         
         $user = Auth::user();
         
-        // Get accessible shops for the user
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin: can see all shops
-            $allShops = accountModel::select('id', 'name', 'location')->orderBy('name')->get();
-            $accountIds = $allShops->pluck('id')->toArray();
-        } else {
-            // Non-admins: only their assigned accounts
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            $allShops = accountModel::whereIn('id', $accountIds)->select('id', 'name', 'location')->orderBy('name')->get();
-        }
+        $allShops = getuserAccounts();
+        $accountIds = array_column($allShops, 'id');
 
         // Apply shop filter if provided (for users)
         $filteredAccountIds = $accountIds;
@@ -751,12 +550,9 @@ class salsController extends Controller
             'staffKpis', 'monthParam', 'totalAllSales', 'allShops'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.kpi', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.kpi', $data);
-        }
+
+            return view('kpi', $data);
+   
     }
 
     public function customerKPI(Request $req)
@@ -777,8 +573,9 @@ class salsController extends Controller
         $user = Auth::user();
 
         // Customer KPI always shows data from ALL accounts/shops regardless of user role
-        $allShops = accountModel::select('id', 'name', 'location')->orderBy('name')->get();
-        $accountIds = $allShops->pluck('id')->toArray();
+        $allShops = getuserAccounts();
+        $accountIds = array_column($allShops, 'id');
+        
 
         // Apply shop filter if provided
         $filteredAccountIds = $accountIds;
@@ -871,12 +668,9 @@ class salsController extends Controller
 
         $data = compact('customerKpis', 'monthParam', 'allShops');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.customerKPI', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.customerKPI', $data);
-        }
+
+            return view('customerKPI', $data);
+ 
     }
 
     public function cashSubmit(Request $req) {
@@ -944,7 +738,7 @@ class salsController extends Controller
 
         $log = new logModal();
         $log->title = 'Cash Submission';
-        $log->description = 'Cash of amount '.$req->input('submitted_cash').' '.($existing ? 'updated' : 'submitted').' by '.session('username');
+        $log->description = 'Cash of amount '.$req->input('submitted_cash').' '.($existing ? 'updated' : 'submitted').' by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', $message);
@@ -981,7 +775,7 @@ class salsController extends Controller
                 ->update(['chip_amount' => 0, 'available_chip' => 0]);
             $log = new logModal();
             $log->title = 'Cash Submission Deleted';
-            $log->description = 'Cash submission for shop ' . $shopId . ' on ' . $date . ' deleted by ' . session('username');
+            $log->description = 'Cash submission for shop ' . $shopId . ' on ' . $date . ' deleted by ' . Auth::user()->name;
             $log->save();
             return redirect()->back()->with('success', 'Cash submission deleted successfully.');
         }
@@ -1023,7 +817,7 @@ class salsController extends Controller
         // Keep inside foreach: Loop through each item in the order to restore stock
         foreach ($sales as $sale) {
             // 1. Restore Product Master Quantity
-            $product = productsModel::where('account', $account)
+            $product = productsModel::where('account', $sale->account)
                 ->where('product_id', $sale->productId)
                 ->first();
             
@@ -1060,7 +854,7 @@ class salsController extends Controller
         
         $log = new logModal();
         $log->title = 'Sales Undone';
-        $log->description = 'Sale ' . $salesId . ' undone by ' . session('username');
+        $log->description = 'Sale ' . $salesId . ' undone by ' . Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Sale undone successfully. Stock quantities have been restored.');
@@ -1073,21 +867,44 @@ class salsController extends Controller
 }
 
 
+    public function viewSalesPublic(Request $req) {
+        $salesId = $req->input('sales_id');
+        
+        if (empty($salesId)) {
+            return view('viewSales', ['error' => 'Invalid sales identifier.']);
+        }
+
+        $allsales = salsModel::where('sales_id', $salesId)->get();
+        
+        if ($allsales->isEmpty()) {
+            return view('viewSales', ['error' => 'Receipt not found.']);
+        }
+        
+        $sales = $allsales->first();
+        $account = $sales->account;
+        
+        $paid = salsModel::where('account', $account)
+            ->where('sales_id', '=', $salesId)
+            ->sum('paid');
+
+        $getName = DB::table('system')->where('account', $account)->first();
+
+        $data = compact('sales', 'paid', 'getName', 'allsales');
+        $data['public'] = true;
+
+        return view('viewSales', $data);
+    }
+
     public function viewSales(Request $req) {
         $user = Auth::user();
         $salesId = $req->input(key: 'sales_id');
         $account = $req->input('account');
-
+        $accountIds = array_column(getUserAccounts(), 'id');
+        
         if (empty($salesId)) {
             return redirect()->back()->with('error', 'Invalid sales identifier.');
         }
-        
-        // Determine which accounts to query
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
+
                 
         $paid = salsModel::whereIn('account', $accountIds)
             ->where('sales_id', '=', $salesId)
@@ -1103,12 +920,130 @@ class salsController extends Controller
 
         $data = compact('sales', 'paid', 'getName', 'allsales');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.viewSales', $data);
+
+            return view('viewSales', $data);
+
+    }
+
+    public function trackSale(Request $req) {
+        $salesName = $req->input('sales_name');
+        
+        if (empty($salesName)) {
+            return view('trackSale', ['error' => 'Please provide a sales name to track.']);
         }
-        if(!empty($user->levelStatus)) {
-            return view('user.viewSales', $data);
+        
+        $accountIds = array_column(getUserAccounts(), 'id');
+        
+        $sale = salsModel::whereIn('account', $accountIds)
+            ->where('salesName', $salesName)
+            ->first();
+        
+        if (!$sale) {
+            return view('trackSale', ['error' => 'Sale not found for the provided sales name.']);
         }
+        
+        $saleDate = date('Y-m-d', strtotime($sale->created_at));
+        $accountId = $sale->account;
+        
+        $saleProducts = salsModel::whereIn('account', $accountIds)
+            ->where('salesName', $salesName)
+            ->pluck('productId')
+            ->unique()
+            ->toArray();
+        
+        $itemRequests = itemRequestModel::where('account', $accountId)
+            ->whereDate('created_at', $saleDate)
+            ->whereIn('productId', $saleProducts)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $approvedRequests = itemRequestModel::where('account', $accountId)
+            ->whereDate('created_at', $saleDate)
+            ->whereIn('productId', $saleProducts)
+            ->where('status', 'Approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $receivings = recevingModel::where('account', $accountId)
+            ->whereDate('created_at', $saleDate)
+            ->whereIn('productId', $saleProducts)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $saleItems = salsModel::whereIn('account', $accountIds)
+            ->where('salesName', $salesName)
+            ->orderBy('id', 'asc')
+            ->get();
+        
+        $cashSubmitted = cashSubmitModel::where('account', $accountId)
+            ->whereDate('report_date', $saleDate)
+            ->first();
+        
+        $shopName = accountModel::find($accountId)?->name ?? 'Unknown';
+        
+        $diffRequestApproved = [];
+        $diffApprovedReceiving = [];
+        $diffReceivingSale = [];
+        
+        if ($itemRequests->count() > 0 && $approvedRequests->count() > 0) {
+            $reqByProduct = $itemRequests->keyBy('productId');
+            $appByProduct = $approvedRequests->keyBy('productId');
+            foreach ($appByProduct as $productId => $approved) {
+                if ($reqByProduct->has($productId)) {
+                    $req = $reqByProduct[$productId];
+                    $qtyDiff = $approved->quantity - $req->quantity;
+                    $priceDiff = $approved->price - $req->price;
+                    $diffRequestApproved[$productId] = [
+                        'qtyDiff' => $qtyDiff,
+                        'priceDiff' => $priceDiff,
+                        'qtyChanged' => $qtyDiff != 0,
+                        'priceChanged' => $priceDiff != 0,
+                    ];
+                }
+            }
+        }
+        
+        if ($approvedRequests->count() > 0 && $receivings->count() > 0) {
+            $appByProduct = $approvedRequests->keyBy('productId');
+            $recByProduct = $receivings->keyBy('productId');
+            foreach ($appByProduct as $productId => $approved) {
+                if ($recByProduct->has($productId)) {
+                    $rec = $recByProduct[$productId];
+                    $qtyDiff = $rec->quantity - $approved->quantity;
+                    $priceDiff = $rec->price - $approved->price;
+                    $diffApprovedReceiving[$productId] = [
+                        'qtyDiff' => $qtyDiff,
+                        'priceDiff' => $priceDiff,
+                        'qtyChanged' => $qtyDiff != 0,
+                        'priceChanged' => $priceDiff != 0,
+                    ];
+                }
+            }
+        }
+        
+        if ($receivings->count() > 0 && $saleItems->count() > 0) {
+            $recByProduct = $receivings->keyBy('productId');
+            $saleByProduct = $saleItems->keyBy('productId');
+            foreach ($recByProduct as $productId => $rec) {
+                if ($saleByProduct->has($productId)) {
+                    $sale = $saleByProduct[$productId];
+                    $qtyDiff = $sale->pQuantity - $rec->quantity;
+                    $priceDiff = $sale->productPrice - $rec->price;
+                    $diffReceivingSale[$productId] = [
+                        'qtyDiff' => $qtyDiff,
+                        'priceDiff' => $priceDiff,
+                        'qtyChanged' => $qtyDiff != 0,
+                        'priceChanged' => $priceDiff != 0,
+                    ];
+                }
+            }
+        }
+        
+        return view('trackSale', compact(
+            'salesName', 'saleDate', 'shopName', 'saleProducts',
+            'itemRequests', 'approvedRequests', 'receivings', 'saleItems', 'cashSubmitted',
+            'diffRequestApproved', 'diffApprovedReceiving', 'diffReceivingSale'
+        ));
     }
 
     public function export(Request $req) {
@@ -1116,13 +1051,7 @@ class salsController extends Controller
         $thedate = $req->input('selectedDate');
         $start_date = $thedate ? $thedate . ' 00:00:00' : date("Y-m-01") . ' 00:00:00';
         $end_date   = $thedate ? $thedate . ' 23:59:59' : date("Y-m-t") . ' 23:59:59';
-
-        // Determine which accounts to query
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
+        $accountIds = array_column(getUserAccounts(), 'id');
 
         $sales = DB::table('sales')
             ->select(
@@ -1211,24 +1140,13 @@ class salsController extends Controller
 
         $user = Auth::user();
         
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $allShops = accountModel::select('id', 'name', 'location', 'phone', 'email')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            if (empty($assignedAccountIds)) {
-                $allShops = collect();
-            } else {
-                $allShops = accountModel::whereIn('id', $assignedAccountIds)
-                            ->select('id', 'name', 'location', 'phone', 'email')
-                            ->get();
-            }
-        }
+        $allShops = getuserAccounts();
+        $accountIds = array_column($allShops, 'id');
 
         $shopReports = collect();
 
         foreach ($allShops as $shop) {
-            $salesAgg = salsModel::where('account', $shop->id)
+            $salesAgg = salsModel::where('account', $shop['id'])
                 ->whereBetween('created_at', [$start_date, $end_date])
                 ->selectRaw('
                     sales_id,
@@ -1259,17 +1177,17 @@ class salsController extends Controller
                 ->selectRaw('COALESCE(SUM(credit_returns), 0) as credit_returns')
                 ->first();
 
-            $expenses = expensesModel::where('account', $shop->id)
+            $expenses = expensesModel::where('account', $shop['id'])
                 ->whereBetween('created_at', [$start_date, $end_date])
                 ->selectRaw('COALESCE(SUM(amount), 0) as total_expenses')
                 ->first();
 
-            $paidInvoices = debtsModel::where('account', $shop->id)
+            $paidInvoices = debtsModel::where('account', $shop['id'])
                 ->whereBetween('created_at', [$start_date, $end_date])
                 ->selectRaw('COALESCE(SUM(amount), 0) as total_paid_invoices')
                 ->first();
 
-            $creditReceivings = recevingModel::where('account', $shop->id)
+            $creditReceivings = recevingModel::where('account', $shop['id'])
                 ->where('isPaid', 0)
                 ->where(function($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'Returned');
@@ -1279,7 +1197,7 @@ class salsController extends Controller
                 ->selectRaw('COALESCE(SUM(COALESCE(quantity, 0)), 0) as credit_receiving_quantity')
                 ->first();
 
-            $paidReceivings = recevingModel::where('account', $shop->id)
+            $paidReceivings = recevingModel::where('account', $shop['id'])
                 ->where('isPaid', 1)
                 ->where(function($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'Returned');
@@ -1289,7 +1207,7 @@ class salsController extends Controller
                 ->selectRaw('COALESCE(SUM(COALESCE(quantity, 0)), 0) as paid_receivings_quantity')
                 ->first();
 
-            $returnedReceivings = recevingModel::where('account', $shop->id)
+            $returnedReceivings = recevingModel::where('account', $shop['id'])
                 ->where(function($q) {
                     $q->where('is_return', 1)->orWhere('status', 'Returned');
                 })
@@ -1297,12 +1215,11 @@ class salsController extends Controller
                 ->selectRaw('COALESCE(SUM(price * COALESCE(quantity, 0)), 0) as total_returned_receivings')
                 ->first();
 
-            $supplierPayments = madeni::where('account', $shop->id)
+            $supplierPayments = madeni::where('account', $shop['id'])
                 ->whereBetween('created_at', [$start_date, $end_date])
-                ->selectRaw('COALESCE(SUM(amount), 0) as total_supplier_payments')
-                ->first();
+                ->sum('amount');
 
-            $cashSubmissions = cashSubmitModel::where('account', $shop->id)
+            $cashSubmissions = cashSubmitModel::where('account', $shop['id'])
                 ->whereBetween(DB::raw('DATE(report_date)'), [date('Y-m-d', strtotime($start_date)), date('Y-m-d', strtotime($end_date))])
                 ->selectRaw('COALESCE(SUM(submitted_cash), 0) as total_cash_submitted')
                 ->first();
@@ -1325,16 +1242,15 @@ class salsController extends Controller
             $cashAmount = $netCashSales
                         + ($paidInvoices->total_paid_invoices ?? 0)
                         - ($expenses->total_expenses ?? 0)
-                        - (($paidReceivings->total_paid_receivings ?? 0) + ($supplierPayments->total_supplier_payments ?? 0));
+                        - ($paidReceivings->total_paid_receivings ?? 0);
 
             $cashDifference = $cashAmount - $cashSubmissions->total_cash_submitted;
 
             $shopReports->push((object)[
-                'shop_id' => $shop->id,
-                'shop_name' => $shop->name ?? 'Unnamed Shop',
-                'location' => $shop->location ?? 'N/A',
-                'phone' => $shop->phone ?? 'N/A',
-                'email' => $shop->email ?? 'N/A',
+                'shop_id' => $shop['id'],
+                'shop_name' => $shop['name'] ?? 'Unnamed Shop',
+                'location' => $shop['location'] ?? 'N/A',
+                'phone' => $shop['phone'] ?? 'N/A',
                 'total_transactions' => $salesData->total_transactions,
                 'cash_sales' => $salesData->total_cash,
                 'credit_sales' => $salesData->total_credit,
@@ -1347,6 +1263,7 @@ class salsController extends Controller
                 'expenses' => $expenses->total_expenses,
                 'paid_invoices' => $paidInvoices->total_paid_invoices,
                 'profit' => $profit,
+                'main_store' => $supplierPayments ?? 0,
                 'cash_receivings' => $paidReceivings->total_paid_receivings,
                 'credit_receivings' => $creditReceivings->total_credit_receivings,
                 'credit_receiving_quantity' => $creditReceivings->credit_receiving_quantity,
@@ -1406,12 +1323,7 @@ class salsController extends Controller
             
             $searchTerm = $req->input('search', '');
             
-            // Determine which accounts to query
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                $accountIds = accountModel::pluck('id')->toArray();
-            } else {
-                $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            }
+            $accountIds = array_column(getUserAccounts(), 'id');
 
             \Log::info('SearchSales: Account IDs: ' . json_encode($accountIds));
 
@@ -1469,15 +1381,9 @@ class salsController extends Controller
             return response()->json(['success' => false, 'message' => 'Sales ID is required']);
         }
 
-        // Determine which accounts to query
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
+        $accountIds = array_column(getUserAccounts(), 'id');
 
-        $salesItems = salsModel::whereIn('account', $accountIds)
-            ->where('sales_id', $salesId)
+        $salesItems = salsModel::where('sales_id', $salesId)
             ->get();
 
         if ($salesItems->isEmpty()) {
@@ -1488,7 +1394,7 @@ class salsController extends Controller
         $orderId = 'ORD-' . time() . '-' . rand(1000, 9999);
 
         foreach ($salesItems as $sale) {
-            $product = productsModel::whereIn('account', $accountIds)
+            $product = productsModel::where('account', $sale->account)
                 ->where('product_id', $sale->productId)
                 ->first();
             if ($product) {
@@ -1497,7 +1403,7 @@ class salsController extends Controller
             }
             
             $stock = stock::where('productId', $sale->productId)
-                ->whereIn('account', $accountIds)
+                ->where('account', $sale->account)
                 ->where('quantity', '>', 0)
                 ->orderBy('id', 'desc')
                 ->first();
@@ -1520,16 +1426,18 @@ class salsController extends Controller
             $order->status = 'Pending';
             $order->account = $sale->account;
             $order->created_at = $sale->created_at;
+            $order->offered_items = $sale->offered_items ?? 0;
+            $order->offer_parent_product = $sale->offer_parent_product ?? null;
+            $order->offer_parent_products = $sale->offer_parent_products ?? null;
             $order->save();
         }
 
-        salsModel::whereIn('account', $accountIds)
-            ->where('sales_id', $salesId)
+        salsModel::where('sales_id', $salesId)
             ->delete();
 
         $log = new logModal();
         $log->title = 'Sales Returned to Order';
-        $log->description = 'Sale ' . $salesId . ' returned to orders for editing by ' . session('username');
+        $log->description = 'Sale ' . $salesId . ' returned to orders for editing by ' . Auth::user()->name;
         $log->save();
 
         return response()->json([
@@ -1543,24 +1451,13 @@ class salsController extends Controller
         $user = Auth::user();
         $year = $req->input('year', date('Y'));
         $month = $req->input('month', date('m'));
-        $shopFilter = $req->input('shop_id'); // Optional shop filter
-        
-        $start_date = date("{$year}-{$month}-01") . ' 00:00:00';
-        $end_date = date("{$year}-{$month}-t") . ' 23:59:59';
-        
-        // Determine which accounts to query
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            if ($shopFilter) {
-                // Admin with specific shop filter
-                $accountIds = [$shopFilter];
-            } else {
-                $accountIds = accountModel::pluck('id')->toArray();
-            }
-        } else {
-            // Non-admins: only their assigned accounts
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
-        
+        $shopFilter = $req->input('shop_id');
+
+        $start_date = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateTimeString();
+        $end_date = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateTimeString();
+
+        $accountIds = $shopFilter ? [$shopFilter] : array_column(getUserAccounts(), 'id');
+
         $dates = DB::table('sales')
             ->whereIn('account', $accountIds)
             ->selectRaw('DATE(created_at) as sale_date')
@@ -1571,7 +1468,7 @@ class salsController extends Controller
             ->groupBy('sale_date')
             ->pluck('sale_date')
             ->toArray();
-        
+
         return response()->json(['dates' => $dates]);
     }
 
@@ -1623,57 +1520,32 @@ class salsController extends Controller
      }
      
      $user = Auth::user();
-     
-     \Log::info('AllShopReport: Starting report generation', [
-         'user_id' => $user->id,
-         'user_level' => $user->levelStatus,
-         'date_from' => $start_date,
-         'date_to' => $end_date,
-         'shop_filter' => $selectedShopId
-     ]);
-     
-     // Get shops (same as before)
-     if (strtolower(trim($user->levelStatus)) === 'admin') {
-         $allShops = accountModel::select('id', 'name', 'location')
-                     ->orderBy('created_at', 'desc')
-                     ->get();
-     } else {
-         $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-         
-         if (empty($assignedAccountIds)) {
-             $allShops = collect();
-         } else {
-             $allShops = accountModel::whereIn('id', $assignedAccountIds)
-                         ->select('id', 'name', 'location')
-                         ->orderBy('created_at', 'desc')
-                         ->get();
-         }
-     }
-     
-     \Log::info('AllShopReport: Total shops found: ' . $allShops->count());
-     \Log::info('AllShopReport: Shop IDs: ' . implode(', ', $allShops->pluck('id')->toArray()));
-     
-     if ($allShops->isEmpty()) {
-         \Log::warning('AllShopReport: No shops found for user');
-         $data = compact('dateParam');
-         return view('admin.shopReport', $data);
-     }
-     
-     // Determine which shops to include in the report
-     if ($selectedShopId && in_array($selectedShopId, $allShops->pluck('id')->toArray())) {
-         $shopIds = [$selectedShopId];
-     } else {
-         $shopIds = $allShops->pluck('id')->toArray();
-     }
-    
-    // Batch load all data with single queries
-    \Log::info('AllShopReport: Starting batch queries for shop IDs: ' . implode(', ', $shopIds));
-    \Log::info('AllShopReport: Date range: ' . $start_date . ' to ' . $end_date);
-    
-    // 1. Get all sales data aggregated by shop (OPTIMIZED)
-    // Excludes returns - returns are tracked separately in $returnData
-    // Uses composite index: (account, created_at, status) for fast filtering
-    $salesData = salsModel::whereIn('account', $shopIds)
+          
+ $allShops = getUserAccounts();
+$accountIds = array_column($allShops, 'id');
+
+$allShops = array_values(array_filter($allShops, function($shop) {
+    return $shop['id'] != 7;
+}));
+$accountIds = array_column($allShops, 'id');
+
+// Check if there are any shops LEFT after removing ID 7
+if (empty($accountIds)) {
+    $data = compact('dateParam');
+    return view('shopReport', $data);
+}
+
+// Determine which shops to include in the report
+if ($selectedShopId && in_array($selectedShopId, $accountIds)) {
+    $shopIds = [$selectedShopId];
+} else {
+    $shopIds = $accountIds;
+}
+
+// 1. Get all sales data aggregated by shop (OPTIMIZED)
+// Excludes returns - returns are tracked separately in $returnData
+// Uses composite index: (account, created_at, status) for fast filtering
+$salesData = salsModel::whereIn('account', $shopIds)
         ->whereBetween('created_at', [$start_date, $end_date])
         ->where('status', '!=', 'Return')
         ->where(function($q) { $q->where('salesName', '!=', '')->orWhereNull('salesName'); })
@@ -1681,11 +1553,10 @@ class salsController extends Controller
             COUNT(DISTINCT sales_id) as total_transactions,
             SUM(totalPrice) as total_sales,
             SUM(return_amount) as total_return,
-            SUM(CASE WHEN status = "Debt" THEN credit ELSE 0 END) as total_credit,
-            SUM(CASE WHEN status = "Partial" THEN credit ELSE 0 END) as partial_credit,
+            SUM(credit) as total_credit,
             SUM(discount) as total_discount,
             SUM(discount_increase) as total_discount_increase,
-            SUM(CASE WHEN status = "Paid" THEN paid ELSE 0 END) as cash_sales_paid,
+            SUM(paid) as cash_sales_paid,
             SUM(CASE WHEN status = "Partial" THEN paid ELSE 0 END) as cash_sales_partial,
             SUM(credit) as total_debt')
         ->groupBy('account')
@@ -1782,7 +1653,6 @@ class salsController extends Controller
         ->groupBy('account')
         ->get()
         ->keyBy('account');
-    \Log::info('AllShopReport: Supplier payments data count: ' . $supplierPaymentsData->count());
      
     // 8. Get cash submissions (OPTIMIZED: removed DB::raw wrapper to use index)
     // report_date is a DATE column, so we convert the datetime range to date range
@@ -1805,7 +1675,6 @@ class salsController extends Controller
         ->groupBy('account')
         ->get()
         ->keyBy('account');
-    \Log::info('AllShopReport: Product quantities count: ' . $productQuantities->count());
      
     // 10. Get banking transfers (OPTIMIZED: ensure index on shop_id+transfer_date exists)
     $bankingData = BankingTransfer::whereIn('shop_id', $shopIds)
@@ -1942,8 +1811,8 @@ class salsController extends Controller
     $shopReports = collect();
     
     foreach ($allShops as $shop) {
-        \Log::info('AllShopReport: Processing shop ID=' . $shop->id . ', name=' . $shop->name);
-        $accountId = $shop->id;
+        \Log::info('AllShopReport: Processing shop ID=' . $shop['id'] . ', name=' . $shop['name']);
+        $accountId = $shop['id'];
         
         $sales = $salesData[$accountId] ?? null;
         $returns = $returnData[$accountId] ?? null;
@@ -1961,8 +1830,8 @@ class salsController extends Controller
         
         \Log::info('AllShopReport: Shop ' . $accountId . ' - sales=' . ($sales ? 'found' : 'null') . ', returns=' . ($returns ? 'found' : 'null') . ', expense=' . ($expense ? 'found' : 'null'));
         
-        $totalCashSales = (($sales?->cash_sales_paid ?? 0) + ($sales?->cash_sales_partial ?? 0)) - ($returns?->cash_return_total ?? 0);
-        $totalCreditSales = (($sales?->total_credit ?? 0) + ($sales?->partial_credit ?? 0)) - ($returns?->credit_return_total ?? 0);
+        $totalCashSales = ($sales?->cash_sales_paid ?? 0) - ($returns?->cash_return_total ?? 0);
+        $totalCreditSales = ($sales?->total_credit ?? 0) - ($returns?->credit_return_total ?? 0);
         $totalSales = $totalCashSales + $totalCreditSales;
         $totalReturn = ($returns?->credit_return_total ?? 0) + ($returns?->cash_return_total ?? 0);
         
@@ -1977,20 +1846,20 @@ class salsController extends Controller
                     + ($paidInvoice?->total_paid_invoices ?? 0)
                     - ($expense?->total_expenses ?? 0)
                     - ($paidReceiving?->total_paid_receivings ?? 0)
-                    - ($supplierPayment?->total_supplier_payments ?? 0)
                     - ($paidInvoice?->total_chip_used ?? 0);
         
         $cashSubmit = ($cashSubmission?->total_cash_submitted ?? 0) + ($chip?->total_chip ?? 0);
         $bankingAmount = $banking?->total_banking ?? 0;
 
-        $crReceiving = ($creditReceiving?->total_credit_receivings ?? 0) - ($returnedReceiving->total_returned_receivings ?? 0) ;
+        $crReceiving = ($creditReceiving?->total_credit_receivings ?? 0);
 
         $bankDifference = $cashSubmit - $bankingAmount;
         $cashDifference = $cashAmount - ($cashSubmission?->total_cash_submitted ?? 0);
         
         $sellingWorth = $sales?->total_sales ?? 0;
+
         $costWorth = (($paidReceiving?->total_paid_receivings ?? 0) + ($crReceiving))
-                    - $totalSales
+                    - ($totalSales + ($returnedReceiving->total_returned_receivings ?? 0))
                     - ($sales?->total_discount ?? 0)
                     - ($offer?->total_offered ?? 0);
         
@@ -2006,8 +1875,8 @@ class salsController extends Controller
         
         $shopReports->push((object)[
             'shop_id' => $accountId,
-            'shop_name' => $shop->name ?? 'Unnamed Shop',
-            'location' => $shop->location ?? 'N/A',
+            'shop_name' => $shop['name'] ?? 'Unnamed Shop',
+            'location' => $shop['name'] ?? 'N/A',
             'total_transactions' => $sales->total_transactions ?? 0,
             'total_product_quantity' => $productQty->total_quantity ?? 0,
             'cash_sales' => $totalCashSales,
@@ -2028,8 +1897,8 @@ class salsController extends Controller
             'credit_receivings' => $crReceiving,
             'returned_receivings' => $returnedReceiving->total_returned_receivings ?? 0,
             'credit_receivings_quantity' => $creditReceiving->credit_receiving_quantity ?? 0,
-            'paid_receivings' => $supplierPayment->total_supplier_payments ?? 0,
             'cash_amount' => $cashAmount,
+            'main_store'    => $supplierPayment->total_supplier_payments ?? 0,
             'cash_submitted' => $cashSubmit,
             'totalChip' => $chip->total_chip ?? 0,
             'cash_difference' => $cashDifference,
@@ -2065,6 +1934,7 @@ class salsController extends Controller
         'paid_invoices'             => $shopReports->sum('paid_invoices'),
         'chip_used'                 => $shopReports->sum('chip_used'),
         'profit'                    => $shopReports->sum('profit'),
+        'main_store'                => $shopReports->sum('main_store'),
         'cash_receivings'           => $shopReports->sum('cash_receivings'),
         'credit_receivings'         => $shopReports->sum('credit_receivings'),
         'returned_receivings'       => $shopReports->sum('returned_receivings'),
@@ -2078,19 +1948,10 @@ class salsController extends Controller
         'total_discrepancies'       => $shopReports->sum('discrepancy_count'),
     ];
     
-    $activeShopsCount = $allShops->count();
+    $activeShopsCount = count($allShops);
     $shopsWithSalesCount = $shopReports->where('has_sales', true)->count();
     $report = $shopReports;
-    
-    \Log::info('AllShopReport: Final shopReports count: ' . $shopReports->count());
-    \Log::info('AllShopReport: Has sales count: ' . $shopsWithSalesCount);
-    
-    if ($shopReports->isEmpty()) {
-        \Log::warning('AllShopReport: shopReports is EMPTY after processing all shops!');
-    } else {
-        \Log::info('AllShopReport: First shop report: ', (array) $shopReports->first());
-    }
-    
+
     $data = compact(
         'shopReports',
         'dateParam',
@@ -2103,17 +1964,265 @@ class salsController extends Controller
         'dateTo'
     );
     
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        \Log::info('AllShopReport: Returning admin view with shopReports count: ' . $shopReports->count());
-        return view('admin.shopReport', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        \Log::info('AllShopReport: Returning user view with shopReports count: ' . $shopReports->count());
-        return view('user.shopReport', $data);
-    }
+    return view('shopReport', $data);
+  
     
     \Log::warning('AllShopReport: No view returned - user levelStatus is empty');
-}
+    }
+
+    public function AllShopDailyItemReport(Request $req)
+    {
+        $user = Auth::user();
+        if (!canUser('view_shops_report')) {
+            return redirect()->back()->with('error', 'Unauthorized access');
+        }
+
+        $fromDate = $req->input('from_date', date('Y-m-d'));
+        $toDate = $req->input('to_date', date('Y-m-d'));
+        $shopFilter = $req->input('shop', null);
+
+        $allShops = getUserAccounts();
+        $allShops = array_values(array_filter($allShops, function($shop) {
+            return $shop['id'] != 7;
+        }));
+
+        if ($shopFilter !== null && $shopFilter !== '') {
+            $valid = array_filter($allShops, fn($s) => $s['id'] == $shopFilter);
+            if (!empty($valid)) {
+                $accountIds = [$shopFilter];
+                session(['selected_shop_id' => $shopFilter]);
+            } else {
+                $accountIds = null;
+            }
+        } else {
+            $currentShopId = getCurrentShopId();
+            if ($currentShopId) {
+                $accountIds = [$currentShopId];
+                $shopFilter = $currentShopId;
+            } else {
+                $accountIds = null;
+                $shopFilter = '';
+            }
+        }
+
+        $shopNameMap = [];
+        foreach ($allShops as $shop) {
+            $shopNameMap[$shop['id']] = $shop['name'];
+        }
+
+        if (empty($accountIds)) {
+            return view('shopDailyItemReport', [
+                'fromDate' => $fromDate,
+                'toDate' => $toDate,
+                'reportRows' => [],
+                'allShops' => $allShops,
+                'shopFilter' => $shopFilter,
+                'shopNameMap' => $shopNameMap,
+                'grandTotals' => [
+                    'requestedQty' => 0, 'receivedQty' => 0, 'soldQty' => 0,
+                    'requestValue' => 0, 'receivedValue' => 0, 'soldValue' => 0, 'discountValue' => 0, 'offerValue' => 0,
+                ],
+            ]);
+        }
+
+        $requests = itemRequestModel::whereIn('account', $accountIds)
+            ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+            ->get(['account', 'productId', 'quantity', 'totalPrice']);
+
+        $receivings = recevingModel::whereIn('account', $accountIds)
+            ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+            ->where('is_return', '!=', 1)
+            ->get(['account', 'productId', 'quantity', 'price']);
+
+        $sales = salsModel::whereIn('account', $accountIds)
+            ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+            ->where('status', '!=', 'Return')
+            ->where(function($q) { $q->where('salesName', '!=', '')->orWhereNull('salesName'); })
+            ->get(['account', 'productId', 'pQuantity', 'totalPrice', 'discount', 'offered_items', 'offer_parent_product', 'productPrice']);
+
+        $productIds = collect();
+        foreach ($requests as $reqItem) { if ($reqItem->productId) $productIds->push($reqItem->productId); }
+        foreach ($receivings as $rec) { if ($rec->productId) $productIds->push($rec->productId); }
+        foreach ($sales as $sale) { if ($sale->productId) $productIds->push($sale->productId); }
+        $productIds = $productIds->unique()->filter()->values()->toArray();
+
+        $products = [];
+        if (!empty($productIds)) {
+            $products = productsModel::whereIn('product_id', $productIds)->get(['product_id', 'name01']);
+        }
+        $productMap = [];
+        foreach ($products as $p) {
+            $productMap[$p->product_id] = $p->name01;
+        }
+
+        $reportRows = [];
+        $grandTotals = [
+            'requestedQty' => 0, 'receivedQty' => 0, 'soldQty' => 0,
+            'requestValue' => 0, 'receivedValue' => 0, 'soldValue' => 0, 'discountValue' => 0, 'offerValue' => 0,
+        ];
+
+        $addRow = function($shopId, $productId, $productName, $reqQty, $recQty, $soldQty, $reqVal, $recVal, $soldVal, $discountVal = 0) use (&$reportRows, &$grandTotals) {
+            $key = $shopId . '|' . ($productId ?? 'name_' . md5($productName));
+            if (!isset($reportRows[$key])) {
+                $reportRows[$key] = [
+                    'shopId' => $shopId,
+                    'productId' => $productId,
+                    'productName' => $productName,
+                    'requestedQty' => 0,
+                    'receivedQty' => 0,
+                    'soldQty' => 0,
+                    'requestValue' => 0,
+                    'receivedValue' => 0,
+                    'soldValue' => 0,
+                    'discountValue' => 0,
+                    'offerValue' => 0,
+                ];
+            }
+            $reportRows[$key]['requestedQty'] += (int)$reqQty;
+            $reportRows[$key]['receivedQty'] += (int)$recQty;
+            $reportRows[$key]['soldQty'] += (int)$soldQty;
+            $reportRows[$key]['requestValue'] += (float)$reqVal;
+            $reportRows[$key]['receivedValue'] += (float)$recVal;
+            $reportRows[$key]['soldValue'] += (float)$soldVal;
+            $reportRows[$key]['discountValue'] += (float)$discountVal;
+        };
+
+        foreach ($requests as $reqItem) {
+            $pid = $reqItem->productId;
+            $productName = $productMap[$pid] ?? 'Unknown';
+            $qty = (int)($reqItem->quantity ?? 0);
+            $total = (float)($reqItem->totalPrice ?? 0);
+            $addRow($reqItem->account, $pid, $productName, $qty, 0, 0, $total, 0, 0);
+
+            $grandTotals['requestedQty'] += $qty;
+            $grandTotals['requestValue'] += $total;
+        }
+
+        foreach ($receivings as $rec) {
+            $pid = $rec->productId;
+            $productName = $productMap[$pid] ?? ('Unknown (#' . $pid . ')');
+            $qty = (int)($rec->quantity ?? 0);
+            $price = (float)($rec->price ?? 0);
+            $total = $qty * $price;
+            $addRow($rec->account, $pid, $productName, 0, $qty, 0, 0, $total, 0);
+
+            $grandTotals['receivedQty'] += $qty;
+            $grandTotals['receivedValue'] += $total;
+        }
+
+        foreach ($sales as $sale) {
+            $pid = $sale->productId;
+            $productName = $productMap[$pid] ?? ('Unknown (#' . $pid . ')');
+            $qty = (int)($sale->pQuantity ?? 0);
+            $total = (float)($sale->totalPrice ?? 0);
+            $discount = (float)($sale->discount ?? 0);
+            $netTotal = max(0, $total);
+            $addRow($sale->account, $pid, $productName, 0, 0, $qty, 0, 0, $netTotal, $discount);
+
+            $grandTotals['soldQty'] += $qty;
+            $grandTotals['soldValue'] += $netTotal;
+            $grandTotals['discountValue'] += $discount;
+        }
+
+        $offerTotals = [];
+        foreach ($sales as $sale) {
+            if (($sale->offered_items ?? 0) == 1 && !empty($sale->offer_parent_product)) {
+                $parentPid = $sale->offer_parent_product;
+                $offerVal = (float)($sale->productPrice * $sale->pQuantity);
+                $key = $sale->account . '|' . $parentPid;
+                if (!isset($offerTotals[$key])) {
+                    $offerTotals[$key] = [
+                        'shopId' => $sale->account,
+                        'parentProductId' => $parentPid,
+                        'offerValue' => 0,
+                    ];
+                }
+                $offerTotals[$key]['offerValue'] += max(0, $offerVal);
+                $grandTotals['offerValue'] += max(0, $offerVal);
+            }
+        }
+
+        foreach ($offerTotals as $key => $ot) {
+            $ppid = $ot['parentProductId'];
+            $ov = $ot['offerValue'];
+            $reportKey = $ot['shopId'] . '|' . $ppid;
+            if (isset($reportRows[$reportKey])) {
+                $reportRows[$reportKey]['offerValue'] += $ov;
+            } else {
+                $rowKey = $ot['shopId'] . '|name_' . md5('Offer (' . $ppid . ')');
+                if (!isset($reportRows[$rowKey])) {
+                    $reportRows[$rowKey] = [
+                        'shopId' => $ot['shopId'],
+                        'productId' => $ppid,
+                        'productName' => 'Offer (# ' . $ppid . ')',
+                        'requestedQty' => 0, 'receivedQty' => 0, 'soldQty' => 0,
+                        'requestValue' => 0, 'receivedValue' => 0, 'soldValue' => 0,
+                        'discountValue' => 0,
+                        'offerValue' => 0,
+                    ];
+                }
+                $reportRows[$rowKey]['offerValue'] += $ov;
+            }
+        }
+
+        foreach ($reportRows as $key => &$row) {
+            $row['diffRecReq']   = $row['receivedQty'] - $row['requestedQty'];
+            $row['diffSoldRec']  = $row['soldQty']     - $row['receivedQty'];
+            $row['diffSoldReq']  = $row['soldQty']     - $row['requestedQty'];
+            $row['diffValRecReq']   = $row['receivedValue'] - $row['requestValue'];
+            $row['diffValSoldRec']  = $row['soldValue']     - $row['receivedValue'];
+
+            $statuses = [];
+            if ($row['requestedQty'] == 0 && $row['receivedQty'] > 0) {
+                $statuses[] = 'received_not_requested';
+            }
+            if ($row['requestedQty'] == 0 && $row['soldQty'] > 0) {
+                $statuses[] = 'sold_without_request';
+            }
+            if ($row['receivedQty'] == 0 && $row['soldQty'] > 0) {
+                $statuses[] = 'sold_without_receiving';
+            }
+            if ($row['soldQty'] > $row['receivedQty']) {
+                $statuses[] = 'over_sold';
+            } elseif ($row['receivedQty'] > $row['requestedQty']) {
+                $statuses[] = 'over_received';
+            } elseif ($row['receivedQty'] < $row['requestedQty']) {
+                $statuses[] = 'under_received';
+            }
+
+            if (empty($statuses)) {
+                $statuses[] = 'balanced';
+            }
+
+            $row['markStatus'] = $statuses;
+        }
+        unset($row);
+
+        $shopNameMap = [];
+        foreach ($allShops as $shop) {
+            $shopNameMap[$shop['id']] = $shop['name'];
+        }
+
+        usort($reportRows, function($a, $b) use ($shopNameMap) {
+            $shopA = $shopNameMap[$a['shopId']] ?? '';
+            $shopB = $shopNameMap[$b['shopId']] ?? '';
+            $cmp = strcmp($shopA, $shopB);
+            if ($cmp !== 0) return $cmp;
+            return strcmp($a['productName'], $b['productName']);
+        });
+
+        $reportRows = array_values($reportRows);
+
+        return view('shopDailyItemReport', [
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'reportRows' => $reportRows,
+            'allShops' => $allShops,
+            'shopFilter' => $shopFilter,
+            'shopNameMap' => $shopNameMap,
+            'grandTotals' => $grandTotals,
+        ]);
+    }
 
     /**
      * Get users from all accessible accounts
@@ -2124,20 +2233,7 @@ class salsController extends Controller
     {
         $user = Auth::user();
         
-        // Determine which accounts to query based on user role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin sees all users from all accounts
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            // Regular user sees users from their assigned accounts
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            // Also include the user's main account field
-            if ($user->account) {
-                $accountIds[] = $user->account;
-            }
-            $accountIds = array_unique($accountIds);
-        }
+        $accountIds = array_column(getUserAccounts(), 'id');
         
         if (empty($accountIds)) {
             return response()->json(['success' => false, 'message' => 'No accessible accounts found']);
@@ -2176,20 +2272,7 @@ class salsController extends Controller
     {
         $user = Auth::user();
         
-        // Determine which accounts to query based on user role
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin sees all suppliers from all accounts
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            // Regular user sees suppliers from their assigned accounts
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            // Also include the user's main account field
-            if ($user->account) {
-                $accountIds[] = $user->account;
-            }
-            $accountIds = array_unique($accountIds);
-        }
+        $accountIds = array_column(getUserAccounts(), 'id');
         
         if (empty($accountIds)) {
             return response()->json(['success' => false, 'message' => 'No accessible accounts found']);
@@ -2217,20 +2300,7 @@ class salsController extends Controller
         $todayStart = now()->startOfDay();
         $todayEnd = now()->endOfDay();
         
-        // Determine which accounts to query
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
-        
-        if (empty($accountIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No shops assigned to your account',
-                'balanced' => false
-            ]);
-        }
+       $accountIds = array_column(getUserAccounts(), 'id');
         
         $results = [];
         $allBalanced = true;

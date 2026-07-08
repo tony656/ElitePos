@@ -11,76 +11,48 @@ use App\Models\logModal;
 use App\Models\productsModel;
 use App\Models\madeni;
 use App\Models\UserAccount;
-use function getSessionAccountName;
-use function getSessionAccountId;
+use function getCurrentShopId;
+use function getUserAccounts;
 
 class vendorController extends Controller
 {
     public function index(Request $req) {
-        $user = Auth::user();
-        $Account = getSessionAccountName();
 
-        // Get shops based on user access
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin can see all shops
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            // Non-admin: only show shops they have access to
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            if (empty($assignedAccountIds)) {
-                $shops = collect();
-            } else {
-                $shops = accountModel::whereIn('id', $assignedAccountIds)
-                            ->orderBy('name', 'asc')
-                            ->get();
-            }
-        }
+    if (!canUser('view_suppliers')) {
+        abort(403, 'Unauthorized access');
+    }
+        $user = Auth::user();
+        $Account = getCurrentShopId();
+        $shops = getUserAccounts();
+
 
         // Determine selected shop (for admin filter)
         $selectedShopId = $req->input('shop');
-        $selectedShopName = null;
-        if ($selectedShopId) {
-            $selectedShop = accountModel::find($selectedShopId);
-            if ($selectedShop) {
-                $selectedShopName = $selectedShop->name;
-            }
-        }
+   
 
         // Build query
         $query = vendorModal::query();
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            // Admin: filter by selected shop if provided, else show all
-            if ($selectedShopName) {
-                $query->where('account', $selectedShopName);
+            if ($selectedShopId) {
+                $query->where('account', $selectedShopId);
             }
-        } else {
-            // Non-admin: only show vendors from their assigned shop(s)
-            $query->where('account', $Account);
-        }
-
+        
         $fetch = $query->get();
 
         $data = compact(
             'fetch',
             'shops',
-            'selectedShopId'
         );
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.vendors', $data);
-        }
-        if(!empty($user->levelStatus)) {
-            return view('user.vendors', $data);
-        }
+            return view('vendors', $data);
+    
     }
     
 
 
     public function newVendor(Request $req) {
 
-                $Account = getSessionAccountName();
+        $Account = getCurrentShopId();
 
         $name = $req->input('name');
         $contact = $req->input('contact');
@@ -100,22 +72,22 @@ class vendorController extends Controller
         $insert->credit = $credit;
         $insert->bank = $bank;
         $insert->card = $account;
-        $insert->createdBy = session('username');
-        $insert->account = $Account;
+        $insert->createdBy = Auth::user()->name;
+        $insert->account = 7;
         $insert->save();
 
         if($insert) {
 
             $create = new logModal();
             $create->title = 'Supplier Created';
-            $create->description = $name.'(Supplier) created by '.session('username');
+            $create->description = $name.'(Supplier) created by '.Auth::user()->name;
             $create->save();
 
             return redirect()->back()->with('success', 'Supplier added successfully');
         } else {
               $create = new logModal();
             $create->title = 'Supplier Creation Failed';
-            $create->description = $name.'(Supplier) creation Failed, by '.session('username');
+            $create->description = $name.'(Supplier) creation Failed, by '.Auth::user()->name;
             $create->save();
 
         return redirect()->back()->with('success', 'faild to add Supplier');
@@ -125,27 +97,23 @@ class vendorController extends Controller
 
     public function dltVendeor(Request $req) {
 
-                $Account = getSessionAccountName();
+                $Account = getCurrentShopId();
 
         $prodId = $req->input('product_id');
 
-         $deletes = vendorModal::where('account', $Account)->where('id', $prodId)->first();
+         $deletes = vendorModal::where('id', $prodId)->first();
 
-        $delete = vendorModal::where('account', $Account)->where('id', $prodId)->delete();
+        $delete = vendorModal::where('id', $prodId)->delete();
 
         if($delete) {
              $create = new logModal();
             $create->title = 'Supplier Deleted';
-            $create->description = $deletes->name .'(Supplier) Deleted By '.session('username');
+            $create->description = $deletes->name .'(Supplier) Deleted By '.Auth::user()->name;
             $create->save();
             
             return redirect()->back()->with('success', 'Supplier Deleted successfully');
         } else {
-             $create = new logModal();
-            $create->title = 'Supplier Deletion Failed';
-            $create->description = $deletes->name .'(Supplier) Deletion Failed By '.session('username');
-            $create->save();
-            
+                        
             return redirect()->back()->with('success', 'Supplier failed to delete');
         }
     }
@@ -154,74 +122,43 @@ class vendorController extends Controller
 
         $user = Auth::user();
         $vendorId = $req->input('vendorId');
-        $Account = getSessionAccountName();
+        $Account = getCurrentShopId();
 
-        $fetchProduct = productsModel::where('supplier', $vendorId)->where('account', $Account)->get();
-        $fetch = vendorModal::where('id', $vendorId)->where('account', $Account)->first();
+        $fetchProduct = productsModel::where('supplier', $vendorId)->get();
+        $fetch = vendorModal::where('id', $vendorId)->first();
 
             $data = compact(
         'fetch','fetchProduct'
     );
 
- if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.vendorView', $data);
-    }
-    if(!empty($user->levelStatus)) {
-        return view('user.vendorView', $data);
-    }
+        return view('vendorView', $data);
+
     }
 public function supplierCredit(Request $req) {
-
-    $user = Auth::user();
-    $AccountId = getSessionAccountId();
-
-    // Get shops based on user access
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        // Admin can see all shops
-        $shops = accountModel::orderBy('name', 'asc')->get();
-        // Admin can filter by selected shop or show all
-        $selectedShopId = $req->input('shop');
-    } else {
-        // Non-admin: only show shops they have access to
-        $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        
-        if (empty($assignedAccountIds)) {
-            $shops = collect();
-        } else {
-            $shops = accountModel::whereIn('id', $assignedAccountIds)
-                        ->orderBy('name', 'asc')
-                        ->get();
-        }
-        // Non-admin always uses their assigned shop(s)
-        $selectedShopId = null;
+if (!canUser('manage_supplier_credit')) {
+        abort(403, 'Unauthorized access');
     }
+    $user = Auth::user();
+        $selectedShopId = $req->input('shop');
+        $shops = getUserAccounts();
+        $shopIds = array_column(getUserAccounts(),'id');
+
+        if(!empty($selectedShopId)) {
+            session([
+                'selected_shop_id' => getCurrentShopId()
+            
+            ]);
+        } else {
+            $selectedShopId = getCurrentShopId();
+        }
 
     // Build query with shop filter - only show debt/credit items (isDebt = 1)
     $query = recevingModel::where('isDebt', 1);
-
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        if ($selectedShopId) {
+            $query->whereIn('account', $shopIds);
+  if ($selectedShopId) {
             $query->where('account', $selectedShopId);
         }
-        // If no shop selected, admin sees all shops (no account filter)
-    } else {
-        // Non-admin: filter by their assigned shop(s)
-        if (!empty($assignedAccountIds)) {
-            $query->whereIn('account', $assignedAccountIds);
-        } else {
-            // No shops assigned, return empty result
-            $groupedCredits = collect();
-            $data = compact('groupedCredits', 'shops', 'selectedShopId');
-            
-            if (strtolower(trim($user->levelStatus)) === 'admin') {
-                return view('admin.deptors', $data);
-            }
-            if(!empty($user->levelStatus)) {
-                return view('user.deptors', $data);
-            }
-        }
-    }
-
+  
     // Filter by date range - default to today if no dates provided
     if ($req->has('date_from') && !empty($req->date_from)) {
         $query->whereDate('created_at', '>=', $req->date_from);
@@ -238,8 +175,9 @@ public function supplierCredit(Request $req) {
     }
 
     // Get supplier credits grouped by date and supplier
-    $credits = $query->selectRaw('MAX(receivingId) as receivingId,DATE(created_at) as order_date, supplier, SUM(quantity) as quantity, SUM(price * quantity) as total_price')
+    $credits = $query->selectRaw('MAX(receivingId) as receivingId,MAX(receivingName) as receivingName,DATE(created_at) as order_date,account, supplier, SUM(quantity) as quantity, SUM(price * quantity) as total_price')
         ->groupBy('order_date', 'supplier')
+        ->groupBy('order_date', 'account')
         ->orderBy('order_date', 'desc')
         ->get();
 
@@ -251,14 +189,126 @@ public function supplierCredit(Request $req) {
 
     $data = compact('groupedCredits', 'shops', 'selectedShopId');
 
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
-        return view('admin.deptors', $data);
+
+        return view('deptors', $data);
+
+}
+
+public function mainCredit(Request $req) {
+
+    $user = Auth::user();
+  
+    $selectedShopId = 7;
+        
+
+    // Build query with shop filter - only show debt/credit items (isDebt = 1)
+    $query = recevingModel::where('isDebt', 1);
+  if ($selectedShopId) {
+            $query->where('account', $selectedShopId);
+        }
+  
+    // Filter by date range - default to today if no dates provided
+    if ($req->has('date_from') && !empty($req->date_from)) {
+        $query->whereDate('created_at', '>=', $req->date_from);
+    } else {
+        // Default to today's date if no date_from provided
+        $query->whereDate('created_at', '>=', date('Y-m-d'));
+    }
+    
+    if ($req->has('date_to') && !empty($req->date_to)) {
+        $query->whereDate('created_at', '<=', $req->date_to);
+    } else {
+        // Default to today's date if no date_to provided
+        $query->whereDate('created_at', '<=', date('Y-m-d'));
     }
 
-    if(!empty($user->levelStatus)) {
-        return view('user.deptors', $data);
+    // Get supplier credits grouped by date and supplier
+    $credits = $query->selectRaw('MAX(receivingId) as receivingId,MAX(receivingName) as receivingName,DATE(created_at) as order_date,account, supplier, SUM(quantity) as quantity, SUM(price * quantity) as total_price')
+        ->groupBy('order_date', 'supplier')
+        ->groupBy('order_date', 'account')
+        ->orderBy('order_date', 'desc')
+        ->get();
+
+    // Group by date for easier display
+    $groupedCredits = $credits->groupBy('order_date');
+
+    // Initialize products array
+    $products = collect();
+
+    $data = compact('groupedCredits', 'selectedShopId');
+
+
+        return view('main-credit', $data);
+
+}
+
+
+public function dltSupPay(Request $req) {
+    $id = $req->input('id');
+
+    $query = madeni::where('id', $id)->delete();
+
+    if($query) {
+        return redirect()->back()->with('success', "Payment Deleted Successfully");
+    } else {
+        return redirect()->back()->with('error', "Failed to Delete Payment");
     }
 }
+
+public function suplierPayments (Request $req) {
+        $user = Auth::user();
+        $selectedShopId = $req->input('shop');
+        $date_from = $req->date_from ?? date('Y-m-d');
+        $date_to = $req->date_to ?? date('Y-m-d');
+        $shops = getUserAccounts();
+        
+        if(!empty($selectedShopId)) {
+            session([
+                'selected_shop_id' => getCurrentShopId()
+            
+            ]);
+        } else {
+            $selectedShopId = getCurrentShopId();
+        }
+   
+ // Filter by date range - default to today if no dates provided
+
+
+    // Build query with shop filter - only show debt/credit items (isDebt = 1)
+    $querys = madeni::query();
+    if(!empty($selectedShopId)) {
+    $querys->where('account', $selectedShopId);
+    }
+    $querys->whereDate('created_at', '>=', $date_from)->whereDate('created_at', '<=', $date_to);
+
+    $query = $querys->get();
+    
+       $data = compact('query', 'shops', 'selectedShopId');
+
+        return view('supplier-payments', $data);
+
+}
+
+public function mainPaid (Request $req) {
+        $user = Auth::user();
+        $selectedShopId = $req->input('shop');
+        $date_from = $req->date_from ?? date('Y-m-d');
+        $date_to = $req->date_to ?? date('Y-m-d');
+        $shops = getUserAccounts();
+        
+            $selectedShopId = 7;
+        
+
+    // Build query with shop filter - only show debt/credit items (isDebt = 1)
+    $query = madeni::where('account', $selectedShopId)->whereDate('created_at', '>=', $date_from)->whereDate('created_at', '<=', $date_to)->get();
+
+
+       $data = compact('query', 'shops', 'selectedShopId');
+
+        return view('main-paid', $data);
+
+}
+
 public function supplierItems(Request $req)
 {
     $user = Auth::user();
@@ -268,22 +318,11 @@ public function supplierItems(Request $req)
         ->where('isDebt', 1);
 
     // Apply account filter based on user role (same logic as supplierCredit)
-    if (strtolower(trim($user->levelStatus)) === 'admin') {
         $selectedShopId = $req->input('shop') ?? $req->input('account'); // Try both parameters
         if ($selectedShopId) {
             $query->where('account', $selectedShopId);
         }
-        // If no shop selected, admin sees all shops (no account filter)
-    } else {
-        // Non-admin: filter by their assigned shop(s)
-        $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        if (!empty($assignedAccountIds)) {
-            $query->whereIn('account', $assignedAccountIds);
-        } else {
-            // No shops assigned, return empty result
-            return response()->json([]);
-        }
-    }
+  
 
     // Filter by date range - default to today if no dates provided
     if ($req->has('date_from') && !empty($req->date_from)) {
@@ -325,6 +364,7 @@ public function supplierItems(Request $req)
         $supplier = $request->input('supplier');
         $orderid = $request->input('orderid');
         $amountPaid = $request->input('amount');
+        $shop = $request->input('shop');
 
         try {
             // Validate input
@@ -359,36 +399,15 @@ public function supplierItems(Request $req)
             $payment = new madeni();
             $payment->supplierId = $receiving->supplier; // Or use actual supplier ID if available
             $payment->amount = $amountPaid;
-            $payment->receivingsId = $orderid;
-            $payment->account = getSessionAccountName();
+            $payment->receivingsId = $receiving->receivingId ?? $orderid;
+            $payment->account = $shop ?? '';
             $payment->save();
 
-            $check = madeni::where('receivingsId', $orderid)->sum('amount');
-
-            if(!$check >= $receivings) {
-                $receiving->update([
-                    'paid_status' => 'Completed',
-                ]);
-            } else {
-                $receiving->update([
-                    'paid_status' => 'Partial',
-                ]);
-            }
-            // Check if payment is complete
-            $totalPaidForOrder = madeni::where('receivingsId', $orderid)->sum('amount');
-
-            if ($totalPaidForOrder >= $receivings) {
-                // Payment is complete, update receiving
-                $receiving->update([
-                    'isPaid' => 1,
-                    'isDebt' => 0
-                ]);
-            }
 
             // Log the transaction
             $logEntry = new logModal();
             $logEntry->title = 'Supplier Payment';
-            $logEntry->description = $supplier . ' (Supplier) made a payment of ' . $amountPaid . ' for order ' . $orderid . ' by ' . session('username');
+            $logEntry->description = $supplier . ' (Supplier) made a payment of ' . $amountPaid . ' for order ' . $orderid . ' by ' . Auth::user()->name;
             $logEntry->save();
 
             return redirect()->back()->with('success', 'Payment of ' . number_format($amountPaid, 2) . ' recorded successfully');
@@ -416,7 +435,7 @@ public function supplierItems(Request $req)
                 // Log the deletion
                 $logEntry = new logModal();
                 $logEntry->title = 'Debt Deleted';
-                $logEntry->description = 'Supplier credit for ' . $supplier . ' on ' . $date . ' was deleted by ' . session('username');
+                $logEntry->description = 'Supplier credit for ' . $supplier . ' on ' . $date . ' was deleted by ' . Auth::user()->name;
                 $logEntry->save();
 
                 return redirect()->back()->with('success', 'Supplier credit deleted successfully');

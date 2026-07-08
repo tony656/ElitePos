@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BankingSupplier;
-use App\Models\BankingBeneficiary;
-use App\Models\BankingTransfer;
-use App\Models\BankingTransferAllocation;
 use App\Models\BankingAccount;
+use App\Models\BankingBeneficiary;
 use App\Models\BankingChip;
-use App\Models\accountModel;
+use App\Models\BankingSupplier;
+use App\Models\BankingTransfer;
+use App\Models\logModal;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use App\Models\logModal;
-use function getSessionAccountId;
+use Illuminate\Support\Facades\DB;
+
+use function getCurrentShopId;
+use function getUserAccounts;
 
 class bankingController extends Controller
 {
@@ -27,17 +26,12 @@ class bankingController extends Controller
         $user = Auth::user();
 
         $suppliers = BankingSupplier::with('accounts')
-                        ->get();
+            ->get();
 
         $data = compact('suppliers');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-suppliers', $data);
-        }
+        return view('banking-suppliers', $data);
 
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-suppliers', $data);
-        }
     }
 
     /**
@@ -46,20 +40,7 @@ class bankingController extends Controller
     public function partners(Request $req)
     {
         $user = Auth::user();
-
-        // Get all shops (accounts) for filter dropdown based on permission
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $shops = collect();
-            } else {
-                $shops = accountModel::whereIn('id', $assignedAccountIds)
-                            ->orderBy('name', 'asc')
-                            ->get();
-            }
-        }
+        $shops = getUserAccounts();
 
         // Build supplier query with optional shop filter
         $supplierQuery = BankingSupplier::with('accounts');
@@ -83,13 +64,8 @@ class bankingController extends Controller
 
         $data = compact('suppliers', 'beneficiaries', 'shops', 'shopId');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-partners', $data)->with($req->all());
-        }
+        return view('banking-partners', $data)->with($req->all());
 
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-partners', $data)->with($req->all());
-        }
     }
 
     /**
@@ -100,17 +76,12 @@ class bankingController extends Controller
         $user = Auth::user();
 
         $beneficiaries = BankingBeneficiary::with('accounts')
-                            ->get();
+            ->get();
 
         $data = compact('beneficiaries');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-beneficiaries', $data);
-        }
+        return view('banking-beneficiaries', $data);
 
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-beneficiaries', $data);
-        }
     }
 
     /**
@@ -118,7 +89,7 @@ class bankingController extends Controller
      */
     public function storeSupplier(Request $req)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'name' => 'required|string|max:255',
@@ -131,7 +102,7 @@ class bankingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $supplier = new BankingSupplier();
+        $supplier = new BankingSupplier;
         $supplier->name = $req->name;
         $supplier->bank_name = $req->bank_name;
         $supplier->account_number = $req->account_number;
@@ -140,12 +111,12 @@ class bankingController extends Controller
         $supplier->contact = $req->contact;
         $supplier->address = $req->address;
         $supplier->description = $req->description;
-        $supplier->created_by = session('username');
+        $supplier->created_by = Auth::user()->name;
         $supplier->account = $Account;
         $supplier->save();
 
         // Create the primary bank account for this supplier
-        $account = new BankingAccount();
+        $account = new BankingAccount;
         $account->accountable()->associate($supplier);
         $account->bank_name = $req->bank_name;
         $account->account_number = $req->account_number;
@@ -154,15 +125,15 @@ class bankingController extends Controller
         $account->contact = $req->contact;
         $account->address = $req->address;
         $account->description = $req->description;
-        $account->created_by = session('username');
+        $account->created_by = Auth::user()->name;
         $account->account = $Account;
         $account->is_primary = true;
         $account->save();
 
         if ($supplier && $account) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Supplier Created';
-            $log->description = $req->name . ' (Banking Supplier) created by ' . session('username');
+            $log->description = $req->name.' (Banking Supplier) created by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Banking supplier added successfully');
@@ -176,7 +147,7 @@ class bankingController extends Controller
      */
     public function storeBeneficiary(Request $req)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'name' => 'required|string|max:255',
@@ -189,7 +160,7 @@ class bankingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $beneficiary = new BankingBeneficiary();
+        $beneficiary = new BankingBeneficiary;
         $beneficiary->name = $req->name;
         $beneficiary->bank_name = $req->bank_name;
         $beneficiary->account_number = $req->account_number;
@@ -198,12 +169,12 @@ class bankingController extends Controller
         $beneficiary->contact = $req->contact;
         $beneficiary->address = $req->address;
         $beneficiary->description = $req->description;
-        $beneficiary->created_by = session('username');
+        $beneficiary->created_by = Auth::user()->name;
         $beneficiary->account = $Account;
         $beneficiary->save();
 
         // Create the primary bank account for this beneficiary
-        $account = new BankingAccount();
+        $account = new BankingAccount;
         $account->accountable()->associate($beneficiary);
         $account->bank_name = $req->bank_name;
         $account->account_number = $req->account_number;
@@ -212,15 +183,15 @@ class bankingController extends Controller
         $account->contact = $req->contact;
         $account->address = $req->address;
         $account->description = $req->description;
-        $account->created_by = session('username');
+        $account->created_by = Auth::user()->name;
         $account->account = $Account;
         $account->is_primary = true;
         $account->save();
 
         if ($beneficiary && $account) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Beneficiary Created';
-            $log->description = $req->name . ' (Banking Beneficiary) created by ' . session('username');
+            $log->description = $req->name.' (Banking Beneficiary) created by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Banking beneficiary added successfully');
@@ -234,7 +205,7 @@ class bankingController extends Controller
      */
     public function updateSupplier(Request $req, $id)
     {
-        $Account = getSessionAccountId();
+        $Account = $req->input('account');
 
         $req->validate([
             'name' => 'required|string|max:255',
@@ -247,10 +218,10 @@ class bankingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $supplier = BankingSupplier::where('id', $id)->where('account', $Account)->first();
+        $supplier = BankingSupplier::where('id', $id)->first();
 
-        if (!$supplier) {
-            return redirect()->back()->with('error', 'Supplier not found');
+        if (! $supplier) {
+            return redirect()->back()->with('error', 'Id '.$id.' Supplier not found');
         }
 
         $supplier->name = $req->name;
@@ -275,7 +246,7 @@ class bankingController extends Controller
             $primaryAccount->description = $req->description;
             $primaryAccount->save();
         } else {
-            $account = new BankingAccount();
+            $account = new BankingAccount;
             $account->accountable()->associate($supplier);
             $account->bank_name = $req->bank_name;
             $account->account_number = $req->account_number;
@@ -284,16 +255,16 @@ class bankingController extends Controller
             $account->contact = $req->contact;
             $account->address = $req->address;
             $account->description = $req->description;
-            $account->created_by = session('username');
+            $account->created_by = Auth::user()->name;
             $account->account = $Account;
             $account->is_primary = true;
             $account->save();
         }
 
         if ($supplier) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Supplier Updated';
-            $log->description = $req->name . ' (Banking Supplier) updated by ' . session('username');
+            $log->description = $req->name.' (Banking Supplier) updated by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Banking supplier updated successfully');
@@ -307,7 +278,7 @@ class bankingController extends Controller
      */
     public function updateBeneficiary(Request $req, $id)
     {
-        $Account = getSessionAccountId();
+        $Account = $req->input('account');
 
         $req->validate([
             'name' => 'required|string|max:255',
@@ -320,9 +291,9 @@ class bankingController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $beneficiary = BankingBeneficiary::where('id', $id)->where('account', $Account)->first();
+        $beneficiary = BankingBeneficiary::where('id', $id)->first();
 
-        if (!$beneficiary) {
+        if (! $beneficiary) {
             return redirect()->back()->with('error', 'Beneficiary not found');
         }
 
@@ -348,7 +319,7 @@ class bankingController extends Controller
             $primaryAccount->description = $req->description;
             $primaryAccount->save();
         } else {
-            $account = new BankingAccount();
+            $account = new BankingAccount;
             $account->accountable()->associate($beneficiary);
             $account->bank_name = $req->bank_name;
             $account->account_number = $req->account_number;
@@ -357,16 +328,16 @@ class bankingController extends Controller
             $account->contact = $req->contact;
             $account->address = $req->address;
             $account->description = $req->description;
-            $account->created_by = session('username');
+            $account->created_by = Auth::user()->name;
             $account->account = $Account;
             $account->is_primary = true;
             $account->save();
         }
 
         if ($beneficiary) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Beneficiary Updated';
-            $log->description = $req->name . ' (Banking Beneficiary) updated by ' . session('username');
+            $log->description = $req->name.' (Banking Beneficiary) updated by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Banking beneficiary updated successfully');
@@ -380,9 +351,9 @@ class bankingController extends Controller
      */
     public function deleteSupplier($id)
     {
-        $supplier = BankingSupplier::where('id', $id)->where('account', getSessionAccountId())->first();
+        $supplier = BankingSupplier::where('id', $id)->where('account', getCurrentShopId())->first();
 
-        if (!$supplier) {
+        if (! $supplier) {
             return redirect()->back()->with('error', 'Supplier not found');
         }
 
@@ -391,9 +362,9 @@ class bankingController extends Controller
         $supplier->accounts()->delete();
         $supplier->delete();
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Banking Supplier Deleted';
-        $log->description = $name . ' (Banking Supplier) deleted by ' . session('username');
+        $log->description = $name.' (Banking Supplier) deleted by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Banking supplier deleted successfully');
@@ -404,9 +375,9 @@ class bankingController extends Controller
      */
     public function deleteBeneficiary($id)
     {
-        $beneficiary = BankingBeneficiary::where('id', $id)->where('account', getSessionAccountId())->first();
+        $beneficiary = BankingBeneficiary::where('id', $id)->where('account', getCurrentShopId())->first();
 
-        if (!$beneficiary) {
+        if (! $beneficiary) {
             return redirect()->back()->with('error', 'Beneficiary not found');
         }
 
@@ -415,9 +386,9 @@ class bankingController extends Controller
         $beneficiary->accounts()->delete();
         $beneficiary->delete();
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Banking Beneficiary Deleted';
-        $log->description = $name . ' (Banking Beneficiary) deleted by ' . session('username');
+        $log->description = $name.' (Banking Beneficiary) deleted by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Banking beneficiary deleted successfully');
@@ -429,39 +400,33 @@ class bankingController extends Controller
     public function transfers(Request $req)
     {
         $user = Auth::user();
-        $accountName = getSessionAccountId();
+        $accountName = $req->input('shop_id') ?? getCurrentShopId();
         $today = date('Y-m-d');
-        
-        // Build base query - for admins, show all transfers; for regular users, filter by account
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
-        } else {
-            $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
-                        ->where('account', $accountName);
-        }
+
+        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
 
         // Date range filter
         if ($req->has('date_from') && $req->date_from) {
             $query->whereDate('transfer_date', '>=', $req->date_from);
-        } else if ($req->has('date_to') && $req->date_to) {
+        } elseif ($req->has('date_to') && $req->date_to) {
             $query->whereDate('transfer_date', '<=', $req->date_to);
         } else {
             $query->whereDate('transfer_date', $today);
         }
-        
+
         // Shop filter - applies to both admins and regular users
         if ($req->has('shop_id') && $req->shop_id) {
             $query->where('shop_id', $req->shop_id);
         }
-          
+
         // Sorting
         $sortBy = $req->get('sort_by', 'transfer_date');
         $sortDirection = $req->get('sort_direction', 'desc');
         $validSortColumns = ['transfer_date', 'amount', 'created_at'];
-        if (!in_array($sortBy, $validSortColumns)) {
+        if (! in_array($sortBy, $validSortColumns)) {
             $sortBy = 'transfer_date';
         }
-        if (!in_array($sortDirection, ['asc', 'desc'])) {
+        if (! in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
         $query->orderBy($sortBy, $sortDirection);
@@ -477,30 +442,12 @@ class bankingController extends Controller
 
         $suppliers = BankingSupplier::with('accounts')->get();
         $beneficiaries = BankingBeneficiary::with('accounts')->get();
-        
-        // Get all shops (accounts) for allocation dropdown
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $shops = collect();
-            } else {
-                $shops = accountModel::whereIn('id', $assignedAccountIds)
-                            ->orderBy('name', 'asc')
-                            ->get();
-            }
-        }
+        $shops = getUserAccounts();
 
         $data = compact('transfers', 'suppliers', 'beneficiaries', 'shops', 'totalDeposits', 'depositCount', 'averageDeposit', 'maxDeposit', 'minDeposit');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-transfers', $data)->with($req->all());
-        }
+        return view('banking-transfers', $data)->with($req->all());
 
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-transfers', $data)->with($req->all());
-        }
     }
 
     /**
@@ -514,11 +461,11 @@ class bankingController extends Controller
         if (is_string($permissions)) {
             $permissions = json_decode($permissions, true) ?: [];
         }
-        if (!in_array('add_banking_transfer', $permissions)) {
+        if (! in_array('add_banking_transfer', $permissions)) {
             return redirect()->back()->with('error', 'You do not have permission to add banking transfers');
         }
 
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'transfer_date' => 'required|date',
@@ -536,11 +483,11 @@ class bankingController extends Controller
 
         // Verify supplier and beneficiary belong to the same account
         $supplier = BankingSupplier::where('id', $req->supplier_id)
-                        ->first();
+            ->first();
         $beneficiary = BankingBeneficiary::where('id', $req->beneficiary_id)
-                        ->first();
+            ->first();
 
-        if (!$supplier || !$beneficiary) {
+        if (! $supplier || ! $beneficiary) {
             return redirect()->back()->with('error', 'Invalid supplier or beneficiary selected');
         }
 
@@ -550,7 +497,7 @@ class bankingController extends Controller
                 ->where('accountable_type', BankingSupplier::class)
                 ->where('accountable_id', $supplier->id)
                 ->first();
-            if (!$supplierAccount) {
+            if (! $supplierAccount) {
                 return redirect()->back()->with('error', 'Invalid supplier account selected');
             }
         }
@@ -560,7 +507,7 @@ class bankingController extends Controller
                 ->where('accountable_type', BankingBeneficiary::class)
                 ->where('accountable_id', $beneficiary->id)
                 ->first();
-            if (!$beneficiaryAccount) {
+            if (! $beneficiaryAccount) {
                 return redirect()->back()->with('error', 'Invalid beneficiary account selected');
             }
         }
@@ -569,16 +516,16 @@ class bankingController extends Controller
         $user = Auth::user();
         if ($user->levelStatus !== 'Admin') {
             $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            if (!in_array($req->shop_id, $assignedAccountIds)) {
+
+            if (! in_array($req->shop_id, $assignedAccountIds)) {
                 return redirect()->back()
                     ->with('error', 'You do not have permission to allocate to the selected shop')
                     ->withInput();
             }
         }
 
-        DB::transaction(function () use ($req, $Account, $supplier, $beneficiary) {
-            $transfer = new BankingTransfer();
+        DB::transaction(function () use ($req, $Account) {
+            $transfer = new BankingTransfer;
             $transfer->transfer_date = $req->transfer_date;
             $transfer->supplier_id = $req->supplier_id;
             $transfer->beneficiary_id = $req->beneficiary_id;
@@ -594,31 +541,31 @@ class bankingController extends Controller
             // Create chip entry if chip_amount is provided
             $chipAmount = $req->chip_amount ?? 0;
             if ($chipAmount > 0) {
-                $chipEntry = new BankingChip();
+                $chipEntry = new BankingChip;
                 $chipEntry->shop_id = $req->shop_id;
                 $chipEntry->transfer_id = $transfer->id;
                 $chipEntry->chip_amount = $chipAmount;
                 $chipEntry->transfer_date = $req->transfer_date;
                 $chipEntry->created_by = auth::user()->name;
                 $chipEntry->account = $Account;
-                
+
                 // Calculate available_chip as cumulative sum
                 $lastChip = BankingChip::where('shop_id', $req->shop_id)
                     ->orderBy('id', 'desc')
                     ->first();
                 $previousChipTotal = $lastChip ? $lastChip->available_chip : 0;
                 $chipEntry->available_chip = $previousChipTotal + $chipAmount;
-                
+
                 $chipEntry->save();
             }
         });
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Banking Transfer Created';
-        $log->description = 'Transfer of ' . number_format($req->amount, 2) .
-                          ' from ' . $supplier->name . ' to ' . $beneficiary->name .
-                          ' allocated to shop ID: ' . $req->shop_id .
-                          ' created by ' . auth::user()->name;
+        $log->description = 'Transfer of '.number_format($req->amount, 2).
+                          ' from '.$supplier->name.' to '.$beneficiary->name.
+                          ' allocated to shop ID: '.$req->shop_id.
+                          ' created by '.auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Banking transfer created successfully with shop allocation');
@@ -635,21 +582,21 @@ class bankingController extends Controller
         if (is_string($permissions)) {
             $permissions = json_decode($permissions, true) ?: [];
         }
-        if (!in_array('delete_banking_transfer', $permissions)) {
+        if (! in_array('delete_banking_transfer', $permissions)) {
             return redirect()->back()->with('error', 'You do not have permission to delete banking transfers');
         }
 
-        $transfer = BankingTransfer::where('id', $id)->where('account', getSessionAccountId())->first();
+        $transfer = BankingTransfer::where('id', $id)->first();
 
-        if (!$transfer) {
+        if (! $transfer) {
             return redirect()->back()->with('error', 'Transfer not found');
         }
 
         $transfer->delete();
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Banking Transfer Deleted';
-        $log->description = 'Transfer ID: ' . $id . ' deleted by ' . session('username');
+        $log->description = 'Transfer ID: '.$id.' deleted by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Banking transfer deleted successfully');
@@ -660,7 +607,7 @@ class bankingController extends Controller
      */
     public function storeSupplierAccount(Request $req, $supplierId)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'bank_name' => 'required|string|max:255',
@@ -673,10 +620,9 @@ class bankingController extends Controller
         ]);
 
         $supplier = BankingSupplier::where('id', $supplierId)
-                        ->where('account', $Account)
-                        ->first();
+            ->first();
 
-        if (!$supplier) {
+        if (! $supplier) {
             return redirect()->back()->with('error', 'Supplier not found');
         }
 
@@ -686,7 +632,7 @@ class bankingController extends Controller
             $supplier->accounts()->update(['is_primary' => false]);
         }
 
-        $account = new BankingAccount();
+        $account = new BankingAccount;
         $account->accountable()->associate($supplier);
         $account->bank_name = $req->bank_name;
         $account->account_number = $req->account_number;
@@ -695,15 +641,15 @@ class bankingController extends Controller
         $account->contact = $req->contact;
         $account->address = $req->address;
         $account->description = $req->description;
-        $account->created_by = session('username');
+        $account->created_by = Auth::user()->name;
         $account->account = $Account;
         $account->is_primary = $isPrimary;
         $account->save();
 
         if ($account) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Bank Account Added to Supplier';
-            $log->description = 'New bank account added to ' . $supplier->name . ' by ' . session('username');
+            $log->description = 'New bank account added to '.$supplier->name.' by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Bank account added successfully');
@@ -717,7 +663,7 @@ class bankingController extends Controller
      */
     public function storeBeneficiaryAccount(Request $req, $beneficiaryId)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'bank_name' => 'required|string|max:255',
@@ -730,10 +676,9 @@ class bankingController extends Controller
         ]);
 
         $beneficiary = BankingBeneficiary::where('id', $beneficiaryId)
-                            ->where('account', $Account)
-                            ->first();
+            ->first();
 
-        if (!$beneficiary) {
+        if (! $beneficiary) {
             return redirect()->back()->with('error', 'Beneficiary not found');
         }
 
@@ -743,7 +688,7 @@ class bankingController extends Controller
             $beneficiary->accounts()->update(['is_primary' => false]);
         }
 
-        $account = new BankingAccount();
+        $account = new BankingAccount;
         $account->accountable()->associate($beneficiary);
         $account->bank_name = $req->bank_name;
         $account->account_number = $req->account_number;
@@ -752,15 +697,15 @@ class bankingController extends Controller
         $account->contact = $req->contact;
         $account->address = $req->address;
         $account->description = $req->description;
-        $account->created_by = session('username');
+        $account->created_by = Auth::user()->name;
         $account->account = $Account;
         $account->is_primary = $isPrimary;
         $account->save();
 
         if ($account) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Bank Account Added to Beneficiary';
-            $log->description = 'New bank account added to ' . $beneficiary->name . ' by ' . session('username');
+            $log->description = 'New bank account added to '.$beneficiary->name.' by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Bank account added successfully');
@@ -774,7 +719,7 @@ class bankingController extends Controller
      */
     public function updateAccount(Request $req, $id)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'bank_name' => 'required|string|max:255',
@@ -787,10 +732,10 @@ class bankingController extends Controller
         ]);
 
         $account = BankingAccount::where('id', $id)
-                    ->where('account', $Account)
-                    ->first();
+            ->where('account', $Account)
+            ->first();
 
-        if (!$account) {
+        if (! $account) {
             return redirect()->back()->with('error', 'Account not found');
         }
 
@@ -810,9 +755,9 @@ class bankingController extends Controller
         $account->is_primary = $isPrimary;
         $account->save();
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Bank Account Updated';
-        $log->description = 'Bank account updated by ' . session('username');
+        $log->description = 'Bank account updated by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Bank account updated successfully');
@@ -823,13 +768,12 @@ class bankingController extends Controller
      */
     public function deleteAccount($id)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $account = BankingAccount::where('id', $id)
-                    ->where('account', $Account)
-                    ->first();
+            ->first();
 
-        if (!$account) {
+        if (! $account) {
             return redirect()->back()->with('error', 'Account not found');
         }
 
@@ -840,9 +784,9 @@ class bankingController extends Controller
 
         $account->delete();
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Bank Account Deleted';
-        $log->description = 'Bank account deleted by ' . session('username');
+        $log->description = 'Bank account deleted by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Bank account deleted successfully');
@@ -853,53 +797,23 @@ class bankingController extends Controller
      */
     public function chips(Request $req)
     {
+        if (! canUser('view_all_chips')) {
+            abort(403, 'Unauthorized access');
+        }
         $user = Auth::user();
-        $sessionAccountId = getSessionAccountId();
-
-        // Check permission for viewing all chips
-        $permissions = $user->permissions;
-        if (is_string($permissions)) {
-            $permissions = json_decode($permissions, true) ?: [];
-        }
-        $canViewAllChips = in_array('view_all_banking_chips', $permissions);
-
-        // Get all accounts (shops) the user can access
-        if (strtolower(trim($user->levelStatus)) === 'admin' || $canViewAllChips) {
-            $allAccounts = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $allAccounts = collect();
-            } else {
-                $allAccounts = accountModel::whereIn('id', $assignedAccountIds)
-                            ->orderBy('name', 'asc')
-                            ->get();
-            }
-        }
+        $sessionAccountId = getCurrentShopId();
+        $selectedAccountId = $req->account_id;
+        $shops = getUserAccounts();
+        $allAccounts = $shops;
+        $accountIds = array_column($shops, 'id');
 
         // Build query - filter by selected account or default to session account
         $query = BankingChip::with(['shop', 'transfer'])->whereHas('shop');
-
-        // Determine which account to filter by
-        $selectedAccountId = $req->has('account_id') && $req->account_id ? $req->account_id : $sessionAccountId;
-
-        // Apply account filter to the query
-        $query->where('account', $selectedAccountId);
-
-        // If user cannot view all chips, restrict to assigned shops only
-        if (strtolower(trim($user->levelStatus)) !== 'admin' && !$canViewAllChips) {
-            if (!empty($assignedAccountIds)) {
-                $query->whereIn('shop_id', $assignedAccountIds);
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
-
-        // Apply shop filter from request
-        if ($req->has('shop_id') && $req->shop_id) {
+        $query->whereIn('account', $accountIds);
+        if (! empty($req->shop_id)) {
+            // Apply account filter to the query
             $query->where('shop_id', $req->shop_id);
         }
-
         // Date range filter
         if ($req->has('date_from') && $req->date_from) {
             $query->whereDate('transfer_date', '>=', $req->date_from);
@@ -912,10 +826,10 @@ class bankingController extends Controller
         $sortBy = $req->get('sort_by', 'transfer_date');
         $sortDirection = $req->get('sort_direction', 'desc');
         $validSortColumns = ['transfer_date', 'chip_amount', 'available_chip', 'created_at'];
-        if (!in_array($sortBy, $validSortColumns)) {
+        if (! in_array($sortBy, $validSortColumns)) {
             $sortBy = 'transfer_date';
         }
-        if (!in_array($sortDirection, ['asc', 'desc'])) {
+        if (! in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = 'desc';
         }
         $query->orderBy($sortBy, $sortDirection);
@@ -925,24 +839,10 @@ class bankingController extends Controller
         // Calculate total deposits (sum of chip_amount)
         $totalDeposit = $chips->sum('chip_amount');
 
-        // Determine shops for filter dropdown
-        // For admins: always show all accounts as shop options (since shops = accounts in this system)
-        // For regular users: show only their assigned accounts
-        if (strtolower(trim($user->levelStatus)) === 'admin' || $canViewAllChips) {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $shops = $allAccounts;
-        }
-
         $data = compact('chips', 'shops', 'allAccounts', 'totalDeposit', 'selectedAccountId');
 
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-chips', $data)->with($req->all());
-        }
+        return view('banking-chips', $data)->with($req->all());
 
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-chips', $data)->with($req->all());
-        }
     }
 
     /**
@@ -950,7 +850,7 @@ class bankingController extends Controller
      */
     public function storeChip(Request $req)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'shop_id' => 'required|exists:accounts,id',
@@ -961,9 +861,9 @@ class bankingController extends Controller
         // Check user's access to shop (non-admin users)
         $user = Auth::user();
         if ($user->levelStatus !== 'Admin') {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            if (!in_array($req->shop_id, $assignedAccountIds)) {
+            $assignedAccountIds = array_column(getUserAccounts(), 'id');
+
+            if (! in_array($req->shop_id, $assignedAccountIds)) {
                 return redirect()->back()
                     ->with('error', 'You do not have permission to add chip for the selected shop')
                     ->withInput();
@@ -972,29 +872,29 @@ class bankingController extends Controller
 
         // Get the last chip entry for this shop and account to calculate cumulative total
         $lastChip = BankingChip::where('shop_id', $req->shop_id)
-                    ->where('account', $Account)
-                    ->orderBy('id', 'desc')
-                    ->first();
-        
+            ->where('account', $Account)
+            ->orderBy('id', 'desc')
+            ->first();
+
         $previousAvailable = $lastChip ? $lastChip->available_chip : 0;
         $newAvailable = $previousAvailable + $req->chip_amount;
 
-        $chip = new BankingChip();
+        $chip = new BankingChip;
         $chip->shop_id = $req->shop_id;
         $chip->chip_amount = $req->chip_amount;
         $chip->available_chip = $newAvailable;
         $chip->transfer_date = $req->transfer_date;
-        $chip->created_by = session('username');
+        $chip->created_by = Auth::user()->name;
         $chip->account = $Account;
         $chip->save();
 
         if ($chip) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Chip Created';
-            $log->description = 'Chip entry of ' . number_format($req->chip_amount, 2) .
-                              ' for shop ID: ' . $req->shop_id .
-                              ' (Available: ' . number_format($newAvailable, 2) . ')' .
-                              ' created by ' . session('username');
+            $log->description = 'Chip entry of '.number_format($req->chip_amount, 2).
+                              ' for shop ID: '.$req->shop_id.
+                              ' (Available: '.number_format($newAvailable, 2).')'.
+                              ' created by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Chip entry created successfully');
@@ -1008,7 +908,7 @@ class bankingController extends Controller
      */
     public function updateChip(Request $req, $id)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
 
         $req->validate([
             'chip_amount' => 'required|numeric|min:0.01',
@@ -1016,10 +916,10 @@ class bankingController extends Controller
         ]);
 
         $chip = BankingChip::where('id', $id)
-                ->where('account', $Account)
-                ->first();
+            ->where('account', $Account)
+            ->first();
 
-        if (!$chip) {
+        if (! $chip) {
             return redirect()->back()->with('error', 'Chip entry not found');
         }
 
@@ -1027,8 +927,8 @@ class bankingController extends Controller
         $user = Auth::user();
         if ($user->levelStatus !== 'Admin') {
             $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            
-            if (!in_array($chip->shop_id, $assignedAccountIds)) {
+
+            if (! in_array($chip->shop_id, $assignedAccountIds)) {
                 return redirect()->back()
                     ->with('error', 'You do not have permission to edit this chip entry')
                     ->withInput();
@@ -1044,12 +944,12 @@ class bankingController extends Controller
         $chip->recalculateCumulativeChip();
 
         if ($chip) {
-            $log = new logModal();
+            $log = new logModal;
             $log->title = 'Banking Chip Updated';
-            $log->description = 'Chip entry changed from ' . number_format($oldAmount, 2) .
-                              ' to ' . number_format($req->chip_amount, 2) .
-                              ' for shop ID: ' . $chip->shop_id .
-                              ' by ' . session('username');
+            $log->description = 'Chip entry changed from '.number_format($oldAmount, 2).
+                              ' to '.number_format($req->chip_amount, 2).
+                              ' for shop ID: '.$chip->shop_id.
+                              ' by '.Auth::user()->name;
             $log->save();
 
             return redirect()->back()->with('success', 'Chip entry updated successfully');
@@ -1063,12 +963,12 @@ class bankingController extends Controller
      */
     public function deleteChip($id)
     {
-        $Account = getSessionAccountId();
+        $Account = getCurrentShopId();
         $chip = BankingChip::where('id', $id)
-                ->where('account', $Account)
-                ->first();
+            ->where('account', $Account)
+            ->first();
 
-        if (!$chip) {
+        if (! $chip) {
             return redirect()->back()->with('error', 'Chip entry not found');
         }
 
@@ -1078,10 +978,10 @@ class bankingController extends Controller
 
         // Recalculate cumulative available_chip for all entries after deletion
         $remainingChips = BankingChip::where('shop_id', $shopId)
-                            ->where('account', $Account)
-                            ->orderBy('id', 'asc')
-                            ->get();
-        
+            ->where('account', $Account)
+            ->orderBy('id', 'asc')
+            ->get();
+
         $runningTotal = 0;
         foreach ($remainingChips as $remainingChip) {
             $runningTotal += $remainingChip->chip_amount;
@@ -1089,11 +989,11 @@ class bankingController extends Controller
             $remainingChip->saveQuietly();
         }
 
-        $log = new logModal();
+        $log = new logModal;
         $log->title = 'Banking Chip Deleted';
-        $log->description = 'Chip entry of ' . number_format($chipAmount, 2) .
-                          ' for shop ID: ' . $shopId .
-                          ' deleted by ' . session('username');
+        $log->description = 'Chip entry of '.number_format($chipAmount, 2).
+                          ' for shop ID: '.$shopId.
+                          ' deleted by '.Auth::user()->name;
         $log->save();
 
         return redirect()->back()->with('success', 'Chip entry deleted successfully');
@@ -1105,38 +1005,25 @@ class bankingController extends Controller
     public function supplierDepositReport(Request $req)
     {
         $user = Auth::user();
-        
+
         // Date range filter
         $dateFrom = $req->input('date_from', date('Y-m-d')); // Default to first day of current month
         $dateTo = $req->input('date_to', date('Y-m-d')); // Default to today
         $shopId = $req->input('shop_id');
-        
-        // Get all shops (accounts) for filter dropdown based on permission
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $shops = accountModel::orderBy('name', 'asc')->get();
-        } else {
-            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-            if (empty($assignedAccountIds)) {
-                $shops = collect();
-            } else {
-                $shops = accountModel::whereIn('id', $assignedAccountIds)
-                            ->orderBy('name', 'asc')
-                            ->get();
-            }
-        }
-        
+        $shops = getUserAccounts();
+
         // Build query with filters - NO account filter to show all data across accounts
         $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
-                        ->orderBy('transfer_date', 'desc');
-        
+            ->orderBy('transfer_date', 'desc');
+
         if ($dateFrom) {
             $query->whereDate('transfer_date', '>=', $dateFrom);
         }
-        
+
         if ($dateTo) {
             $query->whereDate('transfer_date', '<=', $dateTo);
         }
-        
+
         // Apply shop filter
         if ($shopId) {
             $query->where('shop_id', $shopId);
@@ -1146,38 +1033,38 @@ class bankingController extends Controller
         if ($req->has('supplier_id') && $req->supplier_id) {
             $query->where('supplier_id', $req->supplier_id);
         }
-        
+
         $transfers = $query->get();
-        
+
         // Group transfers by supplier
         $supplierGroups = $transfers->groupBy('supplier_id');
-        
+
         // Calculate totals per supplier
         $supplierTotals = [];
         foreach ($supplierGroups as $supplierId => $group) {
             $supplier = $group->first()->supplier;
-            $supplierTotals[$supplierId] = (object)[
+            $supplierTotals[$supplierId] = (object) [
                 'supplier' => $supplier,
                 'total_amount' => $group->sum('amount'),
                 'transfer_count' => $group->count(),
                 'transfers' => $group,
             ];
         }
-        
+
         // Sort by total amount descending
-        uasort($supplierTotals, function($a, $b) {
+        uasort($supplierTotals, function ($a, $b) {
             return $b->total_amount <=> $a->total_amount;
         });
-        
+
         // Grand totals
         $grandTotal = $transfers->sum('amount');
         $grandCount = $transfers->count();
         $averageDeposit = $grandCount > 0 ? $transfers->avg('amount') : 0;
-        
+
         // Get suppliers for filter dropdown based on active filters
         // Build a single query that applies ALL current filters (shop + dates) - NO account filter
         $relevantSupplierQuery = BankingTransfer::where('supplier_id', '!=', null);
-        
+
         // Apply same filters as the main report query
         if ($shopId) {
             $relevantSupplierQuery->where('shop_id', $shopId);
@@ -1188,13 +1075,13 @@ class bankingController extends Controller
         if ($dateTo) {
             $relevantSupplierQuery->whereDate('transfer_date', '<=', $dateTo);
         }
-        
+
         $supplierIds = $relevantSupplierQuery->distinct()->pluck('supplier_id')->toArray();
-        
+
         $allSuppliers = BankingSupplier::whereIn('id', $supplierIds)
-                            ->orderBy('name')
-                            ->get();
-        
+            ->orderBy('name')
+            ->get();
+
         $data = compact(
             'supplierTotals',
             'grandTotal',
@@ -1206,14 +1093,9 @@ class bankingController extends Controller
             'shops',
             'shopId'
         );
-        
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            return view('admin.banking-supplier-deposit-report', $data);
-        }
-        
-        if (!empty($user->levelStatus)) {
-            return view('user.banking-supplier-deposit-report', $data);
-        }
+
+        return view('banking-supplier-deposit-report', $data);
+
     }
 
     /**
@@ -1222,16 +1104,16 @@ class bankingController extends Controller
     public function getSuppliersByShop(Request $req)
     {
         $shopId = $req->input('shop_id');
-        
+
         // Build query to get suppliers that have transfers for the selected shop
         // NO account filter to show all suppliers across all accounts
         $query = BankingTransfer::where('supplier_id', '!=', null);
-        
+
         // Apply shop filter if provided
         if ($shopId) {
             $query->where('shop_id', $shopId);
         }
-        
+
         // Apply date filters if provided (optional - to match current report filters)
         if ($req->has('date_from') && $req->date_from) {
             $query->whereDate('transfer_date', '>=', $req->date_from);
@@ -1239,19 +1121,57 @@ class bankingController extends Controller
         if ($req->has('date_to') && $req->date_to) {
             $query->whereDate('transfer_date', '<=', $req->date_to);
         }
-        
+
         // Get distinct supplier IDs
         $supplierIds = $query->distinct()->pluck('supplier_id')->toArray();
-        
+
         // Get suppliers - NO account filter
         $suppliers = BankingSupplier::whereIn('id', $supplierIds)
-                            ->orderBy('name', 'asc')
-                            ->get(['id', 'name', 'bank_name', 'account_number', 'branch']);
-        
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'bank_name', 'account_number', 'branch']);
+
         return response()->json([
             'success' => true,
-            'suppliers' => $suppliers
+            'suppliers' => $suppliers,
         ]);
+    }
+
+    /**
+     * Search suppliers by name (AJAX endpoint)
+     */
+    public function searchSupplier(Request $req)
+    {
+        $query = trim($req->input('query', ''));
+
+        if (strlen($query) < 1) {
+            return response()->json([]);
+        }
+
+        $suppliers = BankingSupplier::where('name', 'LIKE', "%{$query}%")
+            ->orderBy('name', 'asc')
+            ->limit(15)
+            ->get(['id', 'name']);
+
+        return response()->json($suppliers);
+    }
+
+    /**
+     * Search beneficiaries by name (AJAX endpoint)
+     */
+    public function searchBeneficiary(Request $req)
+    {
+        $query = trim($req->input('query', ''));
+
+        if (strlen($query) < 1) {
+            return response()->json([]);
+        }
+
+        $beneficiaries = BankingBeneficiary::where('name', 'LIKE', "%{$query}%")
+            ->orderBy('name', 'asc')
+            ->limit(15)
+            ->get(['id', 'name']);
+
+        return response()->json($beneficiaries);
     }
 
     /**
@@ -1266,17 +1186,12 @@ class bankingController extends Controller
         $dateTo = $req->input('date_to');
         $shopId = $req->input('shop_id');
         $supplierId = $req->input('supplier_id');
-
-        // Determine which accounts the user can access
-        if (strtolower(trim($user->levelStatus)) === 'admin') {
-            $accountIds = accountModel::pluck('id')->toArray();
-        } else {
-            $accountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
-        }
+        $shops = getUserAccounts();
+        $accountIds = array_column($shops, 'id');
 
         // Build query with filters - restrict to user's accessible accounts
         $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop'])
-                        ->whereIn('account', $accountIds);
+            ->whereIn('account', $accountIds);
 
         if ($dateFrom) {
             $query->whereDate('transfer_date', '>=', $dateFrom);
@@ -1297,33 +1212,33 @@ class bankingController extends Controller
         }
 
         $transfers = $query->get();
-        
+
         // Group transfers by supplier
         $supplierGroups = $transfers->groupBy('supplier_id');
-        
+
         $supplierTotals = [];
         foreach ($supplierGroups as $supplierId => $group) {
             $supplier = $group->first()->supplier;
-            $supplierTotals[$supplierId] = (object)[
+            $supplierTotals[$supplierId] = (object) [
                 'supplier' => $supplier,
                 'total_amount' => $group->sum('amount'),
                 'transfer_count' => $group->count(),
                 'transfers' => $group,
             ];
         }
-        
+
         // Sort by total amount descending
-        uasort($supplierTotals, function($a, $b) {
+        uasort($supplierTotals, function ($a, $b) {
             return $b->total_amount <=> $a->total_amount;
         });
-        
+
         // Prepare data for export
         $exportData = [];
         $rowNum = 1;
-        
+
         foreach ($supplierTotals as $supplierTotal) {
             $supplier = $supplierTotal->supplier;
-            
+
             // First row for supplier header
             $exportData[] = [
                 'row' => $rowNum++,
@@ -1338,7 +1253,7 @@ class bankingController extends Controller
                 'reference' => '',
                 'description' => "Total Deposits: {$supplierTotal->transfer_count} transaction(s)",
             ];
-            
+
             // Individual transfer rows
             foreach ($supplierTotal->transfers as $transfer) {
                 $exportData[] = [
@@ -1355,7 +1270,7 @@ class bankingController extends Controller
                     'description' => $transfer->description ?? '',
                 ];
             }
-            
+
             // Add blank row between suppliers
             $exportData[] = [
                 'row' => '',
@@ -1371,20 +1286,20 @@ class bankingController extends Controller
                 'description' => '',
             ];
         }
-        
+
         // Generate CSV
-        $fileName = 'supplier-deposit-report-' . now()->format('Y-m-d') . '.csv';
+        $fileName = 'supplier-deposit-report-'.now()->format('Y-m-d').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
-        
-        $callback = function() use ($exportData) {
+
+        $callback = function () use ($exportData) {
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for UTF-8
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             // Header row
             fputcsv($file, [
                 '#',
@@ -1397,16 +1312,16 @@ class bankingController extends Controller
                 'Shop',
                 'Amount (Tsh)',
                 'Reference',
-                'Description'
+                'Description',
             ]);
-            
+
             foreach ($exportData as $row) {
                 fputcsv($file, $row);
             }
-            
+
             fclose($file);
         };
-        
+
         return response()->stream($callback, 200, $headers);
     }
 }

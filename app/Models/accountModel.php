@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Http\Controllers\ProductsController;
 
 class accountModel extends Model
 {
@@ -18,6 +19,13 @@ class accountModel extends Model
         'is_primary',
     ];
 
+     protected static function booted()
+    {
+        static::saved(function ($account) {
+            ProductsController::clearProductCache($account->id);
+            ProductsController::clearStatsCache($account->id);
+        });
+    }
     /**
      * Get the account name attribute.
      * This provides backward compatibility for code using 'account' property.

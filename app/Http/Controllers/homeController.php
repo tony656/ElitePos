@@ -14,7 +14,7 @@ use App\Models\recevingModel;
 use Illuminate\Support\Facades\DB;
 use App\Models\notifications;
 use Illuminate\Support\Facades\Auth;
-use function getSessionAccountId;
+use function getCurrentShopId;
 
 class homeController extends Controller
 {
@@ -22,24 +22,16 @@ class homeController extends Controller
     
  public function dashboard() {
     $user = Auth::user();
-    $Account = getSessionAccountId();
+    $Account = getCurrentShopId();
     
     // Current month sales
     $currentMonthStart = now()->startOfMonth();
     $currentMonthEnd = now()->endOfMonth();
     
-    \Log::info('Dashboard ads query', [
-        'user_id' => $user->id ?? null,
-        'account' => $Account ?? null
-    ]);
 
     $ads = adsModel::orderBy('created_at', 'desc')
             ->get();
 
-    \Log::info('Dashboard ads result', [
-        'ads_count' => $ads->count(),
-        'ads_data' => $ads->toArray()
-    ]);
 
     $currentMonthSales = salsModel::where('account', $Account)
         ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
@@ -223,15 +215,9 @@ class homeController extends Controller
     // Use case-insensitive comparison for role checking
     $role = strtolower(trim($user->levelStatus));
     
-    if ($role === 'admin') {
-        return view('admin.home', $data);
+    if (!empty($role)) {
+        return view('home', $data);
     }
-    
-    // For non-admin users (Manager, Seller, etc.)
-    if (!empty($user->levelStatus)) {
-        return view('user.home', $data);
-    }
-    
     // If somehow levelStatus is empty, abort with unauthorized
     abort(403, 'Unauthorized access');
 }

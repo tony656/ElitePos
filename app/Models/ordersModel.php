@@ -30,6 +30,7 @@ class ordersModel extends Model
         'discount_increase',
         'offered_items',
         'offer_parent_product',
+        'offer_parent_products',
         'status',
         'account',
         'saleDate'
