@@ -71,4 +71,142 @@ A comprehensive Point of Sale (POS) system built with **Laravel** for retail and
 
 ```bash
 git clone https://github.com/yourusername/leruma-pos.git
-cd leruma-pos
+cd leruma-pos 
+
+exit
+```
+### Step 2: Install PHP Dependencies
+
+```bash
+composer install
+exit
+```
+
+### Step 3: Install NPM Dependencies
+```bash
+npm install
+exit
+```
+
+### Step 4: Environment Configuration
+```bash
+cp .env.example .env
+
+Update the .env file with your database credentials:
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=leruma_pos
+DB_USERNAME=root
+DB_PASSWORD=your_password
+exit
+```
+
+### Step 5: Generate Application Key
+```bash
+php artisan key:generate
+exit
+```
+
+### Step 6: Run Migrations
+```bash
+php artisan migrate
+exit
+```
+
+### Start the Server
+```bash
+php artisan serve
+exit
+```
+
+## 👤 User Roles & Permissions
+Role	Permissions
+Admin	Full system access, manage users, view all reports, system settings
+Manager	Manage inventory, sales, reports, employees (limited), receiving/returns
+Seller	Create sales, view inventory, create invoices, basic customer management
+
+## 📱 Modules
+📊 Dashboard
+Real-time statistics
+
+Sales overview
+
+Quick access to key features
+
+Performance metrics
+
+📦 Inventory
+Product management (CRUD)
+
+Stock tracking
+
+Receiving management
+
+Return processing
+
+Stock reports
+
+💰 Sales
+Create new orders
+
+Apply discounts and coupons
+
+Generate invoices
+
+Process payments
+
+Sales history
+
+👥 Customers
+Customer profiles
+
+Credit management
+
+Purchase history
+
+Debt tracking
+
+KPI dashboard
+
+🏦 Banking
+Supplier management
+
+Beneficiary management
+
+Bank transfers
+
+Chip management
+
+Deposit reports
+
+📈 Reports
+Sales reports
+
+Stock reports
+
+Shop reports
+
+Receiving reports
+
+Supplier deposit reports
+
+KPI dashboards
+
+📊 Available Reports
+Report	Description
+Sales Report	Daily, monthly, and custom date ranges
+Stock Report	Current stock levels and low stock alerts
+Shops Report	Performance across different shops
+Receiving Report	Inventory receiving history
+Supplier Deposit Report	Banking deposits by supplier
+KPI Dashboard	Key performance indicators
+Offered Products Report	Products with active offers
+Full Report	Comprehensive business report
+🎨 Color Scheme
+Color	Hex Code	Usage
+Navy Blue	#0B1E3D	Primary / Headers
+Amber/Gold	#F59E0B	Secondary / Accents
+Emerald	#059669	Success / Positive
+Rose	#E11D48	Danger / Errors
+Sky Blue	#0284C7	Info / Highlights
