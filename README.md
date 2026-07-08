@@ -136,7 +136,7 @@ Quick access to key features
 
 Performance metrics
 
-# 📦 Inventory
+### 📦 Inventory
 Product management (CRUD)
 
 Stock tracking
@@ -147,7 +147,7 @@ Return processing
 
 Stock reports
 
-# 💰 Sales
+### 💰 Sales
 Create new orders
 
 Apply discounts and coupons
@@ -158,7 +158,7 @@ Process payments
 
 Sales history
 
-# 👥 Customers
+### 👥 Customers
 Customer profiles
 
 Credit management
@@ -169,7 +169,7 @@ Debt tracking
 
 KPI dashboard
 
-# 🏦 Banking
+### 🏦 Banking
 Supplier management
 
 Beneficiary management
@@ -180,7 +180,7 @@ Chip management
 
 Deposit reports
 
-# 📈 Reports
+### 📈 Reports
 Sales reports
 
 Stock reports
