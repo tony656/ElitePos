@@ -127,7 +127,7 @@ Manager	Manage inventory, sales, reports, employees (limited), receiving/returns
 Seller	Create sales, view inventory, create invoices, basic customer management
 
 ## 📱 Modules
-# 📊 Dashboard
+### 📊 Dashboard
 Real-time statistics
 
 Sales overview
