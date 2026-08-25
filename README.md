@@ -1,66 +1,215 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏪 ELITE POS System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive Point of Sale (POS) system built with **Laravel** for retail and inventory management.
 
-## About Laravel
+You can donate for the progress of this Pos, I am available on whatsapp through +255 627 781 324
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
+[![Laravel Version](https://img.shields.io/badge/Laravel-10.x-red.svg)](https://laravel.com)
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-orange.svg)](https://mysql.com)
+[![License](https://img.shields.io/badge/License-Proprietary-green.svg)](LICENSE)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📌 Table of Contents
 
-## Learning Laravel
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [User Roles](#-user-roles--permissions)
+- [Modules](#-modules)
+- [Reports](#-reports)
+- [Color Scheme](#-color-scheme)
+- [Screenshots](#-screenshots)
+- [Troubleshooting](#-troubleshooting)
+- [License](#-license)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🚀 Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Core Features
 
-## Laravel Sponsors
+| Feature | Description |
+|---------|-------------|
+| **Inventory Management** | Track products, stock levels, and inventory movements |
+| **Sales Management** | Create and manage sales orders, invoices, and receipts |
+| **Customer Management** | Maintain customer profiles, credit limits, and purchase history |
+| **Supplier Management** | Manage supplier information and credit |
+| **Employee Management** | User roles, permissions, and access control |
+| **Expense Tracking** | Record and monitor business expenses |
+| **Banking Integration** | Manage supplier and beneficiary bank accounts |
+| **Reporting & Analytics** | Generate comprehensive reports and KPI dashboards |
+| **Multi-Shop Support** | Manage multiple shop locations from one system |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+### Advanced Features
 
-### Premium Partners
+- ✅ **Offer Management** - Create buy-one-get-one-free offers with required items
+- ✅ **Receiving & Returns** - Manage inventory receiving and return processes
+- ✅ **Credit Management** - Track customer and supplier credits
+- ✅ **Chip System** - Manage banking chips for transfers
+- ✅ **Item Request System** - Request items between shops
+- ✅ **Debt Management** - Track and manage customer debts
+- ✅ **Emergency Access** - Bypass system restrictions for emergency situations
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+---
 
-## Contributing
+## 📋 Requirements
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Requirement | Version |
+|-------------|---------|
+| PHP | 8.1 or higher |
+| MySQL | 5.7 or higher / PostgreSQL 10+ |
+| Composer | Latest stable |
+| Node.js | 14.x or higher |
+| NPM | 6.x or higher |
+| Web Server | Apache / Nginx |
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🛠️ Installation
 
-## Security Vulnerabilities
+### Step 1: Clone the Repository
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+git clone https://github.com/yourusername/leruma-pos.git
+cd leruma-pos 
 
-## License
+exit
+```
+### Step 2: Install PHP Dependencies
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install
+exit
+```
+
+### Step 3: Install NPM Dependencies
+```bash
+npm install
+exit
+```
+
+### Step 4: Environment Configuration
+```bash
+cp .env.example .env
+
+Update the .env file with your database credentials:
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=leruma_pos
+DB_USERNAME=root
+DB_PASSWORD=your_password
+exit
+```
+
+### Step 5: Generate Application Key
+```bash
+php artisan key:generate
+exit
+```
+
+### Step 6: Run Migrations
+```bash
+php artisan migrate
+exit
+```
+
+### Start the Server
+```bash
+php artisan serve
+exit
+```
+
+## 👤 User Roles & Permissions
+Role	Permissions
+Admin	Full system access, manage users, view all reports, system settings
+Manager	Manage inventory, sales, reports, employees (limited), receiving/returns
+Seller	Create sales, view inventory, create invoices, basic customer management
+
+## 📱 Modules
+### 📊 Dashboard
+Real-time statistics
+
+Sales overview
+
+Quick access to key features
+
+Performance metrics
+
+### 📦 Inventory
+Product management (CRUD)
+
+Stock tracking
+
+Receiving management
+
+Return processing
+
+Stock reports
+
+### 💰 Sales
+Create new orders
+
+Apply discounts and coupons
+
+Generate invoices
+
+Process payments
+
+Sales history
+
+### 👥 Customers
+Customer profiles
+
+Credit management
+
+Purchase history
+
+Debt tracking
+
+KPI dashboard
+
+### 🏦 Banking
+Supplier management
+
+Beneficiary management
+
+Bank transfers
+
+Chip management
+
+Deposit reports
+
+### 📈 Reports
+Sales reports
+
+Stock reports
+
+Shop reports
+
+Receiving reports
+
+Supplier deposit reports
+
+KPI dashboards
+
+## 📊 Available Reports
+Report	Description
+- Sales Report	Daily, monthly, and custom date ranges
+- Stock Report	Current stock levels and low stock alerts
+- Shops Report	Performance across different shops
+- Receiving Report	Inventory receiving history
+- Supplier Deposit Report	Banking deposits by supplier
+- KPI Dashboard	Key performance indicators
+- Offered Products Report	Products with active offers
+- Full Report	Comprehensive business report
+
+## 🎨 Color Scheme
+- Color	Hex Code	Usage
+- Navy Blue	#0B1E3D	Primary / Headers
+- Amber/Gold	#F59E0B	Secondary / Accents
+- Emerald	#059669	Success / Positive
+- Rose	#E11D48	Danger / Errors
+- Sky Blue	#0284C7	Info / Highlights
