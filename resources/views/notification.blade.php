@@ -72,14 +72,14 @@
         }
 
         .suggestion-chip:hover {
-            border-color: #f59e0b;
+            border-color: var(--theme-primary);
             background: #fffbeb;
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
         }
 
         .suggestion-chip .chip-icon {
-            color: #f59e0b;
+            color: var(--theme-primary);
             font-size: 0.9rem;
             flex-shrink: 0;
         }
@@ -113,7 +113,7 @@
         }
 
         .chat-input:focus {
-            border-color: #f59e0b;
+            border-color: var(--theme-primary);
             background: white;
             box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
         }
@@ -122,7 +122,7 @@
             border-radius: 12px;
             padding: 12px 24px;
             font-weight: 600;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: linear-gradient(135deg, var(--theme-primary), #d97706);
             border: none;
             color: white;
             cursor: pointer;
@@ -165,7 +165,7 @@
         }
 
         .question-icon {
-            color: #f59e0b;
+            color: var(--theme-primary);
             flex-shrink: 0;
         }
 
@@ -246,7 +246,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #f59e0b;
+            background: var(--theme-primary);
             margin: 0 3px;
             animation: bounce 0.6s infinite alternate;
         }

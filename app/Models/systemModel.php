@@ -29,6 +29,8 @@ class systemModel extends Model
         'payment_services',
         'bank_accounts',
         'business_profile_picture',
+        'theme_color',
+        'theme_colors',
     ];
 
 }

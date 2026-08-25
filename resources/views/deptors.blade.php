@@ -19,7 +19,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -324,9 +324,9 @@
                         foreach ($suppliers as $order) {
                             $p = DB::table('madeni')->where('receivingsId', $order->receivingId)->orwhere('receivingsId', $order->receivingName)->where('supplierId', $order->supplier)->sum('amount');
                             
-                            $totalCredit  += $order->total_price;
+                            $totalCredit  += ($order->total_price - $returns);
                             $totalPaidAll += $p;
-                            if (($order->total_price - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
+                            if ((($order->total_price - $returns) - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
                         }
                     }
                     $totalRemaining = $totalCredit - $totalPaidAll;
@@ -409,7 +409,7 @@
                                     @php
                                         $paid = DB::table('madeni')->where('account', $order->account)->where('receivingsId', $order->receivingId)->sum('amount');
  
-                                        $remaining = $order->total_price - $paid;
+                                        $remaining = ($order->total_price - $returns) - $paid;
                                         $isFullyPaid = $order->isPaid == 1 || $remaining <= 0;
 
                                         $vendor = DB::table('accounts')->where('id', $order->account)->first();
@@ -438,7 +438,7 @@
                                             @endif
                                         </td>
                                         <td><span class="mono-val">{{ number_format($order->quantity) }}</span></td>
-                                        <td><span class="mono-val credit-val">{{ number_format($order->total_price) }}</span></td>
+                                        <td><span class="mono-val credit-val">{{ number_format($order->total_price - $returns) }}</span></td>
                                         <td><span class="mono-val paid-val">{{ number_format($paid) }}</span></td>
                                         <td>
                                             <span class="mono-val remaining-val {{ $remaining > 0 ? 'credit-val' : 'paid-val' }}">
@@ -454,7 +454,7 @@
                                                     data-date="{{ $date }}"
                                                     data-paid="{{ $paid }}"
                                                     data-orderid="{{ $order->receivingId }}"
-                                                    data-totalamount="{{ $order->total_price }}">
+                                                    data-totalamount="{{ $order->total_price - $returns }}">
                                                     <i class="bi bi-cash-coin"></i> Pay
                                                 </button>
                                                 @endif
@@ -547,7 +547,6 @@
             <form method="post" action="supplierPay">
                 @csrf
                 <input type="hidden" name="supplier" id="paySupplier">
-                <input type="hidden" name="date"     id="payDate">
                 <input type="hidden" name="orderid"  id="payOrderId">
                 <div class="modal-body">
                     <div class="info-grid">
@@ -562,14 +561,22 @@
                     </div>
                     <div class="field">
                         <label class="field-label">Shop <span class="req">*</span></label>
-                        <select name="shop" class="field-input" style="border:none; padding-left:0;" >
-                                <option value="">All Shops</option>
+                        <select name="shop" class="field-input" style="border:none; padding-left:0;" required>
+                                <option value="" selected disabled>All Shops</option>
                                 @foreach($shops as $shop)
                                     <option value="{{ $shop['id'] }}" {{ request('shop') == $shop['id'] ? 'selected' : '' }}>
                                         {{ $shop['name'] }}
                                     </option>
                                 @endforeach
-                            </select>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Payment date</label>
+                        @if(canUser("supplier_credit_payment_date"))
+                        <input type="date" class="field-input" name="date" id="paymentDate" value="{{ date('Y-m-d') }}">
+                        @else
+                        <input type="hidden" name="date" id="paymentDate" value="{{ date('Y-m-d') }}">
+                        @endif
                     </div>
                     <div class="field">
                         <label class="field-label">Payment amount <span class="req">*</span></label>
@@ -602,8 +609,8 @@
         const btn = e.relatedTarget;
         const remaining = parseFloat(btn.dataset.totalamount) - parseFloat(btn.dataset.paid);
         this.querySelector('#paySupplier').value        = btn.dataset.supplier;
-        this.querySelector('#payDate').value            = btn.dataset.date;
         this.querySelector('#payOrderId').value         = btn.dataset.orderid;
+        this.querySelector('#paymentDate').value        = btn.dataset.date;
         this.querySelector('#displaySupplier').textContent   = btn.dataset.supplier;
         this.querySelector('#displayTotalAmount').textContent = new Intl.NumberFormat().format(remaining.toFixed(2)) + ' Tsh';
     });

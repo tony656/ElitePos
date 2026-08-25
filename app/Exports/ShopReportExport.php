@@ -54,6 +54,8 @@ class ShopReportExport implements FromCollection, WithHeadings, WithMapping, Wit
             'Paid Receivings',
             'Cash Amount',
             'Cash Submitted',
+            'Bank Deposit',
+            'Bank Sale',
             'Difference',
             'Status',
         ];
@@ -91,6 +93,8 @@ class ShopReportExport implements FromCollection, WithHeadings, WithMapping, Wit
             $shop->paid_receivings,
             $shop->cash_amount,
             $shop->cash_submitted,
+            $shop->total_bank,
+            $shop->sales_bank ?? 0,
             $shop->cash_difference,
             $diffClass,
         ];

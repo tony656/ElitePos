@@ -145,41 +145,51 @@ if (!canUser('manage_supplier_credit')) {
 
         if(!empty($selectedShopId)) {
             session([
-                'selected_shop_id' => getCurrentShopId()
-            
+                'selected_shop_id' => $selectedShopId
             ]);
         } else {
-            $selectedShopId = getCurrentShopId();
+            $selectedShopId = null;
         }
 
     // Build query with shop filter - only show debt/credit items (isDebt = 1)
-    $query = recevingModel::where('isDebt', 1);
+    $query = recevingModel::where('isDebt', 1)->where('is_return', '!=', 1);
             $query->whereIn('account', $shopIds);
-  if ($selectedShopId) {
+    
+             // Get return items (negative values)
+    $returnQuery = recevingModel::where('isDebt', 1)
+        ->where('is_return', 1)
+        ->whereIn('account', $shopIds);
+
+      if ($selectedShopId) {
             $query->where('account', $selectedShopId);
+            $returnQuery->where('account', $selectedShopId);
         }
   
     // Filter by date range - default to today if no dates provided
     if ($req->has('date_from') && !empty($req->date_from)) {
         $query->whereDate('created_at', '>=', $req->date_from);
+        $returnQuery->whereDate('created_at', '>=', $req->date_from);
     } else {
         // Default to today's date if no date_from provided
         $query->whereDate('created_at', '>=', date('Y-m-d'));
+        $returnQuery->whereDate('created_at', '>=', date('Y-m-d'));
     }
     
     if ($req->has('date_to') && !empty($req->date_to)) {
         $query->whereDate('created_at', '<=', $req->date_to);
+        $returnQuery->whereDate('created_at', '<=', $req->date_to);
     } else {
         // Default to today's date if no date_to provided
         $query->whereDate('created_at', '<=', date('Y-m-d'));
+        $returnQuery->whereDate('created_at', '<=', date('Y-m-d'));
     }
 
     // Get supplier credits grouped by date and supplier
     $credits = $query->selectRaw('MAX(receivingId) as receivingId,MAX(receivingName) as receivingName,DATE(created_at) as order_date,account, supplier, SUM(quantity) as quantity, SUM(price * quantity) as total_price')
         ->groupBy('order_date', 'supplier')
         ->groupBy('order_date', 'account')
-        ->orderBy('order_date', 'desc')
         ->get();
+    $returns = $returnQuery->sum(DB::raw('price * quantity'));
 
     // Group by date for easier display
     $groupedCredits = $credits->groupBy('order_date');
@@ -187,7 +197,7 @@ if (!canUser('manage_supplier_credit')) {
     // Initialize products array
     $products = collect();
 
-    $data = compact('groupedCredits', 'shops', 'selectedShopId');
+        $data = compact('groupedCredits', 'shops', 'selectedShopId','returns');
 
 
         return view('deptors', $data);
@@ -202,7 +212,7 @@ public function mainCredit(Request $req) {
         
 
     // Build query with shop filter - only show debt/credit items (isDebt = 1)
-    $query = recevingModel::where('isDebt', 1);
+    $query = recevingModel::where('isDebt', 1)->where('is_return', 0);
   if ($selectedShopId) {
             $query->where('account', $selectedShopId);
         }
@@ -261,22 +271,23 @@ public function suplierPayments (Request $req) {
         $date_from = $req->date_from ?? date('Y-m-d');
         $date_to = $req->date_to ?? date('Y-m-d');
         $shops = getUserAccounts();
+        $shopIds = array_column(getUserAccounts(),'id');
         
         if(!empty($selectedShopId)) {
             session([
-                'selected_shop_id' => getCurrentShopId()
-            
+                'selected_shop_id' => $selectedShopId
             ]);
         } else {
-            $selectedShopId = getCurrentShopId();
+            $selectedShopId = null;
         }
-   
+    
  // Filter by date range - default to today if no dates provided
 
 
     // Build query with shop filter - only show debt/credit items (isDebt = 1)
     $querys = madeni::query();
-    if(!empty($selectedShopId)) {
+    $querys->whereIn('account', $shopIds);
+    if($selectedShopId) {
     $querys->where('account', $selectedShopId);
     }
     $querys->whereDate('created_at', '>=', $date_from)->whereDate('created_at', '<=', $date_to);
@@ -401,6 +412,7 @@ public function supplierItems(Request $req)
             $payment->amount = $amountPaid;
             $payment->receivingsId = $receiving->receivingId ?? $orderid;
             $payment->account = $shop ?? '';
+            $payment->created_at = $date ?: ($receiving->created_at ?? now());
             $payment->save();
 
 

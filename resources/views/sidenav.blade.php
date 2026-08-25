@@ -18,8 +18,8 @@
 
     :root {
         --sidebar-bg: #0B1E3D;
-        --sidebar-hover-bg: rgba(245, 158, 11, 0.15);
-        --sidebar-active-bg: #F59E0B;
+        --sidebar-hover-bg: rgba(var(--theme-primary-rgb, 245, 158, 11), 0.15);
+        --sidebar-active-bg: var(--theme-primary);
         --sidebar-text: #ffffff;
         --sidebar-text-muted: rgba(255, 255, 255, 0.6);
         --sidebar-icon: #ffffff;
@@ -30,8 +30,8 @@
         --sidebar-mobile: 85%;
         --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         --mobile-overlay: rgba(0, 0, 0, 0.6);
-        --gradient-start: #F59E0B;
-        --gradient-end: #D97706;
+        --gradient-start: var(--theme-primary);
+        --gradient-end: var(--theme-primary);
     }
 
     /* ===== SIDEBAR TOGGLE BUTTON ===== */
@@ -826,10 +826,11 @@
         @endif
 
         <!-- ================= SECTION 2: SALE SECTION ================= -->
+        @if ( canUser('view_invoices') || canUser('view_shop_debts') || canUser('manage_paid_invoice') || canUser('create_sales'))
         <li class="nav-section-header">
             <span>{{ __('messages.section_sales') }}</span>
         </li>
-        
+        @endif
         <!-- New Sale -->
         @if (canUser('create_sales'))
         <li class="nav-item">
@@ -841,7 +842,7 @@
             </a>
         </li>
         @endif
-
+        @if ( canUser('view_invoices') || canUser('view_shop_debts') || canUser('manage_paid_invoice'))
         <!-- Invoices -->
         <li class="nav-item">
             <button class="nav-toggle" aria-expanded="false" aria-controls="invoices-menu">
@@ -852,7 +853,7 @@
                 <span class="chevron"><i class="fas fa-chevron-right"></i></span>
             </button>
             <ul class="submenu" id="invoices-menu">
-                @if ( canUser('view_invoices'))
+                <!--@if ( canUser('view_invoices'))
                 <li class="nav-item">
                     <a href="/ordersList" class="nav-link">
                         <div class="nav-content">
@@ -860,7 +861,7 @@
                         </div>
                     </a>
                 </li>
-                @endif
+                @endif-->
                 
                 
                 @if (canUser('view_shop_debts'))
@@ -883,7 +884,7 @@
                 @endif
             </ul>
         </li>
-        
+        @endif
 
         <!-- Expenses -->
         @if (canUser('view_expenses'))
@@ -1161,7 +1162,7 @@
                 </li>
             
         @endif
-        @if (canUser('main_supplier_credit'))
+        @if (canUser('main_supplier_credit') || canUser('manage_supplier_credit'))
         <li class="nav-item">
             <button class="nav-toggle" aria-expanded="false" aria-controls="main-suppliers-menu">
                 <div class="nav-content">
@@ -1171,6 +1172,7 @@
                 <span class="chevron"><i class="fas fa-chevron-right"></i></span>
             </button>
             <ul class="submenu" id="main-suppliers-menu">
+                @if (canUser('main_supplier_credit') )
                 <li class="nav-item">
                     <a href="/main-supplier" class="nav-link">
                 <div class="nav-content">
@@ -1179,6 +1181,7 @@
                 </div>
             </a>
         </li>
+        @endif
                 @if (canUser('manage_supplier_credit'))
                 <li class="nav-item">
                     <a href="/main-credit" class="nav-link">

@@ -256,7 +256,7 @@
         --navy: #0B1E3D;
         --navy-mid: #112952;
         --navy-light: #1A3A6B;
-        --amber: #F59E0B;
+        --amber: var(--theme-primary);
         --amber-pale: #FEF3C7;
         --emerald: #059669;
         --emerald-pale: #D1FAE5;
@@ -413,7 +413,7 @@
     .stat-card-navy { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); }
     .stat-card-sky { background: linear-gradient(135deg, var(--sky) 0%, #0369a1 100%); }
     .stat-card-rose { background: linear-gradient(135deg, var(--rose) 0%, #b91c1c 100%); }
-    .stat-card-amber { background: linear-gradient(135deg, var(--amber) 0%, #d97706 100%); }
+    .stat-card-amber { background: linear-gradient(135deg, var(--amber) 0%, var(--amber) 100%); }
 
     .icon-shape {
         width: 60px;
@@ -549,7 +549,9 @@
             const dayLabels = [];
             const currentMonthData = [];
             const lastMonthData = [];
-            
+            const primaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--amber').trim() || '#f59e0b';
+
             for (let i = 1; i <= daysInCurrentMonth; i++) {
                 dayLabels.push(i);
                 currentMonthData.push(currentMonthDaily[i] || 0);
@@ -564,15 +566,15 @@
                         {
                             label: 'This Month',
                             data: currentMonthData,
-                            borderColor: '#0B1E3D',
+                            borderColor: primaryColor,
                             backgroundColor: 'rgba(11, 30, 61, 0.05)',
                             borderWidth: 3,
                             fill: false,
                             tension: 0.4,
                             pointRadius: 3,
                             pointHoverRadius: 7,
-                            pointBackgroundColor: '#0B1E3D',
-                            pointBorderColor: '#0B1E3D',
+                            pointBackgroundColor: primaryColor,
+                            pointBorderColor: primaryColor,
                         },
                         {
                             label: 'Last Month',
@@ -658,6 +660,8 @@
         const monthlyData = @json($monthlyTotalPrices ?? []);
         const barCtx = document.getElementById('barChart');
         if (barCtx) {
+             const primaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--amber').trim() || '#f59e0b';
             const chartLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             
             new Chart(barCtx.getContext('2d'), {
@@ -667,14 +671,14 @@
                     datasets: [{
                         label: 'Monthly Sales',
                         data: monthlyData,
-                        borderColor: '#F59E0B',
+                        borderColor: primaryColor,
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
                         pointRadius: 4,
                         pointHoverRadius: 7,
-                        pointBackgroundColor: '#F59E0B',
+                        pointBackgroundColor: primaryColor,
                         pointBorderColor: '#0B1E3D',
                         pointBorderWidth: 2,
                     }]
@@ -740,7 +744,9 @@
             const last30Days = [];
             const last30DaysLabels = [];
             const today = new Date();
-            
+            const primaryColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--amber').trim() || '#f59e0b';
+
             for (let i = 29; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(today.getDate() - i);
@@ -757,8 +763,8 @@
                     datasets: [{
                         label: 'Daily Sales',
                         data: last30Days,
-                        backgroundColor: 'rgba(11, 30, 61, 0.7)',
-                        borderColor: '#0B1E3D',
+                        backgroundColor: primaryColor,
+                        borderColor: primaryColor,
                         borderWidth: 2,
                         borderRadius: 4,
                         hoverBackgroundColor: 'rgba(245, 158, 11, 0.8)',

@@ -5,997 +5,1615 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@lang('messages.create_new_sales')</title>
     @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
+        /* ── CSS Variables ── */
         :root {
-            --navy:          #0B1E3D;
-            --navy-mid:      #112952;
-            --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
-            --amber-pale:    #FEF3C7;
-            --emerald:       #059669;
-            --emerald-pale:  #D1FAE5;
-            --rose:          #E11D48;
-            --rose-pale:     #FFE4E6;
-            --violet:        #7C3AED;
-            --violet-pale:   #EDE9FE;
-            --fuchsia:       #C026D3;
-            --fuchsia-pale:  #FAE8FF;
-            --sky:           #0284C7;
-            --sky-pale:      #E0F2FE;
-            --slate-50:      #F8FAFC;
-            --slate-100:     #F1F5F9;
-            --slate-200:     #E2E8F0;
-            --slate-300:     #CBD5E1;
-            --slate-400:     #94A3B8;
-            --slate-500:     #64748B;
-            --slate-600:     #475569;
-            --slate-700:     #334155;
-            --slate-800:     #1E293B;
-            --white:         #FFFFFF;
+            --primary-dark:     #0B1E3D;
+            --primary-mid:      #112952;
+            --primary-light:    #1A3A6B;
+            --accent:           var(--theme-primary, #F59E0B);
+            --accent-dark:      #D97706;
+            --accent-pale:      #FEF3C7;
+            --success:          #059669;
+            --success-pale:     #D1FAE5;
+            --danger:           #E11D48;
+            --danger-pale:      #FFE4E6;
+            --info:             #7C3AED;
+            --info-pale:        #EDE9FE;
+            --fuchsia:          #C026D3;
+            --fuchsia-pale:     #FAE8FF;
+            --sky:              #0284C7;
+            --sky-pale:         #E0F2FE;
+            --gray-50:          #F8FAFC;
+            --gray-100:         #F1F5F9;
+            --gray-200:         #E2E8F0;
+            --gray-300:         #CBD5E1;
+            --gray-400:         #94A3B8;
+            --gray-500:         #64748B;
+            --gray-600:         #475569;
+            --gray-700:         #334155;
+            --gray-800:         #1E293B;
+            --gray-900:         #0F172A;
+            --white:            #FFFFFF;
+            --shadow-sm:        0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md:        0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg:        0 8px 32px rgba(0,0,0,0.12);
+            --radius:           12px;
+            --radius-sm:        8px;
+            --radius-xs:        6px;
+            --transition:       all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            
+            font-family: 'Inter', -apple-system, sans-serif;
             background: #EEF2F9;
-            color: var(--slate-800);
+            color: var(--gray-800);
             min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--slate-100); }
-        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-        /* ── Main wrap ── */
-        .main-wrap { max-width: 1800px; margin: 0 auto; padding: 1.1rem 1.4rem; }
-
-        /* ── Page header ── */
-        .pg-header {
-            background: var(--navy);
-            border-radius: 12px;
-            padding: 0.95rem 1.4rem;
-            margin-bottom: 1.1rem;
-            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        /* ── Main Wrapper ── */
+        .main-wrap {
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem;
         }
 
-        .pg-title {
-            display: flex; align-items: center; gap: 0.75rem;
-            color: var(--white); font-size: 1.3rem; font-weight: 700;
+        @media (max-width: 768px) {
+            .main-wrap { padding: 0.75rem; }
         }
 
-        .pg-title-icon {
-            width: 38px; height: 38px;
-            background: rgba(245,158,11,0.18);
-            border: 1px solid rgba(245,158,11,0.35);
-            border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--amber); font-size: 1rem; flex-shrink: 0;
+        /* ── Page Header ── */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        .pg-title span { color: var(--amber); }
-
-        .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-
-        .hbtn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            
-            font-size: 0.8rem; font-weight: 600;
-            padding: 0.44rem 0.95rem;
-            border-radius: 7px; border: 1px solid transparent;
-            cursor: pointer; text-decoration: none; transition: all 0.15s;
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -5%;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
         }
-        .hbtn-ghost {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.18);
-            color: rgba(255,255,255,0.85);
+
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
         }
-        .hbtn-ghost:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        .page-header-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1.5px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .page-title {
+            color: var(--white);
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.3px;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: var(--white);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-header i { font-size: 1rem; }
 
         /* ── Alerts ── */
         .alert-bar {
-            display: flex; align-items: center; justify-content: space-between; gap: 0.65rem;
-            padding: 0.7rem 1rem;
-            border-radius: 10px;
-            font-size: 0.875rem; font-weight: 500;
-            margin-bottom: 1rem;
-            animation: fadeSlide 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.8rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            animation: slideDown 0.35s ease;
         }
-        @keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-        .alert-ok  { background: var(--emerald-pale); border-left: 4px solid var(--emerald); color: #065F46; }
-        .alert-err { background: var(--rose-pale);    border-left: 4px solid var(--rose);    color: #9F1239; }
-        .alert-bar button { background: none; border: none; cursor: pointer; opacity: 0.5; font-size: 1rem; }
-        .alert-bar button:hover { opacity: 1; }
 
-        /* ── Two-col layout ── */
-        .layout {
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-success {
+            background: var(--success-pale);
+            border-left: 4px solid var(--success);
+            color: #065F46;
+        }
+
+        .alert-danger {
+            background: var(--danger-pale);
+            border-left: 4px solid var(--danger);
+            color: #9F1239;
+        }
+
+        .alert-bar i { font-size: 1.1rem; margin-right: 0.4rem; }
+
+        .alert-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.5;
+            padding: 0 0.25rem;
+            transition: var(--transition);
+            line-height: 1;
+        }
+
+        .alert-close:hover { opacity: 1; }
+
+        /* ── Layout Grid ── */
+        .layout-grid {
             display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 1rem;
+            grid-template-columns: 1fr 360px;
+            gap: 1.25rem;
             align-items: start;
         }
-        @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+
+        @media (max-width: 1100px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
 
         /* ── Panel ── */
         .panel {
             background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(11,30,61,0.08);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
             overflow: hidden;
         }
 
-        .panel-head {
-            background: var(--navy);
-            padding: 0.75rem 1.1rem;
-            display: flex; align-items: center; justify-content: space-between;
-            color: var(--white); font-size: 0.9rem; font-weight: 600;
-            flex-shrink: 0;
+        .panel-header {
+            background: var(--primary-dark);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--white);
+            font-size: 0.85rem;
+            font-weight: 600;
         }
-        .panel-head-left { display: flex; align-items: center; gap: 0.55rem; }
-        .panel-head i { color: var(--amber); }
 
-        /* ── Search box ── */
-        .search-wrap { padding: 0.85rem 1rem; border-bottom: 1px solid var(--slate-200); position: relative; }
+        .panel-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
 
-        .sbox {
-            position: relative;
-            display: flex; align-items: center;
+        .panel-header i { color: var(--accent); }
+
+        /* ── Search Section ── */
+        .search-section {
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
         }
-        .sbox-icon {
-            position: absolute; left: 0.7rem;
-            color: var(--slate-400); font-size: 0.875rem; pointer-events: none;
+
+        .search-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
         }
-        .sbox-input {
-            
-            font-size: 0.875rem;
+
+        .search-row .field {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .search-row .field:last-child {
+            flex: 2;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .field-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .field-label i { color: var(--primary-light); font-size: 0.75rem; }
+
+        .field-input {
             width: 100%;
-            padding: 0.55rem 2.2rem 0.55rem 2.1rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            background: var(--slate-50);
-            color: var(--slate-800);
-            outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-        }
-        .sbox-input:focus {
-            border-color: var(--navy-light);
+            font-size: 0.85rem;
+            padding: 0.45rem 0.7rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
             background: var(--white);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            color: var(--gray-800);
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
         }
-        .sbox-input::placeholder { color: var(--slate-400); }
+
+        .field-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.08);
+        }
+
+        .field-input::placeholder { color: var(--gray-400); }
+
+        select.field-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2rem;
+        }
+
+        .shop-select-inline {
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.45rem 2rem 0.45rem 0.7rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            color: var(--primary-dark);
+            cursor: pointer;
+            outline: none;
+            min-width: 150px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%234361EE' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .shop-select-inline:hover { border-color: var(--primary-light); }
+        .shop-select-inline:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.08);
+        }
+
+        .shop-select-inline option {
+            font-size: 0.85rem;
+            padding: 0.4rem;
+            color: var(--gray-800);
+            background: var(--white);
+        }
+
+        /* ── Search Wrapper (with icon) ── */
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-wrapper .search-icon {
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .search-wrapper input {
+            width: 100%;
+            padding: 0.45rem 0.7rem 0.45rem 2.2rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--gray-50);
+            font-size: 0.85rem;
+            color: var(--gray-800);
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .search-wrapper input:focus {
+            border-color: var(--primary-light);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.08);
+        }
+
+        .search-wrapper input::placeholder { color: var(--gray-400); }
 
         /* ── Dropdown ── */
         .dropdown {
-            position: relative;
+            position: absolute;
             top: calc(100% + 4px);
-            left: 1rem; right: 1rem;
+            left: 0;
+            right: 0;
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 10px;
-            box-shadow: 0 8px 32px rgba(11,30,61,0.14);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
             z-index: 1000;
             display: none;
-            max-height: 700px;
+            max-height: 400px;
             overflow-y: auto;
             animation: dropIn 0.16s ease;
         }
+
         .dropdown.open { display: block; }
-        @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
 
-        .dd-item {
-            padding: 0.6rem 0.9rem;
-            border-bottom: 1px solid var(--slate-100);
+        @keyframes dropIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
             cursor: pointer;
-            transition: background 0.12s;
+            overflow-y: auto;
+            transition: var(--transition);
         }
-        .dd-item:last-child { border-bottom: none; }
-        .dd-item:hover { background: #EFF4FF; }
-        .dd-item-name { font-weight: 600; color: var(--navy); font-size: 0.865rem; margin-bottom: 0.18rem; }
-        .dd-item-meta {
-            display: flex; gap: 0.75rem; align-items: center;
-            font-size: 0.74rem; color: var(--slate-500);
-            
+
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: #EFF4FF; }
+
+        .dropdown-item-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 0.86rem;
+            margin-bottom: 0.15rem;
         }
+
+        .dropdown-item-meta {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            font-size: 0.74rem;
+            color: var(--gray-500);
+            flex-wrap: wrap;
+        }
+
         .dd-badge {
-            display: inline-flex; align-items: center; gap: 0.2rem;
-            font-size: 0.7rem; font-weight: 700;
-            padding: 0.18rem 0.55rem; border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
         }
-        .dd-badge-price  { background: var(--emerald-pale); color: #065F46; }
+
+        .dd-badge-price  { background: var(--success-pale); color: #065F46; }
         .dd-badge-offer  { background: var(--fuchsia-pale); color: var(--fuchsia); }
-        .dd-badge-stock  { background: var(--sky-pale);      color: var(--sky); }
+        .dd-badge-stock  { background: var(--sky-pale); color: var(--sky); }
+        .dd-badge-debt   { background: var(--danger-pale); color: var(--danger); }
 
-        .dd-loading { padding: 0.9rem; text-align: center; color: var(--slate-400); font-size: 0.85rem; }
-        .dd-empty   { padding: 1.5rem; text-align: center; color: var(--slate-400); font-size: 0.85rem; }
+        .dd-loading, .dd-empty {
+            padding: 1.25rem;
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 0.85rem;
+        }
 
-        /* ── Selected badge ── */
-        .sel-badge {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            background: var(--navy); color: var(--white);
-            font-size: 0.78rem; font-weight: 600;
-            padding: 0.3rem 0.35rem 0.3rem 0.7rem;
+        /* ── Selected Badge ── */
+        .selected-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-dark);
+            color: var(--white);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.25rem 0.3rem 0.25rem 0.7rem;
             border-radius: 20px;
             margin-top: 0.5rem;
         }
-        .sel-badge-remove {
-            width: 18px; height: 18px;
-            background: rgba(255,255,255,0.15);
-            border: none; color: white; cursor: pointer;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; transition: background 0.15s; flex-shrink: 0;
-        }
-        .sel-badge-remove:hover { background: var(--rose); }
 
-        /* ── Cart section ── */
-        .cart-section { padding: 0 0 0.5rem; }
+        .selected-badge-remove {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.12);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .selected-badge-remove:hover { background: var(--danger); }
+
+        /* ── Cart Section ── */
+        .cart-section { padding: 0; }
 
         .cart-toolbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.65rem 1rem;
-            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
+
         .cart-label {
-            font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-            color: var(--slate-500); display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
-        .cart-label i { color: var(--amber); }
+
+        .cart-label i { color: var(--accent); }
+
         .cart-badge {
-            background: var(--amber); color: var(--navy);
-            font-size: 0.7rem; font-weight: 700;
-            padding: 0.15rem 0.5rem; border-radius: 20px;
+            background: var(--accent);
+            color: var(--primary-dark);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.5rem;
+            border-radius: 20px;
         }
+
+        .btn-clear {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--radius-xs);
+            background: transparent;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-clear:hover {
+            background: var(--danger);
+            color: var(--white);
+            border-color: var(--danger);
+        }
+
+        /* ── Offer Banner ── */
         .offer-banner {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.25rem;
             background: linear-gradient(90deg, var(--fuchsia-pale), #FFF);
             border-bottom: 1px solid #F5D0FE;
-            font-size: 0.78rem; font-weight: 600; color: var(--fuchsia);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
         }
+
+        .offer-banner-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--fuchsia);
+        }
+
         .offer-chip {
-            display: inline-flex; align-items: center; gap: 0.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
             background: #F5D0FE;
             border: 1px solid #F3E8FF;
-            border-radius: 8px;
-            padding: 0.3rem 0.55rem;
-            font-size: 0.75rem; font-weight: 600; color: var(--fuchsia);
+            border-radius: var(--radius-xs);
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--fuchsia);
             align-self: flex-start;
         }
-        .offer-chip span { color: var(--navy); font-weight: 700; }
-        .offer-remove {
-            background: none; border: none; cursor: pointer; color: var(--rose);
-            font-size: 1rem; line-height: 1; padding: 0; display: inline-flex; align-items: center;
+
+        .offer-chip span { color: var(--primary-dark); font-weight: 700; }
+        .offer-chip-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--danger);
+            font-size: 0.9rem;
+            line-height: 1;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
         }
-        .offer-remove:hover { color: #9F1239; }
-        .toast-item { padding: 0.6rem 0.9rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--white); display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem; }
-        .toast-ok { background: var(--emerald); }
-        .toast-err { background: var(--rose); }
 
-        /* ── Cart table ── */
-        .cart-overflow { overflow-x: auto; }
+        .offer-chip-remove:hover { color: #9F1239; }
 
-        table.cart-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        table.cart-tbl thead th {
-            background: var(--slate-100);
-            color: var(--slate-500);
-            font-size: 0.7rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
+        /* ── Cart Table ── */
+        .cart-scroll {
+            overflow-x: auto;
+            padding: 0 4px;
+        }
+
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            min-width: 600px;
+        }
+
+        .cart-table thead th {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             padding: 0.5rem 0.7rem;
-            border-bottom: 2px solid var(--slate-200);
+            border-bottom: 2px solid var(--gray-200);
             white-space: nowrap;
+            text-align: left;
         }
-        table.cart-tbl tbody td {
+
+        .cart-table thead th:last-child { text-align: right; }
+
+        .cart-table tbody td {
             padding: 0.5rem 0.7rem;
-            border-bottom: 1px solid var(--slate-100);
+            border-bottom: 1px solid var(--gray-100);
             vertical-align: middle;
         }
-        table.cart-tbl tbody tr:hover td { background: #F8FAFF; }
-        table.cart-tbl tbody tr.offer-row td { background: #F0FDF4; }
-        table.cart-tbl tbody tr.offer-row:hover td { background: #DCFCE7; }
-        table.cart-tbl tbody tr.offer-row td:first-child { border-left: 3px solid var(--emerald); }
 
-        .cart-prod-name {
-            font-weight: 600; color: var(--navy);
-            max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        .cart-table tbody tr:hover td { background: #F8FAFF; }
+        .cart-table tbody tr.offer-row td { background: #F0FDF4; }
+        .cart-table tbody tr.offer-row:hover td { background: #DCFCE7; }
+        .cart-table tbody tr.offer-row td:first-child { border-left: 3px solid var(--success); }
+
+        .cart-product-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .mono {  font-size: 0.78rem; }
-        .num-right { text-align: right;  font-size: 0.8rem; }
-        .fw-total { font-weight: 600; color: var(--navy); }
 
-        .tbl-input {
-             font-size: 0.78rem;
-            width: 72px; padding: 0.28rem 0.4rem;
-            border: 1.5px solid var(--slate-200); border-radius: 5px;
-            background: var(--white); color: var(--slate-800);
-            text-align: center; outline: none;
-            transition: border-color 0.15s;
+        .mono { font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .fw-bold { font-weight: 700; }
+
+        .qty-input {
+            font-size: 0.78rem;
+            width: 70px;
+            padding: 0.25rem 0.35rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-xs);
+            background: var(--white);
+            color: var(--gray-800);
+            text-align: center;
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
         }
-        .tbl-input:focus { border-color: var(--navy-light); background: #EEF3FF; }
 
-        .del-btn {
-            width: 27px; height: 27px;
-            background: var(--rose-pale); color: var(--rose);
-            border: none; border-radius: 6px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
-            transition: background 0.15s, transform 0.12s;
+        .qty-input:focus {
+            border-color: var(--primary-light);
+            background: #EEF3FF;
         }
-        .del-btn:hover { background: var(--rose); color: var(--white); transform: scale(1.08); }
 
+        .btn-delete {
+            width: 28px;
+            height: 28px;
+            background: var(--danger-pale);
+            color: var(--danger);
+            border: none;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: var(--white);
+            transform: scale(1.08);
+        }
+
+        /* ── Empty Cart ── */
         .empty-cart {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 3rem 1rem; color: var(--slate-400); text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            color: var(--gray-400);
+            text-align: center;
         }
-        .empty-cart i { font-size: 2.2rem; margin-bottom: 0.6rem; opacity: 0.4; display: block; }
-        .empty-cart-title { font-size: 0.9rem; font-weight: 600; color: var(--slate-500); margin-bottom: 0.25rem; }
+
+        .empty-cart i {
+            font-size: 2.5rem;
+            margin-bottom: 0.6rem;
+            opacity: 0.4;
+            display: block;
+        }
+
+        .empty-cart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
         .empty-cart p { font-size: 0.8rem; }
 
-        /* ── Right panel sections ── */
-        .rp-sec {
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid var(--slate-200);
+        /* ── Sidebar Sections ── */
+        .sidebar-section {
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
         }
-        .rp-sec:last-child { border-bottom: none; }
 
-        .sec-title {
-            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-            color: var(--slate-400); margin-bottom: 0.75rem;
-            display: flex; align-items: center; gap: 0.35rem;
+        .sidebar-section:last-child { border-bottom: none; }
+
+        .section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-400);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
         }
-        .sec-title i { color: var(--amber); font-size: 0.8rem; }
 
-        /* ── Customer info card ── */
-        .cust-info {
-            background: var(--slate-50);
-            border: 1.5px solid var(--slate-200);
-            border-left: 3px solid var(--amber);
-            border-radius: 8px;
+        .section-title i { color: var(--accent); font-size: 0.8rem; }
+
+        /* ── Customer Info Card ── */
+        .customer-info {
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-left: 3px solid var(--accent);
+            border-radius: var(--radius-sm);
             padding: 0.7rem 0.85rem;
             margin-top: 0.6rem;
         }
-        .cust-info-title {
-            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-            color: var(--slate-500); margin-bottom: 0.6rem;
-        }
-        .cust-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.25rem 0;
-            font-size: 0.815rem;
-            border-bottom: 1px solid var(--slate-200);
-        }
-        .cust-row:last-child { border-bottom: none; }
-        .cust-key { color: var(--slate-500); font-weight: 500; }
-        .cust-val {  font-weight: 500; color: var(--slate-800); font-size: 0.8rem; }
-        .cust-val.available { color: var(--emerald); }
 
-        /* ── Order meta ── */
+        .customer-info-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .customer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.2rem 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .customer-row:last-child { border-bottom: none; }
+
+        .customer-key { color: var(--gray-500); font-weight: 500; }
+        .customer-value { font-weight: 500; color: var(--gray-800); }
+        .customer-value.available { color: var(--success); }
+        .customer-value.debt { color: var(--danger); }
+
+        /* ── Order Meta ── */
         .order-meta {
-            display: flex; gap: 0.75rem; flex-wrap: wrap;
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
             margin-top: 0.6rem;
         }
+
         .meta-chip {
-            display: flex; flex-direction: column; gap: 0.1rem;
-            background: var(--slate-100); border-radius: 7px;
-            padding: 0.4rem 0.65rem; flex: 1; min-width: 90px;
-        }
-        .meta-chip-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-400); }
-        .meta-chip-value { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
-
-        /* ── Field ── */
-        .field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.6rem; }
-        .field:last-child { margin-bottom: 0; }
-        .field-label { font-size: 0.77rem; font-weight: 600; color: var(--slate-600); display: flex; align-items: center; gap: 0.3rem; }
-        .field-label i { color: var(--navy-light); font-size: 0.8rem; }
-        .field-input {
-            width: 100%;
-             font-size: 0.855rem;
-            padding: 0.46rem 0.7rem;
-            border: 1.5px solid var(--slate-200); border-radius: 7px;
-            background: var(--white); color: var(--slate-800);
-            outline: none; transition: border-color 0.18s, box-shadow 0.18s;
-        }
-        .field-input:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
-        }
-        select.field-input {
-            cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 0.7rem center; padding-right: 2rem;
-            appearance: none;
-        }
-        .field-hint { font-size: 0.71rem; color: var(--slate-400); }
-
-        /* ── Inline Shop Selector ── */
-        .shop-select-inline {
-            
-            font-size: 0.85rem;
-            font-weight: 500;
-            padding: 0.5rem 2rem 0.5rem 0.75rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            background: var(--white);
-            color: var(--navy);
-            cursor: pointer;
-            outline: none;
-            min-width: 160px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%234361EE' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 0.6rem center;
-            appearance: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-        }
-        .shop-select-inline:hover {
-            border-color: var(--navy-light);
-        }
-        .shop-select-inline:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
-            outline: none;
-        }
-        .shop-select-inline option {
-            
-            font-size: 0.85rem;
-            padding: 0.5rem;
-            color: var(--slate-800);
-            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            background: var(--gray-100);
+            border-radius: var(--radius-xs);
+            padding: 0.35rem 0.6rem;
+            flex: 1;
+            min-width: 80px;
         }
 
-        /* ── Pay distribution ── */
-        .pay-dist {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
-            background: var(--slate-50); border: 1.5px solid var(--slate-200);
-            border-radius: 8px; padding: 0.65rem;
+        .meta-chip-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-400);
+        }
+
+        .meta-chip-value {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        /* ── Pay Distribution ── */
+        .pay-distribution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.65rem;
             margin-bottom: 0.6rem;
         }
-        .pay-dist-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-500); margin-bottom: 0.3rem; }
 
-        /* ── Pricing summary ── */
-        .price-rows { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; }
-        .price-row-item {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.845rem;
+        .pay-dist-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray-500);
+            margin-bottom: 0.2rem;
         }
-        .price-row-item .key { color: var(--slate-600); font-weight: 500; }
-        .price-row-item .val {  font-weight: 500; color: var(--slate-700); }
 
+        /* ── Price Summary ── */
+        .price-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.84rem;
+        }
+
+        .price-row .key { color: var(--gray-600); font-weight: 500; }
+        .price-row .val { font-weight: 500; color: var(--gray-700); }
+
+        /* ── Total Card ── */
         .total-card {
-            background: var(--navy);
-            border-radius: 10px; padding: 0.85rem 1rem;
-            display: flex; justify-content: space-between; align-items: center;
+            background: var(--primary-dark);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.85rem;
         }
-        .total-card-label { color: rgba(255,255,255,0.6); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
-        .total-card-amount {  font-size: 1.15rem; color: var(--amber); font-weight: 500; }
-        .total-card-curr { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-right: 2px; }
 
-        /* ── Submit button ── */
-        .submit-btn {
-            width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-             font-size: 0.925rem; font-weight: 700;
-            padding: 0.75rem;
-            background: var(--amber); color: var(--navy);
-            border: none; border-radius: 9px; cursor: pointer;
-            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
-            transition: box-shadow 0.18s, transform 0.12s, filter 0.15s;
+        .total-card-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
         }
-        .submit-btn:hover { box-shadow: 0 5px 20px rgba(245,158,11,0.42); transform: translateY(-1px); }
-        .submit-btn:active { transform: translateY(0); }
-        .submit-btn:disabled { background: var(--slate-300); color: var(--slate-500); box-shadow: none; cursor: not-allowed; transform: none; }
+
+        .total-card-amount {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.25rem;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .total-card-currency {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-right: 2px;
+        }
+
+        /* ── Submit Button ── */
+        .btn-submit {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.925rem;
+            font-weight: 700;
+            padding: 0.75rem;
+            background: var(--accent);
+            color: var(--primary-dark);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(245, 158, 11, 0.3);
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 5px 24px rgba(245, 158, 11, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:active { transform: translateY(0); }
+        .btn-submit:disabled {
+            background: var(--gray-300);
+            color: var(--gray-500);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         /* ── Toast ── */
-        .toast-stack { position: fixed; top: 1.2rem; right: 1.2rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.45rem; }
+        .toast-stack {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
         .toast-item {
-            display: flex; align-items: center; gap: 0.55rem;
-            background: var(--white); border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(11,30,61,0.16);
-            padding: 0.65rem 0.95rem;
-            min-width: 240px; max-width: 320px;
-            font-size: 0.855rem; font-weight: 500;
-            opacity: 0; transform: translateX(16px);
-            transition: opacity 0.22s, transform 0.22s;
-        }
-        .toast-item.show { opacity: 1; transform: translateX(0); }
-        .toast-ok  { border-left: 4px solid var(--emerald); }
-        .toast-err { border-left: 4px solid var(--rose); }
-        .toast-ok  .t-ico { color: var(--emerald); }
-        .toast-err .t-ico { color: var(--rose); }
-
-        /* ── Modal tweaks ── */
-        .modal-header-navy {
-            background: var(--navy);
-            color: var(--white);
-            border-bottom: none;
-        }
-        .modal-header-navy .btn-close { filter: invert(1) brightness(0.8); }
-        .modal-header-navy i { color: var(--amber); }
-
-        .modal-header-emerald {
-            background: var(--emerald);
-            color: var(--white);
-            border-bottom: none;
-        }
-        .modal-header-emerald .btn-close { filter: invert(1) brightness(0.8); }
-
-        .suspended-row {
-            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-            padding: 0.7rem 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             background: var(--white);
-            border-left: 3px solid var(--amber);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            box-shadow: 0 2px 6px rgba(11,30,61,0.07);
-            transition: box-shadow 0.15s, transform 0.12s;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            padding: 0.65rem 1rem;
+            min-width: 240px;
+            max-width: 360px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(16px);
+            transition: opacity 0.25s, transform 0.25s;
         }
-        .suspended-row:hover { box-shadow: 0 4px 14px rgba(245,158,11,0.2); transform: translateX(3px); }
-        .suspended-row-name { font-weight: 600; color: var(--navy); font-size: 0.875rem; }
-        .suspended-row-meta {  font-size: 0.78rem; color: var(--slate-500); }
 
-        .resume-btn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-             font-size: 0.78rem; font-weight: 600;
-            padding: 0.38rem 0.8rem;
-            background: var(--navy); color: var(--white);
-            border: none; border-radius: 7px; cursor: pointer;
-            transition: background 0.15s; text-decoration: none; white-space: nowrap;
-        }
-        .resume-btn:hover { background: var(--navy-light); color: var(--white); }
+        .toast-item.show { opacity: 1; transform: translateX(0); }
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+        .toast-success .toast-icon { color: var(--success); }
+        .toast-error .toast-icon { color: var(--danger); }
 
+        /* ── Info Box ── */
         .info-box {
             background: #EFF6FF;
             border-left: 3px solid var(--sky);
-            border-radius: 7px;
+            border-radius: var(--radius-sm);
             padding: 0.7rem 0.85rem;
-            font-size: 0.835rem; color: var(--slate-700);
+            font-size: 0.83rem;
+            color: var(--gray-700);
             margin-bottom: 0.85rem;
         }
+
         .info-box i { color: var(--sky); }
+
+        /* ── Modal Overrides ── */
+        .modal-header-navy {
+            background: var(--primary-dark);
+            color: var(--white);
+            border-bottom: none;
+        }
+
+        .modal-header-navy .btn-close { filter: invert(1) brightness(0.8); }
+        .modal-header-navy i { color: var(--accent); }
+
+        .modal-header-emerald {
+            background: var(--success);
+            color: var(--white);
+            border-bottom: none;
+        }
+
+        .modal-header-emerald .btn-close { filter: invert(1) brightness(0.8); }
+
+        /* ── Suspended Orders ── */
+        .suspended-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: var(--white);
+            border-left: 3px solid var(--accent);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .suspended-row:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateX(3px);
+        }
+
+        .suspended-row-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 0.875rem;
+        }
+
+        .suspended-row-meta {
+            font-size: 0.78rem;
+            color: var(--gray-500);
+        }
+
+        .btn-resume {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.8rem;
+            background: var(--primary-dark);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn-resume:hover {
+            background: var(--primary-light);
+            color: var(--white);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .page-header { flex-direction: column; align-items: stretch; }
+            .page-header-actions { width: 100%; flex-wrap: wrap; }
+            .btn-header { flex: 1; justify-content: center; min-width: 120px; }
+            .search-row { flex-direction: column; }
+            .search-row .field { width: 100%; min-width: unset; }
+            .shop-select-inline { width: 100%; }
+            .search-wrapper { width: 100%; }
+        }
+
+        @media (max-width: 768px) {
+            .layout-grid { grid-template-columns: 1fr; }
+            .page-header-left { flex-wrap: wrap; }
+            .page-header-icon { width: 40px; height: 40px; font-size: 1.25rem; }
+            .page-title { font-size: 1.1rem; }
+            .pay-distribution { grid-template-columns: 1fr; }
+            .cart-table thead { display: none; }
+            .cart-table tbody tr {
+                display: block;
+                margin-bottom: 0.6rem;
+                border: 1px solid var(--gray-200);
+                border-radius: var(--radius-sm);
+                padding: 0.6rem;
+                background: var(--white);
+            }
+            .cart-table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.35rem 0;
+                border-bottom: 1px solid var(--gray-100);
+                text-align: left !important;
+            }
+            .cart-table tbody td:last-child {
+                border-bottom: none;
+                padding-top: 0.6rem;
+                border-top: 1px solid var(--gray-200);
+                margin-top: 0.35rem;
+            }
+            .cart-table tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--gray-500);
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+            .qty-input { width: 60px; }
+        }
+
+        @media (max-width: 480px) {
+            .main-wrap { padding: 0.5rem; }
+            .page-header { padding: 0.75rem; }
+            .panel-header { padding: 0.6rem 0.9rem; font-size: 0.8rem; }
+            .search-section { padding: 0.6rem 0.9rem; }
+            .sidebar-section { padding: 0.6rem 0.9rem; }
+            .cart-toolbar { padding: 0.4rem 0.9rem; flex-direction: column; align-items: stretch; }
+            .offer-banner { padding: 0.4rem 0.9rem; }
+            .toast-stack { right: 0.5rem; left: 0.5rem; }
+            .toast-item { max-width: 100%; }
+        }
+
+        /* ── Utilities ── */
+        .d-flex { display: flex; }
+        .align-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 0.4rem; }
+        .gap-2 { gap: 0.8rem; }
+        .flex-wrap { flex-wrap: wrap; }
+        .w-100 { width: 100%; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .text-muted { color: var(--gray-500); }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--success); }
+        .position-relative { position: relative; }
     </style>
 </head>
 <body>
 
 @include("sidenav")
-<main class="main-content">
-        <div class="main-wrap">
 
-            {{-- ── Page Header ── --}}
-            <div class="pg-header">
-                    <div class="pg-title">
-                        <div class="pg-title-icon"><i class="bi bi-bag-plus-fill"></i></div>
-                        @lang('messages.create_new_sales_header')
-                    </div>
-                <div class="header-actions">
-                    @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="hbtn hbtn-ghost" data-bs-toggle="modal" data-bs-target="#pastSalesModal">
-                        <i class="bi bi-pencil-square"></i> @lang('messages.edit_past_sales')
-                    </button>
-                    @endif                    
-                    <button class="hbtn hbtn-ghost" data-bs-toggle="modal" data-bs-target="#suspendedModal">
-                        <i class="bi bi-pause-circle"></i> @lang('messages.suspended_orders')
-                    </button>
+<main class="main-content">
+    <div class="main-wrap">
+
+        {{-- ── Page Header ── --}}
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-header-icon">
+                    <i class="bi bi-bag-plus-fill"></i>
+                </div>
+                <div>
+                    <h1 class="page-title">@lang('messages.create_new_sales_header')</h1>
+                    <p class="page-subtitle"><i class="bi bi-clock-history"></i> {{ now()->format('l, F d, Y') }}</p>
                 </div>
             </div>
-
-            {{-- ── Alerts ── --}}
-            @if(session('success'))
-            <div class="alert-bar alert-ok">
-                <span><i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}</span>
-                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+            <div class="page-header-actions">
+                @if (Auth::user()->levelStatus === 'Admin')
+                <button class="btn-header" data-bs-toggle="modal" data-bs-target="#pastSalesModal">
+                    <i class="bi bi-pencil-square"></i> @lang('messages.edit_past_sales')
+                </button>
+                @endif
+                <button class="btn-header" data-bs-toggle="modal" data-bs-target="#suspendedModal">
+                    <i class="bi bi-pause-circle"></i> @lang('messages.suspended_orders')
+                </button>
+               
             </div>
-            @endif
-            @if(session('error'))
-            <div class="alert-bar alert-err">
-                <span><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ session('error') }}</span>
-                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
-            </div>
-            @endif
+        </div>
 
-            <div class="layout">
+        {{-- ── Alerts ── --}}
+        @if(session('success'))
+        <div class="alert-bar alert-success">
+            <span><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</span>
+            <button class="alert-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert-bar alert-danger">
+            <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
+            <button class="alert-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+        </div>
+        @endif
 
-                {{-- ══ LEFT: Product search + Cart ══ --}}
-                <div class="panel">
-                    <div class="panel-head">
-                        <div class="panel-head-left">
-                            <i class="bi bi-grid-3x3-gap-fill"></i> @lang('messages.select_products')
-                        </div>
+        {{-- ── Layout Grid ── --}}
+        <div class="layout-grid">
+
+            {{-- ══ LEFT: Product Search + Cart ══ --}}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> @lang('messages.select_products')
                     </div>
+                    <span style="font-size:0.7rem;color:rgba(255,255,255,0.5);">
+                        <i class="bi bi-info-circle"></i> {{ $cart->where('offered_items', '!=', 1)->count() }} @lang('messages.items_in_cart')
+                    </span>
+                </div>
 
-                    {{-- Product search with shop selector --}}
-                    <div class="search-wrap">
-                        <div class="sbox" style="display:flex; gap:0.5rem; align-items:center;">
-                             <div class="field">
-                                <label class="field-label"><i class="bi bi-tag"></i> @lang('messages.sales_type')</label>
-                                 <select id="orderType" name="orderType" class="field-input">
-                                     <option value="Sell" {{ session('orderType', 'Sell') == 'Sell' ? 'selected' : '' }}>@lang('messages.pay')</option>
-                                     <option value="Return" {{ session('orderType', 'Sell') == 'Return' ? 'selected' : '' }}>@lang('messages.return')</option>
-                                 </select>
-                            </div>
-                            {{-- Shop Selector --}}
-                            @if(isset($allShops) && count($allShops) > 1)
-                            <select class="shop-select-inline" id="shopSelect" onchange="changeShop(this.value)" title="@lang('messages.select_shop')">
-                                <option value="" selected disabled>@lang('messages.select_shop')</option>
+                {{-- Search --}}
+                <div class="search-section">
+                    <div class="search-row">
+                        <div class="field" style="flex:0 0 auto; min-width:140px;">
+                            <label class="field-label"><i class="bi bi-tag"></i> @lang('messages.sales_type')</label>
+                            <select id="orderType" name="orderType" class="field-input">
+                                <option value="Sell" {{ session('orderType', 'Sell') == 'Sell' ? 'selected' : '' }}><i class="bi bi-circle-fill text-success"></i> @lang('messages.pay')</option>
+                                <option value="Return" {{ session('orderType', 'Sell') == 'Return' ? 'selected' : '' }}><i class="bi bi-circle-fill text-info"></i> @lang('messages.return')</option>
+                                <option value="Debt" {{ session('orderType', 'Sell') == 'Debt' ? 'selected' : '' }}><i class="bi bi-circle-fill text-danger"></i> @lang('messages.credit')</option>
+                                <option value="Suspended" {{ session('orderType', 'Sell') == 'Suspended' ? 'selected' : '' }}><i class="bi bi-circle-fill text-warning"></i> @lang('messages.suspended')</option>
+                            </select>
+                        </div>
+
+                        @if(isset($allShops) && count($allShops) > 1)
+                        <div class="field" style="flex:0 0 auto; min-width:150px;">
+                            <label class="field-label"><i class="bi bi-shop"></i> @lang('messages.shop_label')</label>
+                            <select class="shop-select-inline" id="shopSelect" onchange="changeShop(this.value)">
                                 @foreach($allShops as $shop)
                                 <option value="{{ $shop['id'] }}" {{ (session('selected_shop_id') == $shop['id']) ? 'selected' : '' }}>
                                     {{ $shop['name'] }}
                                 </option>
                                 @endforeach
                             </select>
-                            @endif
-                            {{-- Search Input --}}
-                            <div style="flex:1; position:relative;">
-                                <i class="bi bi-search sbox-icon"></i>
-                                <input type="text" id="productSearch" class="sbox-input"
-                                    placeholder="@lang('messages.search_products_placeholder')" autocomplete="off">
-                            </div>
                         </div>
-                        <div class="dropdown" id="productDropdown"></div>
-                    </div>
+                        @endif
 
-                    {{-- Cart --}}
-                    <div class="cart-section">
-                    <div class="cart-toolbar">
-                        <div class="d-flex">
-                            <span class="cart-label"><i class="bi bi-cart3"></i> @lang('messages.cart')</span>
-                        <span class="cart-badge" id="cartBadge">
-                            {{ $cart->where('offered_items', '!=', 1)->count() }}
-                        </span>
+                        <div class="search-wrapper">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" id="productSearch" placeholder="@lang('messages.search_products_placeholder')" autocomplete="off">
+                            <div class="dropdown" id="productDropdown"></div>
                         </div>
-                        <button type="button" class="btn btn-outline-danger" id="clearCartBtn" style="font-size:0.75rem;padding:0.3rem 0.55rem;">
-                            <i class="bi bi-x"></i> Clear All
+                    </div>
+                </div>
+
+                {{-- Cart --}}
+                <div class="cart-section">
+                    <div class="cart-toolbar">
+                        <div class="d-flex align-center gap-1">
+                            <span class="cart-label"><i class="bi bi-cart3"></i> @lang('messages.cart')</span>
+                            <span class="cart-badge" id="cartBadge">
+                                {{ $cart->where('offered_items', '!=', 1)->count() }}
+                            </span>
+                            <span style="font-size:0.7rem;color:var(--gray-400);">
+                                <i class="bi bi-box-seam"></i> {{ $cart->sum('pQuantity') }} @lang('messages.items')
+                            </span>
+                        </div>
+                        <button type="button" class="btn-clear" id="clearCartBtn">
+                            <i class="bi bi-x"></i> @lang('messages.clear_all')
                         </button>
                     </div>
 
-                        @php $offeredItems = $cart->where('offered_items', 1); @endphp
-                        @if($offeredItems->count() > 0)
-                        <div class="offer-banner" style="flex-direction:column;align-items:stretch;gap:0.5rem;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                                <span><i class="bi bi-gift-fill"></i> @lang('messages.free_offer_items_included', ['count' => $offeredItems->count()])</span>
-                            </div>
-                            <div id="offerList" style="display:flex;flex-direction:column;gap:0.35rem;">
-                                @foreach($offeredItems as $oi)
-                                @php
-                                    $oiName = DB::table('products')->where('account', getCurrentShopId())->where('product_id', $oi->productId)->value('name01') ?? __('messages.unknown');
-                                @endphp
-                                <div class="offer-chip" data-product-id="{{ $oi->productId }}">
-                                    <i class="bi bi-gift"></i>
-                                    <span>{{ $oiName }} &times;{{ $oi->pQuantity }}</span>
-                                    <button type="button" class="offer-remove" title="@lang('messages.remove_free_item')" onclick="removeOfferItem(this,'{{ $oi->order_id }}','{{ $oi->productId }}',{{ $oi->pQuantity }})">
-                                        <i class="bi bi-x-circle-fill"></i>
-                                    </button>
-                                </div>
-                                @endforeach
-                            </div>
+                    @php $offeredItems = $cart->where('offered_items', 1); @endphp
+                    @if($offeredItems->count() > 0)
+                    <div class="offer-banner">
+                        <div class="offer-banner-top">
+                            <span><i class="bi bi-gift-fill"></i> @lang('messages.free_offer_items_included', ['count' => $offeredItems->count()])</span>
                         </div>
-                        @endif
-                         
-                        <div class="cart-overflow">
+                        <div id="offerList" style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+                            @foreach($offeredItems as $oi)
                             @php
-                                $cartProductIds = $cart->pluck('productId')->toArray();
-                                $cartOffers = [];
-                                if(!empty($offers) && !empty($cartProductIds)) {
-                                    foreach($offers as $offer) {
-                                        $requiredPids = $offer->requiredItems->pluck('product_id')->toArray();
-                                        $hasAll = true;
-                                        foreach($requiredPids as $rpid) {
-                                            if(!in_array($rpid, $cartProductIds)) { $hasAll = false; break; }
-                                        }
-                                        if($hasAll) {
-                                            $cartOffers[$offer->id] = $offer;
-                                        }
+                                $oiName = DB::table('products')->where('account', getCurrentShopId())->where('product_id', $oi->productId)->value('name01') ?? __('messages.unknown');
+                            @endphp
+                            <div class="offer-chip" data-product-id="{{ $oi->productId }}">
+                                <i class="bi bi-gift"></i>
+                                <span>{{ $oiName }} &times;{{ $oi->pQuantity }}</span>
+                                <button type="button" class="offer-chip-remove" title="@lang('messages.remove_free_item')" onclick="removeOfferItem(this,'{{ $oi->order_id }}','{{ $oi->productId }}',{{ $oi->pQuantity }})">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="cart-scroll">
+                        @php
+                            $cartProductIds = $cart->pluck('productId')->toArray();
+                            $cartOffers = [];
+                            if(!empty($offers) && !empty($cartProductIds)) {
+                                foreach($offers as $offer) {
+                                    $requiredPids = $offer->requiredItems->pluck('product_id')->toArray();
+                                    $hasAll = true;
+                                    foreach($requiredPids as $rpid) {
+                                        if(!in_array($rpid, $cartProductIds)) { $hasAll = false; break; }
+                                    }
+                                    if($hasAll) {
+                                        $cartOffers[$offer->id] = $offer;
                                     }
                                 }
-                                $cartItems = $cart->where('offered_items', '!=', 1);
-                            @endphp
-
-                            @if($cartItems->count() > 0)
-                            <table class="cart-tbl">
-                                <thead>
-                                    <tr>
-                                        <th>@lang('messages.products_col_product')</th>
-                                        <th style="text-align:center;">@lang('messages.col_qty')</th>
-                                        <th style="text-align:right;">@lang('messages.col_unit_price')</th>
-                                        <th style="text-align:right;">@lang('messages.amount')</th>
-                                        <th style="text-align:right;">@lang('messages.discount')</th>
-                                        <th style="text-align:right;">@lang('messages.total')</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($cartItems as $item)
-                                    @php
-                                        $productObj = DB::table('products')->where('account', getCurrentShopId())->where('product_id', $item->productId)->first('name01');
-                                        $productName = $productObj->name01 ?? 'Unknown Product';
-                                        $amount        = $item->productPrice * $item->pQuantity;
-                                        $discIncrease  = $item->discount_increase ?? 0;
-                                        $netAdj        = ($item->discount ?? 0) - $discIncrease;
-                                        $total         = $amount - $netAdj;
-
-                                        $qualifies = false; $offerInfo = null; $freeCount = 0;
-                                        foreach($cartOffers as $offer) {
-                                            $reqItem = $offer->requiredItems->first();
-                                            if(!$reqItem) continue;
-                                            if($item->productId == $reqItem->product_id && $item->pQuantity >= $reqItem->required_quantity) {
-                                                $times = floor($item->pQuantity / $reqItem->required_quantity);
-                                                $qualifies = true;
-                                                $freeCount = $times * $offer->offer_quantity;
-                                                $offerInfo = $offer;
-                                                break;
-                                            }
-                                        }
-                                    @endphp
-                                    <tr class="{{ $qualifies ? 'offer-row' : '' }}">
-                                        <td>
-                                            <div class="cart-prod-name" title="{{ $productName }}">
-                                                {{ $productName }}
-                                            </div>
-                                            @if($qualifies && $offerInfo)
-                                                <span class="dd-badge dd-badge-offer" style="margin-top:2px;">
-                                                    <i class="bi bi-gift-fill"></i> +{{ $freeCount }} @lang('messages.free')
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td style="text-align:center;">
-                                            <input type="number" class="tbl-input" value="{{ $item->pQuantity }}"
-                                                onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','pQuantity',this.value)">
-                                        </td>
-                                        <td class="num-right">{{ number_format($item->productPrice) }}</td>
-                                        <td class="num-right">{{ number_format($amount) }}</td>
-                                        <td style="text-align:center;">
-                                            <input type="number" class="tbl-input" value="{{ $netAdj }}"
-                                                placeholder="±"
-                                                onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','adjustment',this.value)">
-                                        </td>
-                                        <td class="num-right fw-total">{{ number_format($total) }}</td>
-                                        <td style="text-align:center;">
-                                            <form action="removeFromCart" method="post" style="display:inline;">
-                                                @csrf
-                                                <input type="hidden" name="itemId" value="{{ $item->productId }}">
-                                                <input type="hidden" name="orderId" value="{{ $item->order_id }}">
-                                                <input type="hidden" name="prodQuantity" value="{{ $item->pQuantity }}">
-                                                <button type="submit" class="del-btn" title="@lang('messages.remove')">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                            @else
-                            <div class="empty-cart">
-                                <i class="bi bi-cart-x"></i>
-                                <div class="empty-cart-title">@lang('messages.cart_empty')</div>
-                                <p>@lang('messages.cart_empty_hint')</p>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>{{-- /left panel --}}
-
-                {{-- ══ RIGHT: Summary + Submit ══ --}}
-                <div class="panel">
-                    <div class="panel-head">
-                        <div class="panel-head-left"><i class="bi bi-receipt"></i> @lang('messages.sales_summary')</div>
-                    </div>
-
-                    {{-- Customer --}}
-                    <div class="rp-sec">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-                            <div class="sec-title" style="margin-bottom:0;"><i class="bi bi-person-circle"></i> @lang('messages.customer')</div>
-                            <a href="customers" class="hbtn" style="background:var(--navy);color:#fff;font-size:0.75rem;padding:0.3rem 0.65rem;">
-                                <i class="bi bi-plus-lg"></i> @lang('messages.new')
-                            </a>
-                        </div>
-
-                        <form action="saveInfos" id="saveInfosForm" method="post">
-                            @csrf
-                            <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
-                            <input type="hidden" name="orderType" id="orderTypeForm1" value="{{ session('orderType', 'Sell') }}">
-                            <input type="hidden" name="selectedCustomer" id="selectedCustomer">
-                            <div style="position:relative;">
-                                <div class="sbox">
-                                    <i class="bi bi-search sbox-icon"></i>
-                                    <input type="text" id="customerSearch" class="sbox-input"
-                                        placeholder="@lang('messages.search_customer_placeholder')" autocomplete="off">
-                                </div>
-                                <div class="dropdown" id="customerDropdown"></div>
-                            </div>
-
-                            <div id="customerBadgeWrap" style="display:{{ !empty($orders->cPhone) ? 'block' : 'none' }};margin-top:0.5rem;">
-                                <span class="sel-badge">
-                                    <span id="customerBadgeText">{{ $orders->cName ?? '' }}</span>
-                                    <button type="button" class="sel-badge-remove" onclick="clearCustomer()">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </span>
-                            </div>
-                        </form>
-
-                        @php
-                            $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
-                            $odez1   = DB::table('orders')->whereIn('status', ['Debt','Partial'])
-                                        ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
-                            $odez2   = DB::table('debts')->where('cId', $orders->cPhone ?? '')->sum('amount');
-                            $odez    = +($odez1 - $odez2);
-                            $totalSpent = $odez1;
+                            }
+                            $cartItems = $cart->where('offered_items', '!=', 1);
                         @endphp
 
-                        @if(!empty($orders->cPhone))
-                        <div class="cust-info" id="custInfoCard">
-                            <div class="cust-info-title">@lang('messages.customer_info')</div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.name')</span>
-                                <span class="cust-val" id="custName">{{ $checkz->name ?? '—' }}</span>
-                            </div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.credit_limit')</span>
-                                <span class="cust-val" id="custLimit">{{ number_format($checkz->limits ?? 0) }}</span>
-                            </div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.used_credit')</span>
-                                <span class="cust-val" id="custCredit">{{ number_format($odez1 ?? 0) }}</span>
-                            </div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.total_paid')</span>
-                                <span class="cust-val" id="custPaid">{{ number_format($odez2 ?? 0) }}</span>
-                            </div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.remaining_debt')</span>
-                                <span class="cust-val" id="custRemaining">{{ number_format($odez ?? 0) }}</span>
-                            </div>
-                            <div class="cust-row">
-                                <span class="cust-key">@lang('messages.available')</span>
-                                <span class="cust-val available" id="custAvail">{{ number_format(($checkz->limits ?? 0) - ($odez ?? 0)) }}</span>
-                            </div>
-                        </div>
-                        @else
-                        <div class="cust-info" id="custInfoCard" style="display:none;"></div>
-                        @endif
+                        @if($cartItems->count() > 0)
+                        <table class="cart-table">
+                            <thead>
+                                <tr>
+                                    <th>@lang('messages.products_col_product')</th>
+                                    <th class="text-center">@lang('messages.col_qty')</th>
+                                    <th class="text-right">@lang('messages.col_unit_price')</th>
+                                    <th class="text-right">@lang('messages.amount')</th>
+                                    <th class="text-right">@lang('messages.discount')</th>
+                                    <th class="text-right">@lang('messages.total')</th>
+                                    <th class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($cartItems as $item)
+                                @php
+                                    $productObj = DB::table('products')->where('account', getCurrentShopId())->where('product_id', $item->productId)->first('name01');
+                                    $productName = $productObj->name01 ?? 'Unknown Product';
+                                    $amount        = $item->productPrice * $item->pQuantity;
+                                    $discIncrease  = $item->discount_increase ?? 0;
+                                    $netAdj        = ($item->discount ?? 0) - $discIncrease;
+                                    $total         = $amount - $netAdj;
 
-                        @if(!empty($orders->orderName))
-                        <div class="order-meta">
-                            <div class="meta-chip">
-                                <span class="meta-chip-label">@lang('messages.order_id')</span>
-                                <span class="meta-chip-value">{{ $orders->orderName ?? '—' }}</span>
-                            </div>
-                            <div class="meta-chip">
-                                <span class="meta-chip-label">@lang('messages.status')</span>
-                                <span class="meta-chip-value">{{ $orders->status ?? '—' }}</span>
-                            </div>
+                                    $qualifies = false; $offerInfo = null; $freeCount = 0;
+                                    foreach($cartOffers as $offer) {
+                                        $reqItem = $offer->requiredItems->first();
+                                        if(!$reqItem) continue;
+                                        if($item->productId == $reqItem->product_id && $item->pQuantity >= $reqItem->required_quantity) {
+                                            $times = floor($item->pQuantity / $reqItem->required_quantity);
+                                            $qualifies = true;
+                                            $freeCount = $times * $offer->offer_quantity;
+                                            $offerInfo = $offer;
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                <tr class="{{ $qualifies ? 'offer-row' : '' }}">
+                                    <td data-label="@lang('messages.products_col_product')">
+                                        <div class="cart-product-name" title="{{ $productName }}">
+                                            {{ $productName }}
+                                        </div>
+                                        @if($qualifies && $offerInfo)
+                                            <span class="dd-badge dd-badge-offer" style="margin-top:2px;">
+                                                <i class="bi bi-gift-fill"></i> +{{ $freeCount }} @lang('messages.free')
+                                            </span>
+                                        @endif
+                                        <div style="font-size:0.6rem;color:var(--gray-400);margin-top:2px;">
+                                            <i class="bi bi-hash"></i> {{ $item->productId }}
+                                        </div>
+                                    </td>
+                                    <td data-label="@lang('messages.col_qty')" class="text-center">
+                                        <input type="number" class="qty-input" value="{{ $item->pQuantity }}"
+                                            min="1" step="1"
+                                            onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','pQuantity',this.value)">
+                                    </td>
+                                    <td data-label="@lang('messages.col_unit_price')" class="text-right mono">
+                                        {{ number_format($item->productPrice) }}
+                                    </td>
+                                    <td data-label="@lang('messages.amount')" class="text-right mono">
+                                        {{ number_format($amount) }}
+                                    </td>
+                                    <td data-label="@lang('messages.discount')" class="text-center">
+                                        <input type="number" class="qty-input" value="{{ $netAdj }}"
+                                            placeholder="±" style="width:65px;"
+                                            onchange="updateCartItem('{{ $item->order_id }}','{{ $item->productId }}','adjustment',this.value)">
+                                    </td>
+                                    <td data-label="@lang('messages.total')" class="text-right mono fw-bold">
+                                        {{ number_format($total) }}
+                                    </td>
+                                    <td data-label="@lang('messages.actions')" class="text-center">
+                                        <form action="removeFromCart" method="post" style="display:inline;">
+                                            @csrf
+                                            <input type="hidden" name="itemId" value="{{ $item->productId }}">
+                                            <input type="hidden" name="orderId" value="{{ $item->order_id }}">
+                                            <input type="hidden" name="prodQuantity" value="{{ $item->pQuantity }}">
+                                            <button type="submit" class="btn-delete" title="@lang('messages.remove')">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        @else
+                        <div class="empty-cart">
+                            <i class="bi bi-cart-x"></i>
+                            <div class="empty-cart-title">@lang('messages.cart_empty')</div>
+                            <p>@lang('messages.cart_empty_hint')</p>
                         </div>
                         @endif
                     </div>
+                </div>
+            </div>{{-- /left panel --}}
 
-                    {{-- Seller --}}
-                    <div class="rp-sec">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-                            <div class="sec-title" style="margin-bottom:0;"><i class="bi bi-person-badge"></i> @lang('messages.seller')</div>
+            {{-- ══ RIGHT: Summary + Submit ══ --}}
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-header-left"><i class="bi bi-receipt"></i> @lang('messages.sales_summary')</div>
+                    <span style="font-size:0.7rem;color:rgba(255,255,255,0.5);">
+                        <i class="bi bi-clock"></i> {{ now()->format('H:i') }}
+                    </span>
+                </div>
+
+                {{-- Customer --}}
+                <div class="sidebar-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                        <div class="section-title" style="margin-bottom:0;"><i class="bi bi-person-circle"></i> @lang('messages.customer')</div>
+                        <a href="customers" class="btn-header" style="background:var(--primary-dark);color:#fff;font-size:0.7rem;padding:0.2rem 0.6rem;border:none;">
+                            <i class="bi bi-plus-lg"></i> @lang('messages.new')
+                        </a>
+                    </div>
+
+                    <form action="saveInfos" id="saveInfosForm" method="post">
+                        @csrf
+                        <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
+                        <input type="hidden" name="orderType" id="orderTypeForm1" value="{{ session('orderType', 'Sell') }}">
+                        <input type="hidden" name="selectedCustomer" id="selectedCustomer">
+
+                        <div class="position-relative">
+                            <div class="search-wrapper">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="customerSearch" class="field-input" style="padding-left:2.2rem;"
+                                    placeholder="@lang('messages.search_customer_placeholder')" autocomplete="off">
+                                <div class="dropdown" id="customerDropdown"></div>
+                            </div>
                         </div>
-                        
-                        <form action="saveSeller" id="saveSellerForm" method="post">
-                            @csrf
-                            <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
-                            <input type="hidden" name="orderType" id="orderTypeForm2" value="{{ session('orderType', 'Sell') }}">
 
-                            <div style="position:relative;">
-                                <div class="sbox">
-                                    <i class="bi bi-search sbox-icon"></i>
-                                    <input type="text" id="sellerSearch" class="sbox-input"
-                                        placeholder="@lang('messages.search_seller_placeholder')" autocomplete="off"
-                                        value="{{ $orders->served_by ?? '' }}">
-                                    <input type="hidden" name="selectedSeller" id="selectedSeller"
-                                        value="{{ $orders->served_by ?? '' }}">
-                                </div>
+                        <div id="customerBadgeWrap" style="display:{{ !empty($orders->cPhone) ? 'block' : 'none' }};margin-top:0.5rem;">
+                            <span class="selected-badge">
+                                <span id="customerBadgeText">{{ $orders->cName ?? '' }}</span>
+                                <button type="button" class="selected-badge-remove" onclick="clearCustomer()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </form>
+
+                    @php
+                        $checkz = DB::table('customers')->where('id', $orders->cPhone ?? '')->first();
+                        $odez1   = DB::table('orders')->whereIn('status', ['Debt','Partial'])
+                                    ->where('cPhone', $orders->cPhone ?? '')->sum('credit');
+                        $odez2   = DB::table('debts')->where('cId', $orders->cPhone ?? '')->sum('amount');
+                        $odez    = +($odez1 - $odez2);
+                        $totalSpent = $odez1;
+                    @endphp
+
+                    @if(!empty($orders->cPhone))
+                    <div class="customer-info" id="custInfoCard">
+                        <div class="customer-info-title"><i class="bi bi-person-badge"></i> @lang('messages.customer_info')</div>
+                        <div class="customer-row">
+                            <span class="customer-key">@lang('messages.name')</span>
+                            <span class="customer-value" id="custName">{{ $checkz->name ?? '—' }}</span>
+                        </div>
+                        <div class="customer-row">
+                            <span class="customer-key">@lang('messages.credit_limit')</span>
+                            <span class="customer-value" id="custLimit">{{ number_format($checkz->limits ?? 0) }}</span>
+                        </div>
+                        <div class="customer-row">
+                            <span class="customer-key">@lang('messages.used_credit')</span>
+                            <span class="customer-value debt" id="custCredit">{{ number_format($odez1 ?? 0) }}</span>
+                        </div>
+                        <div class="customer-row">
+                            <span class="customer-key">@lang('messages.total_paid')</span>
+                            <span class="customer-value" id="custPaid">{{ number_format($odez2 ?? 0) }}</span>
+                        </div>
+                        <div class="customer-row">
+                            <span class="customer-key">@lang('messages.remaining_debt')</span>
+                            <span class="customer-value debt" id="custRemaining">{{ number_format($odez ?? 0) }}</span>
+                        </div>
+                        <div class="customer-row">
+                            <span class="customer-key"><i class="bi bi-check-circle-fill text-success me-1"></i>@lang('messages.available')</span>
+                            <span class="customer-value available" id="custAvail">{{ number_format(($checkz->limits ?? 0) - ($odez ?? 0)) }}</span>
+                        </div>
+                    </div>
+                    @else
+                    <div class="customer-info" id="custInfoCard" style="display:none;"></div>
+                    @endif
+
+                    @if(!empty($orders->orderName))
+                    <div class="order-meta">
+                        <div class="meta-chip">
+                            <span class="meta-chip-label"><i class="bi bi-clipboard me-1"></i>@lang('messages.order_id')</span>
+                            <span class="meta-chip-value">{{ $orders->orderName ?? '—' }}</span>
+                        </div>
+                        <div class="meta-chip">
+                            <span class="meta-chip-label"><i class="bi bi-bar-chart me-1"></i>@lang('messages.status')</span>
+                            <span class="meta-chip-value">{{ $orders->status ?? '—' }}</span>
+                        </div>
+                        <div class="meta-chip">
+                            <span class="meta-chip-label"><i class="bi bi-calendar-date me-1"></i>@lang('messages.date')</span>
+                            <span class="meta-chip-value">{{ $orders->created_at ? date('M d, Y', strtotime($orders->created_at)) : '—' }}</span>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Seller --}}
+                <div class="sidebar-section">
+                    <div class="section-title"><i class="bi bi-person-badge"></i> @lang('messages.seller')</div>
+                    
+                    <form action="saveSeller" id="saveSellerForm" method="post">
+                        @csrf
+                        <input type="hidden" name="orderId" value="{{ $orders->order_id ?? '' }}">
+                        <input type="hidden" name="orderType" id="orderTypeForm2" value="{{ session('orderType', 'Sell') }}">
+
+                        <div class="position-relative">
+                            <div class="search-wrapper">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="sellerSearch" class="field-input" style="padding-left:2.2rem;"
+                                    placeholder="@lang('messages.search_seller_placeholder')" autocomplete="off"
+                                    value="{{ $orders->served_by ?? '' }}">
+                                <input type="hidden" name="selectedSeller" id="selectedSeller"
+                                    value="{{ $orders->served_by ?? '' }}">
                                 <div class="dropdown" id="sellerDropdown"></div>
                             </div>
-                            
-                            <div id="sellerBadgeWrap" style="display:{{ $orders->served_by ? 'block' : 'none' }};margin-top:0.5rem;">
-                                <span class="sel-badge">
-                                    <span id="sellerBadgeText">{{ $orders->served_by ?? '' }}</span>
-                                    <button type="button" class="sel-badge-remove" onclick="clearSeller()">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </span>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        
+                        <div id="sellerBadgeWrap" style="display:{{ $orders->served_by ? 'block' : 'none' }};margin-top:0.5rem;">
+                            <span class="selected-badge">
+                                <span id="sellerBadgeText">{{ $orders->served_by ?? '' }}</span>
+                                <button type="button" class="selected-badge-remove" onclick="clearSeller()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </form>
+                </div>
 
-                    {{-- Order form --}}
-                    <div class="rp-sec">
-                        <form action="payout" method="post" id="payoutForm">
-                            @csrf
-                            <input type="hidden" name="orderId"          value="{{ $orders->order_id ?? '' }}">
-                            <input type="hidden" name="served"           id="servedHidden" value="{{ $orders->served_by ?? '' }}">
-                            <input type="hidden" name="selectedCustomer" id="custHidden">
-                            <input type="hidden" name="offered_items"    id="offeredItemsInput" value="">
-                            <input type="hidden" name="orderType" id="orderTypeHidden" value="{{ session('orderType', 'Sell') }}">
+                {{-- Order Form --}}
+                <div class="sidebar-section" style="border-bottom:none;">
+                    <form action="payout" method="post" id="payoutForm">
+                        @csrf
+                        <input type="hidden" name="orderId"          value="{{ $orders->order_id ?? '' }}">
+                        <input type="hidden" name="served"           id="servedHidden" value="{{ $orders->served_by ?? '' }}">
+                        <input type="hidden" name="selectedCustomer" id="custHidden">
+                        <input type="hidden" name="offered_items"    id="offeredItemsInput" value="">
+                        <input type="hidden" name="orderType" id="orderTypeHidden" value="{{ session('orderType', 'Sell') }}">
 
-                            <div class="sec-title"><i class="bi bi-sliders"></i> @lang('messages.order_settings')</div>
+                        <div class="section-title"><i class="bi bi-sliders"></i> @lang('messages.order_settings')</div>
 
-
-                            <div id="payDistWrap">
-                                <div class="pay-dist">
-                                    <div>
-                                        <div class="pay-dist-label">@lang('messages.paid')</div>
-                                        <input type="number" id="paidInput" name="paid" class="field-input" style="margin:0;">
-                                    </div>
-                                    <div>
-                                        <div class="pay-dist-label">@lang('messages.credit')</div>
-                                        <input type="number" id="creditInput" name="credit" class="field-input" style="margin:0;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="payMethodWrap" class="field">
-                                <label class="field-label"><i class="bi bi-wallet2"></i> @lang('messages.payment_method')</label>
-                                <select id="paymentType" name="paymentMethod" class="field-input">
-                                    <option value="Cash">@lang('messages.cash')</option>
-                                     <option value="Credit">@lang('messages.credit')</option>
-                                </select>
-                            </div>
-
-                            <div id="debtNote" style="display:none;" class="field">
-                                <label class="field-label"><i class="bi bi-sticky"></i> @lang('messages.credit_note')</label>
-                                <textarea class="field-input" placeholder="@lang('messages.add_a_note_placeholder')" rows="2" style="resize:none;"></textarea>
-                            </div>
-
-                            <div id="suspendNote" style="display:none;" class="field">
-                                <label class="field-label"><i class="bi bi-pause-circle"></i> @lang('messages.suspension_reason')</label>
-                                <textarea class="field-input" placeholder="@lang('messages.suspension_reason_placeholder')" rows="2" style="resize:none;"></textarea>
-                            </div>
-
-                            @if(canUser('manage_sales_date'))
-                            @php
-                                $orderDate = null;
-                                if (!empty($orders->created_at)) {
-                                    $d = \Carbon\Carbon::parse($orders->created_at);
-                                    if ($d->format('Y-m-d') !== date('Y-m-d')) $orderDate = $d->format('Y-m-d');
-                                }
-                            @endphp
-                            <div class="field">
-                                <label class="field-label"><i class="bi bi-calendar3"></i> @lang('messages.sale_date') <span style="font-weight:400;color:var(--slate-400);">@lang('messages.optional')</span></label>
-                                <input type="date" name="saleDate" value="{{ $orderDate ?? date('Y-m-d') }}" class="field-input">
-                            </div>
-                            @endif
-
-                            {{-- Summary --}}
-                            @php
-                                $totalAdj = ($totalD ?? 0) - ($totalDI ?? 0);
-                                $grandTotal = $totalP;
-                            @endphp
-                            <div class="price-rows" style="margin-top:0.75rem;">
-                                <div class="price-row-item">
-                                    <span class="key">@lang('messages.subtotal')</span>
-                                    <span class="val" id="sumSubtotal">{{ number_format($totalP + $totalD + $totalDI) }}</span>
-                                </div>
-                                <div class="price-row-item">
-                                    <span class="key">@lang('messages.discount')</span>
-                                    <span class="val" id="sumDiscount">{{ number_format($totalAdj) }}</span>
-                                </div>
-                            </div>
-
-                            <div class="total-card">
+                        <div id="payDistWrap">
+                            <div class="pay-distribution">
                                 <div>
-                                    <div class="total-card-label">@lang('messages.total')</div>
+                                    <div class="pay-dist-label"><i class="bi bi-cash me-1"></i>@lang('messages.paid')</div>
+                                    <input type="number" id="paidInput" name="paid" class="field-input" style="margin:0;">
                                 </div>
-                                <div class="total-card-amount">
-                                    <span class="total-card-curr">Tsh</span><span id="grandTotalEl">{{ number_format($grandTotal) }}</span>
+                                <div>
+                                    <div class="pay-dist-label"><i class="bi bi-pencil me-1"></i>@lang('messages.credit')</div>
+                                    <input type="number" id="creditInput" name="credit" class="field-input" style="margin:0;">
+                                </div>
+                                <div>
+                                    <div class="pay-dist-label"><i class="bi bi-bank me-1"></i>@lang('messages.bank')</div>
+                                    <input type="number" id="bankInput" name="bank" class="field-input" style="margin:0;">
                                 </div>
                             </div>
+                        </div>
 
-                            <button type="submit" class="submit-btn" id="submitBtn">
-                                <i class="bi bi-check-circle-fill"></i> @lang('messages.submit_sale')
+                        <div id="payMethodWrap" class="field">
+                            <label class="field-label"><i class="bi bi-wallet2"></i> @lang('messages.payment_method')</label>
+                            <select id="paymentType" name="paymentMethod" class="field-input">
+                                <option value="Cash"><i class="bi bi-cash me-1"></i>@lang('messages.cash')</option>
+                                <option value="Credit"><i class="bi bi-credit-card me-1"></i>@lang('messages.credit')</option>
+   
+                            </select>
+                        </div>
+
+                        <div id="debtNote" style="display:none;" class="field">
+                            <label class="field-label"><i class="bi bi-sticky"></i> @lang('messages.credit_note')</label>
+                            <textarea class="field-input" placeholder="@lang('messages.add_a_note_placeholder')" rows="2" style="resize:none;"></textarea>
+                        </div>
+
+                        <div id="suspendNote" style="display:none;" class="field">
+                            <label class="field-label"><i class="bi bi-pause-circle"></i> @lang('messages.suspension_reason')</label>
+                            <textarea class="field-input" placeholder="@lang('messages.suspension_reason_placeholder')" rows="2" style="resize:none;"></textarea>
+                        </div>
+
+                        @if(canUser('manage_sales_date'))
+                        @php
+                            $orderDate = null;
+                            if (!empty($orders->created_at)) {
+                                $d = \Carbon\Carbon::parse($orders->created_at);
+                                if ($d->format('Y-m-d') !== date('Y-m-d')) $orderDate = $d->format('Y-m-d');
+                            }
+                        @endphp
+                        <div class="field">
+                            <label class="field-label"><i class="bi bi-calendar3"></i> @lang('messages.sale_date') <span style="font-weight:400;color:var(--gray-400);font-size:0.65rem;">@lang('messages.optional')</span></label>
+                            <input type="date" name="saleDate" value="{{ $orderDate ?? date('Y-m-d') }}" class="field-input">
+                        </div>
+                        @endif
+
+                        {{-- Summary --}}
+                        @php
+                            $totalAdj = ($totalD ?? 0) - ($totalDI ?? 0);
+                            $grandTotal = $totalP;
+                        @endphp
+                        <div class="price-rows" style="margin-top:0.75rem;">
+                            <div class="price-row">
+                                 <span class="key"><i class="bi bi-bar-chart me-1"></i>@lang('messages.subtotal')</span>
+                                <span class="val mono" id="sumSubtotal">{{ number_format($totalP + $totalD + $totalDI) }}</span>
+                            </div>
+                            <div class="price-row">
+                                 <span class="key"><i class="bi bi-tag me-1"></i>@lang('messages.discount')</span>
+                                <span class="val mono" id="sumDiscount">{{ number_format($totalAdj) }}</span>
+                            </div>
+                            <div class="price-row" style="border-top:1px dashed var(--gray-200);padding-top:0.4rem;">
+                                 <span class="key" style="font-weight:700;"><i class="bi bi-box me-1"></i>@lang('messages.items')</span>
+                                <span class="val mono">{{ $cart->sum('pQuantity') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="total-card">
+                            <div>
+                                <div class="total-card-label"><i class="bi bi-cash-stack me-1"></i>@lang('messages.total')</div>
+                                <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;">
+                                    <i class="bi bi-box-seam"></i> {{ $cart->where('offered_items', '!=', 1)->count() }} @lang('messages.products')
+                                </div>
+                            </div>
+                            <div class="total-card-amount">
+                                <span class="total-card-currency">Tsh</span><span id="grandTotalEl">{{ number_format($grandTotal) }}</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="submitBtn">
+                            <i class="bi bi-check-circle-fill"></i> @lang('messages.submit_sale')
+                        </button>
+
+                        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+                            <button type="button" class="btn-header" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-300);flex:1;justify-content:center;" onclick="suspendOrder()">
+                                <i class="bi bi-pause-circle"></i> @lang('messages.suspend')
                             </button>
-                        </form>
-                    </div>
-                </div>{{-- /right panel --}}
+                            <button type="button" class="btn-header" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-300);flex:1;justify-content:center;" onclick="printInvoice()">
+                                <i class="bi bi-printer"></i> @lang('messages.print')
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>{{-- /right panel --}}
 
-            </div>{{-- /layout --}}
-        </div>
+        </div>{{-- /layout-grid --}}
+
     </div>
-</div>
+</main>
 
 {{-- ════════════════════════════════════════════
      MODALS
@@ -1006,18 +1624,19 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-navy">
-                 <h5 class="modal-title"><i class="bi bi-pencil-square"></i> @lang('messages.edit_past_sales')</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> @lang('messages.edit_past_sales')</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="info-box mb-3">
+                <div class="info-box">
                     <i class="bi bi-info-circle me-1"></i>
                     @lang('messages.past_sales_search_note')
                 </div>
-                <div style="position:relative;margin-bottom:1rem;">
-                    <div class="sbox">
-                        <i class="bi bi-search sbox-icon"></i>
-                        <input type="text" id="pastSalesSearch" class="sbox-input" placeholder="@lang('messages.search_by_customer_name')" autocomplete="off">
+                <div class="position-relative" style="margin-bottom:1rem;">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" id="pastSalesSearch" class="field-input" style="padding-left:2.2rem;" placeholder="@lang('messages.search_by_customer_name')" autocomplete="off">
+                        <div class="dropdown" id="pastSalesDropdown"></div>
                     </div>
                 </div>
                 <div id="pastSalesResults" style="max-height:400px;overflow-y:auto;"></div>
@@ -1031,18 +1650,18 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-navy">
-                 <h5 class="modal-title"><i class="bi bi-arrow-return-left"></i> @lang('messages.confirm_return')</h5>
+                <h5 class="modal-title"><i class="bi bi-arrow-return-left"></i> @lang('messages.confirm_return')</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom:0.75rem;font-size:0.9rem;color:var(--slate-600);">
+                <p style="margin-bottom:0.75rem;font-size:0.9rem;color:var(--gray-600);">
                     @lang('messages.return_to_orders_note')
                 </p>
-                <div id="returnSaleDetails" class="cust-info" style="display:none;"></div>
+                <div id="returnSaleDetails" class="customer-info" style="display:none;"></div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">@lang('messages.cancel')</button>
-                <button type="button" id="confirmReturnBtn" class="submit-btn" style="width:auto;padding:0.5rem 1.2rem;">
+                <button type="button" class="btn-header" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-300);" data-bs-dismiss="modal">@lang('messages.cancel')</button>
+                <button type="button" id="confirmReturnBtn" class="btn-submit" style="width:auto;padding:0.5rem 1.2rem;">
                     <i class="bi bi-check-circle-fill"></i> @lang('messages.confirm')
                 </button>
             </div>
@@ -1055,7 +1674,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-navy">
-                 <h5 class="modal-title"><i class="bi bi-pause-circle"></i> @lang('messages.suspended_orders')</h5>
+                <h5 class="modal-title"><i class="bi bi-pause-circle"></i> @lang('messages.suspended_orders')</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
@@ -1063,20 +1682,24 @@
                 <div class="suspended-row">
                     <div>
                         <div class="suspended-row-name">{{ $order->cName ?: __('messages.no_customer') }}</div>
-                        <div class="suspended-row-meta">Tsh {{ number_format($order->total_price) }}</div>
+                        <div class="suspended-row-meta">
+                            <span><i class="bi bi-cash"></i> Tsh {{ number_format($order->total_price) }}</span>
+                            <span style="margin-left:0.5rem;"><i class="bi bi-box-seam"></i> {{ $order->items_count ?? 0 }} @lang('messages.items')</span>
+                            <span style="margin-left:0.5rem;"><i class="bi bi-clock"></i> {{ date('M d, H:i', strtotime($order->created_at)) }}</span>
+                        </div>
                     </div>
                     <form action="resumeOrder" method="post">
                         @csrf
                         <input type="hidden" name="orderId" value="{{ $order->order_id }}">
-                        <button type="submit" class="resume-btn">
+                        <button type="submit" class="btn-resume">
                             @lang('messages.resume') <i class="bi bi-arrow-right-short"></i>
                         </button>
                     </form>
                 </div>
                 @empty
-                <div style="text-align:center;padding:2.5rem 1rem;color:var(--slate-400);">
+                <div style="text-align:center;padding:2.5rem 1rem;color:var(--gray-400);">
                     <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
-                     @lang('messages.no_suspended_orders')
+                    @lang('messages.no_suspended_orders')
                 </div>
                 @endforelse
             </div>
@@ -1089,25 +1712,27 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-emerald">
-                 <h5 class="modal-title"><i class="bi bi-gift-fill me-2"></i>@lang('messages.special_offer')</h5>
+                <h5 class="modal-title"><i class="bi bi-gift-fill me-2"></i>@lang('messages.special_offer')</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center" style="padding:1.5rem;">
-                <i class="bi bi-gift" style="font-size:3rem;color:var(--emerald);display:block;margin-bottom:1rem;"></i>
-                <p style="font-size:0.9rem;color:var(--slate-600);margin-bottom:0.75rem;">                    @lang('messages.special_offer_qualify')</p>
-                <div style="background:var(--emerald-pale);border-left:3px solid var(--emerald);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.875rem;font-weight:600;color:#065F46;">
-                    Buy @lang('messages.special_offer_buy_get_free', ['req' => '<span id="offerReqQty">0</span>', 'free' => '<span id="offerFreeQty">0</span>'])
+                <i class="bi bi-gift" style="font-size:3rem;color:var(--success);display:block;margin-bottom:1rem;"></i>
+                <p style="font-size:0.9rem;color:var(--gray-600);margin-bottom:0.75rem;">@lang('messages.special_offer_qualify')</p>
+                <div style="background:var(--success-pale);border-left:3px solid var(--success);border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;font-size:0.875rem;font-weight:600;color:#065F46;">
+                    <i class="bi bi-gift me-1"></i>@lang('messages.special_offer_buy_get_free', ['req' => '<span id="offerReqQty">0</span>', 'free' => '<span id="offerFreeQty">0</span>'])
                 </div>
-                    <p style="font-size:0.85rem;color:var(--slate-600);margin-bottom:1rem;">@lang('messages.product_label') <strong id="offerProdName"></strong></p>
+                <p style="font-size:0.85rem;color:var(--gray-600);margin-bottom:1rem;">@lang('messages.product_label') <strong id="offerProdName"></strong></p>
                 <div style="text-align:left;">
                     <label class="field-label"><i class="bi bi-hash"></i> @lang('messages.how_many_free_items')</label>
                     <input type="number" id="offerAcceptQty" class="field-input" value="0" min="0" style="margin-top:0.3rem;">
-                    <div class="field-hint" style="margin-top:0.3rem;">@lang('messages.maximum_free_items', ['count' => '<span id="offerMaxQty">0</span>'])</div>
+                    <div class="field-hint" style="margin-top:0.3rem;font-size:0.7rem;color:var(--gray-400);">
+                        @lang('messages.maximum_free_items', ['count' => '<span id="offerMaxQty">0</span>'])
+                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal" onclick="declineOffer()">@lang('messages.no_thanks')</button>
-                <button type="button" class="submit-btn" onclick="acceptOffer()" style="width:auto;padding:0.5rem 1.2rem;">
+                <button type="button" class="btn-header" style="background:var(--gray-100);color:var(--gray-700);border-color:var(--gray-300);" data-bs-dismiss="modal" onclick="declineOffer()">@lang('messages.no_thanks')</button>
+                <button type="button" class="btn-submit" onclick="acceptOffer()" style="width:auto;padding:0.5rem 1.2rem;">
                     <i class="bi bi-check-circle-fill"></i> @lang('messages.accept_offer')
                 </button>
             </div>
@@ -1136,37 +1761,45 @@ function getOffer(productId) { return offersData.find(o => o.product_id === prod
 const productSearch = document.getElementById('productSearch');
 const productDD     = document.getElementById('productDropdown');
 
+let searchTimeout = null;
+
 productSearch.addEventListener('input', async e => {
     const q = e.target.value.trim();
     if (q.length < 1) { productDD.classList.remove('open'); return; }
 
-    productDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>' + @json(__('messages.searching')) + '</div>';
+    clearTimeout(searchTimeout);
+    productDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i> ' + @json(__('messages.searching')) + '</div>';
     productDD.classList.add('open');
 
-    try {
-        const res  = await fetch(`{{ url('searchProduct') }}?query=${encodeURIComponent(q)}`);
-        const data = await res.json();
+    searchTimeout = setTimeout(async () => {
+        try {
+            const res  = await fetch(`{{ url('searchProduct') }}?query=${encodeURIComponent(q)}`);
+            const data = await res.json();
 
-        if (!data.length) {
-            productDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_products_found')) + '</div>';
-        } else {
-            productDD.innerHTML = data.map(p => {
-                const offer = getOffer(p.product_id);
-                const offerBadge = offer
-                    ? `<span class="dd-badge dd-badge-offer"><i class="bi bi-gift-fill"></i> Buy ${offer.required_quantity} Get ${offer.offer_quantity}</span>`
-                    : '';
-                return `<div class="dd-item" onclick="addProductToOrder(${p.id}, '${escHtml(p.name01)}', ${p.sPrice})">
-                    <div class="dd-item-name">${escHtml(p.name01)} ${offerBadge}</div>
-                    <div class="dd-item-meta">
-                        <span class="dd-badge dd-badge-price">${Number(p.bPrice).toLocaleString()} Tsh</span>
-                        <span class="dd-badge dd-badge-stock"><i class="bi bi-box-seam"></i> ${p.quantity}</span>
-                    </div>
-                </div>`;
-            }).join('');
+            if (!data.length) {
+                productDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_products_found')) + '</div>';
+            } else {
+                productDD.innerHTML = data.map(p => {
+                    const offer = getOffer(p.product_id);
+                    const offerBadge = offer
+                        ? `<span class="dd-badge dd-badge-offer"><i class="bi bi-gift-fill"></i> Buy ${offer.required_quantity} Get ${offer.offer_quantity}</span>`
+                        : '';
+                    const stockBadge = p.quantity <= 5 
+                        ? `<span class="dd-badge dd-badge-debt"><i class="bi bi-exclamation-triangle"></i> ${p.quantity} Low Stock</span>` 
+                        : `<span class="dd-badge dd-badge-stock"><i class="bi bi-box-seam"></i> ${p.quantity}</span>`;
+                    return `<div class="dropdown-item" onclick="addProductToOrder(${p.id}, '${escHtml(p.name01)}', ${p.sPrice})">
+                        <div class="dropdown-item-name">${escHtml(p.name01)} ${offerBadge}</div>
+                        <div class="dropdown-item-meta">
+                            <span class="dd-badge dd-badge-price">${Number(p.bPrice).toLocaleString()} Tsh</span>
+                            ${stockBadge}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        } catch {
+            productDD.innerHTML = '<div class="dd-empty" style="color:var(--danger);">' + @json(__('messages.error_loading_products')) + '</div>';
         }
-    } catch {
-        productDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">' + @json(__('messages.error_loading_products')) + '</div>';
-    }
+    }, 300);
 });
 
 function addProductToOrder(id, name, price) {
@@ -1185,41 +1818,49 @@ function addProductToOrder(id, name, price) {
     document.body.appendChild(form);
     form.submit();
 }
+
 // ════════════════════════════════════════════
 // CUSTOMER SEARCH
 // ════════════════════════════════════════════
 const custSearch = document.getElementById('customerSearch');
 const custDD     = document.getElementById('customerDropdown');
 
+let custTimeout = null;
+
 custSearch.addEventListener('input', async e => {
     const q = e.target.value.trim();
     if (q.length < 1) { custDD.classList.remove('open'); return; }
 
-    custDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>' + @json(__('messages.searching')) + '</div>';
+    clearTimeout(custTimeout);
+    custDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i> ' + @json(__('messages.searching')) + '</div>';
     custDD.classList.add('open');
 
-    try {
-        const res  = await fetch(`{{ url('searchCustomers') }}?query=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        if (!data.length) {
-            custDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_customers_found')) + '</div>';
-        } else {
-            custDD.innerHTML = data.map(c => `
-                <div class="dd-item" onclick="selectCustomer(${c.id}, '${escHtml(c.name)}', ${c.limits || 0})">
-                    <div class="dd-item-name">${escHtml(c.name)}</div>
-                    <div class="dd-item-meta">
-                        <span><i class="bi bi-phone"></i> ${c.phone || 'N/A'}</span>
-                        <span class="dd-badge dd-badge-stock">Limit: ${Number(c.limits || 0).toLocaleString()}</span>
-                    </div>
-                </div>
-            `).join('');
+    custTimeout = setTimeout(async () => {
+        try {
+            const res  = await fetch(`{{ url('searchCustomers') }}?query=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            if (!data.length) {
+                custDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_customers_found')) + '</div>';
+            } else {
+                custDD.innerHTML = data.map(c => {
+                    const debtClass = c.remaining_debt > 0 ? 'dd-badge-debt' : 'dd-badge-stock';
+                    return `<div class="dropdown-item" onclick="selectCustomer(${c.id}, '${escHtml(c.name)}', ${c.limits || 0})">
+                        <div class="dropdown-item-name">${escHtml(c.name)}</div>
+                        <div class="dropdown-item-meta">
+                            <span><i class="bi bi-phone"></i> ${c.phone || 'N/A'}</span>
+                            <span class="dd-badge ${debtClass}">Debt: ${Number(c.remaining_debt || 0).toLocaleString()}</span>
+                            <span class="dd-badge dd-badge-price">Limit: ${Number(c.limits || 0).toLocaleString()}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        } catch {
+            custDD.innerHTML = '<div class="dd-empty" style="color:var(--danger);">' + @json(__('messages.error')) + '</div>';
         }
-    } catch {
-        custDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">' + @json(__('messages.error')) + '</div>';
-    }
+    }, 300);
 });
 
-    async function selectCustomer(id, name, limit) {
+async function selectCustomer(id, name, limit) {
     const orderType = document.getElementById('orderTypeHidden')?.value || 'Sell';
     document.getElementById('orderTypeForm1').value = orderType;
     try {
@@ -1253,13 +1894,13 @@ function showCustInfo(name, limits, credit, paid, remainingDebt, available) {
     const card = document.getElementById('custInfoCard');
     card.style.display = '';
     card.innerHTML = `
-        <div class="cust-info-title">@lang('messages.customer_info')</div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.name')</span><span class="cust-val" id="custName">${name}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.credit_limit')</span><span class="cust-val">${Number(limits||0).toLocaleString()}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.used_credit')</span><span class="cust-val">${Number(credit||0).toLocaleString()}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.total_paid')</span><span class="cust-val">${Number(paid||0).toLocaleString()}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.remaining_debt')</span><span class="cust-val" style="font-weight:700;color:var(--rose);">${Number(remainingDebt||0).toLocaleString()}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.available')</span><span class="cust-val available">${Number(available||0).toLocaleString()}</span></div>
+        <div class="customer-info-title"><i class="bi bi-person-badge"></i> @lang('messages.customer_info')</div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.name')</span><span class="customer-value">${name}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.credit_limit')</span><span class="customer-value">${Number(limits||0).toLocaleString()}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.used_credit')</span><span class="customer-value debt">${Number(credit||0).toLocaleString()}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.total_paid')</span><span class="customer-value">${Number(paid||0).toLocaleString()}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.remaining_debt')</span><span class="customer-value debt">${Number(remainingDebt||0).toLocaleString()}</span></div>
+        <div class="customer-row"><span class="customer-key"><i class="bi bi-check-circle-fill text-success me-1"></i>@lang('messages.available')</span><span class="customer-value available">${Number(available||0).toLocaleString()}</span></div>
     `;
     const pt = document.getElementById('paymentType');
     if (pt) {
@@ -1290,29 +1931,34 @@ function clearCustomer() {
 const sellerSearch = document.getElementById('sellerSearch');
 const sellerDD     = document.getElementById('sellerDropdown');
 
+let sellerTimeout = null;
+
 sellerSearch.addEventListener('input', async e => {
     const q = e.target.value.trim();
     if (q.length < 1) { sellerDD.classList.remove('open'); return; }
 
-    sellerDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i>' + @json(__('messages.searching')) + '</div>';
+    clearTimeout(sellerTimeout);
+    sellerDD.innerHTML = '<div class="dd-loading"><i class="bi bi-hourglass-split me-1"></i> ' + @json(__('messages.searching')) + '</div>';
     sellerDD.classList.add('open');
 
-    try {
-        const res  = await fetch(`{{ url('searchSellers') }}?query=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        if (!data.length) {
-            sellerDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_sellers_found')) + '</div>';
-        } else {
-            sellerDD.innerHTML = data.map(s => `
-                <div class="dd-item" onclick="selectSeller('${escHtml(s.name)}', '${escHtml(s.levelStatus)}')">
-                    <div class="dd-item-name">${escHtml(s.name)}</div>
-                    <div class="dd-item-meta"><span class="dd-badge dd-badge-stock">${s.levelStatus}</span></div>
-                </div>
-            `).join('');
+    sellerTimeout = setTimeout(async () => {
+        try {
+            const res  = await fetch(`{{ url('searchSellers') }}?query=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            if (!data.length) {
+                sellerDD.innerHTML = '<div class="dd-empty">' + @json(__('messages.no_sellers_found')) + '</div>';
+            } else {
+                sellerDD.innerHTML = data.map(s => `
+                    <div class="dropdown-item" onclick="selectSeller('${escHtml(s.name)}', '${escHtml(s.levelStatus)}')">
+                        <div class="dropdown-item-name">${escHtml(s.name)}</div>
+                        <div class="dropdown-item-meta"><span class="dd-badge dd-badge-stock">${s.levelStatus}</span></div>
+                    </div>
+                `).join('');
+            }
+        } catch {
+            sellerDD.innerHTML = '<div class="dd-empty" style="color:var(--danger);">' + @json(__('messages.error')) + '</div>';
         }
-    } catch {
-        sellerDD.innerHTML = '<div class="dd-empty" style="color:var(--rose);">' + @json(__('messages.error')) + '</div>';
-    }
+    }, 300);
 });
 
 function selectSeller(name, role) {
@@ -1345,6 +1991,9 @@ function clearSeller() {
     selectedSellerName = null;
 }
 
+// ════════════════════════════════════════════
+// ORDER TYPE
+// ════════════════════════════════════════════
 function applyOrderType(v) {
     const pd = document.getElementById('payDistWrap');
     const pm = document.getElementById('payMethodWrap');
@@ -1352,18 +2001,17 @@ function applyOrderType(v) {
     const sn = document.getElementById('suspendNote');
     const otHidden = document.getElementById('orderTypeHidden');
 
-    pd.style.display = 'block'; pm.style.display = 'block';
-    dn.style.display = 'none';  sn.style.display = 'none';
+    if (pd) pd.style.display = 'block';
+    if (pm) pm.style.display = 'block';
+    if (dn) dn.style.display = 'none';
+    if (sn) sn.style.display = 'none';
     if (otHidden) otHidden.value = v;
 
-    if (v === 'Debt')      { pd.style.display = 'none'; pm.style.display = 'none'; dn.style.display = ''; }
-    if (v === 'Suspended') { pd.style.display = 'none'; pm.style.display = 'none'; sn.style.display = ''; }
-    if (v === 'Return')    { pd.style.display = 'none'; }
+    if (v === 'Debt')      { if (pd) pd.style.display = 'none'; if (pm) pm.style.display = 'none'; if (dn) dn.style.display = ''; }
+    if (v === 'Suspended') { if (pd) pd.style.display = 'none'; if (pm) pm.style.display = 'none'; if (sn) sn.style.display = ''; }
+    if (v === 'Return')    { if (pd) pd.style.display = 'none'; }
 }
 
-// ════════════════════════════════════════════
-// ORDER TYPE
-// ════════════════════════════════════════════
 document.getElementById('orderType').addEventListener('change', function() {
     const v = this.value;
     applyOrderType(v);
@@ -1379,30 +2027,22 @@ document.getElementById('orderType').addEventListener('change', function() {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyOrderType(document.getElementById('orderType').value);
+    const ot = document.getElementById('orderType');
+    if (ot) applyOrderType(ot.value);
 });
 
 // ════════════════════════════════════════════
 // PAY DISTRIBUTION
 // ════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-    const rawTotal = document.getElementById('grandTotalEl').textContent.replace(/,/g, '');
+    const rawTotal = document.getElementById('grandTotalEl')?.textContent?.replace(/,/g, '');
     const total    = parseFloat(rawTotal) || 0;
     const paid     = document.getElementById('paidInput');
     const credit   = document.getElementById('creditInput');
-    paid.value   = total;
-    credit.value = 0;
-
-    credit.addEventListener('input', () => {
-        let c = Math.min(Math.max(parseFloat(credit.value) || 0, 0), total);
-        credit.value = c;
-        paid.value   = (total - c).toFixed(2);
-    });
-    paid.addEventListener('input', () => {
-        let p = Math.min(Math.max(parseFloat(paid.value) || 0, 0), total);
-        paid.value   = p;
-        credit.value = (total - p).toFixed(2);
-    });
+    const bank     = document.getElementById('bankInput');
+    if (paid) paid.value     = total;
+    if (credit) credit.value = 0;
+    if (bank) bank.value     = 0;
 });
 
 // ════════════════════════════════════════════
@@ -1421,8 +2061,8 @@ function updateCartItem(orderId, productId, field, value) {
         body: fd
     })
     .then(r => r.json())
-        .then(d => { if (d.success) location.reload(); else showToast(d.error || @json(__('messages.error_updating_item')), 'err'); })
-    .catch(e => showToast(@json(__('messages.network_error')) + ': ' + e.message, 'err'));
+    .then(d => { if (d.success) location.reload(); else showToast(d.error || @json(__('messages.error_updating_item')), 'error'); })
+    .catch(e => showToast(@json(__('messages.network_error')) + ': ' + e.message, 'error'));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1453,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(r => r.text())
             .then(() => location.reload())
-            .catch(e => showToast(@json(__('messages.network_error')) + ': ' + e.message, 'err'));
+            .catch(e => showToast(@json(__('messages.network_error')) + ': ' + e.message, 'error'));
         });
     }
 });
@@ -1468,8 +2108,12 @@ document.getElementById('pastSalesModal').addEventListener('shown.bs.modal', () 
     document.getElementById('pastSalesSearch').focus();
 });
 
+let pastSalesTimeout = null;
+
 document.getElementById('pastSalesSearch').addEventListener('input', e => {
-    loadPastSales(e.target.value.trim());
+    clearTimeout(pastSalesTimeout);
+    const q = e.target.value.trim();
+    pastSalesTimeout = setTimeout(() => loadPastSales(q), 400);
 });
 
 async function loadPastSales(q) {
@@ -1496,9 +2140,9 @@ async function loadPastSales(q) {
             const stBadge = s.status === 'Debt'
                 ? `<span class="dd-badge dd-badge-offer">@lang('messages.credit')</span>`
                 : `<span class="dd-badge dd-badge-price">@lang('messages.paid')</span>`;
-            return `<div class="dd-item" onclick="selectPastSale('${s.sales_id}','${escHtml(s.cName || @json(__('messages.unknown_customer')))}',${s.totalAmount},${s.totalQuantity},'${dt}')">
-                <div class="dd-item-name">${escHtml(s.cName || @json(__('messages.unknown_customer')))} ${stBadge}</div>
-                <div class="dd-item-meta">
+            return `<div class="dropdown-item" onclick="selectPastSale('${s.sales_id}','${escHtml(s.cName || @json(__('messages.unknown_customer')))}',${s.totalAmount},${s.totalQuantity},'${dt}')">
+                <div class="dropdown-item-name">${escHtml(s.cName || @json(__('messages.unknown_customer')))} ${stBadge}</div>
+                <div class="dropdown-item-meta">
                     <span><i class="bi bi-calendar3"></i> ${dt}</span>
                     <span><i class="bi bi-box-seam"></i> ${s.totalQuantity} @lang('messages.items')</span>
                     <span class="dd-badge dd-badge-price">${Number(s.totalAmount).toLocaleString()} Tsh</span>
@@ -1507,7 +2151,7 @@ async function loadPastSales(q) {
         }).join('');
     } catch (error) {
         console.error('Error loading past sales:', error);
-        el.innerHTML = `<div class="dd-empty" style="color:var(--rose);">@lang('messages.error_loading_sales') ${error.message}</div>`;
+        el.innerHTML = `<div class="dd-empty" style="color:var(--danger);">@lang('messages.error_loading_sales') ${error.message}</div>`;
     }
 }
 
@@ -1515,10 +2159,10 @@ function selectPastSale(id, name, total, qty, date) {
     pendingReturnId = id;
     const det = document.getElementById('returnSaleDetails');
     det.innerHTML = `
-        <div class="cust-row"><span class="cust-key">@lang('messages.customer')</span><span class="cust-val">${name}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.date')</span><span class="cust-val">${date}</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.total')</span><span class="cust-val">${Number(total).toLocaleString()} Tsh</span></div>
-        <div class="cust-row"><span class="cust-key">@lang('messages.items')</span><span class="cust-val">${qty}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.customer')</span><span class="customer-value">${name}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.date')</span><span class="customer-value">${date}</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.total')</span><span class="customer-value">${Number(total).toLocaleString()} Tsh</span></div>
+        <div class="customer-row"><span class="customer-key">@lang('messages.items')</span><span class="customer-value">${qty}</span></div>
     `;
     det.style.display = '';
     new bootstrap.Modal(document.getElementById('confirmReturnModal')).show();
@@ -1536,10 +2180,10 @@ document.getElementById('confirmReturnBtn').addEventListener('click', async () =
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('confirmReturnModal'))?.hide();
             bootstrap.Modal.getInstance(document.getElementById('pastSalesModal'))?.hide();
-            showToast(@json(__('messages.sale_returned_to_orders')), 'ok');
+            showToast(@json(__('messages.sale_returned_to_orders')), 'success');
             setTimeout(() => location.reload(), 1200);
-        } else { showToast(@json(__('messages.error')) + ': ' + data.message, 'err'); }
-    } catch (e) { showToast(@json(__('messages.error')) + ': ' + e.message, 'err'); }
+        } else { showToast(@json(__('messages.error')) + ': ' + data.message, 'error'); }
+    } catch (e) { showToast(@json(__('messages.error')) + ': ' + e.message, 'error'); }
     btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + @json(__('messages.confirm'));
     pendingReturnId = null;
 });
@@ -1577,7 +2221,7 @@ function acceptOffer() {
         const items = JSON.parse(sessionStorage.getItem('offeredItems') || '[]');
         items.push({ productId: offerCtx.offer.offer_product_id, productName: offerCtx.offer.offer_product_name, quantity: qty, fromProductId: offerCtx.productId });
         sessionStorage.setItem('offeredItems', JSON.stringify(items));
-        showToast(`${@json(__('messages.added'))} ${qty} ${@json(__('messages.free'))} ${offerCtx.offer.offer_product_name}!`, 'ok');
+        showToast(`${@json(__('messages.added'))} ${qty} ${@json(__('messages.free'))} ${offerCtx.offer.offer_product_name}!`, 'success');
     }
     bootstrap.Modal.getInstance(document.getElementById('offerModal'))?.hide();
     offerCtx = null;
@@ -1588,55 +2232,88 @@ function declineOffer() { offerCtx = null; }
 // Shop Selector
 // ════════════════════════════════════════════
 function changeShop(shopId) {
-    // Show loading state
     const shopSelect = document.getElementById('shopSelect');
-    if (shopSelect) {
-        shopSelect.disabled = true;
-    }
+    if (shopSelect) shopSelect.disabled = true;
     
-    // Send request to update session
     fetch(`{{ url('changeShop') }}?shop_id=${shopId}`, {
         method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
     })
     .then(response => {
         if (response.ok) {
-            // Reload the page to refresh data for the selected shop
             window.location.reload();
         } else {
-            showToast(@json(__('messages.failed_change_shop')), 'err');
+            showToast(@json(__('messages.failed_change_shop')), 'error');
             if (shopSelect) shopSelect.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error changing shop:', error);
-        showToast(@json(__('messages.network_error_changing_shop')), 'err');
+        showToast(@json(__('messages.network_error_changing_shop')), 'error');
         if (shopSelect) shopSelect.disabled = false;
     });
+}
+
+// ════════════════════════════════════════════
+// SUSPEND ORDER
+// ════════════════════════════════════════════
+function suspendOrder() {
+    if (!confirm('@lang('messages.confirm_suspend_order')')) return;
+    const form = document.getElementById('payoutForm');
+    const fd = new FormData(form);
+    fd.set('orderType', 'Suspended');
+    
+    fetch('{{ url("suspendOrder") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: fd
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            showToast('@lang('messages.order_suspended_success')', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(d.message || '@lang('messages.error_suspending_order')', 'error');
+        }
+    })
+    .catch(e => showToast('@lang('messages.network_error')', 'error'));
+}
+
+// ════════════════════════════════════════════
+// PRINT INVOICE
+// ════════════════════════════════════════════
+function printInvoice() {
+    window.print();
 }
 
 // ════════════════════════════════════════════
 // Close dropdowns on outside click
 // ════════════════════════════════════════════
 document.addEventListener('click', e => {
-    if (!productSearch.contains(e.target) && !productDD.contains(e.target))  productDD.classList.remove('open');
-    if (!custSearch.contains(e.target)    && !custDD.contains(e.target))     custDD.classList.remove('open');
-    if (!sellerSearch.contains(e.target)  && !sellerDD.contains(e.target))   sellerDD.classList.remove('open');
+    if (!productSearch?.contains(e.target) && !productDD?.contains(e.target)) {
+        if (productDD) productDD.classList.remove('open');
+    }
+    if (!custSearch?.contains(e.target) && !custDD?.contains(e.target)) {
+        if (custDD) custDD.classList.remove('open');
+    }
+    if (!sellerSearch?.contains(e.target) && !sellerDD?.contains(e.target)) {
+        if (sellerDD) sellerDD.classList.remove('open');
+    }
 });
 
 // ════════════════════════════════════════════
 // Toast
 // ════════════════════════════════════════════
-function showToast(msg, type = 'ok') {
+function showToast(msg, type = 'success') {
     const stack = document.getElementById('toastStack');
     const el = document.createElement('div');
     el.className = `toast-item toast-${type}`;
-    el.innerHTML = `<i class="bi ${type === 'ok' ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} t-ico"></i><span>${msg}</span>`;
+    const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+    el.innerHTML = `<i class="bi ${icon} toast-icon"></i><span>${msg}</span>`;
     stack.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
-    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }, 3200);
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3500);
 }
 
 // ════════════════════════════════════════════
@@ -1645,36 +2322,48 @@ function showToast(msg, type = 'ok') {
 function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const existingLimit = document.getElementById('custLimit')?.textContent?.replace(/,/g, '').trim();
-        if (existingLimit !== undefined && existingLimit !== null) {
-            const pt = document.getElementById('paymentType');
-            if (pt) {
-                const creditOpt = pt.querySelector('option[value="Credit"]');
-                if (creditOpt) creditOpt.disabled = Number(existingLimit) <= 0;
-                if (pt.value === 'Credit' && creditOpt && creditOpt.disabled) pt.value = 'Cash';
-            }
+
+function removeOfferItem(btn, orderId, productId, quantity) {
+    if (!confirm('@lang('messages.remove_free_item_confirm')')) return;
+    const fd = new FormData();
+    fd.append('orderId', orderId);
+    fd.append('productId', productId);
+    fd.append('quantity', quantity);
+    
+    fetch('{{ url("removeOfferItem") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: fd
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            location.reload();
+        } else {
+            showToast(d.message || '@lang('messages.error_removing_item')', 'error');
         }
+    })
+    .catch(e => showToast('@lang('messages.network_error')', 'error'));
+}
 
-        // Check if the success message and sound flag exist
-        @if(session('success') && session('play_sound'))
-            playSuccessSound();
-        @endif
-    });
-
-    function playSuccessSound() {
-        // Create a new Audio object with your MP3 file path
-        var audio = new Audio('/public/sounds/cash.mp3'); // Put your MP3 in public/sounds/
-        
-        // Play the sound
-        audio.play().catch(function(error) {
-            // Handle autoplay restrictions gracefully
-            console.log('Audio playback failed:', error);
-            // You could show a play button as fallback
-        });
+// ── Auto-select seller if logged in ──
+document.addEventListener('DOMContentLoaded', function() {
+    const currentUser = '{{ Auth::user()->name ?? '' }}';
+    if (currentUser && !document.getElementById('sellerBadgeWrap')?.style?.display === 'block') {
+        const sellerSearch = document.getElementById('sellerSearch');
+        if (sellerSearch && !sellerSearch.value) {
+            selectSeller(currentUser, '{{ Auth::user()->levelStatus ?? '' }}');
+        }
     }
+
+    // Play success sound
+    @if(session('success') && session('play_sound'))
+        const audio = new Audio('/public/sounds/cash.mp3');
+        audio.play().catch(() => {});
+    @endif
+});
 </script>
+
+@include('footer')
 </body>
 </html>

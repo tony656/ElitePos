@@ -19,7 +19,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -323,14 +323,18 @@
                     $totalCredit     = 0;
                     $totalPaidAll    = 0;
                     $totalCreditOrds = 0;
-                    foreach ($groupedCredits as $date => $suppliers) {
-                        foreach ($suppliers as $order) {
-                            $p = DB::table('madeni')->where('receivingsId', $order->receivingId)->orwhere('receivingsId', $order->receivingName)->where('supplierId', $order->supplier)->sum('amount');
-                            
-                            $totalCredit  += $order->total_price;
-                            $totalPaidAll += $p;
-                            if (($order->total_price - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
-                        }
+                    foreach ($groupedCredits as $order) {
+                        $p = DB::table('madeni')
+                            ->where(function($q) use ($order) {
+                                $q->where('receivings_id', $order->receivingId)
+                                  ->orWhere('receivings_id', $order->receivingName);
+                            })
+                            ->where('supplier_id', $order->supplier)
+                            ->sum('amount_paid');
+                        
+                        $totalCredit  += $order->total_price;
+                        $totalPaidAll += $p;
+                        if (($order->total_price - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
                     }
                     $totalRemaining = $totalCredit - $totalPaidAll;
                 @endphp
@@ -395,83 +399,70 @@
                             </thead>
                             <tbody>
                                 @php $rowIndex = 1; @endphp
-                                @foreach ($groupedCredits as $date => $suppliers)
-                                    {{-- Date group row --}}
-                                    <tr class="date-group-row">
-                                        <td colspan="8">
-                                            <div class="date-group-label">
-                                                <i class="bi bi-calendar3"></i>
-                                                {{ \Carbon\Carbon::parse($date)->format('F j, Y') }}
-                                                <span style="font-weight:400; color:var(--slate-400); margin-left:4px; font-family:var(--mono); font-size:11px;">
-                                                    · {{ $suppliers->count() }} {{ Str::plural('order', $suppliers->count()) }}
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @foreach ($suppliers as $order)
-                                    @php
-                                        $paid = DB::table('madeni')->where('receivingsId', $order->receivingId)->orwhere('receivingsId', $order->receivingName)->where('supplierId', $order->supplier)->sum('amount');
+                                @foreach ($groupedCredits as $order)
+                                @php
+                                    $paid = DB::table('madeni')
+                                        ->where('account', $order->account)
+                                        ->where('receivings_id', $order->receivingId)
+                                        ->sum('amount_paid');
 
-                                        $remaining = $order->total_price - $paid;
-                                        $isFullyPaid = $order->isPaid == 1 || $remaining <= 0;
+                                    $remaining = $order->total_price - $paid;
+                                    $isFullyPaid = $order->isPaid == 1 || $remaining <= 0;
 
-                                        $vendor = DB::table('accounts')->where('id', $order->account)->first();
+                                    $vendor = DB::table('vendors')->where('id', $order->supplier)->first();
 
-                                        $name      = $vendor ? $vendor->name : 'Unknown';
-                                        
-                                        $initials  = strtoupper(substr($name, 0, 1));
-                                        $parts     = explode(' ', trim($name));
-                                        if (count($parts) > 1) $initials .= strtoupper(substr($parts[1], 0, 1));
-                                    @endphp
-                                    <tr>
-                                        <td class="idx-cell">{{ $rowIndex++ }}</td>
-                                        <td>
-                                            <div class="sup-cell">
-                                                <div class="sup-avatar">{{ $initials }}</div>
-                                                <span class="sup-name">{{ $name }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @if($order->isPaid == 1)
-                                                <span class="badge-paid"><i class="bi bi-check-circle-fill"></i> Paid</span>
-                                            @elseif($remaining <= 0)
-                                                <span class="badge-completed"><i class="bi bi-check-circle-fill"></i> Completed</span>
-                                            @else
-                                                <span class="badge-credit"><i class="bi bi-exclamation-triangle-fill"></i> Credit</span>
+                                    $name      = $vendor ? $vendor->name : 'Unknown';
+                                    
+                                    $initials  = strtoupper(substr($name, 0, 1));
+                                    $parts     = explode(' ', trim($name));
+                                    if (count($parts) > 1) $initials .= strtoupper(substr($parts[1], 0, 1));
+                                @endphp
+                                <tr>
+                                    <td class="idx-cell">{{ $rowIndex++ }}</td>
+                                    <td>
+                                        <div class="sup-cell">
+                                            <div class="sup-avatar">{{ $initials }}</div>
+                                            <span class="sup-name">{{ $name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($order->isPaid == 1)
+                                            <span class="badge-paid"><i class="bi bi-check-circle-fill"></i> Paid</span>
+                                        @elseif($remaining <= 0)
+                                            <span class="badge-completed"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                                        @else
+                                            <span class="badge-credit"><i class="bi bi-exclamation-triangle-fill"></i> Credit</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="mono-val">{{ number_format($order->quantity) }}</span></td>
+                                    <td><span class="mono-val credit-val">{{ number_format($order->total_price) }}</span></td>
+                                    <td><span class="mono-val paid-val">{{ number_format($paid) }}</span></td>
+                                    <td>
+                                        <span class="mono-val remaining-val {{ $remaining > 0 ? 'credit-val' : 'paid-val' }}">
+                                            {{ number_format($remaining) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-btns">
+                                            @if(!$isFullyPaid)
+                                            <button type="button" class="act-btn ab-pay"
+                                                data-bs-toggle="modal" data-bs-target="#payModal"
+                                                data-supplier="{{ $order->supplier }}"
+                                                data-paid="{{ $paid }}"
+                                                data-orderid="{{ $order->receivingId }}"
+                                                data-totalamount="{{ $order->total_price }}">
+                                                <i class="bi bi-cash-coin"></i> Pay
+                                            </button>
                                             @endif
-                                        </td>
-                                        <td><span class="mono-val">{{ number_format($order->quantity) }}</span></td>
-                                        <td><span class="mono-val credit-val">{{ number_format($order->total_price) }}</span></td>
-                                        <td><span class="mono-val paid-val">{{ number_format($paid) }}</span></td>
-                                        <td>
-                                            <span class="mono-val remaining-val {{ $remaining > 0 ? 'credit-val' : 'paid-val' }}">
-                                                {{ number_format($remaining) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-btns">
-                                                @if(!$isFullyPaid)
-                                                <button type="button" class="act-btn ab-pay"
-                                                    data-bs-toggle="modal" data-bs-target="#payModal"
-                                                    data-supplier="{{ $order->supplier }}"
-                                                    data-date="{{ $date }}"
-                                                    data-paid="{{ $paid }}"
-                                                    data-orderid="{{ $order->receivingId }}"
-                                                    data-totalamount="{{ $order->total_price }}">
-                                                    <i class="bi bi-cash-coin"></i> Pay
-                                                </button>
-                                                @endif
-                                                <button type="button" class="act-btn ab-view"
-                                                    data-bs-toggle="modal" data-bs-target="#productsModal"
-                                                    data-supplier="{{ $order->supplier }}"
-                                                    data-date="{{ $date }}"
-                                                    data-shop="{{ $selectedShopId ?? '' }}">
-                                                    <i class="bi bi-eye"></i> View items
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @endforeach
+                                            <button type="button" class="act-btn ab-view"
+                                                data-bs-toggle="modal" data-bs-target="#productsModal"
+                                                data-supplier="{{ $order->supplier }}"
+                                                data-shop="{{ $selectedShopId ?? '' }}">
+                                                <i class="bi bi-eye"></i> View items
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -596,8 +587,8 @@
         const btn = e.relatedTarget;
         const remaining = parseFloat(btn.dataset.totalamount) - parseFloat(btn.dataset.paid);
         this.querySelector('#paySupplier').value        = btn.dataset.supplier;
-        this.querySelector('#payDate').value            = btn.dataset.date;
         this.querySelector('#payOrderId').value         = btn.dataset.orderid;
+        this.querySelector('#paymentDate').value        = btn.dataset.date || '{{ date("Y-m-d") }}';
         this.querySelector('#displaySupplier').textContent   = btn.dataset.supplier;
         this.querySelector('#displayTotalAmount').textContent = new Intl.NumberFormat().format(remaining.toFixed(2)) + ' Tsh';
     });
@@ -606,7 +597,7 @@
     document.getElementById('productsModal').addEventListener('show.bs.modal', function (e) {
         const btn      = e.relatedTarget;
         const supplier = btn.dataset.supplier;
-        const date     = btn.dataset.date;
+        const date     = btn.dataset.date || '{{ date("Y-m-d") }}';
         const shop     = btn.dataset.shop; // Get shop from button
         const body     = document.getElementById('productsModalBody');
         const title    = document.getElementById('productsModalTitle');

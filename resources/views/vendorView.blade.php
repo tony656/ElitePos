@@ -221,7 +221,7 @@
         }
 
         .stock-badge.low-stock {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            background: linear-gradient(135deg, #fbbf24, var(--theme-primary));
             color: white;
         }
 

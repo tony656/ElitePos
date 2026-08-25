@@ -17,7 +17,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -466,31 +466,7 @@
                                 <input type="number" id="maxDiscount" name="maxDiscount" readonly>
                             </div>
 
-                            {{-- Payment type --}}
-                            <div class="form-group">
-                                <label class="form-label">{{ __('messages.payment_type') }}</label>
-                                <div class="radio-group">
-                                    <div class="radio-pill radio-credit">
-                                        <input type="radio" name="paymentType" id="paymentCredit" value="credit" checked>
-                                        <label for="paymentCredit">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                                            </svg>
-                                            {{ __('messages.credit') }}
-                                        </label>
-                                    </div>
-                                    <div class="radio-pill radio-cash">
-                                        <input type="radio" name="paymentType" id="paymentCash" value="cash">
-                                        <label for="paymentCash">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                                                <circle cx="12" cy="12" r="3"/>
-                                            </svg>
-                                            {{ __('messages.cash') }}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>                          
+                                                     
 
                            <!-- <button class="btn-add" type="submit" id="addItemBtn" disabled>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -683,6 +659,180 @@
                                 <p class="form-hint">{{ __('messages.select_user_location_request') }}</p>
                             </div>
                             </form>
+
+                            {{-- Payment type --}}
+                             <form action="/saveInfo" method="post">
+                                @csrf
+                                <input type="hidden" name="requestName" value="{{ $orders->requestName ?? 'NEW-ORDER' }}">
+                                 
+                                 <div class="form-group">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                        <label class="form-label" for="assignedTo">{{ __('messages.payment_type') }}</label>
+                                         <span style="font-size:12px; color:var(--slate-500);">{{ __('messages.current') }} <strong>{{ $payment_type }}</strong></span>
+                                    </div>
+                              
+                                <select name="paymentType" id="paymentType" onchange="this.form.submit()" class="form-select">
+                                    <option value="credit" {{ $payment_type == 'credit' ? 'selected' : '' }}>
+                                        {{ __('messages.credit') }}
+                                    </option>
+                                    <option value="cash" {{ $payment_type == 'cash' ? 'selected' : '' }}>
+                                        {{ __('messages.cash') }}
+                                    </option>
+                                </select>
+                            </div>
+                            </form>
+                        </div>
+
+                        {{-- Pricing --}}
+                        <div class="pricing-block">
+                            <div class="price-row">
+                                <span>{{ __('messages.subtotal') }}</span>
+                                <span class="price-num">{{ number_format($carts->sum('totalPrice'), 2) }} TZS</span>
+                            </div>
+                            <div class="price-row grand">
+                                <span>{{ __('messages.grand_total') }}</span>
+                                <span class="price-num">{{ number_format($carts->sum('totalPrice'), 2) }} TZS</span>
+                            </div>
+                        </div>
+
+                        {{-- Submit --}}
+                        @if($orders->requestName ?? '')
+                        <form action="/requestSubmit" method="POST">
+                            @csrf
+                                <div style="margin-bottom:1.25rem;">
+                            <div class="section-label">{{ __('messages.request_shop') }}</div>
+   
+                                <input type="hidden" name="requestName" value="{{ $orders->requestName ?? 'NEW-ORDER' }}">
+                            
+                        </div>
+                                @if (canUser('item_request_date'))
+                                <div class="form-group">
+                                <label class="form-label" for="requestDate">{{ __('messages.request_date') }}</label>
+                                <input type="date" class="form-control" id="requestDate"
+                                       name="requestDatePicker"
+                                       value="{{ old('requestDate', date('Y-m-d')) }}">
+                            </div>
+                            @endif
+     
+                            <button type="submit" class="btn-submit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                {{ __('messages.submit_request') }}
+                            </button>
+                        </form>
+                        @else
+                        <div class="alert alert-info" style="margin:0;">
+                            <span>{{ __('messages.add_products_begin_request') }}</span>
+                        </div>
+                        @endif
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+$(document).ready(function () {
+
+    $('#product-name').on('input', function () {
+        let query = $(this).val().trim();
+        if (query.length > 1) {
+            $.ajax({
+                url: "{{ url('requestSearch') }}",
+                method: 'GET',
+                data: { query: query },
+                success: function (data) {
+                    if (!data || data.error) {
+                        $('#search-results')
+                            .html('<div class="search-no-results">' + (data.error || '{{ __('messages.search_no_results') }}') + '</div>')
+                            .show();
+                        return;
+                    }
+                    let output = '';
+                    data.forEach(function (product) {
+                        let price = parseFloat(product.sPrice) || 0;
+                        output += `
+                            <div class="search-item"
+                                 data-product_id="${product.product_id}"
+                                 data-name01="${product.name01}"
+                                 data-price="${price}"
+                                 data-discount="${product.discount || 0}">
+                                <div class="search-item-name">${product.name01}</div>
+                                <div class="search-item-quantity float-end">${product.quantity}</div>
+
+                                <div class="search-item-price">${price.toFixed(2)} TZS</div>
+                            </div>`;
+                    });
+                    $('#search-results').html(output).show();
+                },
+                error: function (xhr) {
+                    let msg = '{{ __('messages.error_loading_results') }}';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        msg = xhr.responseJSON.error;
+                    } else if (xhr.status === 401) {
+                        msg = '{{ __('messages.session_expired') }}';
+                    } else if (xhr.status === 0) {
+                        msg = '{{ __('messages.cannot_connect') }}';
+                    }
+                    $('#search-results')
+                        .html('<div class="search-no-results">' + msg + '</div>')
+                        .show();
+                }
+            });
+        } else {
+            $('#search-results').hide().html('');
+        }
+    });
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#product-name, #search-results').length) {
+            $('#search-results').hide();
+        }
+    });
+
+    $(document).on('click', '#search-results .search-item', function () {
+        $('#search-results .search-item').removeClass('selected');
+        $(this).addClass('selected');
+
+        let productName        = $(this).data('name01');
+        let productPrice       = $(this).data('price');
+        let productId          = $(this).data('product_id');
+        let productMaxDiscount = $(this).data('discount') || 0;
+
+        $('#product-name').val(productName);
+        $('#pId').val(productId);
+        $('#pPrice').val(productPrice);
+        $('#maxDiscount').val(productMaxDiscount);
+        $('#search-results').hide();
+
+        $('#formRequestDate').val($('#requestDate').val());
+
+        $('#addItemBtn').prop('disabled', false);
+
+        setTimeout(function () {
+            $('#addItemForm').submit();
+        }, 100);
+    });
+
+    $('#requestDate').on('change', function () {
+        $('#formRequestDate').val($(this).val());
+    });
+
+});
+</script>
+</body>
+</html>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                            {{ __('messages.cash') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div> 
                         </div>
 
                         {{-- Pricing --}}

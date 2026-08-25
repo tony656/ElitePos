@@ -12,7 +12,7 @@
             --navy:          #0B1E3D;
             --navy-mid:      #112952;
             --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
+            --amber:         var(--theme-primary);
             --amber-pale:    #FEF3C7;
             --emerald:       #059669;
             --emerald-pale:  #D1FAE5;
@@ -509,7 +509,7 @@
                                                         @endif
                                                         <form method="post" style="display:inline;">
                                                             @csrf
-                                                            <input type="hidden" name="product_id" value="{{ $item->productId }}">
+                                                            <input type="hidden" name="product_id" value="{{ $item->id }}">
                                                             <input type="hidden" name="action" value="delete">
                                                             <button formaction="{{ url('dltrestock') }}"
                                                                 class="act-btn act-btn-delete" title="Delete"

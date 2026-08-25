@@ -1066,47 +1066,59 @@ public function payout(Request $req)
 
     $paid   = floatval($req->input('paid', 0));
     $credit = floatval($req->input('credit', 0));
+    $bank   = floatval($req->input('bank', 0));
 
     // If total is 0 (all items returned), handle appropriately
     if ($totalAmount <= 0) {
         $paid = 0;
         $credit = 0;
+        $bank = 0;
     }
-    // If both paid and credit are 0 but there's a positive total, default to full payment
-    elseif ($paid == 0 && $credit == 0) {
+    // If all payment fields are 0 but there's a positive total, default to full payment
+    elseif ($paid == 0 && $credit == 0 && $bank == 0) {
         $paid = $totalAmount;
         $credit = 0;
+        $bank = 0;
     }
 
     // Auto-balance
-    if ($paid > 0 && $credit == 0) {
-        $credit = $totalAmount - $paid;
+    if ($paid > 0 && $credit == 0 && $bank == 0) {
+        $credit = 0;
+        $bank = 0;
     }
 
-    if ($credit > 0 && $paid == 0) {
-        $paid = $totalAmount - $credit;
+    if ($credit > 0 && $paid == 0 && $bank == 0) {
+        $paid = 0;
+        $bank = 0;
+    }
+
+    if ($bank > 0 && $paid == 0 && $credit == 0) {
+        $paid = 0;
+        $credit = 0;
     }
 
     // Clamp values - handle when total is 0 or negative
     if ($totalAmount > 0) {
         $paid   = max(0, min($paid, $totalAmount));
         $credit = max(0, min($credit, $totalAmount));
+        $bank   = max(0, min($bank, $totalAmount));
     } else {
         $paid = 0;
         $credit = 0;
+        $bank = 0;
     }
 
     // Final guarantee with floating point tolerance - skip if total is 0 or negative
     if ($totalAmount > 0) {
         $tolerance = 0.01;
-        if (abs(($paid + $credit) - $totalAmount) > $tolerance) {
-            return back()->with('error', 'Payment mismatch detected. Paid: ' . $paid . ', Credit: ' . $credit . ', Total: ' . $totalAmount);
+        if (abs(($paid + $credit + $bank) - $totalAmount) > $tolerance) {
+            return back()->with('error', 'Payment mismatch detected. Paid: ' . $paid . ', Credit: ' . $credit . ', Bank: ' . $bank . ', Total: ' . $totalAmount);
         }
     }
     
     // Ensure they add up exactly after tolerance check
     $paid = round($paid, 2);
-    $credit = round($totalAmount - $paid, 2);
+    $credit = round($totalAmount - $paid - $bank, 2);
 
     /* ============================
        FETCH CUSTOMER
@@ -1148,6 +1160,7 @@ public function payout(Request $req)
             $order->status = 'Return';
             $order->paid = 0;
             $order->credit = 0;
+            $order->bank = 0;
             $order->return_amount = $return_amount;
             $order->save();
             
@@ -1174,6 +1187,7 @@ public function payout(Request $req)
                 'return_amount'  => $order->return_amount ?? 0,
                 'paid'           => 0,
                 'credit'         => 0,
+                'bank'           => 0,
                 'transactionType' => $paymentMethod,
                 'status'          => 'Return',
                 'discount'        => 0,
@@ -1198,11 +1212,12 @@ public function payout(Request $req)
     if($paymentMethod === 'Credit') {
         $paid = 0;
         $credit = $totalAmount;
+        $bank = 0;
     }
       /* ============================
        FINAL STATUS DERIVATION
     ============================ */
-    if ($paid == $totalAmount && $totalAmount > 0) {  
+    if ($paid + $bank == $totalAmount && $totalAmount > 0) {  
         
         $finalStatus = 'Paid';
     } elseif ($credit == $totalAmount && $totalAmount > 0) {
@@ -1242,7 +1257,7 @@ public function payout(Request $req)
         if($limit < 1) {
            return back()->with('error', 'Customer has no credit limit set. Please set a credit limit to proceed with debt payment.');
         }
-        if ((($existingDebt + $newDebt) - $paidinv) > $limit) {
+        if (($existingDebt + $newDebt) > $limit) {
             return back()->with(
                 'error',
                 'Credit ' . $newDebt . ' exceeds limit. Current debt ' .
@@ -1264,10 +1279,12 @@ public function payout(Request $req)
         if ($isFirstOrderRow) {
             $order->paid = $paid;
             $order->credit = $credit;
+            $order->bank = $bank;
             $isFirstOrderRow = false;
         } else {
             $order->paid = 0;
             $order->credit = 0;
+            $order->bank = 0;
         }
         $order->save();
     }
@@ -1307,6 +1324,7 @@ public function payout(Request $req)
             'return_amount'  => $order->return_amount ?? 0,
             'paid'           => $isFirstSaleRow ? $paid : 0, 
             'credit'         => $isFirstSaleRow ? $credit : 0,
+            'bank'           => $isFirstSaleRow ? $bank : 0,
             'transactionType' => $paymentMethod,
             'status'          => $finalStatus,
             'discount'        => $order->discount,

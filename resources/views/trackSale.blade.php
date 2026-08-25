@@ -50,14 +50,14 @@
       cursor:pointer;
       text-decoration:none;
     }
-    .back-btn:hover { background:rgba(245,158,11,0.2); border-color:#f59e0b; color:#f59e0b; }
+    .back-btn:hover { background:rgba(245,158,11,0.2); border-color:var(--theme-primary); color:var(--theme-primary); }
     .header-icon {
       background: rgba(245,158,11,0.12);
       border: 1.5px solid rgba(245,158,11,0.25);
       border-radius: 14px;
       width: 54px; height:54px;
       display: flex; align-items:center; justify-content:center;
-      color: #f59e0b;
+      color: var(--theme-primary);
       font-size: 1.8rem;
     }
     .header-title h1 { color:white; font-weight:700; font-size:1.5rem; letter-spacing:-0.3px; margin-bottom:2px; }
@@ -75,7 +75,7 @@
       align-items:center;
       gap:6px;
     }
-    .track-badge i { color:#f59e0b; }
+    .track-badge i { color:var(--theme-primary); }
 
     /* search */
     .search-panel {

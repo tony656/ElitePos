@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@lang('messages.make_receiving')</title>
+    @include('links')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,7 +13,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -521,13 +522,34 @@
 
                 {{-- ── Layout ── --}}
                 <div class="layout">
-
+                    
                     {{-- ── LEFT: Product search + cart ── --}}
                     <div class="panel">
+                       
                         <div class="panel-head">
                             <i class="bi bi-grid"></i> Select Products
                         </div>
-
+                         <div class="row">
+                            <div class="col-2">
+                                <form action="/storeSession" method="post">
+                            @csrf
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                        <label class="form-label" style="margin-bottom:0;">{{ __('messages.select_shop') }}</label>
+                                    </div>
+                                    <select class="form-select" name="shopId" id="shopId" onchange="this.form.submit()">
+                                        <option value="">— {{ __('messages.choose_shop') }} —</option>
+                                        @foreach ($shops as $shop)
+                                            <option value="{{ $shop['id'] }}"
+                                                {{ ((getCurrentShopId()) == $shop['id'] ) ? 'selected' : '' }}>
+                                                {{ $shop['name'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                        </form>
+                    </div>
+                    <div class="col">
                         {{-- Search --}}
                         <div class="search-wrap" id="searchWrap">
                             <div class="search-box">
@@ -549,7 +571,7 @@
                                 <div class="dd-list" id="ddList"></div>
                             </div>
                         </div>
-
+                        </div></div>
                         {{-- Cart --}}
                         <div class="cart-wrap">
                             <div class="cart-head">
@@ -899,8 +921,7 @@
                     <th style="width:28%">Product</th>
                     <th style="width:11%;text-align:center;">Qty</th>
                     <th style="width:16%;text-align:center;">Cost</th>
-                    <th style="width:16%;text-align:center;">Wholesale</th>
-                    <th style="width:16%;text-align:center;">Retail</th>
+                    <th style="width:16%;text-align:center;">Selling</th>
                     <th style="width:13%;text-align:right;">Total</th>
                     <th style="width:5%;text-align:center;"></th>
                 </tr>
@@ -913,8 +934,7 @@
                         oninput="setField('${item.uid}','quantity',this.value);updateSummary();saveCart()"></td>
                     <td><input class="tbl-input" type="number" step="0.01" value="${item.cost}"
                         oninput="setField('${item.uid}','cost',this.value);updateRowTotal('${item.uid}');updateSummary();saveCart()"></td>
-                    <td><input class="tbl-input" type="number" step="0.01" value="${item.wholesale}"
-                        oninput="setField('${item.uid}','wholesale',this.value);saveCart()"></td>
+      
                     <td><input class="tbl-input" type="number" step="0.01" value="${item.retail}"
                         oninput="setField('${item.uid}','retail',this.value);saveCart()"></td>
                     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--navy);font-weight:500;" id="rowTotal-${item.uid}">

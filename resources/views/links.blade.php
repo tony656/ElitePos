@@ -57,6 +57,15 @@
     }
 </style>
 
+@php
+    $themeColor = $systemSettings->theme_color ?? 'var(--theme-primary)';
+@endphp
+<style>
+    :root {
+        --theme-primary: {{ $themeColor }};
+    }
+</style>
+
 <script>
 (function() {
     var INACTIVITY_LIMIT = 30 * 60 * 1000;
@@ -126,6 +135,30 @@
         });
         resetTimer();
     });
+})();
+</script>
+
+<script>
+(function() {
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    var themeColor = '{{ $systemSettings->theme_color ?? "var(--theme-primary)" }}';
+    var root = document.documentElement;
+    root.style.setProperty('--theme-primary', themeColor);
+
+    var rgb = hexToRgb(themeColor);
+    if (rgb) {
+        root.style.setProperty('--theme-primary-rgb', rgb.r + ', ' + rgb.g + ', ' + rgb.b);
+        root.style.setProperty('--theme-primary-pale', 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 0.12)');
+        root.style.setProperty('--theme-primary-dark', 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 0.88)');
+    }
 })();
 </script>
 

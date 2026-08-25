@@ -11,6 +11,7 @@ use App\Models\ordersModel;
 use App\Models\productsModel;
 use Carbon\Carbon;
 use App\Models\salsModel;
+use App\Models\Transaction;
 use App\Models\couponModel;
 use App\Models\expensesModel;
 use App\Models\itemRequestModel;
@@ -68,7 +69,8 @@ class salsController extends Controller
                         DB::raw('MAX(totalPrice) as totalPrice'),
                         DB::raw('SUM(pQuantity) as totalQuantity'),
                         DB::raw('SUM(paid) as totalPaid'),
-                        DB::raw('SUM(credit) as totalCredit')
+                        DB::raw('SUM(credit) as totalCredit'),
+                        DB::raw('SUM(bank) as totalBank')
                     )
                     ->whereBetween('created_at', [$start_date, $end_date])
                     ->where(function($query) {
@@ -824,6 +826,8 @@ class salsController extends Controller
             if ($product) {
                 $product->quantity += $sale->pQuantity;
                 $product->save();
+            } else {
+            return redirect()->back()->with('error', 'Failed to restore product quantity for product ID: ' . $sale->productId);
             }
 
             // 2. Restore Batch/Stock Ledger Quantity
@@ -845,9 +849,12 @@ class salsController extends Controller
             }
         }
         
-        // Fix: Delete via query builder to safely delete all rows matching the ID
+        //  Delete via query builder to safely delete all rows matching the ID
         salsModel::where('account', $account)
             ->where('salesName', $salesId)
+            ->delete();
+        ordersModel::where('account', $account)
+            ->where('orderName', $salesId)
             ->delete();
 
         DB::commit();
@@ -1373,78 +1380,108 @@ class salsController extends Controller
         }
     }
 
-    public function returnSaleToOrder(Request $req) {
-        $user = Auth::user();
+    public function returnSaleToOrder(Request $req)
+    {
         $salesId = $req->input('sales_id');
-        
+
         if (empty($salesId)) {
-            return response()->json(['success' => false, 'message' => 'Sales ID is required']);
+            return response()->json(['success' => false, 'message' => 'Sales ID is required'], 400);
         }
 
         $accountIds = array_column(getUserAccounts(), 'id');
 
-        $salesItems = salsModel::where('sales_id', $salesId)
+        $salesItems = salsModel::whereIn('account', $accountIds)
+            ->where('sales_id', $salesId)
             ->get();
 
         if ($salesItems->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'No sale found']);
+            return response()->json(['success' => false, 'message' => 'No sale found'], 404);
         }
 
-        $firstItem = $salesItems->first();
         $orderId = 'ORD-' . time() . '-' . rand(1000, 9999);
 
-        foreach ($salesItems as $sale) {
-            $product = productsModel::where('account', $sale->account)
-                ->where('product_id', $sale->productId)
-                ->first();
-            if ($product) {
-                $product->quantity = $product->quantity + $sale->pQuantity;
-                $product->save();
-            }
-            
-            $stock = stock::where('productId', $sale->productId)
-                ->where('account', $sale->account)
-                ->where('quantity', '>', 0)
-                ->orderBy('id', 'desc')
-                ->first();
-            if ($stock) {
-                $stock->quantity = $stock->quantity + $sale->pQuantity;
-                $stock->save();
+        DB::beginTransaction();
+
+        try {
+            foreach ($salesItems as $sale) {
+                $product = productsModel::where('product_id', $sale->productId)
+                    ->where('account', $sale->account)
+                    ->first();
+                if ($product) {
+                    $product->quantity = $product->quantity + $sale->pQuantity;
+                    $product->save();
+                }
+
+                $stock = stock::where('productId', $sale->productId)
+                    ->where('account', $sale->account)
+                    ->where('quantity', '>', 0)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                if ($stock) {
+                    $stock->quantity = $stock->quantity + $sale->pQuantity;
+                    $stock->save();
+                } else {
+                    $newStock = new stock();
+                    $newStock->productId = $sale->productId;
+                    $newStock->quantity = $sale->pQuantity;
+                    $newStock->account = $sale->account;
+                    $newStock->save();
+                }
+
+                $order = new ordersModel();
+                $order->order_id = $orderId;
+                $order->stockId = $sale->stockId;
+                $order->orderName = $sale->salesName;
+                $order->cName = $sale->cName;
+                $order->cPhone = $sale->cPhone;
+                $order->productId = $sale->productId;
+                $order->pQuantity = $sale->pQuantity;
+                $order->productPrice = $sale->productPrice;
+                $order->totalPrice = $sale->totalPrice;
+                $order->served_by = $sale->served_by;
+                $order->status = 'Pending';
+                $order->account = $sale->account;
+                $order->created_at = $sale->created_at;
+                $order->credit = $sale->credit ?? 0;
+                $order->paid = $sale->paid ?? 0;
+                $order->transactionType = $sale->transactionType;
+                $order->coupons = $sale->coupons ?? 0;
+                $order->discount = $sale->discount ?? 0;
+                $order->discount_increase = $sale->discount_increase ?? 0;
+                $order->offered_items = $sale->offered_items ?? 0;
+                $order->offer_parent_products = $sale->offer_parent_products ?? null;
+                $order->offer_parent_products = $sale->offer_parent_products ?? null;
+                $order->save();
             }
 
-            $order = new ordersModel();
-            $order->order_id = $orderId;
-            $order->stockId = $sale->stockId;
-            $order->orderName = $sale->salesName;
-            $order->cName = $sale->cName;
-            $order->cPhone = $sale->cPhone;
-            $order->productId = $sale->productId;
-            $order->pQuantity = $sale->pQuantity;
-            $order->productPrice = $sale->productPrice;
-            $order->totalPrice = $sale->totalPrice;
-            $order->served_by = $sale->served_by;
-            $order->status = 'Pending';
-            $order->account = $sale->account;
-            $order->created_at = $sale->created_at;
-            $order->offered_items = $sale->offered_items ?? 0;
-            $order->offer_parent_product = $sale->offer_parent_product ?? null;
-            $order->offer_parent_products = $sale->offer_parent_products ?? null;
-            $order->save();
+            salsModel::whereIn('account', $accountIds)
+                ->where('sales_id', $salesId)
+                ->delete();
+
+            Transaction::where('transaction_id', $salesId)
+                ->where('transaction_type', 'sale')
+                ->update(['status' => 'cancelled']);
+
+            $log = new logModal();
+            $log->title = 'Sales Returned to Order';
+            $log->description = 'Sale ' . $salesId . ' returned to orders for editing by ' . Auth::user()->name;
+            $log->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sale returned to orders successfully',
+                'order_id' => $orderId
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Return Sale To Order Error: ' . $e->getMessage() . ' | Sales ID: ' . $salesId);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while returning sale to order: ' . $e->getMessage()
+            ], 500);
         }
-
-        salsModel::where('sales_id', $salesId)
-            ->delete();
-
-        $log = new logModal();
-        $log->title = 'Sales Returned to Order';
-        $log->description = 'Sale ' . $salesId . ' returned to orders for editing by ' . Auth::user()->name;
-        $log->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Sale returned to orders successfully',
-            'order_id' => $orderId
-        ]);
     }
 
     public function getSalesDates(Request $req) {
@@ -1604,9 +1641,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
     // Uses composite index: (account, isPaid, created_at) for fast filtering
     $creditReceivingsData = recevingModel::whereIn('account', $shopIds)
         ->where('isPaid', 0)
-        ->where(function($q) {
-            $q->whereNull('status')->orWhere('status', '!=', 'Returned');
-        })
+        ->where('status',  'Approved')
         ->whereBetween('created_at', [$start_date, $end_date])
         ->selectRaw('account,
             COALESCE(SUM(price * COALESCE(quantity, 0)), 0) as total_credit_receivings,
@@ -1630,20 +1665,18 @@ $salesData = salsModel::whereIn('account', $shopIds)
         ->groupBy('account')
         ->get()
         ->keyBy('account');
-    \Log::info('AllShopReport: Paid receivings data count: ' . $paidReceivingsData->count());
 
     // 6.5. Get returned receivings (is_return = 1 or status = 'Returned') (OPTIMIZED)
     // Uses composite index: (account, is_return, created_at) for fast filtering
     $returnedReceivingsData = recevingModel::whereIn('account', $shopIds)
-        ->where(function($q) {
-            $q->where('is_return', 1)->orWhere('status', 'Returned');
-        })
+        ->where('is_return', 1)
+        ->where('status', 'Returned')
         ->whereBetween('created_at', [$start_date, $end_date])
         ->selectRaw('account, COALESCE(SUM(price * COALESCE(quantity, 0)), 0) as total_returned_receivings')
         ->groupBy('account')
         ->get()
         ->keyBy('account');
-    \Log::info('AllShopReport: Returned receivings data count: ' . $returnedReceivingsData->count());
+  
 
     // 7. Get supplier payments (OPTIMIZED)
     // Uses composite index: (account, created_at)
@@ -1675,7 +1708,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
         ->groupBy('account')
         ->get()
         ->keyBy('account');
-     
+      
     // 10. Get banking transfers (OPTIMIZED: ensure index on shop_id+transfer_date exists)
     $bankingData = BankingTransfer::whereIn('shop_id', $shopIds)
         ->whereBetween('transfer_date', [$start_date, $end_date])
@@ -1684,7 +1717,16 @@ $salesData = salsModel::whereIn('account', $shopIds)
         ->get()
         ->keyBy('shop_id');
     \Log::info('AllShopReport: Banking transfers count: ' . $bankingData->count());
-     
+    
+    // 10.5. Get sales bank (bank payments received at point of sale)
+    $salesBankData = salsModel::whereIn('account', $shopIds)
+        ->whereBetween('created_at', [$start_date, $end_date])
+        ->selectRaw('account, COALESCE(SUM(bank), 0) as total_sales_bank')
+        ->groupBy('account')
+        ->get()
+        ->keyBy('account');
+    \Log::info('AllShopReport: Sales bank count: ' . $salesBankData->count());
+      
     // 11. Get banking chips (OPTIMIZED: ensure index on shop_id+transfer_date exists)
     $chipData = BankingChip::whereIn('shop_id', $shopIds)
         ->whereBetween('transfer_date', [$start_date, $end_date])
@@ -1827,18 +1869,20 @@ $salesData = salsModel::whereIn('account', $shopIds)
         $banking = $bankingData[$accountId] ?? null;
         $chip = $chipData[$accountId] ?? null;
         $offer = $offersData[$accountId] ?? null;
+        $salesBank = $salesBankData[$accountId] ?? null;
         
         \Log::info('AllShopReport: Shop ' . $accountId . ' - sales=' . ($sales ? 'found' : 'null') . ', returns=' . ($returns ? 'found' : 'null') . ', expense=' . ($expense ? 'found' : 'null'));
         
         $totalCashSales = ($sales?->cash_sales_paid ?? 0) - ($returns?->cash_return_total ?? 0);
         $totalCreditSales = ($sales?->total_credit ?? 0) - ($returns?->credit_return_total ?? 0);
-        $totalSales = $totalCashSales + $totalCreditSales;
+        $bank_sales = $salesBank?->total_sales_bank ?? 0;
+        $totalSales = $totalCashSales + $totalCreditSales + $bank_sales;
         $totalReturn = ($returns?->credit_return_total ?? 0) + ($returns?->cash_return_total ?? 0);
         
         $cashReturns = $sales?->cash_returns ?? 0;
         $creditReturns = $sales?->credit_returns ?? 0;
         
-        $netCashSales = $totalCashSales - $cashReturns;
+        $netCashSales = ($totalCashSales + $bank_sales) - $cashReturns;
         
         $profit = (($sales?->cash_sales_paid ?? 0) + ($sales?->cash_sales_partial ?? 0)) - ($expense?->total_expenses ?? 0) - ($paidReceiving?->total_paid_receivings ?? 0);
         
@@ -1851,7 +1895,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
         $cashSubmit = ($cashSubmission?->total_cash_submitted ?? 0) + ($chip?->total_chip ?? 0);
         $bankingAmount = $banking?->total_banking ?? 0;
 
-        $crReceiving = ($creditReceiving?->total_credit_receivings ?? 0);
+        $crReceiving = ($creditReceiving?->total_credit_receivings ?? 0) - $returnedReceiving?->total_returned_receivings ?? 0;
 
         $bankDifference = $cashSubmit - $bankingAmount;
         $cashDifference = $cashAmount - ($cashSubmission?->total_cash_submitted ?? 0);
@@ -1859,18 +1903,19 @@ $salesData = salsModel::whereIn('account', $shopIds)
         $sellingWorth = $sales?->total_sales ?? 0;
 
         $costWorth = (($paidReceiving?->total_paid_receivings ?? 0) + ($crReceiving))
-                    - ($totalSales + ($returnedReceiving->total_returned_receivings ?? 0))
+                    - ($totalSales)
                     - ($sales?->total_discount ?? 0)
                     - ($offer?->total_offered ?? 0);
         
         $balance = $balances[$accountId] ?? [];
         $isBalanced = $balance['is_balanced'] ?? (abs($cashDifference) <= 0.01);
+        $isDiffZero = $isBalanced && abs($bankDifference) < 0.1 && abs(($supplierPayment->total_supplier_payments ?? 0) - $crReceiving - $totalReturn) < 0.1;
         $balanceIssues = $balance['issues'] ?? [];
         
         // Add sales balance check
-        $calculatedTotal = $totalCashSales + $totalCreditSales;
+        $calculatedTotal = $totalCashSales + $totalCreditSales + $bank_sales;
         if (abs($calculatedTotal - $totalSales) > 0.01) {
-            $balanceIssues[] = 'Sales mismatch: Cash (' . number_format($totalCashSales) . ') + Credit (' . number_format($totalCreditSales) . ') ≠ Total (' . number_format($totalSales) . ')';
+            $balanceIssues[] = 'Sales mismatch: Cash (' . number_format($totalCashSales) . ') + Credit (' . number_format($totalCreditSales) . ') + Bank (' . number_format($bank_sales) . ') ≠ Total (' . number_format($totalSales) . ')';
         }
         
         $shopReports->push((object)[
@@ -1884,6 +1929,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
             'total_sales' => $totalSales,
             'total_return' => $totalReturn,
             'total_bank' => $bankingAmount,
+            'sales_bank' => $bank_sales,
             'bank_diff' => $bankDifference,
             'total_offer' => $offer->total_offered ?? 0,
             'credit_return' => -$creditReturns,
@@ -1907,7 +1953,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
             'has_sales' => ($sales->total_transactions ?? 0) > 0,
             'cost_worth' => $costWorth,
             'selling_worth' => $sellingWorth,
-            'is_balanced' => $isBalanced,
+            'is_balanced' => $isDiffZero,
             'balance_issues' => $balanceIssues,
             'discrepancy_count' => $discrepancyCounts[$accountId] ?? 0,
         ]);
@@ -1926,6 +1972,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
         'cash_return'               => $shopReports->sum('cash_return'),
         'credit_return'             => $shopReports->sum('credit_return'),
         'total_bank'                => $shopReports->sum('total_bank'),
+        'sales_bank'                => $shopReports->sum('sales_bank'),
         'bank_diff'                 => $shopReports->sum('bank_diff'),
         'offer'                     => $shopReports->sum('total_offer'),
         'discount'                  => $shopReports->sum('discount'),
@@ -1950,6 +1997,14 @@ $salesData = salsModel::whereIn('account', $shopIds)
     
     $activeShopsCount = count($allShops);
     $shopsWithSalesCount = $shopReports->where('has_sales', true)->count();
+    $unbalancedShopsCount = $shopReports->where('is_balanced', false)->count();
+    $unbalancedReasons = [];
+    foreach ($shopReports->where('is_balanced', false) as $shop) {
+        foreach ($shop->balance_issues as $issue) {
+            $unbalancedReasons[$issue] = ($unbalancedReasons[$issue] ?? 0) + 1;
+        }
+    }
+    $unbalancedReasonsText = implode(', ', array_slice(array_keys($unbalancedReasons), 0, 2));
     $report = $shopReports;
 
     $data = compact(
@@ -1958,6 +2013,8 @@ $salesData = salsModel::whereIn('account', $shopIds)
         'totals',
         'activeShopsCount',
         'shopsWithSalesCount',
+        'unbalancedShopsCount',
+        'unbalancedReasonsText',
         'report',
         'allShops',
         'dateFrom',
@@ -2038,7 +2095,7 @@ $salesData = salsModel::whereIn('account', $shopIds)
             ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
             ->where('status', '!=', 'Return')
             ->where(function($q) { $q->where('salesName', '!=', '')->orWhereNull('salesName'); })
-            ->get(['account', 'productId', 'pQuantity', 'totalPrice', 'discount', 'offered_items', 'offer_parent_product', 'productPrice']);
+            ->get(['account', 'productId', 'pQuantity', 'totalPrice', 'discount', 'offered_items', 'offer_parent_products', 'productPrice']);
 
         $productIds = collect();
         foreach ($requests as $reqItem) { if ($reqItem->productId) $productIds->push($reqItem->productId); }
@@ -2126,8 +2183,8 @@ $salesData = salsModel::whereIn('account', $shopIds)
 
         $offerTotals = [];
         foreach ($sales as $sale) {
-            if (($sale->offered_items ?? 0) == 1 && !empty($sale->offer_parent_product)) {
-                $parentPid = $sale->offer_parent_product;
+            if (($sale->offered_items ?? 0) == 1 && !empty($sale->offer_parent_products)) {
+                $parentPid = $sale->offer_parent_products;
                 $offerVal = (float)($sale->productPrice * $sale->pQuantity);
                 $key = $sale->account . '|' . $parentPid;
                 if (!isset($offerTotals[$key])) {

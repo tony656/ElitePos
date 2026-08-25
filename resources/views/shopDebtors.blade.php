@@ -12,7 +12,7 @@
             --primary-dark: #3f37c9;
             --success: #10b981;
             --danger: #ef476f;
-            --warning: #f59e0b;
+            --warning: var(--theme-primary);
             --text: #1a1a2e;
             --muted: #6c757d;
             --border: #e5e7eb;
@@ -295,7 +295,7 @@
         }
         
         .badge.bg-warning {
-            background-color: #f59e0b !important;
+            background-color: var(--theme-primary) !important;
         }
     </style>
 </head>
