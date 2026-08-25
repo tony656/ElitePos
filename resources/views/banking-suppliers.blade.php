@@ -22,7 +22,7 @@
             --primary-dark: #1e40af;
             --primary-light: #3b82f6;
             --success: #10b981;
-            --warning: #f59e0b;
+            --warning: var(--theme-primary);
             --danger: #ef4444;
             --info: #06b6d4;
             --text-primary: #0f172a;

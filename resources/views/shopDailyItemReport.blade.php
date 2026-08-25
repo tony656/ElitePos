@@ -14,12 +14,12 @@
             --border-md: #CECCC4;
             --text: #0B1E3D;
             --muted: #7A7870;
-            --accent: #F59E0B;
+            --accent: var(--theme-primary);
             --green: #1A6B45;
             --green-bg: #E6F4ED;
             --red: #B63A2F;
             --red-bg: #FDECEA;
-            --amber: #F59E0B;
+            --amber: var(--theme-primary);
             --amber-bg: #FEF3D7;
             --purple: #1A3A6B;
             --purple-bg: #EEECFA;

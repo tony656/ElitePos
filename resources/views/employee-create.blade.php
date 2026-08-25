@@ -1,6 +1,6 @@
 <div class="modal fade" id="createEmployeeModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; overflow: hidden; height: 90vh;">
+        <div class="modal-content" style="border-radius: 20px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
             <div class="modal-header" style="background: linear-gradient(135deg, #0B1E3D 0%, #112952 100%); border: none; padding: 1.5rem 2rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <div style="width: 44px; height: 44px; background: rgba(245,158,11,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
@@ -14,12 +14,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
             </div>
 
-            <form action="{{ url('registerEmployee') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; height: 100%;">
+            <form action="{{ url('registerEmployee') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
                 @csrf
-                <div class="modal-body" style="padding: 1.5rem 2rem; flex: 1; overflow-y: auto;">
-                    <div class="row" style="margin: 0;">
+                <div class="modal-body" style="padding: 1.5rem 2rem; flex: 1; overflow-y: auto; min-height: 0; word-break: break-word; overflow-wrap: break-word;">
+                    <div class="row">
                         <!-- Left Column - Basic Info -->
-                        <div class="col-md-6" style="padding: 0 1rem;">
+                        <div class="col-md-6">
                             <h6 style="color: #0B1E3D; font-weight: 700; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 2px solid #F59E0B;">
                                 <i class="bi bi-person-badge me-2"></i>Basic Information
                             </h6>
@@ -64,7 +64,7 @@
                         </div>
 
                         <!-- Right Column - Role & Permissions -->
-                        <div class="col-md-6" style="padding: 0 1rem;">
+                        <div class="col-md-6">
                             <h6 style="color: #0B1E3D; font-weight: 700; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 2px solid #F59E0B;">
                                 <i class="bi bi-shield-lock me-2"></i>Role & Permissions
                             </h6>
@@ -103,19 +103,19 @@
                             <!-- Permissions Section -->
                             <div class="mb-3">
                                 <label class="form-label" style="font-weight: 600; color: #475569; margin-bottom: 0.4rem;">Permissions</label>
-                                <div style="border: 1.5px solid #E2E8F0; border-radius: 12px; max-height: 320px; overflow-y: auto; background: white;" id="permissionsContainer">
+                                <div style="border: 1.5px solid #E2E8F0; border-radius: 12px; background: white;" id="permissionsContainer">
 
                                     <!-- Inventory Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="inventory" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="inventory" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-box-seam" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Inventory Management</strong>
                                                 <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(4 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_items" id="perm_view_items">
                                                 <label class="form-check-label" for="perm_view_items">View Items</label>
@@ -135,16 +135,17 @@
                                         </div>
                                     </div>
 
+                                    <!-- Item Request Management -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="Request" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="Request" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-box-seam" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Item Request Management</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(2 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(5 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="item_request" id="perm_item_request">
                                                 <label class="form-check-label" for="perm_item_request">Item Requests</label>
@@ -167,17 +168,18 @@
                                             </div>
                                         </div>
                                     </div>
+
                                     <!-- Sales Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="sales" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="sales" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-cart" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Sales Management</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(3 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(4 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_sales" id="perm_view_sales">
                                                 <label class="form-check-label" for="perm_view_sales">View Sales</label>
@@ -190,21 +192,24 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_invoices" id="perm_view_invoices">
                                                 <label class="form-check-label" for="perm_view_invoices">{{ __('messages.view_invoices') }}</label>
                                             </div>
-                                        </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="invoice_date" id="perm_invoice_date">
+                                                <label class="form-check-label" for="perm_invoice_date">Invoice Date</label>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Debts Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="debts" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="debts" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-receipt" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Debts Management</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(4 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(5 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_shop_debts" id="perm_view_shop_debts">
                                                 <label class="form-check-label" for="perm_view_shop_debts">{{ __('messages.view_shop_debts') }}</label>
@@ -221,20 +226,24 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="pay_debts" id="perm_pay_debts">
                                                 <label class="form-check-label" for="perm_pay_debts">Pay Debts</label>
                                             </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="payment_date" id="perm_payment_date">
+                                                <label class="form-check-label" for="perm_payment_date">Payment Date</label>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Receivings & Returns -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="receivings" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="receivings" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-truck" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Receivings & Returns</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(3 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(7 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_receivings" id="perm_view_receivings">
                                                 <label class="form-check-label" for="perm_view_receivings">{{ __('messages.view_receivings') }}</label>
@@ -255,7 +264,7 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="print_receiving" id="perm_print_receiving">
                                                 <label class="form-check-label" for="perm_print_receiving">Print Receivings</label>
                                             </div>
-                                              <div class="form-check mb-2">
+                                            <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="make_return" id="perm_make_return">
                                                 <label class="form-check-label" for="perm_make_return">{{ __('messages.make_return') }}</label>
                                             </div>
@@ -268,15 +277,15 @@
 
                                     <!-- Reports Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="reports" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="reports" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-graph-up" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Reports</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(4 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(5 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_reports" id="perm_view_reports">
                                                 <label class="form-check-label" for="perm_view_reports">View Reports</label>
@@ -293,20 +302,24 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_shops_report" id="perm_view_shops_report">
                                                 <label class="form-check-label" for="perm_view_shops_report">Shops Report</label>
                                             </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="cash_submit_date" id="perm_cash_submit_date">
+                                                <label class="form-check-label" for="perm_cash_submit_date">Cash Submit Date</label>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Customers Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="customers" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="customers" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-people" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Customers</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(2 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(3 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_customers" id="perm_view_customers">
                                                 <label class="form-check-label" for="perm_view_customers">View Customers</label>
@@ -324,15 +337,15 @@
 
                                     <!-- Suppliers Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="suppliers" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="suppliers" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-building" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">{{ __('messages.suppliers') }}</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(2 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(4 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_suppliers" id="perm_view_suppliers">
                                                 <label class="form-check-label" for="perm_view_suppliers">{{ __('messages.view_suppliers') }}</label>
@@ -340,6 +353,10 @@
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="manage_supplier_credit" id="perm_manage_supplier_credit">
                                                 <label class="form-check-label" for="perm_manage_supplier_credit">{{ __('messages.manage_supplier_credit') }}</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="supplier_credit_payment_date" id="perm_supplier_credit_payment_date">
+                                                <label class="form-check-label" for="perm_supplier_credit_payment_date">Supplier Credit Payment Date</label>
                                             </div>
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="add_supplier" id="perm_add_supplier">
@@ -350,15 +367,15 @@
 
                                     <!-- Expenses Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="expenses" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="expenses" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-receipt" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Expenses</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(2 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(2 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_expenses" id="perm_view_expenses">
                                                 <label class="form-check-label" for="perm_view_expenses">View Expenses</label>
@@ -372,15 +389,15 @@
 
                                     <!-- Banking Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="banking" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="banking" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-bank" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Banking</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(3 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(6 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_banking" id="perm_view_banking">
                                                 <label class="form-check-label" for="perm_view_banking">View Banking</label>
@@ -393,20 +410,32 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="add_banking_beneficiary" id="perm_add_banking_beneficiary">
                                                 <label class="form-check-label" for="perm_add_banking_beneficiary">Add Beneficiary</label>
                                             </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="add_banking_transfer" id="perm_add_banking_transfer">
+                                                <label class="form-check-label" for="perm_add_banking_transfer">Add Banking Transfer</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_banking_transfer" id="perm_delete_banking_transfer">
+                                                <label class="form-check-label" for="perm_delete_banking_transfer">Delete Banking Transfer</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="banking_transfer_date" id="perm_banking_transfer_date">
+                                                <label class="form-check-label" for="perm_banking_transfer_date">Banking Transfer Date</label>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Main Store Permissions -->
                                     <div class="perm-group" style="margin: 0; border-bottom: 1px solid #E2E8F0;">
-                                        <div class="perm-group-head" data-group="mainstore" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="mainstore" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-shop" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">Main Store Section</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(13 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(13 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_main_store" id="perm_view_main_store">
                                                 <label class="form-check-label" for="perm_view_main_store">View Main Store Section</label>
@@ -459,25 +488,29 @@
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_main_store_report" id="perm_view_main_store_report">
                                                 <label class="form-check-label" for="perm_view_main_store_report">Main Store Report</label>
                                             </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="permissions[]" value="main_create_offers" id="perm_main_create_offers">
+                                                <label class="form-check-label" for="perm_main_create_offers">Offers</label>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- System Permissions -->
                                     <div class="perm-group" style="margin: 0;">
-                                        <div class="perm-group-head" data-group="system" onclick="togglePermissionGroup(this)">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div class="perm-group-head" data-group="system" role="button" tabindex="0" onclick="togglePermissionGroup(this)">
+                                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0;">
                                                 <i class="bi bi-gear" style="color: #F59E0B; font-size: 1.1rem;"></i>
                                                 <strong style="color: #0B1E3D;">System Access</strong>
-                                                <span style="font-size: 0.7rem; color: #94A3B8;">(4 permissions)</span>
+                                                <span style="font-size: 0.7rem; color: #94A3B8; margin-left: 0.5rem;">(4 permissions)</span>
                                             </div>
                                             <i class="bi bi-chevron-down" style="color: #94A3B8; transition: transform 0.2s;"></i>
                                         </div>
-                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; ">
+                                        <div class="perm-group-body" style="padding: 0 1rem 0.75rem 1rem; display: block;">
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_logs" id="perm_view_logs">
                                                 <label class="form-check-label" for="perm_view_logs">View Logs</label>
                                             </div>
-                                             <div class="form-check mb-2">
+                                            <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="view_settings" id="perm_view_settings">
                                                 <label class="form-check-label" for="perm_view_settings">View Settings</label>
                                             </div>
@@ -494,17 +527,8 @@
 
                                 </div>
                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
                 </div>
 
                 <div class="modal-footer" style="padding: 1rem 2rem; border-top: 1px solid #E2E8F0; background: #F8FAFC;">
@@ -521,6 +545,7 @@
 <style>
     .perm-group-head {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
         cursor: pointer;
@@ -528,6 +553,8 @@
         background: #F8FAFC;
         transition: all 0.2s;
         border-radius: 0;
+        min-width: 0;
+        gap: 0.5rem;
     }
     .perm-group-head:hover {
         background: #E8EDF5 !important;
@@ -539,24 +566,16 @@
         background-color: #F59E0B;
         border-color: #F59E0B;
     }
+    .form-check-input:focus {
+        border-color: #F59E0B;
+        box-shadow: 0 0 0 0.2rem rgba(245,158,11,0.25);
+    }
     .form-control:focus, .form-select:focus {
         border-color: #F59E0B;
         box-shadow: 0 0 0 0.2rem rgba(245,158,11,0.1);
     }
-    /* Custom scrollbar */
-    #permissionsContainer::-webkit-scrollbar {
-        width: 6px;
-    }
-    #permissionsContainer::-webkit-scrollbar-track {
-        background: #F1F5F9;
-        border-radius: 3px;
-    }
-    #permissionsContainer::-webkit-scrollbar-thumb {
-        background: #CBD5E1;
-        border-radius: 3px;
-    }
-    #permissionsContainer::-webkit-scrollbar-thumb:hover {
-        background: #94A3B8;
+    .modal-body .form-check-label {
+        cursor: pointer;
     }
 </style>
 
@@ -584,7 +603,7 @@
 
         if (modal) {
             modal.addEventListener('shown.bs.modal', function() {
-                // Reset all permission bodies to hidden
+                // Reset all permission bodies to visible
                 const allBodies = document.querySelectorAll('#createEmployeeModal .perm-group-body');
                 allBodies.forEach(body => {
                     body.style.display = 'block';

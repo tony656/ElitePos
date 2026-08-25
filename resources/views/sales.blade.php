@@ -6,79 +6,114 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{config("app.name")}} - {{ __('messages.sales_dashboard') }}</title>
     @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
+        /* ── CSS Variables ── */
         :root {
-            --navy:          #0B1E3D;
-            --navy-mid:      #112952;
-            --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
-            --amber-dark:    #D97706;
-            --amber-pale:    #FEF3C7;
-            --emerald:       #059669;
-            --emerald-pale:  #D1FAE5;
-            --rose:          #E11D48;
-            --rose-pale:     #FFE4E6;
-            --violet:        #7C3AED;
-            --violet-pale:   #EDE9FE;
-            --sky:           #0284C7;
-            --sky-pale:      #E0F2FE;
-            --slate-50:      #F8FAFC;
-            --slate-100:     #F1F5F9;
-            --slate-200:     #E2E8F0;
-            --slate-300:     #CBD5E1;
-            --slate-400:     #94A3B8;
-            --slate-500:     #64748B;
-            --slate-600:     #475569;
-            --slate-700:     #334155;
-            --slate-800:     #1E293B;
-            --white:         #FFFFFF;
+            --primary-dark:     #0B1E3D;
+            --primary-mid:      #112952;
+            --primary-light:    #1A3A6B;
+            --accent:           var(--theme-primary, #F59E0B);
+            --accent-dark:      #D97706;
+            --accent-pale:      #FEF3C7;
+            --success:          #059669;
+            --success-pale:     #D1FAE5;
+            --danger:           #E11D48;
+            --danger-pale:      #FFE4E6;
+            --info:             #7C3AED;
+            --info-pale:        #EDE9FE;
+            --sky:              #0284C7;
+            --sky-pale:         #E0F2FE;
+            --gray-50:          #F8FAFC;
+            --gray-100:         #F1F5F9;
+            --gray-200:         #E2E8F0;
+            --gray-300:         #CBD5E1;
+            --gray-400:         #94A3B8;
+            --gray-500:         #64748B;
+            --gray-600:         #475569;
+            --gray-700:         #334155;
+            --gray-800:         #1E293B;
+            --gray-900:         #0F172A;
+            --white:            #FFFFFF;
+            --shadow-sm:        0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md:        0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg:        0 8px 32px rgba(0,0,0,0.12);
+            --radius:           12px;
+            --radius-sm:        8px;
+            --radius-xs:        6px;
+            --transition:       all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            
+            font-family: 'Inter', -apple-system, sans-serif;
             background: #EEF2F9;
-            color: var(--slate-800);
+            color: var(--gray-800);
             min-height: 100vh;
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--slate-100); }
-        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-        /* ── Main wrap ── */
-        .main-wrap { max-width: 1900px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+        /* ── Main Wrapper ── */
+        .main-wrap {
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            width: 100%;
+        }
 
-        /* ── Page header ── */
-        .pg-header {
-            background: var(--navy);
-            border-radius: 12px;
-            padding: 1.4rem 1.5rem;
+        @media (max-width: 1024px) {
+            .main-wrap { padding: 1.25rem; }
+        }
+
+        @media (max-width: 768px) {
+            .main-wrap { padding: 1rem; }
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            border-radius: var(--radius);
+            padding: 1.5rem 2rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
+            box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
         }
 
-        .pg-header::before {
+        .page-header::before {
             content: '';
             position: absolute;
             top: -50%;
-            right: -10%;
-            width: 350px;
-            height: 350px;
-            background: rgba(245,158,11,0.08);
+            right: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
         }
 
-        .header-row {
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: 10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -91,392 +126,575 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
+            flex-wrap: wrap;
         }
 
-        .back-btn {
-            width: 42px; height: 42px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.1);
-            border: 1.5px solid rgba(255,255,255,0.2);
-            display: flex; align-items: center; justify-content: center;
+        .back-button {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--white);
             cursor: pointer;
-            transition: all 0.18s;
+            transition: var(--transition);
             text-decoration: none;
-        }
-        .back-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: var(--amber);
-            color: var(--amber);
+            flex-shrink: 0;
         }
 
-        .pg-icon-wrap {
-            width: 52px; height: 52px;
-            background: rgba(245,158,11,0.15);
-            border: 1.5px solid rgba(245,158,11,0.3);
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--amber);
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateX(-2px);
+        }
+
+        .header-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1.5px solid rgba(245, 158, 11, 0.25);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .header-title h1 {
+            color: var(--white);
             font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 0.1rem 0;
+            letter-spacing: -0.3px;
         }
 
-        .pg-title-wrap h1 {
-            color: var(--white); font-size: 1.45rem; font-weight: 700;
-            margin: 0 0 0.15rem 0;
-        }
-        .pg-subtitle {
-            color: rgba(255,255,255,0.7); font-size: 0.82rem;
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
             margin: 0;
+            font-weight: 400;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 0.85rem;
+            gap: 0.75rem;
             flex-wrap: wrap;
         }
 
-        .shop-select-wrap {
+        /* ── Shop Select ── */
+        .shop-select-wrapper {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
-        .shop-label {
-            color: rgba(255,255,255,0.9);
-            font-size: 0.82rem;
+        .shop-select-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.8rem;
             font-weight: 600;
         }
 
         .shop-select {
-            padding: 0.5rem 0.85rem;
-            border: 1.5px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
-            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--white);
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             outline: none;
             cursor: pointer;
-            transition: all 0.18s;
-            min-width: 200px;
-            
+            transition: var(--transition);
+            min-width: 180px;
+            font-family: inherit;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.6)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.25rem;
         }
+
         .shop-select:focus {
-            background: rgba(255,255,255,0.2);
-            border-color: var(--amber);
+            background: rgba(255, 255, 255, 0.16);
+            border-color: var(--accent);
         }
+
         .shop-select option {
-            background: var(--navy);
+            background: var(--primary-dark);
             color: var(--white);
         }
 
+        /* ── Export Button ── */
         .btn-export {
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            font-size: 0.82rem;
+            gap: 0.5rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            padding: 0.55rem 1rem;
-            background: var(--amber);
-            color: var(--navy);
+            padding: 0.55rem 1.25rem;
+            background: var(--accent);
+            color: var(--primary-dark);
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
-            transition: all 0.18s;
+            box-shadow: 0 3px 12px rgba(245, 158, 11, 0.3);
+            transition: var(--transition);
             text-decoration: none;
-        }
-        .btn-export:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 18px rgba(245,158,11,0.4);
-            color: var(--navy);
+            font-family: inherit;
+            white-space: nowrap;
         }
 
-        /* ── Stat cards ── */
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4);
+            color: var(--primary-dark);
+        }
+
+        .btn-export i { font-size: 1.1rem; }
+
+        /* ── Alert Messages ── */
+        .alert {
+            padding: 0.9rem 1.25rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: slideDown 0.35s ease;
+        }
+
+        .alert-success {
+            background: var(--success-pale);
+            color: #065F46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-danger {
+            background: var(--danger-pale);
+            color: #9F1239;
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert i { font-size: 1.15rem; margin-right: 0.5rem; }
+
+        .btn-close-custom {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.5;
+            padding: 0 0.25rem;
+            transition: var(--transition);
+            line-height: 1;
+        }
+
+        .btn-close-custom:hover { opacity: 1; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Stats Grid ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.25rem;
             margin-bottom: 1.5rem;
         }
 
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
         .stat-card {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
-            opacity: 0;
-            animation: slideUp 0.4s ease forwards;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
         }
 
-        .stat-card.s1 { animation-delay: 0s; border-top: 3px solid var(--navy); }
-        .stat-card.s2 { animation-delay: 0.05s; border-top: 3px solid var(--rose); }
-        .stat-card.s3 { animation-delay: 0.1s; border-top: 3px solid var(--amber); }
-        .stat-card.s4 { animation-delay: 0.15s; border-top: 3px solid var(--emerald); }
-
-        .stat-icon-box {
-            width: 52px; height: 52px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 0.85rem;
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
         }
 
-        .stat-icon-box.navy { background: rgba(11,30,61,0.1); color: var(--navy); }
-        .stat-icon-box.rose { background: var(--rose-pale); color: var(--rose); }
-        .stat-icon-box.amber { background: var(--amber-pale); color: #92400E; }
-        .stat-icon-box.emerald { background: var(--emerald-pale); color: var(--emerald); }
-
-        .stat-value {
-            
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--navy);
-            margin-bottom: 0.35rem;
-        }
-
-        .stat-label {
-            font-size: 0.78rem;
-            color: var(--slate-500);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+        .stat-card .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 0.75rem;
         }
 
-        .stat-meta {
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .stat-icon.primary { background: rgba(11, 30, 61, 0.08); color: var(--primary-dark); }
+        .stat-icon.danger  { background: var(--danger-pale); color: var(--danger); }
+        .stat-icon.warning { background: var(--accent-pale); color: #92400E; }
+        .stat-icon.success { background: var(--success-pale); color: var(--success); }
+
+        .stat-trend {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        .stat-trend.up { background: var(--success-pale); color: var(--success); }
+        .stat-trend.down { background: var(--danger-pale); color: var(--danger); }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-footer {
             display: flex;
             justify-content: space-between;
+            margin-top: 0.75rem;
             padding-top: 0.75rem;
-            border-top: 1px solid var(--slate-200);
-            font-size: 0.78rem;
-            color: var(--slate-500);
+            border-top: 1px solid var(--gray-100);
+            font-size: 0.75rem;
+            color: var(--gray-500);
         }
 
-        .stat-meta-value {
-            
+        .stat-footer span strong {
+            color: var(--gray-700);
             font-weight: 600;
-            color: var(--slate-700);
         }
 
-        /* ── Content grid ── */
+        /* ── Content Grid ── */
         .content-grid {
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: 1fr 340px;
             gap: 1.5rem;
+            align-items: start;
+            width: 100%;
         }
 
-        /* ── Search panel ── */
+        @media (max-width: 1200px) {
+            .content-grid { 
+                grid-template-columns: 1fr 300px;
+                gap: 1.25rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .content-grid { 
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+        }
+
+        /* ── Search Panel ── */
         .search-panel {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 0.85rem 1.25rem;
             margin-bottom: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            box-shadow: var(--shadow-sm);
         }
 
-        .search-wrap {
+        .search-wrapper {
             position: relative;
         }
 
-        .search-icon {
+        .search-wrapper .search-icon {
             position: absolute;
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--slate-400);
-            pointer-events: none;
+            color: var(--gray-400);
+            font-size: 1.1rem;
         }
 
-        .search-input {
+        .search-wrapper input {
             width: 100%;
-            padding: 0.65rem 1rem 0.65rem 2.75rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            background: var(--slate-50);
+            padding: 0.7rem 1rem 0.7rem 3rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--gray-50);
             font-size: 0.875rem;
-            color: var(--slate-800);
+            color: var(--gray-800);
             outline: none;
-            transition: all 0.18s;
-            
-        }
-        .search-input::placeholder {
-            color: var(--slate-400);
-        }
-        .search-input:focus {
-            border-color: var(--navy-light);
-            background: var(--white);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            transition: var(--transition);
+            font-family: inherit;
         }
 
-        /* ── Sales table ── */
+        .search-wrapper input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .search-wrapper input:focus {
+            border-color: var(--primary-light);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(26, 58, 107, 0.08);
+        }
+
+        /* ── Table Card ── */
         .table-card {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
+            width: 100%;
         }
 
-        table.sales-tbl {
+        .table-responsive {
+            overflow-x: auto;
+            padding: 0 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sales-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.82rem;
+            min-width: 900px;
         }
 
-        table.sales-tbl thead th {
-            background: var(--slate-100);
-            color: var(--slate-500);
-            font-size: 0.7rem;
+        .sales-table thead th {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            font-size: 0.68rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.75rem 0.85rem;
-            border-bottom: 2px solid var(--slate-200);
+            letter-spacing: 0.06em;
+            padding: 0.85rem 1rem;
+            border-bottom: 2px solid var(--gray-200);
             white-space: nowrap;
+            text-align: left;
         }
 
-        table.sales-tbl tbody td {
-            padding: 0.85rem;
-            border-bottom: 1px solid var(--slate-100);
+        .sales-table thead th:last-child { text-align: right; }
+
+        .sales-table tbody td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
             vertical-align: middle;
-            color: var(--slate-800);
+            color: var(--gray-800);
         }
 
-        table.sales-tbl tbody tr:hover td {
+        .sales-table tbody td:last-child { text-align: right; }
+
+        .sales-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .sales-table tbody tr:hover {
             background: #F8FAFF;
         }
 
-        .amt-mono {
-            
-            font-weight: 600;
-            font-size: 0.82rem;
+        .sales-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
+        /* ── Amount Mono ── */
+        .amount-mono {
+            font-family: 'DM Mono', monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* ── Status Badges ── */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            font-size: 0.72rem;
+            gap: 0.3rem;
+            font-size: 0.7rem;
             font-weight: 700;
-            padding: 0.3rem 0.6rem;
-            border-radius: 5px;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
         }
 
         .status-badge.success {
-            background: var(--emerald-pale);
+            background: var(--success-pale);
             color: #065F46;
         }
+
         .status-badge.danger {
-            background: var(--rose-pale);
+            background: var(--danger-pale);
             color: #9F1239;
         }
+
         .status-badge.secondary {
-            background: var(--slate-200);
-            color: var(--slate-700);
+            background: var(--gray-200);
+            color: var(--gray-600);
         }
 
-        .action-btns {
+        .status-badge.warning {
+            background: var(--accent-pale);
+            color: #92400E;
+        }
+
+        .status-badge i { font-size: 0.6rem; }
+
+        /* ── Action Buttons ── */
+        .action-group {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .btn-view {
+        .action-group form {
+            display: inline;
+            margin: 0;
+        }
+
+        .action-group .d-flex {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            font-size: 0.75rem;
+            gap: 0.3rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            padding: 0.4rem 0.75rem;
-            background: transparent;
-            color: var(--sky);
-            border: 1.5px solid var(--sky);
-            border-radius: 7px;
+            padding: 0.35rem 0.7rem;
+            border-radius: var(--radius-xs);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--transition);
+            border: 1.5px solid transparent;
+            font-family: inherit;
+            background: transparent;
+            white-space: nowrap;
         }
-        .btn-view:hover {
+
+        .btn-action i { font-size: 0.9rem; }
+
+        .btn-action.track {
+            color: var(--info);
+            border-color: var(--info);
+            background: transparent;
+        }
+
+        .btn-action.track:hover {
+            background: var(--info);
+            color: var(--white);
+        }
+
+        .btn-action.view {
+            color: var(--sky);
+            border-color: var(--sky);
+            background: transparent;
+        }
+
+        .btn-action.view:hover {
             background: var(--sky);
             color: var(--white);
         }
 
-        .btn-undo {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.4rem 0.75rem;
+        .btn-action.undo {
+            color: var(--gray-600);
+            border-color: var(--gray-300);
             background: transparent;
-            color: var(--slate-600);
-            border: 1.5px solid var(--slate-300);
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .btn-undo:hover {
-            background: var(--slate-600);
-            color: var(--white);
-            border-color: var(--slate-600);
         }
 
-        .btn-track {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.4rem 0.75rem;
-            background: transparent;
-            color: var(--violet);
-            border: 1.5px solid var(--violet);
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .btn-track:hover {
-            background: var(--violet);
+        .btn-action.undo:hover {
+            background: var(--gray-600);
             color: var(--white);
+            border-color: var(--gray-600);
         }
 
-        /* ── Empty state ── */
+        /* ── Empty State ── */
         .empty-state {
             text-align: center;
-            padding: 4rem 1.5rem;
+            padding: 3rem 1.5rem;
         }
-        .empty-icon {
-            width: 80px; height: 80px;
+
+        .empty-state .empty-icon {
+            width: 72px;
+            height: 72px;
             margin: 0 auto 1rem;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--slate-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-100);
             border-radius: 50%;
-            color: var(--slate-400);
+            color: var(--gray-400);
             font-size: 2rem;
         }
-        .empty-title {
-            font-size: 1.1rem; font-weight: 700;
-            color: var(--slate-600);
-            margin-bottom: 0.4rem;
+
+        .empty-state h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-600);
+            margin-bottom: 0.3rem;
         }
-        .empty-desc {
-            font-size: 0.875rem; color: var(--slate-500);
+
+        .empty-state p {
+            font-size: 0.85rem;
+            color: var(--gray-500);
         }
 
         /* ── Sidebar ── */
+        .sidebar-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+        }
+
         .sidebar-section {
-            margin-bottom: 1.25rem;
+            width: 100%;
         }
 
         /* ── Calendar ── */
         .calendar-card {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
             padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
         }
 
         .calendar-header {
@@ -485,475 +703,605 @@
             align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 0.85rem;
-            border-bottom: 1.5px solid var(--slate-200);
+            border-bottom: 1px solid var(--gray-200);
         }
 
-        .calendar-title {
-            font-size: 0.875rem;
+        .calendar-header h6 {
+            font-size: 0.8rem;
             font-weight: 700;
-            color: var(--navy);
+            color: var(--primary-dark);
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .calendar-header .calendar-hint {
+            font-size: 0.65rem;
+            color: var(--gray-400);
         }
 
         .calendar-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.85rem;
+            margin-bottom: 0.75rem;
         }
 
         .calendar-nav-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-xs);
             background: transparent;
-            border: 1.5px solid var(--slate-300);
-            color: var(--navy);
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-700);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.18s;
+            transition: var(--transition);
+            flex-shrink: 0;
         }
+
         .calendar-nav-btn:hover {
-            background: var(--navy);
+            background: var(--primary-dark);
             color: var(--white);
-            border-color: var(--navy);
+            border-color: var(--primary-dark);
         }
 
-        .calendar-month {
-            font-size: 0.875rem;
+        .calendar-month-label {
+            font-size: 0.85rem;
             font-weight: 600;
-            color: var(--navy);
+            color: var(--gray-800);
         }
 
-        .calendar-table {
+        .calendar-grid {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .calendar-table th {
-            padding: 0.5rem 0.25rem;
-            font-size: 0.7rem;
+        .calendar-grid th {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.65rem;
             font-weight: 600;
-            color: var(--slate-500);
+            color: var(--gray-500);
             text-align: center;
         }
 
-        .calendar-table td {
-            padding: 0.45rem 0.25rem;
+        .calendar-grid td {
+            padding: 0.4rem 0.2rem;
             text-align: center;
             cursor: pointer;
-            transition: all 0.15s;
-            font-size: 0.8rem;
-            color: var(--slate-700);
+            transition: var(--transition);
+            font-size: 0.78rem;
+            color: var(--gray-700);
+            border-radius: var(--radius-xs);
         }
 
-        .calendar-table td:hover {
-            background: var(--amber-pale);
-            border-radius: 6px;
+        .calendar-grid td:hover {
+            background: var(--accent-pale);
             color: #92400E;
         }
 
-        .calendar-table td.current-date {
-            background: var(--navy);
+        .calendar-grid td.today {
+            background: var(--primary-dark);
             color: var(--white);
-            border-radius: 6px;
             font-weight: 700;
         }
 
-        .calendar-table td.sales-date {
-            background: var(--emerald-pale);
+        .calendar-grid td.has-sale {
+            background: var(--success-pale);
             color: #065F46;
-            border-radius: 6px;
             font-weight: 600;
         }
 
-        .calendar-table td.sales-date:hover {
-            background: var(--emerald);
+        .calendar-grid td.has-sale:hover {
+            background: var(--success);
             color: var(--white);
         }
 
-        /* ── Summary card ── */
+        /* ── Summary Card ── */
         .summary-card {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
             padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            box-shadow: var(--shadow-sm);
+            width: 100%;
         }
 
-        .summary-title {
-            font-size: 0.875rem;
+        .summary-card h6 {
+            font-size: 0.8rem;
             font-weight: 700;
-            color: var(--navy);
+            color: var(--primary-dark);
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            margin: 0 0 1rem 0;
             padding-bottom: 0.85rem;
-            border-bottom: 1.5px solid var(--slate-200);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .summary-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.65rem 0;
-            border-bottom: 1px solid var(--slate-100);
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--gray-100);
         }
 
         .summary-row:last-child {
             border-bottom: none;
         }
 
-        .summary-label {
-            font-size: 0.82rem;
-            color: var(--slate-600);
+        .summary-row .label {
+            font-size: 0.8rem;
+            color: var(--gray-500);
         }
 
-        .summary-value {
-            
+        .summary-row .value {
             font-size: 0.875rem;
             font-weight: 700;
-            color: var(--navy);
+            color: var(--gray-800);
         }
 
         /* ── Responsive ── */
-        @media (max-width: 1200px) {
-            .content-grid {
+        @media (max-width: 1024px) {
+            .header-content { 
+                flex-direction: column; 
+                align-items: stretch; 
+            }
+            
+            .header-actions { 
+                width: 100%; 
+                flex-direction: column; 
+                align-items: stretch;
+            }
+            
+            .shop-select-wrapper { 
+                width: 100%; 
+                flex-wrap: wrap; 
+            }
+            
+            .shop-select { 
+                flex: 1; 
+                min-width: 120px; 
+            }
+            
+            .btn-export { 
+                width: 100%; 
+                justify-content: center; 
+            }
+        }
+
+        @media (max-width: 992px) {
+            .content-grid { 
                 grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+            
+            .sidebar-wrapper {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.25rem;
             }
         }
 
         @media (max-width: 768px) {
-            .main-wrap { padding: 1rem; }
-            .pg-header { padding: 1rem; margin-bottom: 1rem; }
-            .header-row { flex-direction: column; align-items: flex-start; }
-            .header-actions { width: 100%; flex-direction: column; }
-            .shop-select { width: 100%; }
-            .btn-export { width: 100%; justify-content: center; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .content-grid { grid-template-columns: 1fr; }
+            .header-left { 
+                flex-wrap: wrap; 
+                width: 100%;
+            }
+            
+            .header-icon-wrapper { 
+                width: 44px; 
+                height: 44px; 
+                font-size: 1.25rem; 
+            }
+            
+            .header-title h1 { 
+                font-size: 1.15rem; 
+            }
+            
+            .page-header { 
+                padding: 1.25rem; 
+            }
 
-            table.sales-tbl thead { display: none; }
-            table.sales-tbl tbody tr {
+            .sidebar-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            /* Mobile table */
+            .sales-table thead { display: none; }
+            
+            .sales-table tbody tr {
                 display: block;
-                margin-bottom: 1rem;
-                border: 1.5px solid var(--slate-200);
-                border-radius: 10px;
-                padding: 1rem;
+                margin-bottom: 0.75rem;
+                border: 1px solid var(--gray-200);
+                border-radius: var(--radius-sm);
+                padding: 0.75rem;
                 background: var(--white);
             }
-            table.sales-tbl tbody td {
+            
+            .sales-table tbody td {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 0.65rem 0;
-                border-bottom: 1px solid var(--slate-100);
+                padding: 0.5rem 0;
+                border-bottom: 1px solid var(--gray-100);
+                text-align: left !important;
             }
-            table.sales-tbl tbody td:last-child {
+            
+            .sales-table tbody td:last-child {
                 border-bottom: none;
-                padding-top: 0.85rem;
-                border-top: 1px solid var(--slate-200);
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--gray-200);
                 margin-top: 0.5rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
             }
-            table.sales-tbl tbody td::before {
+            
+            .sales-table tbody td::before {
                 content: attr(data-label);
                 font-weight: 600;
-                color: var(--slate-500);
-                min-width: 100px;
-                font-size: 0.75rem;
+                color: var(--gray-500);
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
             }
-            .action-btns { width: 100%; justify-content: flex-end; }
+            
+            .action-group { 
+                width: 100%; 
+                justify-content: flex-end; 
+            }
+            
+            .action-group .d-flex { 
+                flex-wrap: wrap; 
+            }
         }
 
-        /* ── Animation ── */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .content-grid { grid-template-columns: 1fr; }
+            .stat-card { padding: 1rem; }
+            .stat-value { font-size: 1.3rem; }
+            .header-actions { gap: 0.5rem; }
+            .shop-select { min-width: 100px; font-size: 0.75rem; }
+            .btn-export { font-size: 0.75rem; padding: 0.45rem 1rem; }
         }
+
+        @media (max-width: 360px) {
+            .main-wrap { padding: 0.5rem; }
+            .page-header { padding: 0.75rem; }
+            .header-title h1 { font-size: 1rem; }
+            .header-subtitle { font-size: 0.75rem; }
+            .back-button { width: 36px; height: 36px; }
+            .header-icon-wrapper { width: 38px; height: 38px; font-size: 1rem; }
+        }
+
+        /* ── Helper Utilities ── */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-muted { color: var(--gray-500); }
+        .fw-bold { font-weight: 700; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .gap-1 { gap: 0.5rem; }
+        .gap-2 { gap: 1rem; }
+        .d-flex { display: flex; }
+        .align-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-column { flex-direction: column; }
+        .w-100 { width: 100%; }
     </style>
 </head>
 <body>
 
 @include("sidenav")
 
-    <main class="main-content">
-        <div class="main-wrap">
+<main class="main-content">
+    <div class="main-wrap">
 
-            {{-- ── Page Header ── --}}
-            <div class="pg-header">
-                <div class="header-row">
-                    <div class="header-left">
-                        <a href="javascript:history.back()" class="back-btn">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                        <div class="pg-icon-wrap">
-                            <i class="bi bi-graph-up"></i>
-                        </div>
-                        <div class="pg-title-wrap">
-                            <h1>{{ __('messages.sales_dashboard') }}</h1>
-                            <p class="pg-subtitle">{{ __('messages.track_and_analyze_sales') }}</p>
-                        </div>
+        {{-- ── Page Header ── --}}
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="javascript:history.back()" class="back-button" aria-label="{{ __('messages.back') }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                    <div class="header-icon-wrapper">
+                        <i class="bi bi-bar-chart-fill"></i>
                     </div>
-                    <div class="header-actions">
-                        @if(isset($allShops) && count($allShops) > 1)
-                        <div class="shop-select-wrap">
-                            <label class="shop-label">{{ __('messages.shop_label') }}</label>
-                            <select class="shop-select" onchange="changeShop(this.value)">
-                                @foreach($allShops as $shop)
-                                <option value="{{ $shop['id'] }}" 
-                                    {{ (getCurrentShopId() == $shop['id'] ? 'selected' : '') }}>
-                                    {{ $shop['name'] }} ({{ $shop['location'] ?? __('messages.na') }})
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        @endif
-                        <a href="{{ route('sales.export', ['selectedDate' => request('selectedDate')]) }}" 
-                           class="btn-export">
-                             <i class="bi bi-download"></i> {{ __('messages.excel_report') }}
-                        </a>
+                    <div class="header-title">
+                        <h1>{{ __('messages.sales_dashboard') }}</h1>
+                        <p class="header-subtitle">{{ __('messages.track_and_analyze_sales') }}</p>
                     </div>
+                </div>
+                <div class="header-actions">
+                    @if(isset($allShops) && count($allShops) > 1)
+                    <div class="shop-select-wrapper">
+                        <span class="shop-select-label"><i class="bi bi-shop"></i> {{ __('messages.shop_label') }}</span>
+                        <select class="shop-select" onchange="changeShop(this.value)">
+                            @foreach($allShops as $shop)
+                            <option value="{{ $shop['id'] }}" 
+                                {{ (getCurrentShopId() == $shop['id'] ? 'selected' : '') }}>
+                                {{ $shop['name'] }} ({{ $shop['location'] ?? __('messages.na') }})
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
+                    <a href="{{ route('sales.export', ['selectedDate' => request('selectedDate')]) }}" class="btn-export">
+                        <i class="bi bi-download"></i> {{ __('messages.excel_report') }}
+                    </a>
                 </div>
             </div>
-  @if(session('success'))
-       <div class="alert alert-success  d-flex justify-content-between">
-           {{ session('success') }}
-           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('messages.close') }}"></button>
+        </div>
 
-       </div>
-   @endif
-   
-   @if(session('error'))
-       <div class="alert alert-danger d-flex justify-content-between">
-           {{ session('error') }}
-           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('messages.close') }}"></button>
+        {{-- ── Alerts ── --}}
+        @if(session('success'))
+        <div class="alert alert-success">
+            <span><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</span>
+            <button type="button" class="btn-close-custom" data-bs-dismiss="alert" aria-label="{{ __('messages.close') }}">×</button>
+        </div>
+        @endif
 
-       </div>
-   @endif
-            {{-- ── Stat Cards ── --}}
-            <div class="stats-grid">
-                <div class="stat-card s1">
-                    <div class="stat-icon-box navy">
-                        <i class="bi bi-currency-exchange"></i>
-                    </div>
-                    <div class="stat-value">Tsh {{ number_format($Tsale) }}</div>
-                    <div class="stat-label">{{ __('messages.total_sales') }}</div>
-                    <div class="stat-meta">
-                        <span>{{ __('messages.dashboard_this_month') }}</span>
-                        <span class="stat-meta-value">Tsh {{ number_format($Msale) }}</span>
-                    </div>
+        @if(session('error'))
+        <div class="alert alert-danger">
+            <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
+            <button type="button" class="btn-close-custom" data-bs-dismiss="alert" aria-label="{{ __('messages.close') }}">×</button>
+        </div>
+        @endif
+
+        {{-- ── Stat Cards ── --}}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon primary"><i class="bi bi-currency-exchange"></i></div>
+                    <span class="stat-trend up"><i class="bi bi-arrow-up"></i> +12%</span>
                 </div>
-
-                <div class="stat-card s2">
-                    <div class="stat-icon-box rose">
-                        <i class="bi bi-tag"></i>
-                    </div>
-                    <div class="stat-value">Tsh {{ number_format($Tdiscount) }}</div>
-                    <div class="stat-label">{{ __('messages.total_discount') }}</div>
-                    <div class="stat-meta">
-                        <span>{{ __('messages.dashboard_this_month') }}</span>
-                        <span class="stat-meta-value">Tsh {{ number_format($Mdiscount) }}</span>
-                    </div>
-                </div>
-
-                <div class="stat-card s3">
-                    <div class="stat-icon-box amber">
-                        <i class="bi bi-exclamation-triangle"></i>
-                    </div>
-                    <div class="stat-value">{{ number_format($Tdebt) }}</div>
-                    <div class="stat-label">{{ __('messages.total_debt') }}</div>
-                    <div class="stat-meta">
-                        <span>{{ __('messages.dashboard_this_month') }}</span>
-                        <span class="stat-meta-value">{{ number_format($Mdebt) }}</span>
-                    </div>
-                </div>
-
-                <div class="stat-card s4">
-                    <div class="stat-icon-box emerald">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                    <div class="stat-value">Tsh {{ number_format($TNetProfit) }}</div>
-                    <div class="stat-label">{{ __('messages.total_profit') }}</div>
-                    <div class="stat-meta">
-                        <span>{{ __('messages.dashboard_this_month') }}</span>
-                        <span class="stat-meta-value">Tsh {{ number_format($MoNetProfit) }}</span>
-                    </div>
+                <div class="stat-value">Tsh {{ number_format($Tsale) }}</div>
+                <div class="stat-label">{{ __('messages.total_sales') }}</div>
+                <div class="stat-footer">
+                    <span>{{ __('messages.dashboard_this_month') }}</span>
+                    <span><strong>Tsh {{ number_format($Msale) }}</strong></span>
                 </div>
             </div>
 
-            {{-- ── Content Grid ── --}}
-            <div class="content-grid">
-                {{-- Main content --}}
-                <div>
-                    {{-- Search Panel --}}
-                    <div class="search-panel">
-                        <div class="search-wrap">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="search" id="search-input" class="search-input" 
-                                placeholder="{{ __('messages.search_sales_placeholder') }}">
-                        </div>
-                    </div>
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon danger"><i class="bi bi-tag"></i></div>
+                    <span class="stat-trend down"><i class="bi bi-arrow-down"></i> -8%</span>
+                </div>
+                <div class="stat-value">Tsh {{ number_format($Tdiscount) }}</div>
+                <div class="stat-label">{{ __('messages.total_discount') }}</div>
+                <div class="stat-footer">
+                    <span>{{ __('messages.dashboard_this_month') }}</span>
+                    <span><strong>Tsh {{ number_format($Mdiscount) }}</strong></span>
+                </div>
+            </div>
 
-                    {{-- Sales Table --}}
-                    <div class="table-card">
-                        <div class="table-responsive">
-                            <table class="sales-tbl">
-                                <thead>
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon warning"><i class="bi bi-exclamation-triangle"></i></div>
+                    <span class="stat-trend up"><i class="bi bi-arrow-up"></i> +5%</span>
+                </div>
+                <div class="stat-value">{{ number_format($Tdebt) }}</div>
+                <div class="stat-label">{{ __('messages.total_debt') }}</div>
+                <div class="stat-footer">
+                    <span>{{ __('messages.dashboard_this_month') }}</span>
+                    <span><strong>{{ number_format($Mdebt) }}</strong></span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon success"><i class="bi bi-graph-up-arrow"></i></div>
+                    <span class="stat-trend up"><i class="bi bi-arrow-up"></i> +18%</span>
+                </div>
+                <div class="stat-value">Tsh {{ number_format($TNetProfit) }}</div>
+                <div class="stat-label">{{ __('messages.total_profit') }}</div>
+                <div class="stat-footer">
+                    <span>{{ __('messages.dashboard_this_month') }}</span>
+                    <span><strong>Tsh {{ number_format($MoNetProfit) }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Content Grid ── --}}
+        <div class="content-grid">
+            {{-- Main Content --}}
+            <div>
+                {{-- Search Panel --}}
+                <div class="search-panel">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="search" id="searchInput" class="search-input" 
+                               placeholder="{{ __('messages.search_sales_placeholder') }}" 
+                               aria-label="{{ __('messages.search_sales_placeholder') }}">
+                    </div>
+                </div>
+
+                {{-- Sales Table --}}
+                <div class="table-card">
+                    <div class="table-responsive">
+                        <table class="sales-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>{{ __('messages.date') }}</th>
+                                    <th>{{ __('messages.sales_id') }}</th>
+                                    <th>{{ __('messages.customer') }}</th>
+                                    <th>{{ __('messages.sales_agent') }}</th>
+                                    <th>{{ __('messages.status') }}</th>
+                                    <th class="text-center">{{ __('messages.col_qty') }}</th>
+                                    <th class="text-right">{{ __('messages.paid') }}</th>
+                                    <th class="text-right">{{ __('messages.credit') }}</th>
+                                    <th class="text-right">{{ __('messages.bank') }}</th>
+                                    <th class="text-right">{{ __('messages.total') }}</th>
+                                    <th class="text-right">{{ __('messages.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if($sales->isEmpty())
+                                <tr>
+                                    <td colspan="12">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">
+                                                <i class="bi bi-inbox"></i>
+                                            </div>
+                                            <h4>{{ __('messages.no_sales_found') }}</h4>
+                                            <p>{{ __('messages.sales_transactions_will_appear') }}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @else
+                                    @foreach ($sales as $index => $sale)
+                                    @php
+                                        if($sale->status == 'Debt') {
+                                            $statusClass = 'danger';
+                                            $statusIcon = 'bi-exclamation-circle';
+                                            $statusText = __('messages.credit');
+                                        } else if($sale->status == 'Return') {
+                                            $statusClass = 'secondary';
+                                            $statusIcon = 'bi-arrow-return-left';
+                                            $statusText = __('messages.returned');
+                                        } else {
+                                            $statusClass = 'success';
+                                            $statusIcon = 'bi-check-circle';
+                                            $statusText = $sale->transactionType ?? __('messages.cash_status');
+                                        }
+                                    @endphp
                                     <tr>
-                                        <th width="5%">#</th>
-                                        <th>{{ __('messages.date') }}</th>
-                                        <th>{{ __('messages.sales_id') }}</th>
-                                        <th>{{ __('messages.customer') }}</th>
-                                        <th>{{ __('messages.sales_agent') }}</th>
-                                        <th>{{ __('messages.status') }}</th>
-                                        <th style="text-align:center;">{{ __('messages.col_qty') }}</th>
-                                        <th style="text-align:right;">{{ __('messages.paid') }}</th>
-                                        <th style="text-align:right;">{{ __('messages.credit') }}</th>
-                                        <th style="text-align:right;">{{ __('messages.total') }}</th>
-                                        <th style="text-align:right;">{{ __('messages.actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if($sales->isEmpty())
-                                    <tr>
-                                        <td colspan="11">
-                                            <div class="empty-state">
-                                                <div class="empty-icon">
-                                                    <i class="bi bi-graph-up"></i>
-                                                </div>
-                                                <div class="empty-title">{{ __('messages.no_sales_found') }}</div>
-                                                <p class="empty-desc">{{ __('messages.sales_transactions_will_appear') }}</p>
+                                        <td data-label="#">{{ $index + 1 }}</td>
+                                        <td data-label="{{ __('messages.date') }}">{{ date('M d, Y', strtotime($sale->created_at)) }}</td>
+                                        <td data-label="{{ __('messages.sales_id') }}"><span class="fw-bold">{{ $sale->salesName }}</span></td>
+                                        <td data-label="{{ __('messages.customer') }}">{{ $sale->cName }}</td>
+                                        <td data-label="{{ __('messages.sales_agent') }}">{{ $sale->served_by }}</td>
+                                        <td data-label="{{ __('messages.status') }}">
+                                            <span class="status-badge {{ $statusClass }}">
+                                                <i class="bi {{ $statusIcon }}"></i> {{ $statusText }}
+                                            </span>
+                                        </td>
+                                        <td data-label="{{ __('messages.col_qty') }}" class="text-center">
+                                            <span class="amount-mono">{{ number_format($sale->totalQuantity ?? 0) }}</span>
+                                        </td>
+                                        <td data-label="{{ __('messages.paid') }}" class="text-right">
+                                            <span class="amount-mono">Tsh {{ number_format($sale->totalPaid ?? 0) }}</span>
+                                        </td>
+                                        <td data-label="{{ __('messages.credit') }}" class="text-right">
+                                            <span class="amount-mono">Tsh {{ number_format($sale->totalCredit ?? 0) }}</span>
+                                        </td>
+                                        <td data-label="{{ __('messages.bank') }}" class="text-right">
+                                            <span class="amount-mono">Tsh {{ number_format($sale->totalBank ?? 0) }}</span>
+                                        </td>
+                                        <td data-label="{{ __('messages.total') }}" class="text-right">
+                                            <span class="amount-mono fw-bold">Tsh {{ number_format(($sale->totalPaid ?? 0) + ($sale->totalCredit ?? 0) + ($sale->totalBank ?? 0)) }}</span>
+                                        </td>
+                                        <td data-label="{{ __('messages.actions') }}">
+                                            <div class="action-group">
+                                                <button class="btn-action track" 
+                                                        onclick="copyAndTrack('{{ $sale->salesName }}')"
+                                                        title="{{ __('messages.track_this_sale') }}">
+                                                    <i class="bi bi-diagram-3"></i>
+                                                </button>
+                                                <form method="post" style="display: inline;">
+                                                    @csrf
+                                                    <input type="hidden" name="account" value="{{ $sale->account }}">
+                                                    <div class="d-flex align-center gap-1">
+                                                        <button class="btn-action view" formaction="/viewSales" 
+                                                                name="sales_id" value="{{ $sale->sales_id }}"
+                                                                title="{{ __('messages.view_sale') }}">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn-action undo" formaction="/undoSales" 
+                                                                name="salesName" value="{{ $sale->salesName }}"
+                                                                title="{{ __('messages.undo_sale') }}">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
-                                    @else
-                                        @foreach ($sales as $index => $sale)
-                                        @php
-                                            if($sale->status == 'Debt') {
-                                                $statusClass = 'danger';
-                                                $statusText = __('messages.credit');
-                                            } else if($sale->status == 'Return') {
-                                                $statusClass = 'secondary';
-                                                $statusText = __('messages.returned');
-                                            } else {
-                                                $statusClass = 'success';
-                                                $statusText = $sale->transactionType ?? __('messages.cash_status');
-                                            }
-                                        @endphp
-                                        <tr>
-                                            <td data-label="#">{{ $index + 1 }}</td>
-                                            <td data-label="{{ __('messages.date') }}">{{ date('M d, Y', strtotime($sale->created_at)) }}</td>
-                                            <td data-label="{{ __('messages.sales_id') }}">{{ $sale->salesName }}</td>
-                                            <td data-label="{{ __('messages.customer') }}">{{ $sale->cName }}</td>
-                                            <td data-label="{{ __('messages.sales_agent') }}">{{ $sale->served_by }}</td>
-                                            <td data-label="{{ __('messages.status') }}">
-                                                <span class="status-badge {{ $statusClass }}">{{ $statusText }}</span>
-                                            </td>
-                                            <td data-label="{{ __('messages.col_qty') }}" style="text-align:center;">
-                                                <span class="amt-mono">{{ number_format($sale->totalQuantity ?? 0) }}</span>
-                                            </td>
-                                            <td data-label="{{ __('messages.paid') }}" style="text-align:right;">
-                                                <span class="amt-mono">Tsh <br/>{{ number_format($sale->totalPaid ?? 0) }}</span>
-                                            </td>
-                                            <td data-label="{{ __('messages.credit') }}" style="text-align:right;">
-                                                <span class="amt-mono">Tsh <br/>{{ number_format($sale->totalCredit ?? 0) }}</span>
-                                            </td>
-                                            <td data-label="{{ __('messages.total') }}" style="text-align:right;">
-                                                <span class="amt-mono">Tsh <br/>{{ number_format($sale->totalPaid + $sale->totalCredit) }}</span>
-                                            </td>
-                                            <td data-label="{{ __('messages.actions') }}">
-                                                <div class="action-btns">
-                                                    <button class="btn-track" 
-                                                            onclick="copyAndTrack('{{ $sale->salesName }}')"
-                                                            title="{{ __('messages.track_this_sale') }}">
-                                                        <i class="bi bi-diagram-3"></i>
-                                                    </button>
-                                                    <form method="post" style="display: inline;">
-                                                        @csrf
-                                                        <input type="hidden" name="account" value="{{ $sale->account }}">
-                                                        <div class="d-flex">
-                                                            <button class="btn-view" formaction="/viewSales" 
-                                                            name="sales_id" value="{{ $sale->sales_id }}">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
-                                                            <button class="btn-undo" formaction="/undoSales" 
-                                                                name="salesName" value="{{ $sale->salesName }}">
-                                                                <i class="bi bi-x-circle"></i>                                                        </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                {{-- Sidebar --}}
-                @if (Auth::user()->levelStatus === 'Admin')
-                <div>
-                    {{-- Calendar Widget --}}
-                    <div class="sidebar-section">
-                        <div class="calendar-card">
-                            <div class="calendar-header">
-                                <h6 class="calendar-title">{{ __('messages.filter_by_date') }}</h6>
-                            </div>
-
-                            <div class="calendar-nav">
-                                <button id="prevMonth" class="calendar-nav-btn">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
-                                <div class="calendar-month" id="currentMonthYear"></div>
-                                <button id="nextMonth" class="calendar-nav-btn">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                            </div>
-
-                            <div id="calendar"></div>
-
-                            <form id="dateForm" action="{{ route('saleDate') }}" method="post">
-                                @csrf
-                                <input type="hidden" id="selectedDate" name="selectedDate">
-                            </form>
-                        </div>
-                    </div>
-
-                    {{-- Summary Card --}}
-                    <div class="sidebar-section">
-                        <div class="summary-card">
-                            <h6 class="summary-title">{{ __('messages.summary') }}</h6>
-                            <div class="summary-row">
-                                <span class="summary-label">{{ __('messages.total_sales') }}</span>
-                                <span class="summary-value">Tsh {{ number_format($Tsale ?? 0) }}</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label">{{ __('messages.transactions') }}</span>
-                                <span class="summary-value">{{ $sales->count() }}</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label">{{ __('messages.avg_sale') }}</span>
-                                <span class="summary-value">Tsh {{ number_format(($sales->count() > 0 ? ($Tsale ?? 0) / $sales->count() : 0)) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endif
             </div>
 
+            {{-- Sidebar --}}
+            @if (Auth::user()->levelStatus === 'Admin')
+            <div class="sidebar-wrapper">
+                {{-- Calendar Widget --}}
+                <div class="sidebar-section">
+                    <div class="calendar-card">
+                        <div class="calendar-header">
+                            <h6><i class="bi bi-calendar3"></i> {{ __('messages.filter_by_date') }}</h6>
+                            <span class="calendar-hint">{{ __('messages.click_date') }}</span>
+                        </div>
+
+                        <div class="calendar-nav">
+                            <button id="prevMonth" class="calendar-nav-btn" aria-label="{{ __('messages.previous_month') }}">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span class="calendar-month-label" id="currentMonthYear"></span>
+                            <button id="nextMonth" class="calendar-nav-btn" aria-label="{{ __('messages.next_month') }}">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div id="calendar"></div>
+
+                        <form id="dateForm" action="{{ route('saleDate') }}" method="post">
+                            @csrf
+                            <input type="hidden" id="selectedDate" name="selectedDate">
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Summary Card --}}
+                <div class="sidebar-section">
+                    <div class="summary-card">
+                        <h6><i class="bi bi-pie-chart"></i> {{ __('messages.summary') }}</h6>
+                        <div class="summary-row">
+                            <span class="label">{{ __('messages.total_sales') }}</span>
+                            <span class="value">Tsh {{ number_format($Tsale ?? 0) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">{{ __('messages.transactions') }}</span>
+                            <span class="value">{{ $sales->count() }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">{{ __('messages.avg_sale') }}</span>
+                            <span class="value">Tsh {{ number_format(($sales->count() > 0 ? ($Tsale ?? 0) / $sales->count() : 0)) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">{{ __('messages.total_debt') }}</span>
+                            <span class="value" style="color:var(--danger);">Tsh {{ number_format($Tdebt ?? 0) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
-    </main>
+
+    </div>
+</main>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     let saleDates = @json($monthlySaleDates);
 
-    // Function to fetch sales dates for a specific month
     function fetchSalesDates(year, month) {
         const shopId = new URLSearchParams(window.location.search).get('shop_id');
         let url = `/getSalesDates?year=${year}&month=${month}`;
@@ -969,22 +1317,19 @@
             .catch(error => console.error('{{ __('messages.error_fetching_sales_dates') }}', error));
     }
 
-    // Function to check if there are sales on a specific date
     function checkSalesForDate(dateString) {
         return saleDates.includes(dateString);
     }
 
-    // Search functionality
     $(document).ready(function() {
-        $('#search-input').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
+        $('#searchInput').on('keyup', function() {
+            const value = $(this).val().toLowerCase();
             $('tbody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
             });
         });
     });
 
-    // Calendar functionality
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
@@ -996,9 +1341,10 @@
         const firstDay = new Date(year, month, 1).getDay();
 
         const monthNames = [
-            '{{ __('messages.january') }}', '{{ __('messages.february') }}', '{{ __('messages.march') }}', '{{ __('messages.april') }}', '{{ __('messages.may') }}',
-            '{{ __('messages.june') }}', '{{ __('messages.july') }}', '{{ __('messages.august') }}', '{{ __('messages.september') }}', '{{ __('messages.october') }}',
-            '{{ __('messages.november') }}', '{{ __('messages.december') }}'
+            '{{ __('messages.january') }}', '{{ __('messages.february') }}', '{{ __('messages.march') }}', 
+            '{{ __('messages.april') }}', '{{ __('messages.may') }}', '{{ __('messages.june') }}',
+            '{{ __('messages.july') }}', '{{ __('messages.august') }}', '{{ __('messages.september') }}',
+            '{{ __('messages.october') }}', '{{ __('messages.november') }}', '{{ __('messages.december') }}'
         ];
         document.getElementById('currentMonthYear').innerText = `${monthNames[month]} ${year}`;
 
@@ -1007,9 +1353,12 @@
         const todayMonth = today.getMonth();
         const todayYear = today.getFullYear();
 
-        const daysHeader = ['{{ __('messages.day_sun') }}', '{{ __('messages.day_mon') }}', '{{ __('messages.day_tue') }}', '{{ __('messages.day_wed') }}', '{{ __('messages.day_thu') }}', '{{ __('messages.day_fri') }}', '{{ __('messages.day_sat') }}'];
+        const daysHeader = ['{{ __('messages.day_sun') }}', '{{ __('messages.day_mon') }}', '{{ __('messages.day_tue') }}', 
+                           '{{ __('messages.day_wed') }}', '{{ __('messages.day_thu') }}', '{{ __('messages.day_fri') }}', 
+                           '{{ __('messages.day_sat') }}'];
+        
         const table = document.createElement('table');
-        table.classList.add('calendar-table');
+        table.classList.add('calendar-grid');
 
         const headerRow = document.createElement('tr');
         daysHeader.forEach(day => {
@@ -1032,22 +1381,16 @@
 
             const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-            // Highlight today's date
             if (day === todayDay && month === todayMonth && year === todayYear) {
-                td.classList.add('current-date');
+                td.classList.add('today');
             }
 
-            // Highlight sale dates
             if (saleDates.includes(dateString)) {
-                td.classList.add('sales-date');
+                td.classList.add('has-sale');
             }
 
             td.addEventListener('click', function() {
-                const clickedMonth = month;
-                const clickedYear = year;
-                const formattedDate = `${clickedYear}-${String(clickedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
-                // Only submit if there are sales on this date
+                const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 if (checkSalesForDate(formattedDate)) {
                     document.getElementById('selectedDate').value = formattedDate;
                     document.getElementById('dateForm').submit();
@@ -1089,7 +1432,6 @@
 
     createCalendar(currentMonth, currentYear);
 
-    // Shop change function
     function changeShop(shopId) {
         const url = new URL(window.location.href);
         url.searchParams.set('shop_id', shopId);
@@ -1104,6 +1446,7 @@
         });
     }
 </script>
+
 @include('footer')
 
 </body>

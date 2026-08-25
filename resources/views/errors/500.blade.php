@@ -40,7 +40,7 @@
         .btn-home {
             display: inline-block;
             padding: 12px 32px;
-            background: #F59E0B;
+            background: var(--theme-primary);
             color: #0B1E3D;
             text-decoration: none;
             border-radius: 8px;
@@ -65,7 +65,7 @@
             margin: 0 5px;
         }
         .btn-back:hover {
-            border-color: #F59E0B;
+            border-color: var(--theme-primary);
             background: rgba(245, 158, 11, 0.1);
         }
     </style>

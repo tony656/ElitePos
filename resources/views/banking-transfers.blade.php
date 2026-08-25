@@ -13,7 +13,7 @@
             --navy:          #0B1E3D;
             --navy-mid:      #112952;
             --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
+            --amber:         var(--theme-primary);
             --amber-dark:    #D97706;
             --amber-pale:    #FEF3C7;
             --emerald:       #059669;
@@ -708,7 +708,11 @@
                                     <tr>
                                         <td data-label="#"> {{ $index + 1 }} </td>
                                         <td data-label="Date">
-                                            {{ \Carbon\Carbon::parse($transfer->transfer_date)->format('d M Y') }}
+                                            @if(canUser("banking_transfer_date"))
+                                                {{ \Carbon\Carbon::parse($transfer->transfer_date)->format('d M Y') }}
+                                            @else
+                                                <span style="color:var(--slate-400);">***</span>
+                                            @endif
                                         </td>
                                         <td data-label="Supplier">
                                             <div class="bank-name">{{ $transfer->supplier->name ?? 'N/A' }}</div>
@@ -789,6 +793,7 @@
                     @csrf
 
                     <div class="row-grid">
+                        @if(canUser("banking_transfer_date"))
                         <div class="form-group">
                             <label class="form-label">
                                 Transfer Date <span class="required">*</span>
@@ -796,6 +801,9 @@
                             <input type="date" class="form-control" name="transfer_date"
                                 value="{{ date('Y-m-d') }}" required>
                         </div>
+                        @else
+                        <input type="hidden" name="transfer_date" value="{{ date('Y-m-d') }}">
+                        @endif
 
                          <div class="form-group">
                         <label class="form-label">

@@ -40,7 +40,7 @@
         .btn-home {
             display: inline-block;
             padding: 12px 32px;
-            background: #F59E0B;
+            background: var(--theme-primary);
             color: #0B1E3D;
             text-decoration: none;
             border-radius: 8px;
@@ -65,7 +65,7 @@
             margin: 0 5px;
         }
         .btn-back:hover {
-            border-color: #F59E0B;
+            border-color: var(--theme-primary);
             background: rgba(245, 158, 11, 0.1);
         }
     </style>
@@ -75,7 +75,7 @@
         <h1 class="error-code">403</h1>
         <h2 class="error-title">Access Denied</h2>
         <p class="error-message">
-            <i class="fas fa-shield-alt" style="color: #F59E0B; font-size: 24px; display: block; margin-bottom: 15px;"></i>
+            <i class="fas fa-shield-alt" style="color: var(--theme-primary); font-size: 24px; display: block; margin-bottom: 15px;"></i>
             You do not have permission to access this page.
             Please contact your administrator if you believe this is a mistake.
         </p>

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mainstore-token-service
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MAINSTORE_API_URL
+        value: https://mainstore.co.tz/api
+      - key: MAINSTORE_API_USERNAME
+        value: api_stock
+      - key: MAINSTORE_API_PASSWORD
+        sync: false
+      - key: MAINSTORE_API_TOKEN_TTL
+        value: 50

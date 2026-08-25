@@ -14,7 +14,7 @@
             --primary-dark: #0F172A;
             --primary: #1E293B;
             --primary-light: #334155;
-            --accent: #F59E0B;
+            --accent: var(--theme-primary);
             --accent-dark: #D97706;
             --accent-glow: rgba(245, 158, 11, 0.15);
             --success: #10B981;
@@ -22,7 +22,7 @@
             --danger: #EF4444;
             --danger-dark: #DC2626;
             --info: #3B82F6;
-            --warning: #F59E0B;
+            --warning: var(--theme-primary);
             --gray-50: #F8FAFC;
             --gray-100: #F1F5F9;
             --gray-200: #E2E8F0;
@@ -48,7 +48,6 @@
         ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-        /* ── Layout ── */
         .wrap { padding: 1.75rem 2rem; }
 
         /* ── Header ── */
@@ -243,7 +242,6 @@
         }
 
         .stat-label {
-            
             font-size: 0.6875rem;
             font-weight: 500;
             color: var(--gray-400);
@@ -253,7 +251,6 @@
         }
 
         .stat-value {
-            
             font-size: 1.625rem;
             font-weight: 700;
             letter-spacing: -0.02em;
@@ -284,7 +281,6 @@
         }
 
         .panel-header-title {
-            
             font-size: 1rem;
             font-weight: 700;
             display: flex; align-items: center; gap: 0.625rem;
@@ -292,7 +288,6 @@
         }
 
         .tx-count {
-            
             font-size: 0.75rem;
             background: var(--gray-100);
             color: var(--gray-500);
@@ -301,9 +296,7 @@
             font-weight: 400;
         }
 
-        /* Toggle all button */
         .btn-toggle-all {
-            
             font-size: 0.75rem;
             font-weight: 500;
             color: var(--info);
@@ -322,22 +315,36 @@
         }
 
         /* ── Table ── */
+        .table-responsive {
+            overflow-x: auto;
+            padding: 0 0.25rem 0.25rem 0.25rem;
+        }
+
         .data-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.8rem;
         }
 
         .data-table thead th {
             background: #FAFBFC;
             color: var(--gray-400);
-            
-            font-size: 0.6875rem;
-            font-weight: 500;
+            font-size: 0.625rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.07em;
-            padding: 0.875rem 1.25rem;
-            border-bottom: 1px solid var(--gray-100);
+            letter-spacing: 0.05em;
+            padding: 0.6rem 0.7rem;
+            border-bottom: 2px solid var(--gray-100);
             white-space: nowrap;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .data-table thead th:first-child {
+            text-align: left;
+            padding-left: 1.25rem;
         }
 
         .data-table tbody tr.main-row {
@@ -350,65 +357,90 @@
         }
 
         .data-table tbody td {
-            padding: 1rem 1.25rem;
-            font-size: 0.875rem;
+            padding: 0.6rem 0.7rem;
+            font-size: 0.78rem;
             vertical-align: middle;
+            text-align: center;
         }
 
-        .mono {  font-size: 0.8125rem; }
+        .data-table tbody td:first-child {
+            text-align: left;
+            padding-left: 1.25rem;
+        }
+
+        .data-table tbody td:last-child {
+            padding-right: 1.25rem;
+        }
+
+        .mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: -0.02em;
+        }
 
         .cell-date {
-            
-            font-size: 0.8125rem;
+            font-size: 0.7rem;
             color: var(--gray-500);
             white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .cell-shop {
+            text-align: left !important;
+            min-width: 120px;
         }
 
         .cell-shop strong {
             display: block;
             font-weight: 600;
             color: var(--gray-800);
+            font-size: 0.8rem;
         }
 
         .cell-shop span {
-            
-            font-size: 0.75rem;
+            font-size: 0.6rem;
             color: var(--gray-400);
         }
 
         .cell-value {
-            
-            font-size: 0.875rem;
             font-weight: 600;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        .cell-value-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 500;
         }
 
         /* Badges */
         .badge {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            padding: 0.25rem 0.625rem;
-            border-radius: 8px;
-            font-size: 0.6875rem;
+            display: inline-flex; align-items: center; gap: 0.2rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.6rem;
             font-weight: 600;
-            
             letter-spacing: 0.02em;
+            white-space: nowrap;
         }
 
         .badge-credit { background: rgba(239,68,68,0.08); color: #DC2626; }
         .badge-cash { background: rgba(16,185,129,0.08); color: #059669; }
         .badge-pending { background: rgba(245,158,11,0.1); color: #B45309; }
         .badge-approved { background: rgba(16,185,129,0.1); color: #059669; }
+        .badge-settled { background: rgba(16,185,129,0.12); color: #059669; }
 
         /* Row expand button */
         .btn-expand {
-            display: inline-flex; align-items: center; gap: 0.375rem;
-            
-            font-size: 0.6875rem;
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-size: 0.6rem;
             font-weight: 500;
             color: var(--gray-400);
             background: var(--gray-100);
             border: 1px solid var(--gray-200);
-            padding: 0.3rem 0.75rem;
-            border-radius: 8px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
@@ -417,8 +449,10 @@
         .btn-expand:hover { background: var(--gray-200); color: var(--gray-600); }
         .btn-expand.active { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); color: var(--info); }
 
-        .expand-icon { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); display: inline-block; }
+        .expand-icon { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); display: inline-block; font-size: 0.7rem; }
         .btn-expand.active .expand-icon { transform: rotate(180deg); }
+
+        .expand-label { font-size: 0.6rem; }
 
         /* ── Details Sub-Row ── */
         .details-row td { padding: 0; border: none; }
@@ -435,42 +469,39 @@
             background: #FAFBFD;
             border-top: 1px dashed var(--gray-200);
             border-bottom: 1px solid var(--gray-100);
-            padding: 1rem 1.5rem 1.25rem;
+            padding: 0.75rem 1.25rem 1rem;
         }
 
         .details-header {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 0.875rem;
+            margin-bottom: 0.6rem;
         }
 
         .details-title {
-            
-            font-size: 0.8125rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--gray-600);
             display: flex; align-items: center; gap: 0.5rem;
         }
 
         .details-count {
-            
-            font-size: 0.6875rem;
+            font-size: 0.6rem;
             color: var(--gray-400);
             background: white;
             border: 1px solid var(--gray-200);
-            padding: 0.15rem 0.5rem;
+            padding: 0.1rem 0.4rem;
             border-radius: 6px;
         }
 
-        .sub-table { width: 100%; border-collapse: collapse; }
+        .sub-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
 
         .sub-table thead th {
-            
-            font-size: 0.6875rem;
-            font-weight: 500;
-            letter-spacing: 0.06em;
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
             color: var(--gray-400);
-            padding: 0.5rem 0.75rem;
+            padding: 0.35rem 0.6rem;
             text-align: left;
             border-bottom: 1px solid var(--gray-200);
             background: white;
@@ -480,8 +511,8 @@
         .sub-table tbody tr:hover { background: white; }
 
         .sub-table tbody td {
-            padding: 0.625rem 0.75rem;
-            font-size: 0.8125rem;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
             color: var(--gray-700);
             border-bottom: 1px solid var(--gray-100);
             vertical-align: middle;
@@ -492,57 +523,55 @@
         .sub-table-wrap {
             background: white;
             border: 1px solid var(--gray-200);
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
         }
 
-        /* Mark paid button */
-        .btn-pay {
-            display: inline-flex; align-items: center; gap: 0.375rem;
-            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
-            color: white;
-            border: none;
-            padding: 0.375rem 0.875rem;
-            border-radius: 10px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 3px 10px rgba(16,185,129,0.25);
+        .sub-table .mono {
+            font-size: 0.68rem;
         }
-
-        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(16,185,129,0.35); }
 
         /* ── Footer totals ── */
         .tfoot-row td {
-            padding: 1rem 1.25rem;
+            padding: 0.7rem 1.25rem;
             background: linear-gradient(135deg, var(--gray-50) 0%, #F0F4F8 100%);
             border-top: 2px solid var(--gray-200);
-            
-            font-size: 0.8125rem;
             font-weight: 600;
+            font-size: 0.75rem;
         }
 
         .tfoot-label {
-            
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             color: var(--gray-500);
         }
 
-        /* Empty state */
+        /* ── Status indicators ── */
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-dot.approved { background: var(--success); }
+        .status-dot.pending { background: var(--warning); }
+        .status-dot.credit { background: var(--danger); }
+        .status-dot.settled { background: var(--success); }
+
+        /* ── Empty state ── */
         .empty-state {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: 3rem 2rem;
             color: var(--gray-300);
         }
 
-        .empty-state i { font-size: 3.5rem; display: block; margin-bottom: 1rem; }
-        .empty-state p {  font-size: 1rem; font-weight: 600; color: var(--gray-400); }
-        .empty-state small { font-size: 0.8125rem; color: var(--gray-300); }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+        .empty-state p { font-size: 0.9rem; font-weight: 600; color: var(--gray-400); }
+        .empty-state small { font-size: 0.75rem; color: var(--gray-300); }
 
         /* ── Responsive ── */
         @media (max-width: 1200px) {
@@ -553,7 +582,11 @@
             .wrap { padding: 1rem; }
             .pg-header { flex-direction: column; gap: 1rem; text-align: center; }
             .stats-grid { grid-template-columns: 1fr; }
-            .data-table { font-size: 0.75rem; }
+            .data-table { font-size: 0.65rem; }
+            .data-table thead th { font-size: 0.55rem; padding: 0.4rem 0.4rem; }
+            .data-table tbody td { padding: 0.4rem 0.4rem; font-size: 0.65rem; }
+            .cell-shop strong { font-size: 0.7rem; }
+            .cell-value { font-size: 0.65rem; }
         }
 
         /* ── Print ── */
@@ -562,6 +595,7 @@
             main { margin: 0 !important; padding: 0 !important; }
             .panel { box-shadow: none; }
             .details-inner { max-height: none !important; }
+            .data-table thead th { background: #f5f5f5 !important; }
         }
 
         /* ── Animations ── */
@@ -571,6 +605,13 @@
         }
 
         .animate-in { animation: fadeUp 0.45s ease both; }
+
+        /* Compact number formatting */
+        .compact-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -607,8 +648,12 @@
                             <label class="filter-label"><i class="bi bi-calendar3"></i> @lang('messages.to_date')</label>
                             <input type="date" name="date_to" class="filter-input" value="{{ $dateTo }}">
                         </div>
-                        <div class="col-md-6">
-                            <div style="display:flex; gap:.75rem; padding-top:.1rem;">
+                        <div class="col-md-3">
+                            <label class="filter-label"><i class="bi bi-search"></i> Search</label>
+                            <input type="text" name="search" class="filter-input" placeholder="Search shop or item..." value="{{ $search ?? '' }}" id="reportSearch">
+                        </div>
+                        <div class="col-md-3">
+                            <div style="display:flex; gap:.75rem; padding-top:.1rem; flex-wrap:wrap;">
                                 <button type="submit" class="btn-filter btn-filter-primary">
                                     <i class="bi bi-funnel-fill"></i> @lang('messages.apply_filter')
                                 </button>
@@ -661,7 +706,7 @@
                         <div class="panel-header-title">
                             <i class="bi bi-table"></i>
                             @lang('messages.daily_transfer_logs')
-                            <span class="tx-count">{{ $reportRows->count() }} @lang('messages.transactions')</span>
+                            <span class="tx-count">{{ count($reportRows) }} @lang('messages.transactions')</span>
                         </div>
                         <button class="btn-toggle-all" id="toggleAllBtn" type="button" onclick="toggleAll()">
                             <i class="bi bi-chevron-expand"></i>
@@ -673,23 +718,22 @@
                         <table class="data-table" id="mainTable">
                             <thead>
                                 <tr>
-                                    <th>@lang('messages.date')</th>
-                                    <th>@lang('messages.shop')</th>
-                                    <th>@lang('messages.items')</th>
-                                    <th>@lang('messages.total_amount')</th>
-                                    <th>@lang('messages.approved')</th>
-                                    <th>Approved Rec. Qty</th>
-                                    <th>Approved Rec. Value</th>
-                                    <th>Diff Qty</th>
-                                    <th>Diff Value</th>
-                                    <th>@lang('messages.credit')</th>
-                                    <th>@lang('messages.cash')</th>
-                                    <th>@lang('messages.sold')</th>
-                                    <th>@lang('messages.payment')</th>
-                                    <th>@lang('messages.return')</th>
-                                    <th>@lang('messages.difference')</th>
-                                    <th>@lang('messages.actions')</th>
-                                    <th></th>
+                                    <th style="min-width:75px;">@lang('messages.date')</th>
+                                    <th style="min-width:130px;text-align:left;">@lang('messages.shop')</th>
+                                    <th style="min-width:55px;">Items</th>
+                                    <th style="min-width:85px;">Total</th>
+                                    <th style="min-width:85px;">Approved</th>
+                                    <th style="min-width:70px;">Rec. Qty</th>
+                                    <th style="min-width:75px;">Rec. Val</th>
+                                    <th style="min-width:55px;">Diff Qty</th>
+                                    <th style="min-width:70px;">Diff Val</th>
+                                    <th style="min-width:75px;">Credit</th>
+                                    <th style="min-width:70px;">Cash</th>
+                                    <th style="min-width:70px;">Sold</th>
+                                    <th style="min-width:70px;">Payment</th>
+                                    <th style="min-width:70px;">Return</th>
+                                    <th style="min-width:85px;">Difference</th>
+                                    <th style="min-width:60px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -698,78 +742,30 @@
                                 <!-- Main Row -->
                                 <tr class="main-row">
                                     <td class="cell-date">
-                                        <i class="bi bi-calendar3" style="color:var(--gray-300); margin-right:.3rem;"></i>{{ date('M-d-Y', strtotime($row->date)) }}
+                                        <i class="bi bi-calendar3" style="color:var(--gray-300); margin-right:.2rem;font-size:0.6rem;"></i>{{ date('M-d-Y', strtotime($row->date)) }}
                                     </td>
                                     <td class="cell-shop">
                                         <strong>{{ $row->shop_name }}</strong>
-                                        <span>ID: {{ $row->shop_id }}</span>
+                                        <span>#{{ $row->shop_id }}</span>
                                     </td>
-                                    <td>
-                                        <span class="mono" style="color:var(--gray-600)">
-                                            <i class="bi bi-boxes" style="color:var(--gray-300)"></i>
-                                            {{ number_format($row->total_qty) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--gray-900)">
-                                            Tsh {{ number_format($row->total_value) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--success-dark)">
-                                            Tsh {{ number_format($row->approved_request_value) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--gray-900)">
-                                            {{ number_format($row->approved_receiving_qty) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--gray-900)">
-                                            Tsh {{ number_format($row->approved_receiving_value) }}
-                                        </span>
-                                    </td>
-                                    <td style="color:var(--danger-dark)">
-                                        <span class="cell-value">
-                                            {{ number_format($row->approved_qty_diff) }}
-                                        </span>
-                                    </td>
-                                    <td style="color:var(--danger-dark)">
-                                        <span class="cell-value">
-                                            Tsh {{ number_format($row->approved_value_diff) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--danger-dark)">
-                                            Tsh {{ number_format($row->credit_value) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--info)">
-                                            Tsh {{ number_format($row->cash_value) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="cell-value" style="color:var(--info)">
-                                            Tsh {{ number_format(($row->shop_total_sales + $row->shop_discount) - $row->returned_value) }}
-                                        </span>
-                                    </td>
-                                    <td class="cell-value">
-                                        <div style="display:flex; gap:.25rem; flex-wrap:wrap;">
-                                           Tsh {{ number_format($row->paidcash_value) }}
-                                        </div>
-                                    </td>
-                                    <td class="cell-value">
-                                       Tsh {{ number_format($row->returned_value) }}
-                                    </td>
-                                    <td class="cell-value" style="color:var(--danger-dark)">
+                                    <td class="cell-value-num">{{ number_format($row->total_qty) }}</td>
+                                    <td class="cell-value" style="color:var(--gray-900);">Tsh {{ number_format($row->total_value) }}</td>
+                                    <td class="cell-value" style="color:var(--success-dark);">Tsh {{ number_format($row->approved_request_value) }}</td>
+                                    <td class="cell-value-num">{{ number_format($row->approved_receiving_qty) }}</td>
+                                    <td class="cell-value" style="color:var(--gray-700);">Tsh {{ number_format($row->approved_receiving_value) }}</td>
+                                    <td class="cell-value-num" style="color:var(--danger-dark);">{{ number_format($row->approved_qty_diff) }}</td>
+                                    <td class="cell-value" style="color:var(--danger-dark);">Tsh {{ number_format($row->approved_value_diff) }}</td>
+                                    <td class="cell-value" style="color:var(--danger-dark);">Tsh {{ number_format($row->credit_value) }}</td>
+                                    <td class="cell-value" style="color:var(--info);">Tsh {{ number_format($row->cash_value) }}</td>
+                                    <td class="cell-value" style="color:var(--info);">Tsh {{ number_format(($row->shop_total_sales + $row->shop_discount) - $row->returned_value) }}</td>
+                                    <td class="cell-value" style="color:var(--gray-700);">Tsh {{ number_format($row->paidcash_value) }}</td>
+                                    <td class="cell-value" style="color:var(--gray-700);">Tsh {{ number_format($row->returned_value) }}</td>
+                                    <td class="cell-value" style="color:var(--danger-dark);font-size:0.7rem;">
                                         @if (($row->credit_value - $row->paidcash_value) == 0)
-                                            0 <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Settled</span>
+                                            <span class="badge badge-settled"><span class="status-dot settled"></span>Settled</span>
                                         @else
                                             Tsh {{ number_format( $row->credit_value - $row->paidcash_value ) }}
                                         @endif
-                                        
                                     </td>
                                     <td>
                                         <button class="btn-expand" type="button"
@@ -783,25 +779,25 @@
 
                                 <!-- Details Row -->
                                 <tr class="details-row">
-                                    <td colspan="15">
+                                    <td colspan="16">
                                         <div class="details-inner" id="details-{{ $loop->index }}">
                                             <div class="details-body">
                                                 <div class="details-header">
                                                     <div class="details-title">
                                                         <i class="bi bi-receipt"></i>
                                                         @lang('messages.item_breakdown')
-                                                        <span class="details-count">{{ $row->items->count() }} @lang('messages.items')</span>
+                                                        <span class="details-count">{{ count($row->items) }} @lang('messages.items')</span>
                                                     </div>
                                                 </div>
                                                 <div class="sub-table-wrap">
                                                     <table class="sub-table">
                                                         <thead>
                                                             <tr>
-                                                                <th>Product Name</th>
-                                                                <th>Qty</th>
-                                                                <th>Unit Price</th>
-                                                                <th>Subtotal</th>
-                                                                <th>Status</th>
+                                                                <th style="width:45%;">Product Name</th>
+                                                                <th style="width:15%;">Qty</th>
+                                                                <th style="width:20%;">Unit Price</th>
+                                                                <th style="width:20%;">Subtotal</th>
+                                                                <th style="width:20%;">Status</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -810,15 +806,15 @@
                                                                 $theName = DB::table('products')->where('product_id', $item->productId)->value('name01');
                                                             @endphp
                                                             <tr>
-                                                                <td style="font-weight:500">{{ $theName ?? 'N/A' }}</td>
+                                                                <td style="font-weight:500;font-size:0.7rem;">{{ $theName ?? 'N/A' }}</td>
                                                                 <td class="mono">{{ number_format($item->quantity) }}</td>
                                                                 <td class="mono">Tsh {{ number_format($item->price) }}</td>
-                                                                <td class="mono" style="font-weight:600">Tsh {{ number_format($item->totalPrice) }}</td>
+                                                                <td class="mono" style="font-weight:600;">Tsh {{ number_format($item->totalPrice) }}</td>
                                                                 <td>
                                                                     @if($item->status == 'Approved')
-                                                                        <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Approved</span>
+                                                                        <span class="badge badge-approved"><span class="status-dot approved"></span>Approved</span>
                                                                     @else
-                                                                        <span class="badge badge-pending"><i class="bi bi-clock"></i> Pending</span>
+                                                                        <span class="badge badge-pending"><span class="status-dot pending"></span>Pending</span>
                                                                     @endif
                                                                 </td>
                                                             </tr>
@@ -833,7 +829,7 @@
 
                                 @empty
                                 <tr>
-                                    <td colspan="15">
+                                    <td colspan="16">
                                         <div class="empty-state">
                                             <i class="bi bi-inbox"></i>
                                             <p>No requests found</p>
@@ -844,17 +840,17 @@
                                 @endforelse
                             </tbody>
 
-                            @if($reportRows->isNotEmpty())
+                            @if(!empty($reportRows))
                             <tfoot>
                                 <tr class="tfoot-row">
-                                    <td colspan="3" style="text-align:right">
+                                    <td colspan="3" style="text-align:right;padding-right:1.5rem;">
                                         <span class="tfoot-label">Grand Totals</span>
                                     </td>
-                                    <td class="mono" style="color:var(--gray-900)">Tsh {{ number_format($grandTotals->value) }}</td>
-                                    <td class="mono" style="color:var(--success-dark)">Tsh {{ number_format($grandTotals->approved) }}</td>
-                                    <td colspan="4"></td>
-                                    <td class="mono" style="color:var(--danger-dark)">Tsh {{ number_format($grandTotals->credit) }}</td>
-                                    <td colspan="6"></td>
+                                    <td class="mono" style="color:var(--gray-900);font-weight:700;">Tsh {{ number_format($grandTotals->value) }}</td>
+                                    <td class="mono" style="color:var(--success-dark);font-weight:700;">Tsh {{ number_format($grandTotals->approved) }}</td>
+                                    <td colspan="4" style="text-align:center;color:var(--gray-400);font-size:0.65rem;">—</td>
+                                    <td class="mono" style="color:var(--danger-dark);font-weight:700;">Tsh {{ number_format($grandTotals->credit) }}</td>
+                                    <td colspan="6" style="text-align:center;color:var(--gray-400);font-size:0.65rem;">—</td>
                                 </tr>
                             </tfoot>
                             @endif
@@ -928,6 +924,22 @@
         card.classList.add('animate-in');
         card.style.opacity = '0';
     });
+
+    /* ── Search filter ── */
+    const searchInput = document.getElementById('reportSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value.trim().toLowerCase();
+            document.querySelectorAll('#mainTable tbody tr.main-row').forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+            document.querySelectorAll('#mainTable tbody tr.details-row').forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    }
 </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use App\Models\salsModel;
 use App\Models\debtsModel;
 use App\Models\expensesModel;
@@ -14,6 +15,7 @@ use App\Models\BankingTransfer;
 use App\Models\BankingChip;
 use App\Models\cashSubmitModel;
 use App\Observers\TransactionObserver;
+use App\Models\systemModel;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -42,5 +44,7 @@ class AppServiceProvider extends ServiceProvider
         BankingTransfer::observe(TransactionObserver::class);
         BankingChip::observe(TransactionObserver::class);
         cashSubmitModel::observe(TransactionObserver::class);
+
+        View::share('systemSettings', systemModel::first());
     }
 }

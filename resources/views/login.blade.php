@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config("app.name") }} - Login</title>
+    @include('links')
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy: #0B1E3D;
             --navy-mid: #112952;
             --navy-light: #1A3A6B;
-            --amber: #F59E0B;
+            --amber: var(--theme-primary);
             --amber-pale: #FEF3C7;
             --emerald: #059669;
             --emerald-pale: #D1FAE5;
@@ -345,7 +346,7 @@
         .btn-login {
             width: 100%;
             padding: 1.1rem;
-            background: linear-gradient(135deg, var(--amber) 0%, #d97706 100%);
+            background: linear-gradient(135deg, var(--amber) 0%, var(--amber) 100%);
             border: none;
             border-radius: 16px;
             color: var(--navy);
@@ -366,7 +367,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, #fbbf24 0%, var(--amber) 100%);
+            background: linear-gradient(135deg, var(--amber) 0%, var(--amber) 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
         }

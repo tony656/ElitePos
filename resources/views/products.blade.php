@@ -16,7 +16,7 @@
             --navy:          #0B1E3D;
             --navy-mid:      #112952;
             --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;z
+            --amber:         var(--theme-primary);
             --amber-pale:    #FEF3C7;
             --emerald:       #059669;
             --emerald-pale:  #D1FAE5;
@@ -40,14 +40,241 @@
             --white:         #FFFFFF;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background: #EEF2F9;
-            color: var(--slate-800);
-            min-height: 100vh;
-            line-height: 1.6;
+        /* ── API Comparison Styles ── */
+        .api-compare-panel {
+            background: var(--white);
+            border: 2px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            transition: all 0.3s ease;
         }
+
+        .api-compare-panel.has-mismatch {
+            border-color: var(--rose);
+            background: var(--rose-pale);
+        }
+
+        .api-compare-panel.has-match {
+            border-color: var(--emerald);
+            background: var(--emerald-pale);
+        }
+
+        .api-compare-panel.loading {
+            border-color: var(--sky);
+            background: var(--sky-pale);
+        }
+
+        .api-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .api-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .api-title i {
+            font-size: 1.2rem;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        .api-status.idle {
+            background: var(--slate-100);
+            color: var(--slate-500);
+        }
+
+        .api-status.loading {
+            background: var(--sky-pale);
+            color: var(--sky);
+        }
+
+        .api-status.success {
+            background: var(--emerald-pale);
+            color: var(--emerald);
+        }
+
+        .api-status.error {
+            background: var(--rose-pale);
+            color: var(--rose);
+        }
+
+        .api-status.mismatch {
+            background: var(--amber-pale);
+            color: #92400E;
+        }
+
+        .api-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .api-date-input {
+            font-size: 0.82rem;
+            padding: 0.4rem 0.7rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 7px;
+            background: var(--white);
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+
+        .api-date-input:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+        }
+
+        .api-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1.5px solid var(--slate-200);
+        }
+
+        .api-summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .api-summary-item .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-400);
+        }
+
+        .api-summary-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .api-summary-item .value.mismatch {
+            color: var(--rose);
+        }
+
+        .api-summary-item .value.match {
+            color: var(--emerald);
+        }
+
+        /* ── Mismatch Table ── */
+        .mismatch-table-wrap {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+        }
+
+        .mismatch-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .mismatch-table thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.5rem 0.7rem;
+            border-bottom: 2px solid var(--slate-200);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .mismatch-table tbody td {
+            padding: 0.5rem 0.7rem;
+            border-bottom: 1px solid var(--slate-100);
+            vertical-align: middle;
+        }
+
+        .mismatch-table tbody tr:hover td {
+            background: #F8FAFF;
+        }
+
+        .mismatch-table .diff-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .mismatch-table .diff-badge.mismatch {
+            background: var(--rose-pale);
+            color: var(--rose);
+        }
+
+        .mismatch-table .diff-badge.match {
+            background: var(--emerald-pale);
+            color: var(--emerald);
+        }
+
+        .mismatch-table .diff-badge.partial {
+            background: var(--amber-pale);
+            color: #92400E;
+        }
+
+        .no-mismatch-msg {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--slate-400);
+        }
+
+        .no-mismatch-msg i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--emerald);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.4rem;
+        }
+
+        .status-dot.idle { background: var(--slate-300); }
+        .status-dot.loading { background: var(--sky); animation: pulse-dot 1s ease-in-out infinite; }
+        .status-dot.success { background: var(--emerald); }
+        .status-dot.error { background: var(--rose); }
+        .status-dot.mismatch { background: #92400E; }
 
         /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -55,10 +282,9 @@
         ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
-        /* ── Main wrap ── */
+        /* ── Rest of your existing styles ── */
         .main-wrap { max-width: 1900px; margin: 0 auto; padding: 1.25rem 1.5rem; }
 
-        /* ── Page header ── */
         .pg-header {
             background: var(--navy);
             border-radius: 12px;
@@ -91,7 +317,6 @@
             color: var(--navy);
         }
 
-        /* ── Stats grid ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -153,7 +378,6 @@
             flex-shrink: 0;
         }
 
-        /* ── Search panel ── */
         .search-panel {
             background: var(--white);
             border: 1.5px solid var(--slate-200);
@@ -196,20 +420,6 @@
         }
         .search-hint.visible { display: block; }
 
-        .search-active-banner {
-            background: var(--sky-pale);
-            border: 1.5px solid var(--sky);
-            border-radius: 8px;
-            padding: 0.5rem 0.85rem;
-            font-size: 0.82rem; color: #075985;
-            display: flex; align-items: center; gap: 0.5rem;
-            margin-top: 0.65rem;
-        }
-        .search-active-banner a {
-            color: var(--rose); font-weight: 600; text-decoration: none; margin-left: auto;
-        }
-        .search-active-banner a:hover { text-decoration: underline; }
-
         .sort-wrap { display: flex; align-items: center; gap: 0.4rem; }
         .sort-label { font-size: 0.78rem; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
         .sort-select {
@@ -250,7 +460,6 @@
         .abtn-primary { background: var(--amber); border-color: var(--amber); color: var(--navy); }
         .abtn-primary:hover { background: #FBBF24; transform: translateY(-1px); color: var(--navy); }
 
-        /* ── Table panel ── */
         .panel {
             background: var(--white);
             border: 1.5px solid var(--slate-200);
@@ -287,28 +496,15 @@
         .pbtn-danger:hover { background: var(--rose); color: var(--white); }
         .pbtn-primary { border-color: var(--amber); color: var(--navy); background: var(--amber); }
         .pbtn-primary:hover { background: #FBBF24; }
+        .pbtn-warning { border-color: #92400E; color: #92400E; background: var(--amber-pale); }
+        .pbtn-warning:hover { background: #FBBF24; color: var(--navy); }
         .pbtn:disabled {
             opacity: 0.4; cursor: not-allowed; pointer-events: none;
             transform: none !important;
         }
 
-        /* ── Live search bar ── */
-        .live-search-bar {
-            display: none;
-            padding: 0.6rem 1.25rem;
-            background: var(--sky-pale);
-            border-bottom: 1.5px solid var(--slate-200);
-            font-size: 0.82rem; color: #075985;
-            align-items: center; gap: 0.4rem;
-        }
-        .live-search-bar strong { color: var(--sky); }
-        .live-search-bar .link {
-            cursor: pointer; color: var(--navy); text-decoration: underline;
-        }
-
-        /* ── Table ── */
+        /* ── Rest of your table styles ── */
         .table-wrap { overflow-x: auto; }
-
         table.prod-tbl { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
         table.prod-tbl thead th {
             background: var(--slate-100);
@@ -371,24 +567,6 @@
             transform: scale(1.6);
         }
 
-        .image-preview-tooltip {
-            position: fixed;
-            pointer-events: none;
-            z-index: 99999;
-            display: none;
-            width: 240px;
-            height: 240px;
-            background: #fff;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 12px 40px rgba(11,30,61,0.25);
-        }
-        .image-preview-tooltip img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
         .prod-name {
             font-weight: 600; color: var(--navy);
             margin-bottom: 0.15rem;
@@ -413,7 +591,7 @@
         .stock-badge.medium { background: var(--amber-pale);   color: #92400E; }
         .stock-badge.high   { background: var(--emerald-pale); color: #065F46; }
 
-        .price {  monospace; font-weight: 500; color: var(--slate-800); font-size: 0.82rem; }
+        .price { font-weight: 500; color: var(--slate-800); font-size: 0.82rem; }
         .price.cost { color: var(--rose); }
 
         .cat-badge {
@@ -441,6 +619,7 @@
         .action-icon-btn.restock { border-color: var(--emerald); color: var(--emerald); }
         .action-icon-btn.return  { border-color: var(--amber);  color: var(--amber); }
         .action-icon-btn.offers  { border-color: var(--fuchsia); color: var(--fuchsia); }
+        .action-icon-btn.compare { border-color: var(--violet); color: var(--violet); }
 
         .action-icon-btn:hover { transform: scale(1.08); }
         .action-icon-btn.view:hover    { background: var(--sky-pale); }
@@ -448,8 +627,8 @@
         .action-icon-btn.restock:hover { background: var(--emerald-pale); }
         .action-icon-btn.return:hover  { background: var(--amber-pale); }
         .action-icon-btn.offers:hover  { background: var(--fuchsia-pale); }
+        .action-icon-btn.compare:hover { background: var(--violet-pale); }
 
-        /* ── Empty state ── */
         .empty-state {
             text-align: center; padding: 4rem 1.5rem;
             color: var(--slate-400);
@@ -458,7 +637,6 @@
         .empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--slate-600); margin-bottom: 0.4rem; }
         .empty-state p { font-size: 0.875rem; margin-bottom: 1.25rem; max-width: 420px; margin-left: auto; margin-right: auto; }
 
-        /* ── Pagination ── */
         .pagination-wrap {
             padding: 1.15rem 1.25rem;
             border-top: 1.5px solid var(--slate-200);
@@ -523,66 +701,6 @@
             box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
         }
 
-        /* ── Modal ── */
-        .modal-content { border: none; border-radius: 12px; overflow: hidden; }
-        .modal-header-navy {
-            background: var(--navy);
-            color: var(--white);
-            padding: 1.15rem 1.4rem;
-            border-bottom: none;
-        }
-        .modal-header-navy .modal-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
-        .modal-header-navy .btn-close { filter: invert(1) brightness(0.8); }
-
-        .modal-body { padding: 1.75rem 1.4rem; }
-        .modal-footer { padding: 1.15rem 1.4rem; border-top: 1.5px solid var(--slate-200); }
-
-        .field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.85rem; }
-        .field:last-child { margin-bottom: 0; }
-        .field-label { font-size: 0.8rem; font-weight: 600; color: var(--slate-600); }
-        .field-input {
-            font-size: 0.875rem;
-            padding: 0.5rem 0.75rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
-            background: var(--white);
-            color: var(--slate-800);
-            outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-        }
-        .field-input:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
-        }
-        select.field-input {
-            cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            padding-right: 2.25rem;
-            appearance: none;
-        }
-
-        .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
-        @media (max-width: 640px) { .row-fields { grid-template-columns: 1fr; } }
-
-        .selected-list { max-height: 180px; overflow-y: auto; }
-        .selected-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.5rem 0.7rem;
-            background: var(--slate-50);
-            border: 1px solid var(--slate-200);
-            border-radius: 7px;
-            font-size: 0.82rem;
-            margin-bottom: 0.4rem;
-        }
-        .selected-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .selected-item-badge {
-            font-size: 0.72rem; font-weight: 600;
-            padding: 0.2rem 0.5rem; border-radius: 5px;
-            background: var(--slate-200); color: var(--slate-600);
-        }
-
         .alert-box {
             display: flex; align-items: center; gap: 0.6rem;
             padding: 0.75rem 0.9rem;
@@ -593,53 +711,23 @@
             margin-bottom: 1rem;
         }
 
-        .mbtn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
-            font-size: 0.875rem; font-weight: 600;
-            padding: 0.55rem 1.1rem;
-            border-radius: 8px; border: none; cursor: pointer;
-            transition: all 0.15s;
+        .image-preview-tooltip {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            display: none;
+            width: 240px;
+            height: 240px;
+            background: #fff;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(11,30,61,0.25);
         }
-        .mbtn-outline { background: var(--slate-100); color: var(--slate-700); border: 1.5px solid var(--slate-200); }
-        .mbtn-outline:hover { background: var(--slate-200); }
-        .mbtn-danger  { background: var(--rose); color: var(--white); }
-        .mbtn-danger:hover { background: #BE123C; transform: translateY(-1px); }
-        .mbtn-primary { background: var(--amber); color: var(--navy); }
-        .mbtn-primary:hover { background: #FBBF24; transform: translateY(-1px); }
-        .mbtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-
-        /* ── Print order ── */
-        .print-order { background: var(--white); padding: 2rem; border-radius: 12px; }
-        .order-hd { text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid var(--navy); }
-        .order-title { font-size: 1.75rem; font-weight: 700; color: var(--navy); margin-bottom: 0.5rem; }
-        .order-sub { color: var(--slate-500); font-size: 0.95rem; }
-        .order-date { color: var(--slate-400); font-size: 0.875rem; margin-top: 0.5rem; }
-
-        .order-tbl { width: 100%; margin-bottom: 2rem; border-collapse: collapse; }
-        .order-tbl thead { background: var(--slate-100); }
-        .order-tbl th {
-            padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--navy);
-            border: 1px solid var(--slate-200);
-            font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .order-tbl td { padding: 1rem; border: 1px solid var(--slate-200); font-size: 0.95rem; }
-        .order-tbl tbody tr:nth-child(even) { background: var(--slate-50); }
-
-        .prod-disp { display: flex; flex-direction: column; }
-        .prod-disp-name { font-weight: 600; color: var(--navy); margin-bottom: 0.25rem; }
-        .prod-disp-sub { font-size: 0.8rem; color: var(--slate-500); }
-
-        .order-sum { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--slate-200); }
-        .sum-row { display: flex; justify-content: space-between; padding: 0.75rem 0; font-size: 0.95rem; }
-        .sum-row.total {
-            padding: 1rem 0; margin-top: 1rem;
-            border-top: 2px solid var(--navy);
-            font-weight: 700; font-size: 1.1rem; color: var(--navy);
-        }
-
-        @media print {
-            .mbtn, .modal-footer, .modal-header-navy { display: none; }
-            .print-order { box-shadow: none; background: var(--white); }
+        .image-preview-tooltip img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         @media (max-width: 768px) {
@@ -654,9 +742,9 @@
             .action-row { width: 100%; }
             .abtn { flex: 1; justify-content: center; }
             .pagination-wrap { flex-direction: column; align-items: flex-start; }
+            .api-summary { grid-template-columns: 1fr 1fr; }
         }
 
-        /* ── Animation ── */
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -664,493 +752,556 @@
         .stat-card { animation: slideUp 0.4s ease forwards; }
         .stat-card:nth-child(2) { animation-delay: 0.08s; }
         .stat-card:nth-child(3) { animation-delay: 0.16s; }
-        /* Make table header sticky */
-.table-wrap {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 70vh;
-    position: relative;
-}
 
-table.prod-tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.845rem;
-}
+        .table-wrap {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 70vh;
+            position: relative;
+        }
 
-table.prod-tbl thead {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
+        table.prod-tbl thead {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
 
-table.prod-tbl thead th {
-    background: var(--slate-100);
-    color: var(--slate-500);
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.65rem 0.8rem;
-    border-bottom: 2px solid var(--slate-200);
-    white-space: nowrap;
-    position: relative;
-    z-index: 20;
-}
-
-/* Add a subtle shadow when scrolling to show header is sticky */
-table.prod-tbl thead.stuck th {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+        table.prod-tbl thead th {
+            background: var(--slate-100);
+            color: var(--slate-500);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 0.8rem;
+            border-bottom: 2px solid var(--slate-200);
+            white-space: nowrap;
+            position: relative;
+            z-index: 20;
+        }
     </style>
 </head>
 <body>
 @include("sidenav")
 <main class="main-content">
-              @if(session('success'))
-      <div class="alert alert-success  d-flex justify-content-between">
-          {{ session('success') }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    @if(session('success'))
+        <div class="alert alert-success d-flex justify-content-between">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    
+    @if(session('error'))
+        <div class="alert alert-danger d-flex justify-content-between">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-      </div>
-  @endif
-  
-  @if(session('error'))
-      <div class="alert alert-danger d-flex justify-content-between">
-          {{ session('error') }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="main-wrap">
 
-      </div>
-  @endif
-        <div class="main-wrap">
-
-            {{-- ── Header ── --}}
-            <div class="pg-header">
-                <div class="pg-title-wrap">
-                    <div class="pg-title">
-                        {{ __('messages.products_heading') }} <span>{{ __('messages.inventory') }}</span>
-                    </div>
-                    <div class="pg-subtitle">{{ __('messages.products_subtitle') }}</div>
+        {{-- ── Header ── --}}
+        <div class="pg-header">
+            <div class="pg-title-wrap">
+                <div class="pg-title">
+                    {{ __('messages.products_heading') }} <span>{{ __('messages.inventory') }}</span>
                 </div>
-                <button class="hbtn-export" onclick="downloadReport()">
-                    <i class="bi bi-file-earmark-text"></i> {{ __('messages.products_export_report') }}
+                <div class="pg-subtitle">{{ __('messages.products_subtitle') }}</div>
+            </div>
+            <button class="hbtn-export" onclick="downloadReport()">
+                <i class="bi bi-file-earmark-text"></i> {{ __('messages.products_export_report') }}
+            </button>
+        </div>
+
+        {{-- ── API Comparison Panel ── --}}
+        <div class="api-compare-panel" id="apiComparePanel">
+            <div class="api-header">
+                <div class="api-title">
+                    <i class="bi bi-cloud-check-fill"></i>
+                    <span>MainStore API Comparison</span>
+                </div>
+                <div class="api-status idle" id="apiStatus">
+                    <span class="status-dot idle"></span>
+                    <span id="apiStatusText">Idle — Click "Compare" to check</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem;">
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 600; color: var(--slate-500);">Start Date</label>
+                    <input type="date" class="api-date-input" id="apiStartDate" value="{{ date('Y-m-d', strtotime('-7 days')) }}">
+                </div>
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 600; color: var(--slate-500);">End Date</label>
+                    <input type="date" class="api-date-input" id="apiEndDate" value="{{ date('Y-m-d') }}">
+                </div>
+                <button class="abtn abtn-primary" id="apiCompareBtn" onclick="runApiComparison()" style="margin-top: 0.5rem;">
+                    <i class="bi bi-arrow-repeat"></i> Compare
+                </button>
+                <button class="abtn abtn-outline" id="apiHideBtn" onclick="toggleApiPanel()" style="margin-top: 0.5rem;">
+                    <i class="bi bi-eye-slash"></i> Hide
                 </button>
             </div>
 
-            {{-- ── Stats ── --}}
-            <div class="stats-grid">
-                <div class="stat-card navy">
-                    <div class="stat-row">
-                        <div class="stat-info">
-                            <div class="stat-label">{{ __('messages.products_total_products') }}</div>
-                            <div class="stat-value">{{ number_format($TProducts) }}</div>
-                            <div class="stat-trend pos"><i class="bi bi-arrow-up"></i> {{ __('messages.products_all_active') }}</div>
-                        </div>
-                        <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
-                    </div>
+            <div class="api-summary" id="apiSummary" style="display: none;">
+                <div class="api-summary-item">
+                    <span class="label">Total Products in API</span>
+                    <span class="value" id="apiTotalProducts">0</span>
                 </div>
-
-                <div class="stat-card emerald">
-                    <div class="stat-row">
-                        <div class="stat-info">
-                            <div class="stat-label">{{ __('messages.products_inventory_worth_cost') }}</div>
-                            <div class="stat-value">Tsh {{ number_format($totalCostWorth) }}</div>
-                            <div class="stat-trend pos"><i class="bi bi-cash-stack"></i> {{ __('messages.products_cost_basis') }}</div>
-                        </div>
-                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
-                    </div>
+                <div class="api-summary-item">
+                    <span class="label">Matched</span>
+                    <span class="value match" id="apiMatchedCount">0</span>
                 </div>
-
-                <div class="stat-card sky">
-                    <div class="stat-row">
-                        <div class="stat-info">
-                            <div class="stat-label">{{ __('messages.products_inventory_worth_selling') }}</div>
-                            <div class="stat-value">Tsh {{ number_format($totalSellingWorth) }}</div>
-                            <div class="stat-trend pos"><i class="bi bi-graph-up-arrow"></i> {{ __('messages.products_expected_revenue') }}</div>
-                        </div>
-                        <div class="stat-icon"><i class="bi bi-tags-fill"></i></div>
-                    </div>
+                <div class="api-summary-item">
+                    <span class="label">Mismatched</span>
+                    <span class="value mismatch" id="apiMismatchCount">0</span>
+                </div>
+                <div class="api-summary-item">
+                    <span class="label">Status</span>
+                    <span class="value" id="apiComparisonStatus">—</span>
                 </div>
             </div>
 
-            {{-- ── Search Panel ── --}}
-            <div class="search-panel">
-                <div class="search-row">
-                    <div class="search-box">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="search" class="search-input" id="searchInput"
-                            placeholder="{{ __('messages.products_search_placeholder') }}"
-                            value="{{ request('search') }}" autocomplete="off">
-                        <div class="search-hint" id="searchHint">
-                            Press <strong>Enter</strong> to search all pages · Type to filter this page
-                        </div>
-
-                        @if(request('search'))
-                        <div class="search-active-banner">
-                            <i class="bi bi-funnel-fill"></i>
-                            {{ __('messages.products_showing_results_for') }} <strong>"{{ request('search') }}"</strong>
-                            ({{ $products->total() }} found)
-                            <a href="{{ url()->current() }}">{{ __('messages.products_clear_search') }}</a>
-                        </div>
-                        @endif
-                    </div>
-
-                    <div class="sort-wrap">
-                        <span class="sort-label"><i class="bi bi-shop"></i> {{ __('messages.products_shop_label') }}</span>
-                        <select id="shopSelect" class="sort-select" onchange="changeShop()">
-                        <option disabled selected>{{ __('messages.products_select_shop') }}</option>
-                            @foreach($getAllAccounts as $account)
-                                <option value="{{ $account['id'] }}"
-                                  {{ $account['id'] == getCurrentShopId() ? 'selected' : ''}} >
-                                    {{ $account['name'] }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="sort-wrap">
-                        <span class="sort-label"><i class="bi bi-sort-down"></i> {{ __('messages.products_sort_label') }}</span>
-                        <select id="sortSelect" class="sort-select" onchange="changeSort()">
-                            <option value="name_asc" {{ request('sort', 'name_asc') == 'name_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_asc') }}</option>
-                            <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_desc') }}</option>
-                            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_asc') }}</option>
-                            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_desc') }}</option>
-                            <option value="stock_asc" {{ request('sort') == 'stock_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_asc') }}</option>
-                            <option value="stock_desc" {{ request('sort') == 'stock_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_desc') }}</option>
-                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('messages.products_sort_newest') }}</option>
-                        </select>
-                    </div>
-
+            <div id="apiMismatchContainer" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; margin-bottom: 0.5rem;">
+                    <h6 style="font-size: 0.9rem; font-weight: 700; color: var(--slate-700); margin: 0;">
+                        <i class="bi bi-exclamation-triangle" style="color: var(--rose);"></i> Mismatched Products
+                    </h6>
+                    <span style="font-size: 0.78rem; color: var(--slate-400);" id="mismatchCountLabel">0 items</span>
                 </div>
-            </div>
-            @if (getCurrentShopId() != 7)
-                @if (count($available) > 0)
-                    <div class="alert-box">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <p>
-                            {{ __('messages.products_unsold_warning', ['count' => count($available)]) }}
-                        </p>
-                </div>
-            @endif
-            @endif
-            @if (count($negatives) > 0)
-                    <div class="alert-box ">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <p>
-                            {{ __('messages.products_negative_warning', ['count' => count($negatives)]) }} <strong>{{ __('messages.products_negative_strong') }}</strong> {{ __('messages.products_negative_suffix') }}
-                        </p>
-                </div>
-            @endif
-            @if (!empty($outOfSyncShops) && getCurrentShopId() == 7)
-                <div class="alert-box">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <div>
-                        <p>
-                            {{ __('messages.products_price_sync_warning', ['count' => count($outOfSyncShops)]) }}
-                        </p>
-                        <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
-                            @foreach($outOfSyncShops as $shop)
-                                @if($shop['id'] == getCurrentShopId())
-                                    <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }} ({{ __('messages.products_current_shop') }})</li>
-                                @else
-                                    <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }}</li>
-                                @endif
-                            @endforeach
-                        </ul>
-                        @if (!empty($currentShopMismatches))
-                            <details style="margin-top: 0.6rem;">
-                                <summary>{{ __('messages.products_view_current_shop_mismatches') }}</summary>
-                                <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
-                                    @foreach($currentShopMismatches as $mm)
-                                        <li>
-                                            {{ $mm['name'] }} ({{ $mm['product_id'] }})
-                                            <br><small>
-                                                Main: Tsh {{ number_format($mm['main_bPrice'], 2) }}/{{ number_format($mm['main_sPrice'], 2) }}
-                                                &nbsp;|&nbsp;
-                                                Shop: Tsh {{ number_format($mm['shop_bPrice'], 2) }}/{{ number_format($mm['shop_sPrice'], 2) }}
-                                            </small>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </details>
-                        @endif
-                    </div>
-                </div>
-            @endif
-            {{-- ── Table Panel ── --}}
-            <div class="panel">
-                <div class="panel-head">
-                    <h2 class="panel-title">
-                        {{ __('messages.products_list_title') }}
-                      
-                        @if(request('search'))
-                            <small>— {{ __('messages.products_search_results') }}</small>
-                        @endif
-                    </h2>
-                    <div class="panel-actions">
-                        <button class="pbtn pbtn-outline" id="selectAllBtn" onclick="toggleSelectAll()">
-                            <i class="bi bi-check2-square"></i> {{ __('messages.products_select_all') }}
-                        </button>
-                         @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="pbtn pbtn-danger" id="deleteAllBtn" onclick="openDeleteModal()" disabled>
-                            <i class="bi bi-trash"></i> {{ __('messages.products_delete_all') }}
-                        </button>
-                        @endif
-                        <button class="pbtn pbtn-primary" id="printBtn" onclick="openPrintModal()" disabled>
-                            <i class="bi bi-printer"></i> {{ __('messages.products_print_order') }}
-                        </button>
-                       @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
-
-                        <button class="pbtn pbtn-primary" id="duplicateBtn" onclick="openDuplicateModal()" disabled>
-                            <i class="bi bi-copy"></i> {{ __('messages.products_duplicate') }}
-                        </button>
-                        @endif
-                        @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
-                        <button class="pbtn pbtn-primary" id="requestBtn" onclick="openRequestModal()">
-                            <i class="bi bi-plus-lg"></i> {{ __('messages.products_request') }}
-                        </button>
-                        @endif
-                        @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="pbtn pbtn-warning" id="syncPricesBtn" onclick="openSyncPricesModal()" disabled>
-                            <i class="bi bi-arrow-repeat"></i> {{ __('messages.products_sync_prices') }}
-                        </button>
-                        @endif
-                        @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="pbtn pbtn-danger" id="clearQuantityBtn" onclick="openClearQuantityModal()" disabled>
-                            <i class="bi bi-dash-circle"></i> {{ __('messages.products_clear_quantity') }}
-                        </button>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="live-search-bar" id="liveSearchBar">
-                    <i class="bi bi-funnel"></i>
-                    {{ __('messages.products_live_showing_start') }} <strong id="liveMatchCount">0</strong> {{ __('messages.products_live_showing_mid') }} <strong>{{ $products->count() }}</strong> {{ __('messages.products_live_showing_end') }}
-                    &nbsp;·&nbsp; <span class="link" onclick="submitSearch()">{{ __('messages.products_enter_to_search') }}</span>
-                </div>
-
-                <div class="table-wrap">
-                    <table class="prod-tbl" id="productsTable">
+                <div class="mismatch-table-wrap">
+                    <table class="mismatch-table" id="mismatchTable">
                         <thead>
                             <tr>
-                                <th class="chk-cell">
-                                    <div class="custom-chk" id="masterCheckbox" onclick="toggleAllCheckboxes()"></div>
-                                </th>
-                                <th>{{ __('messages.products_col_product') }}</th>
-                                <th>{{ __('messages.products_col_stock') }}</th>
-                                <th>{{ __('messages.products_col_cost_price') }}</th>
-                                <th>{{ __('messages.products_col_selling_price') }}</th>
-                                <th>{{ __('messages.products_col_discount') }}</th>
-                                <th>{{ __('messages.products_col_category') }}</th>
-                                <th>{{ __('messages.products_col_actions') }}</th>
+                                <th>#</th>
+                                <th>Product Name</th>
+                                <th>Local Stock</th>
+                                <th>API Stock</th>
+                                <th>Difference</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody id="productsTableBody">
-                            @if($products->isEmpty())
-                            <tr>
-                                <td colspan="8">
-                                    <div class="empty-state">
-                                        <i class="bi bi-box"></i>
-                                        <div class="empty-state-title">{{ __('messages.products_no_found') }}</div>
-                                        <p>
-                                            @if(request('search'))
-                                                {{ __('messages.products_no_match_search', ['search' => request('search')]) }}
-                                            @else
-                                                {{ __('messages.products_add_first') }}
-                                            @endif
-                                        </p>
-                                        @if(request('search'))
-                                            <a href="{{ url()->current() }}" class="abtn abtn-outline">
-                                                <i class="bi bi-x-lg"></i> {{ __('messages.products_clear_search_btn') }}
-                                            </a>
-                                        @else
-                                            <a href="itemRequest" class="abtn abtn-primary">
-                                                <i class="bi bi-plus-lg"></i> {{ __('messages.products_add_new') }}
-                                            </a>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @else
-                                @foreach ($products as $product)
-                                @php
-                                    $loss = $product->bPrice > $product->sPrice;
-                                @endphp
-                                <form method="post">
-                                    @csrf
-                                    <tr data-product-id="{{ $product->product_id }}"
-                                        data-searchable="{{ strtolower($product->name01 . ' ' . $product->name02 . ' ' . $product->category . ' ' . $product->product_id) }}">
-                                        <td class="chk-cell">
-                                            <div class="custom-chk product-checkbox"
-                                                 onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
-                                        </td>
-                                        <td>
-                                            <div class="prod-info">
-                                                <div class="prod-avatar">
-                                                    @if($product->img && $product->img != 'default.png')
-                                                        <img src="{{ asset('/public/images/' . $product->img) }}" alt="{{ $product->name01 }}">
-                                                    @else
-                                                        {{ strtoupper(substr($product->name01, 0, 2)) }}
-                                                    @endif
-                                                </div>
-                                                <div>
-                                                    <div class="prod-name">
-                                                        {{ $product->name01 }}
-                                                        @if(in_array($product->product_id, $offers ?? []))
-                                                        <span class="offer-tag" title="Active offer">
-                                                            <i class="bi bi-gift-fill"></i> Offer
-                                                        </span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="prod-sub">{{ $product->name02 }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @php
-                                                $stockClass = $product->quantity <= 0 ? 'low'
-                                                            : ($product->quantity < 10 ? 'medium' : 'high');
-                                            @endphp
-                                            <span class="stock-badge {{ $stockClass }}">
-                                                {{ number_format($product->quantity) }} {{ $product->unit }}
-                                            </span>
-                                        </td>
-                                        <td><span class="price cost">{{ number_format($product->bPrice, 2) }}</span></td>
-                                        <td>
-                                            <span class="price">{{ number_format($product->sPrice, 2) }}</span>
-                                            @if ($loss)
-                                                <span class="badge bg-warning text-light" title="Loss(Buying Price is greater than selling Price)"><i class="bi bi-exclamation-triangle"></i></span>
-                                            @endif
-                                        </td>
-                                        <td><span class="price">{{ number_format($product->discount, 2) }}</span></td>
-                                        <td><span class="cat-badge">{{ $product->category }}</span></td>
-                                        <td>
-                                            <div class="action-cell">
-                                        
-                                @if (getCurrentShopId() != 7)
-                                <button class="action-icon-btn return" name="product_id"
-                                    formaction="returnToMainStore" value="{{ $product->product_id }}"
-                                    title="{{ __('messages.products_return_main_store') }}"
-                                    onclick="return confirm('{{ __('messages.products_return_confirm') }}')">
-                                    <i class="bi bi-arrow-return-left"></i>
-                                </button>
-                                @endif
-                                               
-                                <button class="action-icon-btn view" name="product_id"
-                                    formaction="viewProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_view') }}">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                      @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
-                                  
-                                    <button type="button" class="action-icon-btn offers"
-                                    data-product-id="{{ $product->product_id }}"
-                                    data-product-name="{{ $product->name01 }}"
-                                    title="{{ __('messages.products_manage_offers') }}"
-                                    onclick="openOfferModal('{{ $product->product_id }}', '{{ addslashes($product->name01) }}')">
-                                    <i class="bi bi-gift"></i>
-                                </button>
-                                                @endif
-                                <button class="action-icon-btn delete" name="product_id" onclick="confirm('{{ __('messages.products_delete_confirm') }}')"
-                                    formaction="dltProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_delete') }}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </form>
-                                @endforeach
-                            @endif
+                        <tbody id="mismatchTableBody">
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                {{-- Pagination --}}
-                @if(!$products->isEmpty())
-                <div class="pagination-wrap" id="paginationContainer"
-                     style="{{ request('search') ? 'display:none' : '' }}">
-                    <p class="pg-info">
-                        {!! __('messages.products_showing_range', ['first' => $products->firstItem(), 'last' => $products->lastItem(), 'total' => $products->total()]) !!}
-                    </p>
-
-                    <nav>
-                        <ul class="pg-list">
-                            @if ($products->onFirstPage())
-                                <li class="pg-item disabled">
-                                    <span class="pg-link"><i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}</span>
-                                </li>
-                            @else
-                                <li class="pg-item">
-                                    <a class="pg-link" href="{{ $products->previousPageUrl() }}">
-                                        <i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}
-                                    </a>
-                                </li>
-                            @endif
-
-                            @php
-                                $currentPage = $products->currentPage();
-                                $lastPage    = $products->lastPage();
-                                $start       = max(1, $currentPage - 2);
-                                $end         = min($lastPage, $currentPage + 2);
-                            @endphp
-
-                            @if($start > 1)
-                                <li class="pg-item"><a class="pg-link" href="{{ $products->url(1) }}">1</a></li>
-                                @if($start > 2)
-                                    <li class="pg-item disabled"><span class="pg-link">…</span></li>
-                                @endif
-                            @endif
-
-                            @for($page = $start; $page <= $end; $page++)
-                                @if($page == $currentPage)
-                                    <li class="pg-item active"><span class="pg-link pg-link-active">{{ $page }}</span></li>
-                                @else
-                                    <li class="pg-item"><a class="pg-link" href="{{ $products->url($page) }}">{{ $page }}</a></li>
-                                @endif
-                            @endfor
-
-                            @if($end < $lastPage)
-                                @if($end < $lastPage - 1)
-                                    <li class="pg-item disabled"><span class="pg-link">…</span></li>
-                                @endif
-                                <li class="pg-item"><a class="pg-link" href="{{ $products->url($lastPage) }}">{{ $lastPage }}</a></li>
-                            @endif
-
-                            @if ($products->hasMorePages())
-                                <li class="pg-item">
-                                    <a class="pg-link" href="{{ $products->nextPageUrl() }}">
-                                        {{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                </li>
-                            @else
-                                <li class="pg-item disabled">
-                                    <span class="pg-link">{{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i></span>
-                                </li>
-                            @endif
-                        </ul>
-                    </nav>
-
-                        <div class="per-page">
-                            <span class="per-page-label">{{ __('messages.products_items_per_page') }}</span>
-                        <select id="perPageSelect" class="per-page-select" onchange="changeItemsPerPage()">
-                            @foreach([50, 100, 300, 500, 1000] as $pp)
-                            <option value="{{ $pp }}" {{ request('per_page', 50) == $pp ? 'selected' : '' }}>{{ $pp }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+            <div id="apiNoMismatch" style="display: none;">
+                <div class="no-mismatch-msg">
+                    <i class="bi bi-check-circle-fill" style="color: var(--emerald);"></i>
+                    <strong style="color: var(--emerald);">All products match!</strong>
+                    <p style="color: var(--slate-500); margin-top: 0.25rem;">No discrepancies found between local and API data.</p>
                 </div>
-                @endif
-
-            </div>{{-- /panel --}}
+            </div>
         </div>
-    </main>
+
+        {{-- ── Stats ── --}}
+        <div class="stats-grid">
+            <div class="stat-card navy">
+                <div class="stat-row">
+                    <div class="stat-info">
+                        <div class="stat-label">{{ __('messages.products_total_products') }}</div>
+                        <div class="stat-value">{{ number_format($TProducts) }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-arrow-up"></i> {{ __('messages.products_all_active') }}</div>
+                    </div>
+                    <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
+                </div>
+            </div>
+
+            <div class="stat-card emerald">
+                <div class="stat-row">
+                    <div class="stat-info">
+                        <div class="stat-label">{{ __('messages.products_inventory_worth_cost') }}</div>
+                        <div class="stat-value">Tsh {{ number_format($totalCostWorth) }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-cash-stack"></i> {{ __('messages.products_cost_basis') }}</div>
+                    </div>
+                    <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+                </div>
+            </div>
+
+            <div class="stat-card sky">
+                <div class="stat-row">
+                    <div class="stat-info">
+                        <div class="stat-label">{{ __('messages.products_inventory_worth_selling') }}</div>
+                        <div class="stat-value">Tsh {{ number_format($totalSellingWorth) }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-graph-up-arrow"></i> {{ __('messages.products_expected_revenue') }}</div>
+                    </div>
+                    <div class="stat-icon"><i class="bi bi-tags-fill"></i></div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Search Panel ── --}}
+        <div class="search-panel">
+            <div class="search-row">
+                <div class="search-box">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="search" class="search-input" id="searchInput"
+                        placeholder="{{ __('messages.products_search_placeholder') }}"
+                        value="{{ request('search') }}" autocomplete="off">
+                    <div class="search-hint" id="searchHint">
+                        Press <strong>Enter</strong> to search all pages · Type to filter this page
+                    </div>
+
+                    @if(request('search'))
+                    <div class="search-active-banner">
+                        <i class="bi bi-funnel-fill"></i>
+                        {{ __('messages.products_showing_results_for') }} <strong>"{{ request('search') }}"</strong>
+                        ({{ $products->total() }} found)
+                        <a href="{{ url()->current() }}">{{ __('messages.products_clear_search') }}</a>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="sort-wrap">
+                    <span class="sort-label"><i class="bi bi-shop"></i> {{ __('messages.products_shop_label') }}</span>
+                    <select id="shopSelect" class="sort-select" onchange="changeShop()">
+                        <option disabled selected>{{ __('messages.products_select_shop') }}</option>
+                        @foreach($getAllAccounts as $account)
+                            <option value="{{ $account['id'] }}"
+                                {{ $account['id'] == getCurrentShopId() ? 'selected' : ''}} >
+                                {{ $account['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="sort-wrap">
+                    <span class="sort-label"><i class="bi bi-sort-down"></i> {{ __('messages.products_sort_label') }}</span>
+                    <select id="sortSelect" class="sort-select" onchange="changeSort()">
+                        <option value="name_asc" {{ request('sort', 'name_asc') == 'name_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_asc') }}</option>
+                        <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_desc') }}</option>
+                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_asc') }}</option>
+                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_desc') }}</option>
+                        <option value="stock_asc" {{ request('sort') == 'stock_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_asc') }}</option>
+                        <option value="stock_desc" {{ request('sort') == 'stock_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_desc') }}</option>
+                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('messages.products_sort_newest') }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        @if (getCurrentShopId() != 7)
+            @if (count($available) > 0)
+                <div class="alert-box">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>
+                        {{ __('messages.products_unsold_warning', ['count' => count($available)]) }}
+                    </p>
+                </div>
+            @endif
+        @endif
+
+        @if (count($negatives) > 0)
+            <div class="alert-box">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>
+                    {{ __('messages.products_negative_warning', ['count' => count($negatives)]) }} <strong>{{ __('messages.products_negative_strong') }}</strong> {{ __('messages.products_negative_suffix') }}
+                </p>
+            </div>
+        @endif
+
+        @if (!empty($outOfSyncShops) && getCurrentShopId() == 7)
+            <div class="alert-box">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>
+                    <p>
+                        {{ __('messages.products_price_sync_warning', ['count' => count($outOfSyncShops)]) }}
+                    </p>
+                    <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
+                        @foreach($outOfSyncShops as $shop)
+                            @if($shop['id'] == getCurrentShopId())
+                                <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }} ({{ __('messages.products_current_shop') }})</li>
+                            @else
+                                <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }}</li>
+                            @endif
+                        @endforeach
+                    </ul>
+                    @if (!empty($currentShopMismatches))
+                        <details style="margin-top: 0.6rem;">
+                            <summary>{{ __('messages.products_view_current_shop_mismatches') }}</summary>
+                            <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
+                                @foreach($currentShopMismatches as $mm)
+                                    <li>
+                                        {{ $mm['name'] }} ({{ $mm['product_id'] }})
+                                        <br><small>
+                                            Main: Tsh {{ number_format($mm['main_bPrice'], 2) }}/{{ number_format($mm['main_sPrice'], 2) }}
+                                            &nbsp;|&nbsp;
+                                            Shop: Tsh {{ number_format($mm['shop_bPrice'], 2) }}/{{ number_format($mm['shop_sPrice'], 2) }}
+                                        </small>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </details>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- ── Table Panel ── --}}
+        <div class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">
+                    {{ __('messages.products_list_title') }}
+                    @if(request('search'))
+                        <small>— {{ __('messages.products_search_results') }}</small>
+                    @endif
+                </h2>
+                <div class="panel-actions">
+                    <button class="pbtn pbtn-outline" id="selectAllBtn" onclick="toggleSelectAll()">
+                        <i class="bi bi-check2-square"></i> {{ __('messages.products_select_all') }}
+                    </button>
+                    @if (Auth::user()->levelStatus === 'Admin')
+                        <button class="pbtn pbtn-danger" id="deleteAllBtn" onclick="openDeleteModal()" disabled>
+                            <i class="bi bi-trash"></i> {{ __('messages.products_delete_all') }}
+                        </button>
+                    @endif
+                    <button class="pbtn pbtn-primary" id="printBtn" onclick="openPrintModal()" disabled>
+                        <i class="bi bi-printer"></i> {{ __('messages.products_print_order') }}
+                    </button>
+                    @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
+                        <button class="pbtn pbtn-primary" id="duplicateBtn" onclick="openDuplicateModal()" disabled>
+                            <i class="bi bi-copy"></i> {{ __('messages.products_duplicate') }}
+                        </button>
+                        <button class="pbtn pbtn-primary" id="requestBtn" onclick="openRequestModal()">
+                            <i class="bi bi-plus-lg"></i> {{ __('messages.products_request') }}
+                        </button>
+                    @endif
+                    @if (Auth::user()->levelStatus === 'Admin')
+                        <button class="pbtn pbtn-warning" id="syncPricesBtn" onclick="openSyncPricesModal()" disabled>
+                            <i class="bi bi-arrow-repeat"></i> {{ __('messages.products_sync_prices') }}
+                        </button>
+                        <button class="pbtn pbtn-danger" id="clearQuantityBtn" onclick="openClearQuantityModal()" disabled>
+                            <i class="bi bi-dash-circle"></i> {{ __('messages.products_clear_quantity') }}
+                        </button>
+                    @endif
+                </div>
+            </div>
+
+            <div class="live-search-bar" id="liveSearchBar">
+                <i class="bi bi-funnel"></i>
+                {{ __('messages.products_live_showing_start') }} <strong id="liveMatchCount">0</strong> {{ __('messages.products_live_showing_mid') }} <strong>{{ $products->count() }}</strong> {{ __('messages.products_live_showing_end') }}
+                &nbsp;·&nbsp; <span class="link" onclick="submitSearch()">{{ __('messages.products_enter_to_search') }}</span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="prod-tbl" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th class="chk-cell">
+                                <div class="custom-chk" id="masterCheckbox" onclick="toggleAllCheckboxes()"></div>
+                            </th>
+                            <th>{{ __('messages.products_col_product') }}</th>
+                            <th>{{ __('messages.products_col_stock') }}</th>
+                            <th>{{ __('messages.products_col_cost_price') }}</th>
+                            <th>{{ __('messages.products_col_selling_price') }}</th>
+                            <th>{{ __('messages.products_col_discount') }}</th>
+                            <th>{{ __('messages.products_col_category') }}</th>
+                            <th>{{ __('messages.products_col_actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        @if($products->isEmpty())
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="bi bi-box"></i>
+                                    <div class="empty-state-title">{{ __('messages.products_no_found') }}</div>
+                                    <p>
+                                        @if(request('search'))
+                                            {{ __('messages.products_no_match_search', ['search' => request('search')]) }}
+                                        @else
+                                            {{ __('messages.products_add_first') }}
+                                        @endif
+                                    </p>
+                                    @if(request('search'))
+                                        <a href="{{ url()->current() }}" class="abtn abtn-outline">
+                                            <i class="bi bi-x-lg"></i> {{ __('messages.products_clear_search_btn') }}
+                                        </a>
+                                    @else
+                                        <a href="itemRequest" class="abtn abtn-primary">
+                                            <i class="bi bi-plus-lg"></i> {{ __('messages.products_add_new') }}
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @else
+                            @foreach ($products as $product)
+                            @php
+                                $loss = $product->bPrice > $product->sPrice;
+                            @endphp
+                            <form method="post">
+                                @csrf
+                                <tr data-product-id="{{ $product->product_id }}"
+                                    data-searchable="{{ strtolower($product->name01 . ' ' . $product->name02 . ' ' . $product->category . ' ' . $product->product_id) }}">
+                                    <td class="chk-cell">
+                                        <div class="custom-chk product-checkbox"
+                                             onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
+                                    </td>
+                                    <td>
+                                        <div class="prod-info">
+                                            <div class="prod-avatar">
+                                                @if($product->img && $product->img != 'default.png')
+                                                    <img src="{{ asset('/public/images/' . $product->img) }}" alt="{{ $product->name01 }}">
+                                                @else
+                                                    {{ strtoupper(substr($product->name01, 0, 2)) }}
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <div class="prod-name">
+                                                    {{ $product->name01 }}
+                                                    @if(in_array($product->product_id, $offers ?? []))
+                                                    <span class="offer-tag" title="Active offer">
+                                                        <i class="bi bi-gift-fill"></i> Offer
+                                                    </span>
+                                                    @endif
+                                                    <span class="api-compare-badge" id="compare-badge-{{ $product->product_id }}" style="display:none;"></span>
+                                                </div>
+                                                <div class="prod-sub">{{ $product->name02 }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $stockClass = $product->quantity <= 0 ? 'low'
+                                                        : ($product->quantity < 10 ? 'medium' : 'high');
+                                        @endphp
+                                        <span class="stock-badge {{ $stockClass }}" id="stock-{{ $product->product_id }}">
+                                            {{ number_format($product->quantity) }} {{ $product->unit }}
+                                        </span>
+                                    </td>
+                                    <td><span class="price cost">{{ number_format($product->bPrice, 2) }}</span></td>
+                                    <td>
+                                        <span class="price">{{ number_format($product->sPrice, 2) }}</span>
+                                        @if ($loss)
+                                            <span class="badge bg-warning text-light" title="Loss(Buying Price is greater than selling Price)"><i class="bi bi-exclamation-triangle"></i></span>
+                                        @endif
+                                    </td>
+                                    <td><span class="price">{{ number_format($product->discount, 2) }}</span></td>
+                                    <td><span class="cat-badge">{{ $product->category }}</span></td>
+                                    <td>
+                                        <div class="action-cell">
+                                            @if (getCurrentShopId() != 7)
+                                            <button class="action-icon-btn return" name="product_id"
+                                                formaction="returnToMainStore" value="{{ $product->product_id }}"
+                                                title="{{ __('messages.products_return_main_store') }}"
+                                                onclick="return confirm('{{ __('messages.products_return_confirm') }}')">
+                                                <i class="bi bi-arrow-return-left"></i>
+                                            </button>
+                                            @endif
+                                            <button class="action-icon-btn view" name="product_id"
+                                                formaction="viewProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_view') }}">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
+                                                <button type="button" class="action-icon-btn offers"
+                                                data-product-id="{{ $product->product_id }}"
+                                                data-product-name="{{ $product->name01 }}"
+                                                title="{{ __('messages.products_manage_offers') }}"
+                                                onclick="openOfferModal('{{ $product->product_id }}', '{{ addslashes($product->name01) }}')">
+                                                <i class="bi bi-gift"></i>
+                                            </button>
+                                            @endif
+                                            <button class="action-icon-btn delete" name="product_id" onclick="confirm('{{ __('messages.products_delete_confirm') }}')"
+                                                formaction="dltProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_delete') }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </form>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Pagination --}}
+            @if(!$products->isEmpty())
+            <div class="pagination-wrap" id="paginationContainer"
+                 style="{{ request('search') ? 'display:none' : '' }}">
+                <p class="pg-info">
+                    {!! __('messages.products_showing_range', ['first' => $products->firstItem(), 'last' => $products->lastItem(), 'total' => $products->total()]) !!}
+                </p>
+
+                <nav>
+                    <ul class="pg-list">
+                        @if ($products->onFirstPage())
+                            <li class="pg-item disabled">
+                                <span class="pg-link"><i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}</span>
+                            </li>
+                        @else
+                            <li class="pg-item">
+                                <a class="pg-link" href="{{ $products->previousPageUrl() }}">
+                                    <i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}
+                                </a>
+                            </li>
+                        @endif
+
+                        @php
+                            $currentPage = $products->currentPage();
+                            $lastPage    = $products->lastPage();
+                            $start       = max(1, $currentPage - 2);
+                            $end         = min($lastPage, $currentPage + 2);
+                        @endphp
+
+                        @if($start > 1)
+                            <li class="pg-item"><a class="pg-link" href="{{ $products->url(1) }}">1</a></li>
+                            @if($start > 2)
+                                <li class="pg-item disabled"><span class="pg-link">…</span></li>
+                            @endif
+                        @endif
+
+                        @for($page = $start; $page <= $end; $page++)
+                            @if($page == $currentPage)
+                                <li class="pg-item active"><span class="pg-link pg-link-active">{{ $page }}</span></li>
+                            @else
+                                <li class="pg-item"><a class="pg-link" href="{{ $products->url($page) }}">{{ $page }}</a></li>
+                            @endif
+                        @endfor
+
+                        @if($end < $lastPage)
+                            @if($end < $lastPage - 1)
+                                <li class="pg-item disabled"><span class="pg-link">…</span></li>
+                            @endif
+                            <li class="pg-item"><a class="pg-link" href="{{ $products->url($lastPage) }}">{{ $lastPage }}</a></li>
+                        @endif
+
+                        @if ($products->hasMorePages())
+                            <li class="pg-item">
+                                <a class="pg-link" href="{{ $products->nextPageUrl() }}">
+                                    {{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        @else
+                            <li class="pg-item disabled">
+                                <span class="pg-link">{{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i></span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+
+                <div class="per-page">
+                    <span class="per-page-label">{{ __('messages.products_items_per_page') }}</span>
+                    <select id="perPageSelect" class="per-page-select" onchange="changeItemsPerPage()">
+                        @foreach([50, 100, 300, 500, 1000] as $pp)
+                        <option value="{{ $pp }}" {{ request('per_page', 50) == $pp ? 'selected' : '' }}>{{ $pp }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            @endif
+        </div>{{-- /panel --}}
+    </div>
+</main>
 
 <div class="image-preview-tooltip" id="imagePreviewTooltip">
     <img src="" alt="Preview">
 </div>
 
-{{-- ════════════════════════════════════════════
-     MODALS (simplified versions for token count)
-════════════════════════════════════════════ --}}
+{{-- ── MODALS ── --}}
 
 <!-- Print Modal -->
 <div class="modal fade" id="printModal" tabindex="-1">
@@ -1257,7 +1408,6 @@ table.prod-tbl thead.stuck th {
     </div>
 </div>
 
-
 <!-- Clear Quantity Modal -->
 <div class="modal fade" id="clearQuantityModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -1346,7 +1496,7 @@ table.prod-tbl thead.stuck th {
     </div>
 </div>
 
-<!-- Offer Modal - FIXED VERSION with working search -->
+<!-- Offer Modal -->
 <div class="modal fade" id="offerModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1355,20 +1505,17 @@ table.prod-tbl thead.stuck th {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Product Info -->
                 <div id="offerProductInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-200);">
                     <div style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 0.25rem;">{{ __('messages.products_select_product') }}</div>
                     <div id="offerProductName" style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">—</div>
                     <div id="offerProductId" style="font-size: 0.8rem; color: var(--slate-400); margin-top: 0.25rem;">—</div>
                 </div>
 
-                <!-- Existing Offers List -->
                 <div id="existingOffersSection" style="margin-bottom: 1.5rem; display: none;">
                     <h6 style="font-size: 0.9rem; font-weight: 700; color: var(--slate-700); margin-bottom: 0.75rem;">{{ __('messages.products_active_offers') }}</h6>
                     <div id="offersList" class="selected-list" style="max-height: 200px; overflow-y: auto;"></div>
                 </div>
 
-                <!-- Create/Edit Offer Form -->
                 <form id="offerForm" method="POST" action="{{ route('saveOffer') }}">
                     @csrf
                     <input type="hidden" name="product_id" id="offerProductIdInput">
@@ -1415,7 +1562,6 @@ table.prod-tbl thead.stuck th {
                     </div>
                 </form>
 
-                <!-- Delete Offer Button -->
                 <div id="deleteOfferSection" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--slate-200);">
                     <button type="button" class="mbtn mbtn-danger" id="deleteOfferBtn" style="width: 100%;">
                         <i class="bi bi-trash"></i> {{ __('messages.products_delete_this_offer') }}
@@ -1480,7 +1626,331 @@ table.prod-tbl thead.stuck th {
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-// [JavaScript - FULL WORKING VERSION with searchable product selector]
+// ============================================================
+// API COMPARISON JAVASCRIPT
+// ============================================================
+
+const API_PROXY_URL = '/main-store/proxy';
+let apiComparisonResults = {
+    matched: [],
+    mismatched: [],
+    totalApiProducts: 0,
+    apiData: []
+};
+
+function toggleApiPanel() {
+    const panel = document.getElementById('apiComparePanel');
+    const btn = document.getElementById('apiHideBtn');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+    } else {
+        panel.style.display = 'none';
+        btn.innerHTML = '<i class="bi bi-eye"></i> Show';
+    }
+}
+
+function updateApiStatus(status, message, details = null) {
+    const statusEl = document.getElementById('apiStatus');
+    const statusText = document.getElementById('apiStatusText');
+    
+    statusEl.className = 'api-status ' + status;
+    statusEl.querySelector('.status-dot').className = 'status-dot ' + status;
+    statusText.textContent = message;
+    
+    if (details) {
+        // Optionally show details
+    }
+}
+
+function showApiMismatches(mismatches) {
+    const container = document.getElementById('apiMismatchContainer');
+    const noMismatch = document.getElementById('apiNoMismatch');
+    const tbody = document.getElementById('mismatchTableBody');
+    const countLabel = document.getElementById('mismatchCountLabel');
+    
+    if (!mismatches || mismatches.length === 0) {
+        container.style.display = 'none';
+        noMismatch.style.display = 'block';
+        return;
+    }
+    
+    container.style.display = 'block';
+    noMismatch.style.display = 'none';
+    countLabel.textContent = mismatches.length + ' items';
+    
+    tbody.innerHTML = '';
+    mismatches.forEach((item, index) => {
+        const diff = item.local_stock - item.api_stock;
+        const statusClass = Math.abs(diff) <= 1 ? 'match' : 'mismatch';
+        const statusText = Math.abs(diff) <= 1 ? '✓ Match' : '⚠ Mismatch';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${escapeHtml(item.product_name)}</strong></td>
+            <td>${item.local_stock}</td>
+            <td>${item.api_stock}</td>
+            <td>${diff > 0 ? '+' : ''}${diff}</td>
+            <td><span class="diff-badge ${statusClass}">${statusText}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateSummary(total, matched, mismatched) {
+    document.getElementById('apiTotalProducts').textContent = total;
+    document.getElementById('apiMatchedCount').textContent = matched;
+    document.getElementById('apiMismatchCount').textContent = mismatched;
+    document.getElementById('apiSummary').style.display = 'grid';
+    
+    if (mismatched === 0 && total > 0) {
+        document.getElementById('apiComparisonStatus').textContent = '✅ All match!';
+        document.getElementById('apiComparisonStatus').style.color = 'var(--emerald)';
+    } else if (total === 0) {
+        document.getElementById('apiComparisonStatus').textContent = '— No data';
+        document.getElementById('apiComparisonStatus').style.color = 'var(--slate-400)';
+    } else {
+        document.getElementById('apiComparisonStatus').textContent = '⚠ ' + mismatched + ' mismatches';
+        document.getElementById('apiComparisonStatus').style.color = 'var(--rose)';
+    }
+}
+
+async function runApiComparison() {
+    const panel = document.getElementById('apiComparePanel');
+    panel.className = 'api-compare-panel loading';
+    
+    const startDate = document.getElementById('apiStartDate').value;
+    const endDate = document.getElementById('apiEndDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        panel.className = 'api-compare-panel';
+        return;
+    }
+    
+    updateApiStatus('loading', 'Fetching stock report from MainStore...');
+    
+    try {
+        const proxyResponse = await fetch(API_PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({
+                action: 'stock_report',
+                start_date: startDate,
+                end_date: endDate
+            })
+        });
+        
+        if (!proxyResponse.ok) {
+            const errorData = await proxyResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Proxy request failed: ' + proxyResponse.status);
+        }
+        
+        const reportData = await proxyResponse.json();
+        
+        // Parse the API response - assuming structure: { data: [...] } or { items: [...] } or just array
+        let apiItems = [];
+        if (Array.isArray(reportData)) {
+            apiItems = reportData;
+        } else if (reportData.data && Array.isArray(reportData.data)) {
+            apiItems = reportData.data;
+        } else if (reportData.items && Array.isArray(reportData.items)) {
+            apiItems = reportData.items;
+        } else if (reportData.stock && Array.isArray(reportData.stock)) {
+            apiItems = reportData.stock;
+        } else {
+            // Try to find any array in the response
+            for (const key in reportData) {
+                if (Array.isArray(reportData[key])) {
+                    apiItems = reportData[key];
+                    break;
+                }
+            }
+        }
+        
+        if (apiItems.length === 0) {
+            updateApiStatus('error', 'No data returned from API');
+            panel.className = 'api-compare-panel';
+            document.getElementById('apiSummary').style.display = 'grid';
+            document.getElementById('apiTotalProducts').textContent = '0';
+            document.getElementById('apiMatchedCount').textContent = '0';
+            document.getElementById('apiMismatchCount').textContent = '0';
+            document.getElementById('apiComparisonStatus').textContent = 'No data';
+            return;
+        }
+        
+        // Step 3: Compare with local data
+        updateApiStatus('loading', 'Comparing with local inventory...');
+        
+        // Build local product map (product name => stock)
+        const localProducts = {};
+        document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
+            const id = row.dataset.productId;
+            const nameEl = row.querySelector('.prod-name');
+            let name = '';
+            if (nameEl) {
+                const clone = nameEl.cloneNode(true);
+                const tags = clone.querySelectorAll('.offer-tag, .api-compare-badge');
+                tags.forEach(tag => tag.remove());
+                name = clone.textContent.trim();
+            }
+            const stockEl = document.getElementById('stock-' + id);
+            let stock = 0;
+            if (stockEl) {
+                const match = stockEl.textContent.match(/[\d,]+/);
+                if (match) stock = parseInt(match[0].replace(/,/g, ''));
+            }
+            if (name) {
+                localProducts[name.toLowerCase()] = stock;
+            }
+        });
+        
+        let matched = 0;
+        let mismatched = [];
+        let apiTotal = apiItems.length;
+        
+        apiItems.forEach((item, index) => {
+            const apiName = (item.item_name || item.name || item.product_name || item.Item_Name || '').trim();
+            const apiStock = parseInt(item.closing_stock || item.stock || item.quantity || item.total || 0);
+            
+            if (!apiName) return;
+            
+            // Try to find matching local product by name (case insensitive, trim)
+            const searchName = apiName.toLowerCase().trim();
+            let localStock = localProducts[searchName];
+            
+            // If not found, try without variation suffix (e.g., remove "- CTN", "- PCS", etc.)
+            if (localStock === undefined && searchName.includes('-')) {
+                const baseName = searchName.split('-')[0].trim();
+                for (const [key, value] of Object.entries(localProducts)) {
+                    if (key.includes(baseName) || baseName.includes(key)) {
+                        localStock = value;
+                        break;
+                    }
+                }
+            }
+            
+            // If still not found, try partial match
+            if (localStock === undefined) {
+                const words = searchName.split(/\s+/).filter(w => w.length > 2);
+                for (const [key, value] of Object.entries(localProducts)) {
+                    let matchCount = 0;
+                    for (const word of words) {
+                        if (key.includes(word)) matchCount++;
+                    }
+                    if (matchCount >= Math.min(words.length, 2)) {
+                        localStock = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (localStock !== undefined) {
+                if (Math.abs(localStock - apiStock) <= 1) {
+                    matched++;
+                } else {
+                    mismatched.push({
+                        product_name: apiName,
+                        local_stock: localStock,
+                        api_stock: apiStock,
+                        diff: localStock - apiStock
+                    });
+                }
+            } else {
+                // Not found in local - mark as mismatch with local_stock = 0
+                mismatched.push({
+                    product_name: apiName,
+                    local_stock: 0,
+                    api_stock: apiStock,
+                    diff: -apiStock
+                });
+            }
+        });
+        
+        apiComparisonResults = {
+            matched: matched,
+            mismatched: mismatched,
+            totalApiProducts: apiTotal,
+            apiData: apiItems
+        };
+        
+        // Update UI
+        updateSummary(apiTotal, matched, mismatched.length);
+        showApiMismatches(mismatched);
+        
+        // Update badges on table rows
+        updateComparisonBadges(mismatched);
+        
+        if (mismatched.length === 0 && apiTotal > 0) {
+            updateApiStatus('success', 'All ' + apiTotal + ' products match!');
+            panel.className = 'api-compare-panel has-match';
+        } else if (mismatched.length > 0) {
+            updateApiStatus('mismatch', mismatched.length + ' products mismatch out of ' + apiTotal);
+            panel.className = 'api-compare-panel has-mismatch';
+        } else {
+            updateApiStatus('idle', 'No products to compare');
+            panel.className = 'api-compare-panel';
+        }
+        
+    } catch (error) {
+        console.error('API Comparison Error:', error);
+        updateApiStatus('error', 'Error: ' + error.message);
+        panel.className = 'api-compare-panel';
+        document.getElementById('apiSummary').style.display = 'grid';
+        document.getElementById('apiTotalProducts').textContent = 'Error';
+        document.getElementById('apiMatchedCount').textContent = '-';
+        document.getElementById('apiMismatchCount').textContent = '-';
+        document.getElementById('apiComparisonStatus').textContent = 'Error';
+    }
+}
+
+function updateComparisonBadges(mismatches) {
+    // Clear all existing badges
+    document.querySelectorAll('.api-compare-badge').forEach(el => el.style.display = 'none');
+    
+    // Create a map for quick lookup
+    const mismatchMap = {};
+    mismatches.forEach(item => {
+        // Try to find matching product by name
+        document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
+            const nameEl = row.querySelector('.prod-name');
+            let name = '';
+            if (nameEl) {
+                const clone = nameEl.cloneNode(true);
+                const tags = clone.querySelectorAll('.offer-tag, .api-compare-badge');
+                tags.forEach(tag => tag.remove());
+                name = clone.textContent.trim().toLowerCase();
+            }
+            if (name === item.product_name.toLowerCase()) {
+                mismatchMap[row.dataset.productId] = item;
+            }
+        });
+    });
+    
+    // Show badges on matching rows
+    for (const [productId, item] of Object.entries(mismatchMap)) {
+        const badge = document.getElementById('compare-badge-' + productId);
+        if (badge) {
+            badge.style.display = 'inline-block';
+            badge.style.marginLeft = '0.5rem';
+            badge.style.fontSize = '0.65rem';
+            badge.style.fontWeight = '700';
+            badge.style.padding = '0.15rem 0.4rem';
+            badge.style.borderRadius = '4px';
+            badge.style.background = 'var(--rose)';
+            badge.style.color = 'white';
+            badge.textContent = '⚠ API: ' + item.api_stock;
+        }
+    }
+}
+
+// ============================================================
+// EXISTING FUNCTIONS (kept as-is)
+// ============================================================
 
 function changeItemsPerPage() {
     const perPage = document.getElementById('perPageSelect').value;
@@ -1620,11 +2090,14 @@ function updateActionButtons() {
     const printBtn = document.getElementById('printBtn');
     const deleteAllBtn = document.getElementById('deleteAllBtn');
     const requestBtn = document.getElementById('requestBtn');
+    const clearQuantityBtn = document.getElementById('clearQuantityBtn');
+    const syncPricesBtn = document.getElementById('syncPricesBtn');
     if (duplicateBtn) duplicateBtn.disabled = count === 0;
     if (printBtn) printBtn.disabled = count === 0;
     if (deleteAllBtn) deleteAllBtn.disabled = count === 0;
-    if (clearQuantityBtn) clearQuantityBtn.disabled = count === 0;
     if (requestBtn) requestBtn.disabled = count === 0;
+    if (clearQuantityBtn) clearQuantityBtn.disabled = count === 0;
+    if (syncPricesBtn) syncPricesBtn.disabled = count === 0;
 }
 
 function openRequestModal() {
@@ -1672,9 +2145,9 @@ function prepareRequestSubmit() {
             qtys.push(qty);
         }
     });
-        if (ids.length === 0) {
-            alert("{{ __('messages.products_no_valid_items') }}");
-            return false;
+    if (ids.length === 0) {
+        alert("{{ __('messages.products_no_valid_items') }}");
+        return false;
     }
     const hiddenInputs = document.getElementById('requestHiddenInputs');
     if (hiddenInputs) hiddenInputs.innerHTML = '';
@@ -1776,12 +2249,12 @@ function openDeleteModal() {
         id: cb.closest('tr').dataset.productId,
         name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
     }));
-        const container = document.querySelector('.selected-products-container-delete');
-        const hiddenInputs = document.getElementById('deleteHiddenInputs');
-        if (container) container.innerHTML = '';
-        if (hiddenInputs) hiddenInputs.innerHTML = '';
-        if (selected.length === 0) {
-            if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
+    const container = document.querySelector('.selected-products-container-delete');
+    const hiddenInputs = document.getElementById('deleteHiddenInputs');
+    if (container) container.innerHTML = '';
+    if (hiddenInputs) hiddenInputs.innerHTML = '';
+    if (selected.length === 0) {
+        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
     } else {
         selected.forEach(p => {
             if (container) {
@@ -1811,12 +2284,12 @@ function openDuplicateModal() {
         id: cb.closest('tr').dataset.productId,
         name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
     }));
-        const container = document.querySelector('.selected-products-container');
-        const hiddenInputs = document.getElementById('hiddenInputs');
-        if (container) container.innerHTML = '';
-        if (hiddenInputs) hiddenInputs.innerHTML = '';
-        if (selected.length === 0) {
-            if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
+    const container = document.querySelector('.selected-products-container');
+    const hiddenInputs = document.getElementById('hiddenInputs');
+    if (container) container.innerHTML = '';
+    if (hiddenInputs) hiddenInputs.innerHTML = '';
+    if (selected.length === 0) {
+        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
     } else {
         selected.forEach(p => {
             if (container) {
@@ -1858,12 +2331,12 @@ function openClearQuantityModal() {
         id: cb.closest('tr').dataset.productId,
         name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
     }));
-        const container = document.querySelector('.selected-products-container-clear');
-        const hiddenInputs = document.getElementById('clearQuantityHiddenInputs');
-        if (container) container.innerHTML = '';
-        if (hiddenInputs) hiddenInputs.innerHTML = '';
-        if (selected.length === 0) {
-            if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
+    const container = document.querySelector('.selected-products-container-clear');
+    const hiddenInputs = document.getElementById('clearQuantityHiddenInputs');
+    if (container) container.innerHTML = '';
+    if (hiddenInputs) hiddenInputs.innerHTML = '';
+    if (selected.length === 0) {
+        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
     } else {
         selected.forEach(p => {
             if (container) {
@@ -1944,12 +2417,21 @@ function escapeHtml(str) {
     });
 }
 
-// ========== OFFER MODAL WITH SEARCHABLE PRODUCT SELECTOR ==========
+function downloadReport() {
+    // Simple export - can be enhanced
+    const url = new URL(window.location.href);
+    url.searchParams.set('export', 'pdf');
+    window.location.href = url.toString();
+}
+
+// ============================================================
+// OFFER MODAL FUNCTIONS
+// ============================================================
+
 let currentOfferProductId = null;
 let currentOfferId = null;
 let allProductsList = [];
 
-// Load all products from server (bypasses pagination)
 function loadAllProductsForSearch() {
     $.ajax({
         url: '{{ route("searchProductsForOffer") }}',
@@ -1962,14 +2444,13 @@ function loadAllProductsForSearch() {
                 response.results.forEach(product => {
                     allProductsList.push({
                         id: product.id,
-                        name: product.text, // Use the formatted text from server
+                        name: product.text,
                         stock: product.stock || 0,
                         displayText: product.text
                     });
                 });
             }
             
-            // Populate datalist options
             const datalist = document.getElementById('productOptionsList');
             if (datalist) {
                 datalist.innerHTML = '';
@@ -1986,13 +2467,11 @@ function loadAllProductsForSearch() {
         },
         error: function(xhr) {
             console.error('Error loading products for search:', xhr);
-            // Fallback to page products only
             loadProductsFromPageOnly();
         }
     });
 }
 
-// Fallback: load only from current page (old behavior)
 function loadProductsFromPageOnly() {
     const rows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
     allProductsList = [];
@@ -2026,7 +2505,6 @@ function loadProductsFromPageOnly() {
         }
     });
     
-    // Populate datalist options
     const datalist = document.getElementById('productOptionsList');
     if (datalist) {
         datalist.innerHTML = '';
@@ -2042,7 +2520,6 @@ function loadProductsFromPageOnly() {
     console.log('Loaded ' + allProductsList.length + ' products from current page only');
 }
 
-// Setup the search input with datalist
 function setupProductSearch() {
     const searchInput = document.getElementById('offerProductSearchInput');
     const hiddenId = document.getElementById('offerProductIdHidden');
@@ -2051,7 +2528,6 @@ function setupProductSearch() {
     
     searchInput.addEventListener('input', function() {
         const value = this.value;
-        // Find matching product by display text or name or ID
         const matchedProduct = allProductsList.find(p => 
             p.displayText === value || 
             p.name.toLowerCase() === value.toLowerCase() ||
@@ -2060,7 +2536,6 @@ function setupProductSearch() {
         
         if (matchedProduct) {
             hiddenId.value = matchedProduct.id;
-            // Add visual feedback
             this.style.borderColor = 'var(--emerald)';
         } else {
             if (value === '') {
@@ -2079,7 +2554,6 @@ function setupProductSearch() {
             hiddenId.value = matchedProduct.id;
             this.style.borderColor = 'var(--emerald)';
         } else {
-            // Try to match by just the product name
             const nameMatch = allProductsList.find(p => p.name.toLowerCase() === value.toLowerCase());
             if (nameMatch) {
                 hiddenId.value = nameMatch.id;
@@ -2089,7 +2563,6 @@ function setupProductSearch() {
         }
     });
     
-    // Allow typing to search - make sure input is focusable
     searchInput.addEventListener('click', function(e) {
         e.stopPropagation();
     });
@@ -2102,12 +2575,10 @@ function openOfferModal(productId = null, productName = '') {
     currentOfferProductId = productId;
     currentOfferId = null;
     
-    // Make sure products are loaded
     if (allProductsList.length === 0) {
         loadAllProductsForSearch();
     }
     
-    // Reset search input
     const searchInput = document.getElementById('offerProductSearchInput');
     const hiddenId = document.getElementById('offerProductIdHidden');
     if (searchInput) {
@@ -2116,7 +2587,6 @@ function openOfferModal(productId = null, productName = '') {
     }
     if (hiddenId) hiddenId.value = '';
     
-    // Update modal header with product info
     const productNameEl = document.getElementById('offerProductName');
     const productIdEl = document.getElementById('offerProductId');
     const productIdInput = document.getElementById('offerProductIdInput');
@@ -2126,8 +2596,6 @@ function openOfferModal(productId = null, productName = '') {
         if (productIdEl) productIdEl.textContent = 'ID: ' + productId;
         if (productIdInput) productIdInput.value = productId;
         document.getElementById('existingOffersSection').style.display = 'block';
-        
-        // Load existing offers for this product
         loadOffersForProduct(productId);
     } else {
         if (productNameEl) productNameEl.textContent = 'Select a product first';
@@ -2140,7 +2608,6 @@ function openOfferModal(productId = null, productName = '') {
         }
     }
     
-    // Reset form
     const offerForm = document.getElementById('offerForm');
     if (offerForm) offerForm.reset();
     const requiredQty = document.getElementById('requiredQuantity');
@@ -2156,13 +2623,11 @@ function openOfferModal(productId = null, productName = '') {
     const deleteSection = document.getElementById('deleteOfferSection');
     if (deleteSection) deleteSection.style.display = 'none';
     
-    // Show modal
     const modalEl = document.getElementById('offerModal');
     if (modalEl) {
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
         
-        // Focus on search input after modal is shown
         modalEl.addEventListener('shown.bs.modal', function() {
             if (searchInput) searchInput.focus();
         }, { once: true });
@@ -2238,7 +2703,6 @@ function editOffer(offerId, reqQty, offQty) {
         messageDiv.innerHTML = '<div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;"><i class="bi bi-info-circle-fill"></i> {{ __('messages.products_editing_offer') }}</div>';
     }
     
-    // Scroll to form
     const offerForm = document.getElementById('offerForm');
     if (offerForm) {
         offerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2273,7 +2737,6 @@ function deleteOffer() {
             
             const offerForm = document.getElementById('offerForm');
             if (offerForm) offerForm.reset();
-            
             const requiredQty = document.getElementById('requiredQuantity');
             const offerQty = document.getElementById('offerQuantity');
             if (requiredQty) requiredQty.value = '1';
@@ -2289,7 +2752,7 @@ function deleteOffer() {
             }, 3000);
         },
         error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || "{{ __('messages.products_error_deleting_offer') }}";
+            const errorMsg = xhr.responseJSON?.message || "{{ __('messages.products_error_deleting_offer') }}";
             const messageDiv = document.getElementById('offerFormMessage');
             if (messageDiv) {
                 messageDiv.innerHTML = `
@@ -2323,7 +2786,10 @@ function updateOfferBadgeInTable(productId, hasOffer) {
     }
 }
 
-// Document ready - initialize everything
+// ============================================================
+// DOCUMENT READY
+// ============================================================
+
 $(document).ready(function() {
     // Load products for search
     setTimeout(function() {
@@ -2348,7 +2814,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Make sure the hidden field has the value
         $('input[name="offer_product_id"]').remove();
         $(this).append(`<input type="hidden" name="offer_product_id" value="${targetProductId}">`);
         
@@ -2370,12 +2835,10 @@ $(document).ready(function() {
                     `;
                 }
                 
-                // Reload offers list
                 if (currentOfferProductId) {
                     loadOffersForProduct(currentOfferProductId);
                 }
                 
-                // Reset form if not editing
                 if (!currentOfferId) {
                     const offerForm = document.getElementById('offerForm');
                     if (offerForm) offerForm.reset();
@@ -2389,12 +2852,10 @@ $(document).ready(function() {
                     if (hiddenId) hiddenId.value = '';
                 }
                 
-                // Clear edit state
                 currentOfferId = null;
                 const deleteSection = document.getElementById('deleteOfferSection');
                 if (deleteSection) deleteSection.style.display = 'none';
                 
-                // Update product badge in table
                 updateOfferBadgeInTable(currentOfferProductId, true);
                 
                 setTimeout(() => {
@@ -2418,11 +2879,13 @@ $(document).ready(function() {
         });
     });
     
-    // Handle delete offer button
     $('#deleteOfferBtn').on('click', deleteOffer);
 });
 
-// ========== HOVER IMAGE PREVIEW FOLLOWING MOUSE ==========
+// ============================================================
+// HOVER IMAGE PREVIEW
+// ============================================================
+
 (function() {
     const tooltip = document.getElementById('imagePreviewTooltip');
     if (!tooltip) return;
@@ -2478,6 +2941,12 @@ $(document).ready(function() {
         tooltip.style.top = top + 'px';
     }
 })();
+
+// Run comparison automatically on page load after a delay
+setTimeout(function() {
+    // Check if we should auto-run (you can enable this)
+    // runApiComparison();
+}, 3000);
 </script>
 </body>
 </html>

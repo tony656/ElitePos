@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@lang('messages.view_receivings')</title>
+    @include('links')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=DM Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,7 +13,7 @@
             --navy:       #0B1E3D;
             --navy-mid:   #112952;
             --navy-light: #1A3A6B;
-            --amber:      #F59E0B;
+            --amber:      var(--theme-primary);
             --amber-pale: #FEF3C7;
             --emerald:    #059669;
             --emerald-pale: #D1FAE5;
@@ -556,12 +557,21 @@
                         $totalQty   = $products->sum('quantity');
                         $totalValue = $products->sum(fn($p) => ($p->quantity ?? 0) * ($p->price ?? 0));
                         $totalReturnValue = $totalReturnValue ?? 0;
+                        $approvedProducts = $products->where('status', 'Approved');
+                        $approvedQty = $approvedProducts->sum('quantity');
+                        $approvedValue = $approvedProducts->sum(fn($p) => ($p->quantity ?? 0) * ($p->price ?? 0));
+                        $pendingQty = $totalQty - $approvedQty;
+                        $pendingValue = $products->where('status', '!=', 'Approved')->sum(fn($p) => (($p->requestedQuantity ?? 0) - ($p->quantity ?? 0)) * ($p->price ?? 0));
                     @endphp
                     <div class="summary-bar">
                         <div class="summary-stat"><span class="summary-stat-label">Items</span><span class="summary-stat-value">{{ number_format($products->count()) }}</span></div>
                         <div class="summary-stat"><span class="summary-stat-label">Total Qty</span><span class="summary-stat-value">{{ number_format($totalQty) }}</span></div>
                         <div class="summary-stat"><span class="summary-stat-label">Total Value</span><span class="summary-stat-value">Tsh {{ number_format($totalValue, 2) }}</span></div>
-                        <div class="summary-stat"><span class="summary-stat-label">Return Value</span><span class="summary-stat-value">Tsh {{ number_format($totalReturnValue, 2) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Approved Qty</span><span class="summary-stat-value" style="color:#059669;">{{ number_format($approvedQty) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Approved Value</span><span class="summary-stat-value" style="color:#059669;">Tsh {{ number_format($approvedValue, 2) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Pending / Diff</span><span class="summary-stat-value" style="color:#92400E;">{{ number_format($pendingQty) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Pending Value</span><span class="summary-stat-value" style="color:#92400E;">Tsh {{ number_format($pendingValue, 2) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Return Value</span><span class="summary-stat-value">{{ number_format($totalReturnValue, 2) }}</span></div>
                     </div>
 
                     {{-- Table Body --}}
@@ -571,38 +581,59 @@
                                 <thead>
                                     <tr>
                                         <th width="36"><input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll()"></th>
-                                        <th>#</th><th>Date</th><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th>
-                                        <th>Status</th><th>Payment</th><th>Supplier</th><th>Allocated</th><th>Actions</th>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Product</th>
+                                        <th>Mainstore</th>
+                                        <!--<th>Req.</th>-->
+                                        <th>Leruma.</th>
+                                        <th>Diff.</th>
+                                        <th>Cost</th>
+                                        <th>Total</th>
+                                        <!--<th>Status</th>-->
+                                        <th>Payment</th>
+                                        <!--<th>Supplier</th>-->
+                                        <th>Allocated</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($products as $index => $item)
-                                    <tr data-product-id="{{ $item->productId }}" data-product-name="{{ $item->productName }}" 
+
+                                    <tr data-product-id="{{ $item->productId }}" data-product-name="{{ $item->productName }}"
                                         data-quantity="{{ $item->quantity }}" data-price="{{ $item->price }}" 
                                         data-status="{{ $item->status }}" data-payment="{{ $item->isDebt == 1 ? 'Credit' : 'Cash' }}"
                                         data-supplier="{{ DB::table('accounts')->where('id', $item->supplier)->value('name') ?? 'Unknown' }}"
                                         data-allocated="{{ DB::table('accounts')->where('id', $item->account)->value('name') ?? 'Unknown' }}"
-                                        data-date="{{ date('M d, Y', strtotime($item->created_at)) }}">
+                                        data-date="{{ date('M d, Y', strtotime($item->created_at)) }}"
+                                        data-requested="{{ $item->requestedQuantity }}" data-diff="{{ $item->quantityDiff }}"
+                                        data-approved-return="{{ $item->approvedReturnQuantity ?? 0 }}" data-pending-return="{{ $item->unapprovedReturnQuantity ?? 0 }}">
                                         <td><input type="checkbox" name="product_ids[]" value="{{ $item->id }}" class="item-checkbox form-check-input"></td>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ date('M d, Y', strtotime($item->created_at)) }}</td>
                                         <td><span class="product-name">{{ $item->productName }}</span></td>
-                                        <td><span class="mono">{{ number_format($item->quantity) }}</span></td>
+                                        <td><span class="mono">{{ number_format($item->quantity - (($item->approvedReturnQuantity ?? 0))) }}</span></td>
+                                        <!--<td><span class="mono">{{ number_format($item->requestedQuantity) }}</span></td> -->
+                                         <td><span class="mono">
+                                            {{ ($item->status == 'Approved' ? $item->quantity : 0) - ($item->approvedReturnQuantity ?? 0) - ($item->unapprovedReturnQuantity ?? 0) }}
+                                        </span></td>
+                                        <!--<td><span class="mono">{{ number_format($item->quantityDiff) }}</span></td> -->
+                                         <td><span class="mono">{{ number_format($item->quantity - ($item->status == 'Approved' ? $item->quantity : 0) - ($item->unapprovedReturnQuantity ?? 0)) }}</span></td>
                                         <td><span class="mono">Tsh {{ number_format($item->price, 2) }}</span></td>
-                                        <td><span class="mono amount-total">Tsh {{ number_format($item->price * $item->quantity, 2) }}</span></td>
-                                        <td>
+                                        <td><span class="mono amount-total">Tsh {{ number_format(($item->quantity - ($item->approvedReturnQuantity)) * $item->price, 2) }}</span></td>
+                                        <!--<td>
                                             @if($item->status == 'Approved')<span class="badge-pill badge-approved">Approved</span>
                                             @elseif($item->status == 'Returned')<span class="badge-pill badge-returned">Returned</span>
                                             @else<span class="badge-pill badge-pending">Pending</span>@endif
-                                         </td>
+                                         </td>-->
                                         <td>
                                             @if($item->isDebt == 1)<span class="badge-pill badge-credit">Credit</span>
                                             @else<span class="badge-pill badge-cash">Cash</span>@endif
                                          </td>
-                                        <td>
+                                      <!--  <td>
                                             <div class="person-cell"><div class="person-avatar">{{ substr(DB::table('accounts')->where('id', $item->supplier)->value('name') ?? 'U', 0, 2) }}</div>
                                             {{ DB::table('accounts')->where('id', $item->supplier)->value('name') ?? 'Unknown Supplier' }}</div>
-                                         </td>
+                                         </td> -->
                                         <td>
                                             <div class="person-cell"><div class="person-avatar">{{ substr(DB::table('accounts')->where('id', $item->account)->value('name') ?? 'U', 0, 2) }}</div>
                                             {{ DB::table('accounts')->where('id', $item->account)->value('name') ?? 'Unknown' }}</div>
@@ -612,17 +643,16 @@
                                                 <form method="post">
                                                     @csrf
                                                     <input type="hidden" value="{{ $item->id }}" name="product_id">
+                                                    <input type="hidden" name="action" value="delete">
                                                     @if (canUser('delete_receiving'))
                                                     <button formaction="{{ url('dltrestock') }}" class="act-btn act-delete" onclick="return confirm('Delete?')"><i class="bi bi-trash3"></i>
                                                     </button>                                        
-
                                                     @endif
-
                                                 </form>
                                                 @if($item->status != 'Approved' && $item->status != 'Returned')
                                                 <form method="post">
                                                     @csrf
-                                                    <input type="hidden" name="receiving_id" value="{{ $item->id }}">
+                                                    <input type="hidden" name="product_id" value="{{ $item->id }}">
                                                     @if (canUser('approve_receiving'))
                                                     <button formaction="{{ url('restockProd') }}" class="act-btn act-approve"><i class="bi bi-check-lg"></i>
                                                     </button>
@@ -636,7 +666,7 @@
                                          </td>
                                      </tr>
                                     @empty
-                                    <tr><td colspan="12"><div class="empty-state"><i class="bi bi-inbox"></i><p>No receivings found.</p></div></td></tr>
+                                    <tr><td colspan="14"><div class="empty-state"><i class="bi bi-inbox"></i><p>No receivings found.</p></div></td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -730,12 +760,14 @@
             date: row.cells[2]?.innerText || row.querySelector('td:nth-child(3)')?.innerText || '',
             product: row.querySelector('.product-name')?.innerText || row.cells[3]?.innerText || '',
             quantity: row.cells[4]?.innerText || '',
-            price: row.cells[5]?.innerText || '',
-            total: row.cells[6]?.innerText || '',
-            status: row.cells[7]?.innerText?.trim() || '',
-            payment: row.cells[8]?.innerText?.trim() || '',
-            supplier: row.cells[9]?.innerText?.trim() || '',
-            allocated: row.cells[10]?.innerText?.trim() || ''
+            requested: row.cells[5]?.innerText || '',
+            diff: row.cells[6]?.innerText || '',
+            price: row.cells[7]?.innerText || '',
+            total: row.cells[8]?.innerText || '',
+            status: row.cells[9]?.innerText?.trim() || '',
+            payment: row.cells[10]?.innerText?.trim() || '',
+            supplier: row.cells[11]?.innerText?.trim() || '',
+            allocated: row.cells[12]?.innerText?.trim() || ''
         };
     }
 
@@ -766,7 +798,7 @@
             </div>
             <table class="print-table">
                 <thead>
-                    <tr><th>#</th><th>Date</th><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+                    <tr><th>#</th><th>Date</th><th>Product</th><th>Qty</th><th>Req.</th><th>Diff.</th><th>Unit Price</th><th>Total</th></tr>
                 </thead>
                 <tbody>
         `;
@@ -777,6 +809,8 @@
                         <td>${item.date}</td>
                         <td>${item.product}</td>
                         <td>${item.quantity}</td>
+                        <td>${item.requested || ''}</td>
+                        <td>${item.diff || ''}</td>
                         <td>${item.price}</td>
                         <td>${item.total}</td>
                      </tr>`;

@@ -23,7 +23,7 @@
         .error-code {
             font-size: 120px;
             font-weight: 700;
-            color: #F59E0B;
+            color: var(--theme-primary);
             margin: 0;
             line-height: 1;
         }
@@ -40,7 +40,7 @@
         .btn-home {
             display: inline-block;
             padding: 12px 32px;
-            background: #F59E0B;
+            background: var(--theme-primary);
             color: #0B1E3D;
             text-decoration: none;
             border-radius: 8px;
@@ -58,6 +58,21 @@
         <h1 class="error-code">404</h1>
         <h2 class="error-title">Page Not Found</h2>
         <p class="error-message">Oops! The page you're looking for doesn't exist or has been moved.</p>
+         @if(session('success'))
+        <div class="alert alert-success  d-flex justify-content-between">
+          {{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
+  
+  @if(session('error'))
+      <div class="alert alert-danger d-flex justify-content-between">
+          {{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+      </div>
+  @endif
         <a href="{{ url('/dashboard') }}" class="btn-home">
             <i class="fas fa-home"></i> Go to Dashboard
         </a>

@@ -12,7 +12,7 @@
             --navy: #0B1E3D;
             --navy-mid: #112952;
             --navy-light: #1A3A6B;
-            --amber: #F59E0B;
+            --amber: var(--theme-primary);
             --amber-pale: #FEF3C7;
             --emerald: #059669;
             --emerald-pale: #D1FAE5;
@@ -419,10 +419,11 @@
                 </div>
                 <div>
                     @if($isAdmin && $overallStatus !== 'Approved')
-                        <form method="post" action="/approveAll" style="display: inline;">
+                        <form method="post" action="/request/approve-all" style="display: inline;">
                             @csrf
                             <input type="hidden" name="requestName" value="{{ $requestId }}">
                             <input type="hidden" name="supplierId" value="{{ $supplierAccount }}">
+                            <input type="hidden" name="status" value="approve">
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-check2-all"></i> {{ __('messages.approve_all') }}
                             </button>
@@ -490,11 +491,13 @@
                                             ->where('account', 7)
                                             ->value('quantity') ?? 0;
                                         
-                                        $itemTotal = $item->quantity * $item->price;
+                                        $adjustedQuantity = $item->adjustedQuantity ?? $item->quantity;
+                                        $returnedQuantity = $item->returnedQuantity ?? 0;
+                                        $itemTotal = $adjustedQuantity * $item->price;
                                         
-                                        $stockBadge = ($prodQuant >= $item->quantity)
+                                        $stockBadge = ($prodQuant >= $adjustedQuantity)
                                             ? '<span class="stock-available">' . __('messages.in_stock', ['count' => number_format($prodQuant)]) . '</span>'
-                                            : '<span class="stock-unavailable">' . __('messages.out_of_stock_need', ['count' => number_format($item->quantity - $prodQuant)]) . '</span>';
+                                            : '<span class="stock-unavailable">' . __('messages.out_of_stock_need', ['count' => number_format($adjustedQuantity - $prodQuant)]) . '</span>';
                                         
                                         $itemPillMap = [
                                             'Pending' => 'pill-pending',
@@ -507,10 +510,20 @@
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
-                                            <strong style="color: var(--navy);">{{ $item->productName }}</strong>
+                                            <form action="/viewProduct" method="post">
+                                                @csrf
+                                            <button name="product_id" value="{{ $item->productId }}" class="btn border-0">
+                                                <strong style="color: var(--navy);">{{ $item->productName }}</strong>
+                                            </button>
+                                            </form>
                                         </td>
                                         <td><span style="color: var(--slate-500); font-size: .8rem;">{{ $item->productId ?? __('messages.na') }}</span></td>
-                                        <td style="text-align: center;">{{ number_format($item->quantity) }}</td>
+                                        <td style="text-align: center;">
+                                            {{ number_format($adjustedQuantity) }}
+                                            @if($returnedQuantity > 0)
+                                                <br><small style="color: var(--rose);">(-{{ number_format($returnedQuantity) }} returned)</small>
+                                            @endif
+                                        </td>
                                         <td style="text-align: right;">Tsh {{ number_format($item->price) }}</td>
                                         <td style="text-align: right; font-weight: 700; color: var(--navy);">Tsh {{ number_format($itemTotal) }}</td>
                                         <td>{!! $stockBadge !!}</td>
@@ -520,7 +533,7 @@
                                                 <div style="display: flex; gap: 4px; justify-content: center;">
                                                     <form method="post" action="/approveRequest" style="display: inline;">
                                                         @csrf
-                                                        <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                        <input type="hidden" name="requestName" value="{{ $item->id }}">
                                                         <input type="hidden" name="product_id" value="{{ $item->productId }}">
                                                         <input type="hidden" name="supplierId" value="{{ $supplierAccount }}">
                                                         <button type="submit" class="btn btn-success btn-sm" title="{{ __('messages.approve_request') }}">
@@ -545,20 +558,36 @@
                         </table>
                     </div>
 
-                    <div class="totals">
-                        <div>
-                            <label><i class="bi bi-box"></i> {{ __('messages.total_items') }}</label>
-                            <span>{{ count($formattedItems) }}</span>
-                        </div>
-                        <div>
-                            <label><i class="bi bi-cubes"></i> {{ __('messages.total_quantity') }}</label>
-                            <span>{{ number_format($totalQuantity) }}</span>
-                        </div>
-                        <div>
-                            <label><i class="bi bi-cash"></i> {{ __('messages.total_price') }}</label>
-                            <span>Tsh {{ number_format($totalPrice) }}</span>
-                        </div>
-                    </div>
+                     <div class="totals">
+                         <div>
+                             <label><i class="bi bi-box"></i> {{ __('messages.total_items') }}</label>
+                             <span>{{ count($formattedItems) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-cubes"></i> {{ __('messages.total_quantity') }}</label>
+                             <span>{{ number_format($totalQuantity) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-cubes"></i> {{ __('messages.adjusted_total_quantity') }}</label>
+                             <span>{{ number_format($adjustedTotalQuantity) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-arrow-return-left"></i> {{ __('messages.total_returned') }}</label>
+                             <span>{{ number_format($totalReturnedQuantity) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-cash"></i> {{ __('messages.total_price') }}</label>
+                             <span>Tsh {{ number_format($totalPrice) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-cash"></i> {{ __('messages.unhandled_price') }}</label>
+                             <span>Tsh {{ number_format($unhandledPrice) }}</span>
+                         </div>
+                         <div>
+                             <label><i class="bi bi-cash"></i> {{ __('messages.grand_total') }}</label>
+                             <span>Tsh {{ number_format($totalPrice - $unhandledPrice) }}</span>
+                         </div>
+                     </div>
                 </div>
             </div>
         </main>

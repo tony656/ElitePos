@@ -17,7 +17,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -666,7 +666,11 @@
 
                     <div class="field">
                         <label class="field-label">{{ __('messages.invoice_date') }} <span class="req">*</span></label>
+                        @if(canUser("invoice_date"))
                         <input type="date" class="field-input" name="invoice_date" value="{{ date('Y-m-d') }}" required>
+                        @else
+                        <input type="hidden" name="invoice_date" value="{{ date('Y-m-d') }}">
+                        @endif
                     </div>
 
                     <div class="field">

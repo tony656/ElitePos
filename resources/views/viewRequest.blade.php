@@ -12,7 +12,7 @@
             --navy: #0B1E3D;
             --navy-mid: #112952;
             --navy-light: #1A3A6B;
-            --amber: #F59E0B;
+            --amber: var(--theme-primary);
             --amber-pale: #FEF3C7;
             --emerald: #059669;
             --emerald-pale: #D1FAE5;
@@ -723,9 +723,9 @@
                                     $statuses = array_unique(array_column($items->toArray(), 'status'));
                                     if (count($statuses) === 1) {
                                         $overallStatus = $statuses[0];
-                                    } elseif (in_array('Pending', $statuses)) {
-                                        $overallStatus = 'Pending';
-                                    } elseif (in_array('Approved', $statuses)) {
+                                    } elseif (in_array('Pending', $statuses) || in_array('Submitted', $statuses)) {
+                                        $overallStatus = 'Mixed';
+                                    } elseif (count(array_diff($statuses, ['Approved'])) === 0) {
                                         $overallStatus = 'Approved';
                                     } else {
                                         $overallStatus = 'Mixed';
@@ -822,11 +822,14 @@
                                             <i class="bi bi-printer"></i>
                                         </button>  
                                     @endif
-                                        
-                                        <a href="{{ url('/viewRequestDetails/' . $requestId) }}" class="btn btn-ghost btn-sm" title="{{ __('messages.view_request') }}">
+                                        <form method="post" class="d-inline" action="viewRequestsDetails" >
+                                                @csrf
+                                                <input type="hidden" name="requestName" value="{{ $requestId }}">
+                                                <input type="hidden" name="account" value="{{ $requesterAccount }}">
+                                        <button  class="btn btn-ghost btn-sm" title="{{ __('messages.view_request') }}">
                                             <i class="bi bi-eye"></i>
-                                        </a>
-
+                                        </button>
+                                    </form>
                                         @if($isAdmin && ($overallStatus == 'Submitted' || $overallStatus == 'Approved'))
                                         <form method="post" class="d-inline" action="{{ route('request.redoRequest') }}" onsubmit="return confirm('{{ __('messages.redo_request_confirm') }}')">
                                                 @csrf

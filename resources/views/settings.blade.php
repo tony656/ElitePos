@@ -14,7 +14,7 @@
             --navy:          #0B1E3D;
             --navy-mid:      #112952;
             --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
+            --amber:         var(--theme-primary);
             --amber-pale:    #FEF3C7;
             --emerald:       #059669;
             --emerald-pale:  #D1FAE5;
@@ -464,6 +464,88 @@
                     </div>
                 </div>
                 </div>
+                   {{-- ══════════════════════════════════════
+                 THEME COLOR SECTION
+            ══════════════════════════════════════ --}}
+            @php
+                $themeColors = [];
+                if (!empty($getData->theme_colors)) {
+                    $decoded = json_decode($getData->theme_colors, true);
+                    if (is_array($decoded)) {
+                        $themeColors = $decoded;
+                    }
+                }
+                $activeThemeColor = $getData->theme_color ?? 'var(--theme-primary)';
+                if (empty($themeColors)) {
+                    $themeColors = [$activeThemeColor];
+                }
+            @endphp
+            <div class="section-panel">
+                <div class="section-head">
+                    <h5 class="section-title">
+                        <i class="bi bi-palette"></i> Theme Colors
+                    </h5>
+                </div>
+                <div class="section-body">
+                    <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:flex-start;">
+                        <div style="flex:1; min-width:280px;">
+                            <label class="field-label">Active Theme Color</label>
+                            <div style="display:flex; align-items:center; gap:1rem; margin-top:0.5rem;">
+                                <div id="activeColorPreview" style="width:56px; height:56px; border-radius:12px; background:{{ $activeThemeColor }}; border:3px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+                                <div>
+                                    <div style="font-weight:700; font-size:1.1rem; color:var(--navy);">{{ $activeThemeColor }}</div>
+                                    <div style="font-size:0.8rem; color:var(--slate-500);">Currently applied across the system</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:280px;">
+                            <form action="{{ route('settings.themeColor') }}" method="post" style="display:flex; flex-direction:column; gap:0.75rem;">
+                                @csrf
+                                <label class="field-label">Change Active Color</label>
+                                <div style="display:flex; gap:0.75rem; align-items:center;">
+                                    <input type="color" class="field-input" name="theme_color" value="{{ $activeThemeColor }}" style="width:60px; height:42px; padding:0.25rem; cursor:pointer;" required>
+                                    <button type="submit" class="btn-save" style="margin:0;">Apply Color</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <hr style="margin:1.5rem 0; border-color:var(--slate-200);">
+
+                    <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:flex-start;">
+                        <div style="flex:1; min-width:280px;">
+                            <label class="field-label">Saved Colors</label>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:0.75rem;">
+                                @foreach($themeColors as $color)
+                                    <div style="display:flex; align-items:center; gap:0.5rem; background:var(--slate-50); border:1.5px solid var(--slate-200); border-radius:10px; padding:0.5rem 0.75rem;">
+                                        <div style="width:28px; height:28px; border-radius:50%; background:{{ $color }}; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.1); cursor:pointer;" title="Set active" onclick="document.getElementById('setColorForm{{ $loop->index }}').submit()"></div>
+                                        <span style="font-size:0.85rem; font-weight:600; color:var(--slate-700);">{{ $color }}</span>
+                                        @if(strtoupper($color) === strtoupper($activeThemeColor))
+                                            <span class="badge-active" style="font-size:0.65rem;">Active</span>
+                                        @else
+                                            <form id="setColorForm{{ $loop->index }}" action="{{ route('settings.themeColor.setActive') }}" method="post" style="display:inline;">@csrf<input type="hidden" name="theme_color" value="{{ $color }}"></form>
+                                        @endif
+                                        <form action="{{ route('settings.themeColor.delete') }}" method="post" onsubmit="return confirm('Delete this color?')" style="display:inline;">@csrf<input type="hidden" name="delete_theme_color" value="{{ $color }}"><button type="submit" style="background:none; border:none; color:var(--rose); cursor:pointer; padding:0.2rem;"><i class="bi bi-trash"></i></button></form>
+                                    </div>
+                                @endforeach
+                                @if(empty($themeColors))
+                                    <div style="font-size:0.85rem; color:var(--slate-500);">No saved colors yet.</div>
+                                @endif
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:280px;">
+                            <form action="{{ route('settings.themeColor.add') }}" method="post" style="display:flex; flex-direction:column; gap:0.75rem;">
+                                @csrf
+                                <label class="field-label">Add New Color</label>
+                                <div style="display:flex; gap:0.75rem; align-items:center;">
+                                    <input type="color" class="field-input" name="new_theme_color" value="var(--theme-primary)" style="width:60px; height:42px; padding:0.25rem; cursor:pointer;" required>
+                                    <button type="submit" class="btn-primary"><i class="bi bi-plus-lg"></i> Add Color</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
                 </div>
             {{-- ══════════════════════════════════════
                  SHOPS SECTION with TABS & SORT + CARD/LIST VIEW
@@ -531,30 +613,8 @@
                     </form>
                 </div>
             </div>
-
-            <div class="section-panel">
-                <div class="section-head">
-                    <h5 class="section-title">
-                        <i class="bi bi-wrench"></i> Data Migration
-                    </h5>
-                </div>
-                <div class="section-body">
-                    <p style="font-size:0.85rem; color: var(--slate-500); margin-bottom: 1rem;">
-                        One-time fix: scans the <strong>orders</strong> and <strong>sales</strong> tables for rows where <code>cPhone</code> contains a phone number (more than 3 digits). It looks up the matching customer by <code>cName</code> in the <strong>customers</strong> table and replaces the phone number with the customer's <strong>ID</strong>.
-                    </p>
-                    <div style="background: var(--rose-pale); border:1px solid var(--rose); border-radius:8px; padding:0.75rem 1rem; font-size:0.8rem; color: #9F1239; margin-bottom:1rem;">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>Run this only once.</strong> Re-running may overwrite already-converted data.
-                    </div>
-                    <form action="{{ route('settings.fixCustomerRefs') }}" method="post" onsubmit="return confirm('Are you sure you want to run this one-time fix?');">
-                        @csrf
-                        <button type="submit" class="btn-save">
-                            <i class="bi bi-wrench"></i> Fix Customer References
-                        </button>
-                    </form>
-                </div>
-            </div>
             @endif
+
             <div class="section-panel">
                 <div class="section-head">
                     <div class="section-title">

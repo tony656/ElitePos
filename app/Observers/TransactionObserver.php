@@ -22,7 +22,7 @@ class TransactionObserver
      */
     public function createdSalsModel(salsModel $sale)
     {
-        $this->recordTransaction($sale, 'sale', $sale->totalPrice, $sale->paid, $sale->credit);
+        $this->recordTransaction($sale, 'sale', $sale->totalPrice, $sale->paid, $sale->credit, $sale->bank);
     }
 
     /**
@@ -113,7 +113,7 @@ class TransactionObserver
     /**
      * Record a sale transaction.
      */
-    private function recordTransaction($model, $type, $totalAmount, $paidAmount, $creditAmount)
+    private function recordTransaction($model, $type, $totalAmount, $paidAmount, $creditAmount, $bankAmount = 0)
     {
         $shopId = $model->account;
         $transactionDate = $model->created_at ?? now();
@@ -152,6 +152,26 @@ class TransactionObserver
                 'chip_amount' => 0,
                 'payment_method' => 'credit',
                 'description' => "Credit sale: {$salesName}",
+                'status' => 'completed',
+                'balance_after' => $this->recalculateBalance($shopId, $transactionDate),
+                'created_by' => $model->served_by ?? Auth::id(),
+                'account' => $shopId,
+            ]);
+        }
+
+        // Record bank portion
+        if ($bankAmount > 0) {
+            Transaction::create([
+                'transaction_id' => $model->sales_id ?? Str::random(10) . '-BANK',
+                'shop_id' => $shopId,
+                'transaction_type' => $type,
+                'transaction_date' => $transactionDate,
+                'reference_type' => get_class($model),
+                'reference_id' => $model->id,
+                'amount' => $bankAmount,
+                'chip_amount' => 0,
+                'payment_method' => 'bank',
+                'description' => "Bank sale: {$salesName}",
                 'status' => 'completed',
                 'balance_after' => $this->recalculateBalance($shopId, $transactionDate),
                 'created_by' => $model->served_by ?? Auth::id(),
@@ -380,18 +400,9 @@ class TransactionObserver
     {
         $date = Carbon::parse($transactionDate)->toDateString();
         
-        // Get all transactions up to this point on the same day
-        $transactions = Transaction::where('shop_id', $shopId)
+        return (float) Transaction::where('shop_id', $shopId)
             ->whereDate('transaction_date', $date)
             ->where('created_at', '<=', now())
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $balance = 0;
-        foreach ($transactions as $tx) {
-            $balance += $tx->amount;
-        }
-
-        return $balance;
+            ->sum('amount');
     }
 }

@@ -16,7 +16,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -731,7 +731,7 @@
                                                 <div class="perm-group-head" data-group="inventory" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-box-seam" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-box-seam" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Inventory Management</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -751,7 +751,7 @@
                                                 <div class="perm-group-head" data-group="Request" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-box-seam" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-box-seam" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Item Request Management</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -771,7 +771,7 @@
                                                 <div class="perm-group-head" data-group="sales" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-cart" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-cart" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Sales Management</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -783,6 +783,7 @@
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="view_invoices" id="vperm_view_invoices" {{ in_array('view_invoices', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_view_invoices">{{ __('messages.view_invoices') }}</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_sales" id="vperm_manage_sales" {{ in_array('manage_sales', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_sales">Manage Sales</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_sales_date" id="vperm_manage_sales_date" {{ in_array('manage_sales_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_sales_date">Alter Sales Date</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="invoice_date" id="vperm_invoice_date" {{ in_array('invoice_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_invoice_date">Invoice Date</label></div>
                                                 </div>
                                             </div>
 
@@ -791,7 +792,7 @@
                                                 <div class="perm-group-head" data-group="debts" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-receipt" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-receipt" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Debts Management</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -802,6 +803,7 @@
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="edit_debts" id="vperm_edit_debts" {{ in_array('edit_debts', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_edit_debts">Edit Shop Debts</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_paid_invoice" id="vperm_manage_paid_invoice" {{ in_array('manage_paid_invoice', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_paid_invoice">{{ __('messages.manage_paid_debts') }}</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="pay_debts" id="vperm_pay_debts" {{ in_array('pay_debts', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_pay_debts">Pay Debts</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="payment_date" id="vperm_payment_date" {{ in_array('payment_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_payment_date">Payment Date</label></div>
                                                 </div>
                                             </div>
 
@@ -810,7 +812,7 @@
                                                 <div class="perm-group-head" data-group="receivings" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-truck" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-truck" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Receivings & Returns</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -833,7 +835,7 @@
                                                 <div class="perm-group-head" data-group="reports" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-graph-up" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-graph-up" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Reports</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -847,6 +849,7 @@
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="view_full_report" id="vperm_view_full_report" {{ in_array('view_full_report', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_view_full_report">View Full Report</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_full_report" id="vperm_manage_full_report" {{ in_array('manage_full_report', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_full_report">Manage Full Report</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_shop_cash_submit" id="vperm_manage_shop_cash_submit" {{ in_array('manage_shop_cash_submit', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_shop_cash_submit">Shop Cash Submit</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="cash_submit_date" id="vperm_cash_submit_date" {{ in_array('cash_submit_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_cash_submit_date">Cash Submit Date</label></div>
                                                 </div>
                                             </div>
 
@@ -855,7 +858,7 @@
                                                 <div class="perm-group-head" data-group="customers" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-people" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-people" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Customers</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -875,7 +878,7 @@
                                                 <div class="perm-group-head" data-group="suppliers" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-building" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-building" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">{{ __('messages.suppliers_vendors') }}</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -884,6 +887,7 @@
                                                 <div class="perm-group-body" style="padding:0 1rem .75rem 1rem; display:none;">
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="view_suppliers" id="vperm_view_suppliers" {{ in_array('view_suppliers', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_view_suppliers">{{ __('messages.view_suppliers') }}</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_supplier_credit" id="vperm_manage_supplier_credit" {{ in_array('manage_supplier_credit', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_supplier_credit">{{ __('messages.manage_supplier_credit') }}</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="supplier_credit_payment_date" id="vperm_supplier_credit_payment_date" {{ in_array('supplier_credit_payment_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_supplier_credit_payment_date">Supplier Credit Payment Date</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="manage_suppliers" id="vperm_manage_suppliers" {{ in_array('manage_suppliers', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_manage_suppliers">{{ __('messages.manage_suppliers') }}</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="add_supplier" id="vperm_add_supplier" {{ in_array('add_supplier', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_add_supplier">Add Supplier</label></div>
                                                 </div>
@@ -894,7 +898,7 @@
                                                 <div class="perm-group-head" data-group="expenses" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-receipt" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-receipt" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Expenses</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -911,7 +915,7 @@
                                                 <div class="perm-group-head" data-group="banking" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-bank" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-bank" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Banking</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -926,7 +930,8 @@
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="edit_banking_beneficiary" id="vperm_edit_banking_beneficiary" {{ in_array('edit_banking_beneficiary', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_edit_banking_beneficiary">Edit Banking Beneficiary</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="delete_banking_beneficiary" id="vperm_delete_banking_beneficiary" {{ in_array('delete_banking_beneficiary', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_delete_banking_beneficiary">Delete Banking Beneficiary</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="add_banking_transfer" id="vperm_add_banking_transfer" {{ in_array('add_banking_transfer', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_add_banking_transfer">Add Banking Transfer</label></div>
-                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="delete_banking_transfer" id="vperm_delete_banking_transfer" {{ in_array('delete_banking_transfer', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_delete_banking_transfer">Delete Banking Transfer</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="delete_banking_transfer" id="vperm_delete_banking_transfer" {{ in_array('add_banking_transfer', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_delete_banking_transfer">Delete Banking Transfer</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="banking_transfer_date" id="vperm_banking_transfer_date" {{ in_array('banking_transfer_date', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_banking_transfer_date">Banking Transfer Date</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="add_banking_chip" id="vperm_add_banking_chip" {{ in_array('add_banking_chip', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_add_banking_chip">Add Banking Chip</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="edit_banking_chip" id="vperm_edit_banking_chip" {{ in_array('edit_banking_chip', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_edit_banking_chip">Edit Banking Chip</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="delete_banking_chip" id="vperm_delete_banking_chip" {{ in_array('delete_banking_chip', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_delete_banking_chip">Delete Banking Chip</label></div>
@@ -938,7 +943,7 @@
                                                 <div class="perm-group-head" data-group="mainstore" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-shop" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-shop" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">Main Store Section</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>
@@ -958,6 +963,7 @@
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="main_supplier_credit" id="vperm_main_supplier_credit" {{ in_array('main_supplier_credit', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_main_supplier_credit">{{ __('messages.supplier_credit') }}</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="main_view_customers" id="vperm_main_view_customers" {{ in_array('main_view_customers', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_main_view_customers">View Customers</label></div>
                                                     <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="view_main_store_report" id="vperm_view_main_store_report" {{ in_array('view_main_store_report', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_view_main_store_report">Main Store Report</label></div>
+                                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="permissions[]" value="main_create_offers" id="vperm_main_create_offers" {{ in_array('main_create_offers', $currentPermissions) ? 'checked' : '' }}><label class="form-check-label" for="vperm_main_create_offers">Offers</label></div>
                                                 </div>
                                             </div>
 
@@ -966,7 +972,7 @@
                                                 <div class="perm-group-head" data-group="system" onclick="toggleViewPermGroup(this)">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;">
                                                         <div style="display:flex; align-items:center; gap:.5rem;">
-                                                            <i class="bi bi-gear" style="color:#F59E0B; font-size:1.1rem;"></i>
+                                                            <i class="bi bi-gear" style="color:var(--theme-primary); font-size:1.1rem;"></i>
                                                             <strong style="color:var(--navy);">System Access</strong>
                                                         </div>
                                                         <i class="bi bi-chevron-down" style="color:#94A3B8; transition:transform .2s;"></i>

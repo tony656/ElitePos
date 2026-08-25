@@ -16,7 +16,7 @@
             --navy:         #0B1E3D;
             --navy-mid:     #112952;
             --navy-light:   #1A3A6B;
-            --amber:        #F59E0B;
+            --amber:        var(--theme-primary);
             --amber-pale:   #FEF3C7;
             --emerald:      #059669;
             --emerald-pale: #D1FAE5;
@@ -373,7 +373,7 @@
                 @php
                     $groupedInvoices = $debtProducts->groupBy('orderName');
                     $groupedByDate   = $debtProducts->groupBy(fn($i) => \Carbon\Carbon::parse($i->created_at)->format('Y-m-d'));
-                    $totalDebt       = $debtProducts->sum('totalPrice') - $debtProducts->sum('paid');
+                    $totalDebt       = collect($invoicePayments)->sum('remaining');
                     $totalPaid       = collect($invoicePayments)->sum('paid');
                     $totalItems      = $debtProducts->count();
                     $invoiceCount    = $groupedInvoices->count();
@@ -458,11 +458,9 @@
 
                         @foreach($dateInvoices as $invoiceName => $items)
                             @php
-                                $invoiceTotal = $items->sum('credit');
-                                if ($invoiceTotal < 1) {
-                                    $invoiceTotal = $items->sum('totalPrice');
-                                }
-                                $paymentInfo  = $invoicePayments[$invoiceName] ?? ['paid'=>0,'remaining'=>$invoiceTotal];
+                                $invoiceTotal = $items->sum('totalPrice');
+                                $paymentInfo  = $invoicePayments[$invoiceName] ?? ['total'=>$invoiceTotal,'paid'=>0,'remaining'=>$invoiceTotal];
+                                $total    = $paymentInfo['total'];
                                 $remaining    = $paymentInfo['remaining'];
                                 $paid         = $paymentInfo['paid'];
                                 $isPaid       = $remaining <= 0;
@@ -497,7 +495,7 @@
                                 <div class="amounts-grid">
                                     <div>
                                         <div class="amt-label">Total</div>
-                                        <div class="amt-val">{{ number_format($invoiceTotal) }}</div>
+                                        <div class="amt-val">{{ number_format($total) }}</div>
                                     </div>
                                     <div>
                                         <div class="amt-label">Paid</div>
@@ -697,7 +695,11 @@
                                             </div>
                                             <div class="field">
                                                 <label class="field-label">Payment date</label>
+                                                @if(canUser("payment_date"))
                                                 <input type="date" class="field-input" name="payment_date" value="{{ date('Y-m-d') }}" required>
+                                                @else
+                                                <input type="hidden" name="payment_date" value="{{ date('Y-m-d') }}">
+                                                @endif
                                             </div>
                                             <input type="hidden" name="invoiceName" value="{{ $invoiceName }}">
                                             <input type="hidden" name="shopName"    value="{{ $shopName }}">
@@ -832,9 +834,10 @@
                                     @foreach($groupedInvoices as $invoiceName => $items)
                                     @php
                                                                               
-                                        $invoiceTotal = $items->sum('totalPrice') - $items->sum('paid');
+                                        $invoiceTotal = $items->sum('totalPrice');
                                         
-                                        $paymentInfo  = $invoicePayments[$invoiceName] ?? ['paid'=>0,'remaining'=>$invoiceTotal];
+                                        $paymentInfo  = $invoicePayments[$invoiceName] ?? ['total'=>$invoiceTotal,'paid'=>0,'remaining'=>$invoiceTotal];
+                                        $total    = $paymentInfo['total'];
                                         $remaining    = $paymentInfo['remaining'];
                                         $paid         = $paymentInfo['paid'];
                                         $isPaid       = $remaining <= 0;
@@ -859,7 +862,7 @@
                                                 {{ $itemCount }} {{ Str::plural('item', $itemCount) }}
                                             </span>
                                         </td>
-                                        <td class="tbl-total">{{ number_format($invoiceTotal) }}</td>
+                                        <td class="tbl-total">{{ number_format($total) }}</td>
                                         <td class="tbl-price" style="color:var(--emerald); font-weight:700;">
                                             {{ number_format($paid) }}
                                         </td>
@@ -946,7 +949,11 @@
                                                         </div>
                                                         <div class="field">
                                                             <label class="field-label">Payment date</label>
+                                                            @if(canUser("payment_date"))
                                                             <input type="date" class="field-input" name="payment_date" value="{{ date('Y-m-d') }}" required>
+                                                            @else
+                                                            <input type="hidden" name="payment_date" value="{{ date('Y-m-d') }}">
+                                                            @endif
                                                         </div>
                                                         <input type="hidden" name="invoiceName" value="{{ $invoiceName }}">
                                                         <input type="hidden" name="shopName"    value="{{ $shopName }}">

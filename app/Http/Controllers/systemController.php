@@ -1016,98 +1016,94 @@ public function uploadProfilePicture(Request $req) {
     
     // New method: Show products for a specific customer debt
     public function customerDebtProducts(Request $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to view customer debt products.')) {
-            return $permissionCheck;
-        }
-        
-        $customerName = $request->input('customer');
-        $shopName = $request->input('shop');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $reset = $request->input('reset');
-
-        if ($reset) {
-            $startDate = $endDate = null;
-        }
-
-        // Get all order items for this customer with Debt or Partial status
-        // Join with products table to get product name
-        $debtProductsQuery = ordersModel::leftJoin('products', function($join) {
-                $join->on('orders.productId', '=', 'products.product_id')
-                     ->on('orders.account', '=', 'products.account');
-            })
-            ->where('orders.account', $shopName)
-            ->where('orders.cName', $customerName)
-            ->whereIn('orders.status', ['Debt', 'Partial'])
-            ->where('orders.orderName', '!=', '')
-            ->where('orders.productId', '!=', '');
-
-        if (!empty($startDate)) {
-            $debtProductsQuery->whereDate('orders.created_at', '>=', Carbon::parse($startDate)->toDateString());
-        }
-
-        if (!empty($endDate)) {
-            $debtProductsQuery->whereDate('orders.created_at', '<=', Carbon::parse($endDate)->toDateString());
-        }
-
-        $debtProducts = $debtProductsQuery
-            ->select('orders.*', 'products.name01')
-            ->orderByDesc('orders.created_at')
-            ->get();
-        
-        // Get unique invoice numbers for grouping
-        $invoices = $debtProducts->groupBy('orderName');
-        
-        // Calculate paid amounts for each invoice from debtsModel table
-        $invoicePayments = [];
-        foreach ($invoices as $invoiceName => $items) {
-            // Get the first item to get order_id
-            $firstItem = $items->first();
-            
-            // Get total debt - always use sum of totalPrice as the actual invoice total
-            // The credit field might be 0 or null for some records
-            $totalDebt = $items->sum(fn($i) => ($i->totalPrice ?? 0) - ($i->paid ?? 0));
-            
-            // Get amount already paid from debtsModel table
-            // Also check account to ensure we're looking at the right shop's payments
-            $paidAmount = debtsModel::where('orderId', $firstItem->order_id)
-                ->where('account', $shopName)
-                ->sum('amount');
-            
-            // Calculate remaining (ensure it doesn't go below 0)
-            $remaining = max(0, $totalDebt - $paidAmount);
-            
-            $invoicePayments[$invoiceName] = [
-                'paid' => $paidAmount,
-                'total' => $totalDebt,
-                'remaining' => $remaining
-            ];
-        }
-        
-        // Get available chip balance from last chip entry (cumulative total)
-        $shop = accountModel::where('id', $shopName)->first();
-        $availableChip = 0;
-        if ($shop) {
-            $lastChip = BankingChip::where('shop_id', $shop->id)
-                ->orderBy('id', 'desc')
-                ->first();
-            if ($lastChip) {
-                $availableChip = $lastChip->available_chip;
-            }
-        }
-        
-        $data = compact(
-            'customerName', 'shopName', 'debtProducts', 'invoices', 'invoicePayments',
-            'startDate', 'endDate', 'availableChip'
-        );
-        
-
-            return view('customerDebtProducts', $data);
-     
+    if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to view customer debt products.')) {
+        return $permissionCheck;
     }
+    
+    $customerName = $request->input('customer');
+    $shopName = $request->input('shop');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $reset = $request->input('reset');
+
+    if ($reset) {
+        $startDate = $endDate = null;
+    }
+
+    // Get all order items for this customer with Debt or Partial status
+    $debtProductsQuery = ordersModel::leftJoin('products', function($join) {
+            $join->on('orders.productId', '=', 'products.product_id')
+                 ->on('orders.account', '=', 'products.account');
+        })
+        ->where('orders.account', $shopName)
+        ->where('orders.cName', $customerName)
+        ->whereIn('orders.status', ['Debt', 'Partial'])
+        ->where('orders.orderName', '!=', '')
+        ->where('orders.productId', '!=', '');
+
+    if (!empty($startDate)) {
+        $debtProductsQuery->whereDate('orders.created_at', '>=', Carbon::parse($startDate)->toDateString());
+    }
+
+    if (!empty($endDate)) {
+        $debtProductsQuery->whereDate('orders.created_at', '<=', Carbon::parse($endDate)->toDateString());
+    }
+
+    $debtProducts = $debtProductsQuery
+        ->select('orders.*', 'products.name01')
+        ->orderByDesc('orders.created_at')
+        ->get();
+    
+    // Get unique invoice numbers for grouping
+    $invoices = $debtProducts->groupBy('orderName');
+    
+    // Calculate paid amounts for each invoice from debtsModel table
+    $invoicePayments = [];
+    foreach ($invoices as $invoiceName => $items) {
+        // Get the first item to get order_id
+        $firstItem = $items->first();
+        
+        // Calculate total debt - use credit if available, otherwise use totalPrice
+        
+        $totalDebt = $items->where('credit', '>', 0)->sum('credit') == 0 ? $items->sum('totalPrice') : $items->sum('credit');
+        
+        // Get amount already paid from debtsModel table
+        $paidAmount = debtsModel::where('orderId', $firstItem->order_id)
+            ->where('account', $shopName)
+            ->sum('amount');
+        
+        // Calculate remaining (ensure it doesn't go below 0)
+        $remaining = max(0, $totalDebt - $paidAmount);
+        
+        $invoicePayments[$invoiceName] = [
+            'paid' => $paidAmount,
+            'total' => $totalDebt,
+            'remaining' => $remaining
+        ];
+    }
+    
+    // Get available chip balance from last chip entry
+    $shop = accountModel::where('id', $shopName)->first();
+    $availableChip = 0;
+    if ($shop) {
+        $lastChip = BankingChip::where('shop_id', $shop->id)
+            ->orderBy('id', 'desc')
+            ->first();
+        if ($lastChip) {
+            $availableChip = $lastChip->available_chip;
+        }
+    }
+    
+    $data = compact(
+        'customerName', 'shopName', 'debtProducts', 'invoices', 'invoicePayments',
+        'startDate', 'endDate', 'availableChip'
+    );
+    
+    return view('customerDebtProducts', $data);
+}
     
     // Undo latest debt payment for a specific invoice
     public function undoInvoiceDebt(Request $request)
@@ -1142,6 +1138,22 @@ public function uploadProfilePicture(Request $req) {
 
         $undoneAmount = $latestPayment->amount;
         $latestPayment->delete();
+
+        $allOrderItems = ordersModel::where('order_id', $firstOrder->order_id)
+            ->where('account', $shopName)
+            ->get();
+        $totalDebtForUndo = $allOrderItems->sum('credit');
+        $allOrderItems->each(function($item) use ($undoneAmount, $totalDebtForUndo) {
+            $proportion = $totalDebtForUndo > 0 ? ($item->credit / $totalDebtForUndo) : 0;
+            $item->paid -= $undoneAmount * $proportion;
+            if ($item->paid <= 0) {
+                $item->paid = 0;
+                $item->status = 'Debt';
+            } else {
+                $item->status = 'Partial';
+            }
+            $item->save();
+        });
 
         logModal::create([
             'title' => 'Debt Payment Undo',
@@ -1180,7 +1192,7 @@ public function uploadProfilePicture(Request $req) {
 
         $order->pQuantity   = $newQty;
         $order->productPrice = $newPrice;
-        $order->totalPrice  = $newTotal;
+        $order->credit  = $newTotal;
         $order->save();
 
         logModal::create([
@@ -1310,12 +1322,22 @@ public function uploadProfilePicture(Request $req) {
         ->where('orderName', $invoiceName)
         ->get();
 
-    $totalDebt = $allOrderItems->sum('totalPrice') - $allOrderItems->sum('paid');
+        // Option 1: Use null coalescing for safety
+$totalCredit = $allOrderItems->sum('credit') ?? 0;
+$totalPrice = $allOrderItems->sum('totalPrice') ?? 0;
+$totalPaid = $allOrderItems->sum('paid') ?? 0;
 
+$debti = $totalCredit == 0 ? $totalPrice : $totalCredit;
+$paidi = $totalPrice == 0 ? $totalPaid : 0;
+
+$totalDebt = max(0, $debti - $paidi);
     // Get amount already paid
     $paidAmount = debtsModel::where('orderId', $firstOrder->order_id)
         ->where('account', $shopName)
         ->sum('amount');
+
+        
+
     $remainingDebt = max(0, $totalDebt - $paidAmount);
     
     if ($remainingDebt < 1) {
@@ -1324,7 +1346,7 @@ public function uploadProfilePicture(Request $req) {
             'shop' => $shopName,
             'start_date' => $startDate,
             'end_date' => $endDate
-        ])->with('error', 'This invoice is already fully paid');
+        ])->with('error', 'This invoice ('.number_format($debti, 2).'Tsh  '.number_format($totalPaid, 2).'Tsh) is already fully paid');
     }
     
  
@@ -1412,6 +1434,20 @@ public function uploadProfilePicture(Request $req) {
     }
     
     $payment->save();
+
+    if($payment) {
+        $totalDebtForDistribution = $allOrderItems->sum('credit');
+        $allOrderItems->each(function($item) use ($TotalPayment, $totalDebtForDistribution) {
+            $proportion = $totalDebtForDistribution > 0 ? ($item->credit / $totalDebtForDistribution) : 0;
+            $item->paid += $TotalPayment * $proportion;
+            if ($item->paid >= $item->credit) {
+                $item->status = 'Paid Debt';
+            } else {
+                $item->status = 'Partial';
+            }
+            $item->save();
+        });
+    }
 
     // Log the payment
     $logDescription = 'Payment of ' . number_format($TotalPayment);
@@ -1528,6 +1564,14 @@ public function uploadProfilePicture(Request $req) {
         if (!$payment) {
             return redirect()->back()->with('error', 'Payment not found');
         }
+            ordersModel::where('order_id', $payment->orderId)
+    ->where('account', $payment->account)
+    ->update([
+        'paid' => DB::raw('paid - ' . $payment->amount),
+        'status' => 'Debt'
+    ]);
+
+$payment->status = 'Debt';
 
             $shopName = $request->input('shop', getCurrentShopId());
 
@@ -1712,7 +1756,8 @@ public function uploadProfilePicture(Request $req) {
                     'productPrice' => $validated['amount'],
                     'totalPrice' => $validated['amount'],
                     'return_amount' => 0,
-                    'credit' => 1,
+                    'credit' => 0,
+                    'bank' => 0,
                     'paid' => 0,
                     'transactionType' => 'Credit',
                     'status' => 'Debt',
@@ -1722,7 +1767,7 @@ public function uploadProfilePicture(Request $req) {
                     'discount' => 0,
                     'discount_increase' => 0,
                     'offered_items' => 0,
-                    'offer_parent_product' => null,
+                    'offer_parent_products' => null,
                 ]);
 
 
@@ -1738,5 +1783,125 @@ public function uploadProfilePicture(Request $req) {
             \Log::error('Manual invoice creation error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to create invoice: ' . $e->getMessage());
         }
+    }
+
+    public function updateThemeColor(Request $request)
+    {
+        $request->validate([
+            'theme_color' => 'required|string|size:7|regex:/^#[0-9a-fA-F]{6}$/',
+        ]);
+
+        $system = systemModel::first();
+        if (!$system) {
+            $system = new systemModel();
+        }
+
+        $system->theme_color = $request->input('theme_color');
+        $system->save();
+
+        logModal::create([
+            'title' => 'Theme Settings',
+            'description' => 'Theme color updated to ' . $request->input('theme_color') . ' by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
+            'status' => 'done'
+        ]);
+
+        return redirect()->back()->with('success', 'Theme color updated successfully');
+    }
+
+    public function addThemeColor(Request $request)
+    {
+        $request->validate([
+            'new_theme_color' => 'required|string|size:7|regex:/^#[0-9a-fA-F]{6}$/',
+        ]);
+
+        $system = systemModel::first();
+        if (!$system) {
+            $system = new systemModel();
+        }
+
+        $colors = $system->theme_colors ? json_decode($system->theme_colors, true) : [];
+        if (!is_array($colors)) {
+            $colors = [];
+        }
+
+        $newColor = strtoupper($request->input('new_theme_color'));
+        if (!in_array($newColor, $colors)) {
+            $colors[] = $newColor;
+            $system->theme_colors = json_encode($colors);
+            $system->save();
+
+            logModal::create([
+                'title' => 'Theme Settings',
+                'description' => 'New theme color ' . $newColor . ' added by ' . Auth::user()->name,
+                'user' => Auth::user()->name,
+                'status' => 'done'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Color added successfully');
+    }
+
+    public function deleteThemeColor(Request $request)
+    {
+        $request->validate([
+            'delete_theme_color' => 'required|string|size:7|regex:/^#[0-9a-fA-F]{6}$/',
+        ]);
+
+        $system = systemModel::first();
+        if (!$system) {
+            return redirect()->back()->with('error', 'System settings not found');
+        }
+
+        $colors = $system->theme_colors ? json_decode($system->theme_colors, true) : [];
+        if (!is_array($colors)) {
+            $colors = [];
+        }
+
+        $deleteColor = strtoupper($request->input('delete_theme_color'));
+        $colors = array_values(array_filter($colors, function($c) use ($deleteColor) {
+            return strtoupper($c) !== $deleteColor;
+        }));
+
+        $system->theme_colors = json_encode($colors);
+        
+        if (strtoupper($system->theme_color) === $deleteColor) {
+            $system->theme_color = $colors[0] ?? 'var(--theme-primary)';
+        }
+        
+        $system->save();
+
+        logModal::create([
+            'title' => 'Theme Settings',
+            'description' => 'Theme color ' . $deleteColor . ' removed by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
+            'status' => 'done'
+        ]);
+
+        return redirect()->back()->with('success', 'Color removed successfully');
+    }
+
+    public function setActiveThemeColor(Request $request)
+    {
+        $request->validate([
+            'theme_color' => 'required|string|size:7|regex:/^#[0-9a-fA-F]{6}$/',
+        ]);
+
+        $system = systemModel::first();
+        if (!$system) {
+            $system = new systemModel();
+        }
+
+        $system->theme_color = $request->input('theme_color');
+        $system->save();
+
+        logModal::create([
+            'title' => 'Theme Settings',
+            'description' => 'Active theme color changed to ' . $request->input('theme_color') . ' by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
+            'status' => 'done'
+        ]);
+
+        return redirect()->back()->with('success', 'Active theme color updated');
     }
 }

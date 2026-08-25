@@ -14,7 +14,7 @@
             --navy:          #0B1E3D;
             --navy-mid:      #112952;
             --navy-light:    #1A3A6B;
-            --amber:         #F59E0B;
+            --amber:         var(--theme-primary);
             --amber-dark:    #D97706;
             --amber-pale:    #FEF3C7;
             --emerald:       #059669;
@@ -25,7 +25,7 @@
             --violet-pale:   #EDE9FE;
             --sky:           #0284C7;
             --sky-pale:      #E0F2FE;
-            --gold:          #F59E0B;
+            --gold:          var(--theme-primary);
             --silver:        #94A3B8;
             --bronze:        #CD7F32;
             --slate-50:      #F8FAFC;

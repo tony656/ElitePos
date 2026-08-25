@@ -151,7 +151,10 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::get('/viewRequest', [itemRequestController::class, 'viewRequest']);
 
-        Route::get('/viewRequestDetails/{requestId}', [itemRequestController::class, 'viewRequestDetails'])->name('viewRequestDetails');
+        Route::get('/viewRequestDetails', [itemRequestController::class, 'viewRequestDetails'])->name('viewRequestDetails');
+
+        Route::post('/viewRequestsDetails', [itemRequestController::class, 'viewRequestDetails'])->name('viewRequestsDetails');
+
 
         Route::post('/itemRequest', [itemRequestController::class, 'itemRequest']);
 
@@ -242,6 +245,11 @@ Route::middleware(['system.security'])->group(function () {
         Route::get('/settings', [systemController::class, 'index']);
 
         Route::post('/settings/fix-customer-refs', [systemController::class, 'fixCustomerRefs'])->name('settings.fixCustomerRefs');
+
+        Route::post('/settings/theme-color', [systemController::class, 'updateThemeColor'])->name('settings.themeColor');
+        Route::post('/settings/theme-color/add', [systemController::class, 'addThemeColor'])->name('settings.themeColor.add');
+        Route::post('/settings/theme-color/delete', [systemController::class, 'deleteThemeColor'])->name('settings.themeColor.delete');
+        Route::post('/settings/theme-color/set-active', [systemController::class, 'setActiveThemeColor'])->name('settings.themeColor.setActive');
 
         Route::get('/main-customers', [systemController::class, 'mainCustomers']);
 
@@ -434,6 +442,8 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::get('items-report', [productsController::class, 'itemsReport'])->name('items-report');
 
+        Route::post('main-store/proxy', [productsController::class, 'mainStoreProxy']);
+
         Route::get('/most-sold-products', [productsController::class, 'mostSoldProducts'])->name('most-sold-products');
 
         Route::get('/stock-report', [productsController::class, 'report']);
@@ -549,7 +559,7 @@ Route::middleware(['system.security'])->group(function () {
     // This should be the LAST route in your web.php file
     Route::fallback(function () {
         // Option 1: Redirect to custom 404 page
-        return response()->view('404', [], 404);
+        return response()->view('errors.404', [], 404);
 
         // Option 2: Redirect to home page
         // return redirect('/');

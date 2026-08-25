@@ -35,4 +35,11 @@ return [
         'api_key' => env('GROQ_API_KEY'),
     ],
 
+    'mainstore' => [
+        'url' => env('MAINSTORE_API_URL', 'https://mainstore.co.tz/api'),
+        'username' => env('MAINSTORE_API_USERNAME'),
+        'password' => env('MAINSTORE_API_PASSWORD'),
+        'token_ttl' => env('MAINSTORE_API_TOKEN_TTL', 50),
+    ],
+
 ];

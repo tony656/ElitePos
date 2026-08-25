@@ -398,57 +398,92 @@ class bankingController extends Controller
      * Display banking transfers list
      */
     public function transfers(Request $req)
-    {
-        $user = Auth::user();
-        $accountName = $req->input('shop_id') ?? getCurrentShopId();
-        $today = date('Y-m-d');
+{
+    $user = Auth::user();
+    $accountName = $req->input('shop_id') ?? getCurrentShopId();
+    $today = date('Y-m-d');
 
-        $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
+    $query = BankingTransfer::with(['supplier', 'beneficiary', 'shop']);
+    
+    // Apply all filters
+    $this->applyDateFilter($query, $req, $today);
+    $this->applyShopFilter($query, $req);
+    $this->applySorting($query, $req);
+    
+    $transfers = $query->get();
+    
+    // Calculate statistics
+    $statistics = $this->calculateStatistics($transfers);
+    
+    // Get related data
+    $suppliers = BankingSupplier::with('accounts')->get();
+    $beneficiaries = BankingBeneficiary::with('accounts')->get();
+    $shops = getUserAccounts();
+    
+    $data = array_merge(
+        compact('transfers', 'suppliers', 'beneficiaries', 'shops'),
+        $statistics
+    );
+    
+    return view('banking-transfers', $data)->with($req->all());
+}
 
-        // Date range filter
-        if ($req->has('date_from') && $req->date_from) {
-            $query->whereDate('transfer_date', '>=', $req->date_from);
-        } elseif ($req->has('date_to') && $req->date_to) {
-            $query->whereDate('transfer_date', '<=', $req->date_to);
-        } else {
-            $query->whereDate('transfer_date', $today);
-        }
-
-        // Shop filter - applies to both admins and regular users
-        if ($req->has('shop_id') && $req->shop_id) {
-            $query->where('shop_id', $req->shop_id);
-        }
-
-        // Sorting
-        $sortBy = $req->get('sort_by', 'transfer_date');
-        $sortDirection = $req->get('sort_direction', 'desc');
-        $validSortColumns = ['transfer_date', 'amount', 'created_at'];
-        if (! in_array($sortBy, $validSortColumns)) {
-            $sortBy = 'transfer_date';
-        }
-        if (! in_array($sortDirection, ['asc', 'desc'])) {
-            $sortDirection = 'desc';
-        }
-        $query->orderBy($sortBy, $sortDirection);
-
-        $transfers = $query->get();
-
-        // Calculate statistics
-        $totalDeposits = $transfers->sum('amount');
-        $depositCount = $transfers->count();
-        $averageDeposit = $depositCount > 0 ? $transfers->avg('amount') : 0;
-        $maxDeposit = $transfers->max('amount') ?? 0;
-        $minDeposit = $transfers->min('amount') ?? 0;
-
-        $suppliers = BankingSupplier::with('accounts')->get();
-        $beneficiaries = BankingBeneficiary::with('accounts')->get();
-        $shops = getUserAccounts();
-
-        $data = compact('transfers', 'suppliers', 'beneficiaries', 'shops', 'totalDeposits', 'depositCount', 'averageDeposit', 'maxDeposit', 'minDeposit');
-
-        return view('banking-transfers', $data)->with($req->all());
-
+/**
+ * Apply date range filter to query
+ */
+private function applyDateFilter($query, $req, $today)
+{
+    if ($req->has('date_from') && $req->date_from) {
+        $query->whereDate('transfer_date', '>=', $req->date_from);
+    } elseif ($req->has('date_to') && $req->date_to) {
+        $query->whereDate('transfer_date', '<=', $req->date_to);
+    } else {
+        $query->whereDate('transfer_date', $today);
     }
+}
+
+/**
+ * Apply shop filter to query
+ */
+private function applyShopFilter($query, $req)
+{
+    if ($req->has('shop_id') && $req->shop_id) {
+        $query->where('shop_id', $req->shop_id);
+    }
+}
+
+/**
+ * Apply sorting to query
+ */
+private function applySorting($query, $req)
+{
+    $validSortColumns = ['transfer_date', 'amount', 'created_at'];
+    $validDirections = ['asc', 'desc'];
+    
+    $sortBy = $req->get('sort_by', 'transfer_date');
+    $sortBy = in_array($sortBy, $validSortColumns) ? $sortBy : 'transfer_date';
+    
+    $sortDirection = $req->get('sort_direction', 'desc');
+    $sortDirection = in_array($sortDirection, $validDirections) ? $sortDirection : 'desc';
+    
+    $query->orderBy($sortBy, $sortDirection);
+}
+
+/**
+ * Calculate statistics from transfers collection
+ */
+private function calculateStatistics($transfers)
+{
+    $count = $transfers->count();
+    
+    return [
+        'totalDeposits' => $transfers->sum('amount'),
+        'depositCount' => $count,
+        'averageDeposit' => $count > 0 ? $transfers->avg('amount') : 0,
+        'maxDeposit' => $transfers->max('amount') ?? 0,
+        'minDeposit' => $transfers->min('amount') ?? 0,
+    ];
+}
 
     /**
      * Store a new banking transfer
@@ -547,7 +582,7 @@ class bankingController extends Controller
                 $chipEntry->chip_amount = $chipAmount;
                 $chipEntry->transfer_date = $req->transfer_date;
                 $chipEntry->created_by = auth::user()->name;
-                $chipEntry->account = $Account;
+                $chipEntry->account = $req->shop_id;
 
                 // Calculate available_chip as cumulative sum
                 $lastChip = BankingChip::where('shop_id', $req->shop_id)
@@ -908,22 +943,17 @@ class bankingController extends Controller
      */
     public function updateChip(Request $req, $id)
     {
-        $Account = getCurrentShopId();
-
         $req->validate([
             'chip_amount' => 'required|numeric|min:0.01',
             'transfer_date' => 'required|date',
         ]);
 
-        $chip = BankingChip::where('id', $id)
-            ->where('account', $Account)
-            ->first();
+        $chip = BankingChip::where('id', $id)->first();
 
         if (! $chip) {
             return redirect()->back()->with('error', 'Chip entry not found');
         }
 
-        // Check user's access to shop (non-admin users)
         $user = Auth::user();
         if ($user->levelStatus !== 'Admin') {
             $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
@@ -963,31 +993,25 @@ class bankingController extends Controller
      */
     public function deleteChip($id)
     {
-        $Account = getCurrentShopId();
-        $chip = BankingChip::where('id', $id)
-            ->where('account', $Account)
-            ->first();
+        $chip = BankingChip::where('id', $id)->first();
 
-        if (! $chip) {
+        if (!$chip) {
             return redirect()->back()->with('error', 'Chip entry not found');
+        }
+
+        $user = Auth::user();
+        if ($user->levelStatus !== 'Admin') {
+            $assignedAccountIds = UserAccount::where('user_id', $user->id)->pluck('account')->toArray();
+
+            if (! in_array($chip->shop_id, $assignedAccountIds)) {
+                return redirect()->back()
+                    ->with('error', 'You do not have permission to delete this chip entry');
+            }
         }
 
         $shopId = $chip->shop_id;
         $chipAmount = $chip->chip_amount;
         $chip->delete();
-
-        // Recalculate cumulative available_chip for all entries after deletion
-        $remainingChips = BankingChip::where('shop_id', $shopId)
-            ->where('account', $Account)
-            ->orderBy('id', 'asc')
-            ->get();
-
-        $runningTotal = 0;
-        foreach ($remainingChips as $remainingChip) {
-            $runningTotal += $remainingChip->chip_amount;
-            $remainingChip->available_chip = $runningTotal;
-            $remainingChip->saveQuietly();
-        }
 
         $log = new logModal;
         $log->title = 'Banking Chip Deleted';

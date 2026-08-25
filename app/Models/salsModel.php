@@ -23,6 +23,7 @@ class salsModel extends Model
             'return_amount',
             'served_by',
             'credit',
+            'bank',
             'transactionType',
             'paid',
             'coupons',

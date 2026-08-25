@@ -22,6 +22,7 @@ class ordersModel extends Model
         'totalPrice',
         'return_amount',
         'credit',
+        'bank',
         'transactionType',
         'paid',
         'served_by',

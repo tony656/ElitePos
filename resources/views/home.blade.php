@@ -83,7 +83,7 @@
        .btn-balance-check {
            position: relative;
            padding: 14px 24px;
-           background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+           background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary) 100%);
            color: white;
            border: none;
            border-radius: 50px;
@@ -102,7 +102,7 @@
        .btn-balance-check:hover {
            transform: translateY(-3px) scale(1.05);
            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
-           background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+           background: linear-gradient(135deg, var(--theme-primary) 0%, v 100%);
        }
 
        .btn-balance-check:active {
@@ -216,7 +216,7 @@
            height: 36px;
            border: none;
            background: rgba(245, 158, 11, 0.1);
-           color: #F59E0B;
+           color: var(--theme-primary);
            border-radius: 50%;
            cursor: pointer;
            display: flex;
@@ -226,7 +226,7 @@
        }
 
        .balance-modal-close:hover {
-           background: #F59E0B;
+           background: var(--theme-primary);
            color: white;
            transform: rotate(90deg);
        }
@@ -335,7 +335,7 @@
 
        .shop-item.unbalanced {
            background: #FFFBF0;
-           border-color: #F59E0B;
+           border-color: var(--theme-primary);
        }
 
        .shop-item.problem {
@@ -370,7 +370,7 @@
 
        .shop-status.unbalanced {
            background: #FEF3D7;
-           color: #D97706;
+           color: var(--theme-primary);
        }
 
        .shop-status.problem {
@@ -424,7 +424,7 @@
            width: 40px;
            height: 40px;
            border: 3px solid rgba(245, 158, 11, 0.2);
-           border-top-color: #F59E0B;
+           border-top-color: var(--theme-primary);
            border-radius: 50%;
            animation: spin 1s linear infinite;
            margin: 0 auto 1rem;

@@ -41,7 +41,7 @@ class madeni extends Model
      */
     public static function getTotalPaidForOrder($receivingId)
     {
-        return self::where('receivings_id', $receivingId)->sum('amount');
+        return self::where('receivings_id', $receivingId)->sum('amount_paid');
     }
 
     /**
