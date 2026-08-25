@@ -1630,7 +1630,7 @@
 // API COMPARISON JAVASCRIPT
 // ============================================================
 
-const API_BASE_URL = 'https://mainstore.co.tz/api';
+const API_PROXY_URL = '/main-store/proxy';
 let apiComparisonResults = {
     matched: [],
     mismatched: [],
@@ -1728,52 +1728,29 @@ async function runApiComparison() {
         return;
     }
     
-    updateApiStatus('loading', 'Authenticating with MainStore API...');
+    updateApiStatus('loading', 'Fetching stock report from MainStore...');
     
     try {
-        // Step 1: Login to get token
-        const loginResponse = await fetch(API_BASE_URL + '/auth/login', {
+        const proxyResponse = await fetch(API_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
             },
             body: JSON.stringify({
-                username: 'api_stock',
-                password: 'af8c184628122ae501'
+                action: 'stock_report',
+                start_date: startDate,
+                end_date: endDate
             })
         });
         
-        if (!loginResponse.ok) {
-            throw new Error('Login failed: ' + loginResponse.status);
+        if (!proxyResponse.ok) {
+            const errorData = await proxyResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Proxy request failed: ' + proxyResponse.status);
         }
         
-        const loginData = await loginResponse.json();
-        const token = loginData.data?.token;
-        
-        if (!token) {
-            throw new Error('No token received from login');
-        }
-        
-        updateApiStatus('loading', 'Fetching stock report from MainStore...');
-        
-        // Step 2: Fetch stock report
-        const reportResponse = await fetch(
-            API_BASE_URL + '/stock/report?start_date=' + startDate + '&end_date=' + endDate,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        if (!reportResponse.ok) {
-            const errorText = await reportResponse.text();
-            throw new Error('Stock report failed: ' + reportResponse.status + ' - ' + errorText);
-        }
-        
-        const reportData = await reportResponse.json();
+        const reportData = await proxyResponse.json();
         
         // Parse the API response - assuming structure: { data: [...] } or { items: [...] } or just array
         let apiItems = [];

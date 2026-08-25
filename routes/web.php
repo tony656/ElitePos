@@ -442,6 +442,8 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::get('items-report', [productsController::class, 'itemsReport'])->name('items-report');
 
+        Route::post('main-store/proxy', [productsController::class, 'mainStoreProxy']);
+
         Route::get('/most-sold-products', [productsController::class, 'mostSoldProducts'])->name('most-sold-products');
 
         Route::get('/stock-report', [productsController::class, 'report']);

@@ -13,6 +13,7 @@ use App\Models\vendorModal;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use App\Models\stock;
 use Illuminate\Support\Facades\DB;
 use App\Models\madeni;
@@ -5610,15 +5611,127 @@ public function offers(Request $req)
         );
 
 
+        // Determine API comparison date (previous day of local report date)
+        $localReportDate = $toDate ?? $selectedDate ?? date('Y-m-d');
+        $apiCompareDate = date('Y-m-d', strtotime($localReportDate . ' -1 day'));
+
         $data = compact(
             'reportRows', 'selectedDate', 'fromDate', 'toDate', 'accountFilter', 'shops',
             'totalReceived', 'totalReturned', 'totalSold',
             'totalReceivedPrice', 'totalSoldPrice',
-            'totalRemainingQty', 'totalRemainingValue'
+            'totalRemainingQty', 'totalRemainingValue',
+            'apiCompareDate'
         );
 
             return view('itemsReport', $data);
-   
+    
+    }
+
+    public function mainStoreProxy(Request $req)
+    {
+        $action = $req->input('action');
+
+        if ($action === 'stock_report') {
+            $startDate = $req->input('start_date');
+            $endDate = $req->input('end_date');
+
+            if (!$startDate || !$endDate) {
+                return response()->json(['error' => 'Missing start_date or end_date'], 422);
+            }
+
+            $externalTokenService = env('MAINSTORE_TOKEN_SERVICE_URL');
+
+            if ($externalTokenService) {
+                $url = rtrim($externalTokenService, '/') . '/stock/report';
+                $response = Http::withoutVerifying()
+                    ->timeout(60)
+                    ->get($url, [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                    ]);
+
+                if ($response->successful()) {
+                    return response()->json($response->json());
+                }
+
+                return response()->json([
+                    'error' => 'MainStore token service error: ' . $response->status()
+                ], $response->status());
+            }
+
+            $token = Cache::get('mainstore_api_token');
+            if (!$token) {
+                $token = $this->fetchMainStoreToken();
+                if (!$token) {
+                    return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
+                }
+                Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+            }
+
+            try {
+                $response = Http::withoutVerifying()
+                    ->withToken($token)
+                    ->timeout(30)
+                    ->get(config('services.mainstore.url') . '/stock/report', [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                    ]);
+
+                if ($response->successful()) {
+                    return response()->json($response->json());
+                }
+
+                if ($response->status() === 401 || $response->status() === 403) {
+                    Cache::forget('mainstore_api_token');
+                    $newToken = $this->fetchMainStoreToken();
+                    if (!$newToken) {
+                        return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+                    }
+                    Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+
+                    $retryResponse = Http::withoutVerifying()
+                        ->withToken($newToken)
+                        ->timeout(30)
+                        ->get(config('services.mainstore.url') . '/stock/report', [
+                            'start_date' => $startDate,
+                            'end_date' => $endDate,
+                        ]);
+
+                    if ($retryResponse->successful()) {
+                        return response()->json($retryResponse->json());
+                    }
+
+                    return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status()], $retryResponse->status());
+                }
+
+                return response()->json(['error' => 'MainStore API error: ' . $response->status()], $response->status());
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
+            }
+        }
+
+        return response()->json(['error' => 'Invalid action'], 400);
+    }
+
+    private function fetchMainStoreToken()
+    {
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(15)
+                ->post(config('services.mainstore.url') . '/auth/login', [
+                    'username' => config('services.mainstore.username'),
+                    'password' => config('services.mainstore.password'),
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['data']['token'] ?? $data['token'] ?? null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function mostSoldProducts(Request $req)
