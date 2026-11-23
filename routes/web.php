@@ -102,6 +102,8 @@ Route::middleware(['system.security'])->group(function () {
             return view('newProduct');
         });
 
+        Route::post('/new-products/sync-from-mainstore', [productsController::class, 'syncProductsFromMainStore']);
+
         Route::post('/addProducts', [productsController::class, 'saveProduct']);
 
         Route::get('/downloadTemplate', [productsController::class, 'downloadTemplate'])->name('downloadTemplate');
@@ -193,17 +195,7 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::get('/main-credit', [vendorController::class, 'mainCredit']);
 
-        Route::post('/dltSupPay', [vendorController::class, 'dltSupPay']);
-
-        Route::get('/suplierPayments', [vendorController::class, 'suplierPayments']);
-
-        Route::get('/main-paid', [vendorController::class, 'mainPaid']);
-
-        Route::post('/supplier-items', [vendorController::class, 'supplierItems']);
-
-        Route::post('/supplierPay', [vendorController::class, 'supplierPay']);
-
-        Route::post('/supplier-items', [vendorController::class, 'supplierItems']);
+         Route::post('/supplier-items', [vendorController::class, 'supplierItems']);
 
         Route::get('/sales', [salsController::class, 'index']);
 
@@ -218,6 +210,9 @@ Route::middleware(['system.security'])->group(function () {
         Route::post('/coupon', [orderController::class, 'coupon']);
 
         Route::post('/viewSales', [salsController::class, 'viewSales']);
+
+        Route::post('/verifyDelivery', [salsController::class, 'verifyDelivery']);
+        Route::get('/sendWhatsApp', [salsController::class, 'sendWhatsApp']);
 
         Route::get('/fullReport', [salsController::class, 'fullReport']);
 
@@ -250,6 +245,7 @@ Route::middleware(['system.security'])->group(function () {
         Route::post('/settings/theme-color/add', [systemController::class, 'addThemeColor'])->name('settings.themeColor.add');
         Route::post('/settings/theme-color/delete', [systemController::class, 'deleteThemeColor'])->name('settings.themeColor.delete');
         Route::post('/settings/theme-color/set-active', [systemController::class, 'setActiveThemeColor'])->name('settings.themeColor.setActive');
+        Route::post('/settings/theme-navy', [systemController::class, 'updateThemeNavy'])->name('settings.themeNavy');
 
         Route::get('/main-customers', [systemController::class, 'mainCustomers']);
 
@@ -291,10 +287,20 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::match(['get', 'post'], '/customerDebtProducts', [systemController::class, 'customerDebtProducts'])->name('customerDebtProducts');
 
+        Route::post('/transferDebt', [systemController::class, 'transferDebt'])->name('transferDebt');
+
+        Route::get('/deleteTransfer/{id}', [systemController::class, 'deleteTransfer'])->name('deleteTransfer');
+
+        Route::get('/cleanupDebtDuplicates', [systemController::class, 'cleanupDebtDuplicates'])->name('cleanupDebtDuplicates');
+        Route::post('/cleanupDebtDuplicates', [systemController::class, 'cleanupDebtDuplicates'])->name('cleanupDebtDuplicates.post');
+
         Route::post('/payInvoiceDebt', [systemController::class, 'payInvoiceDebt']);
         Route::post('/undoInvoiceDebt', [systemController::class, 'undoInvoiceDebt']);
         Route::post('/editDebtProduct', [systemController::class, 'editDebtProduct']);
         Route::post('/deleteDebtProduct', [systemController::class, 'deleteDebtProduct']);
+        Route::post('/deleteSelectedDebtProducts', [systemController::class, 'deleteSelectedDebtProducts']);
+        Route::post('/saveDebtComment', [systemController::class, 'saveDebtComment']);
+        Route::post('/deleteDebtComment', [systemController::class, 'deleteDebtComment']);
 
         Route::get('/paidInvoices', [systemController::class, 'paidInvoices'])->name('paidInvoices');
 
@@ -442,6 +448,10 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::get('items-report', [productsController::class, 'itemsReport'])->name('items-report');
 
+        Route::post('items-report/update-stock', [productsController::class, 'updateItemsReportStock']);
+
+        Route::post('items-report/sync-from-mainstore', [productsController::class, 'syncStockFromMainStoreForRange']);
+
         Route::post('main-store/proxy', [productsController::class, 'mainStoreProxy']);
 
         Route::get('/most-sold-products', [productsController::class, 'mostSoldProducts'])->name('most-sold-products');
@@ -492,6 +502,22 @@ Route::middleware(['system.security'])->group(function () {
 
         Route::post('newVendor', [vendorController::class, 'newVendor']);
 
+        Route::post('updateVendor', [vendorController::class, 'updateVendor']);
+
+        Route::post('update-manual-credit', [vendorController::class, 'updateManualCredit']);
+
+        Route::post('delete-manual-credit', [vendorController::class, 'deleteManualCredit']);
+
+        Route::post('process-debt-payment', [vendorController::class, 'processDebtPayment']);
+
+        Route::post('supplierPay', [vendorController::class, 'supplierPay']);
+
+        Route::get('main-paid', [vendorController::class, 'mainPaid']);
+
+        Route::get('suplierPayments', [vendorController::class, 'suplierPayments']);
+
+        Route::post('dltSupPay', [vendorController::class, 'deletePayment']);
+
         Route::post('returnStock', [productsController::class, 'returnStock']);
 
         Route::post('dltrestock', [productsController::class, 'dltrestock']);
@@ -512,6 +538,7 @@ Route::middleware(['system.security'])->group(function () {
         Route::post('returnToMainStore', [productsController::class, 'returnToMainStore']);
         Route::post('/bulkClearQuantity', [productsController::class, 'bulkClearQuantity'])->name('bulk.clearQuantity');
         Route::post('/bulkSyncPrices', [productsController::class, 'syncPricesToShops'])->name('bulk.syncPrices');
+        Route::post('/syncQuantityFromApi', [productsController::class, 'syncProductQuantityFromApi'])->name('products.syncQuantity');
 
         Route::post('saveInfo', [itemRequestController::class, 'saveInfo']);
 

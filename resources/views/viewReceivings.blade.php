@@ -7,247 +7,300 @@
     @include('links')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        /* =========================================================
+           KESSY POS BLUE THEME
+           Existing Blade markup, IDs, forms and JavaScript retained.
+           ========================================================= */
         :root {
-            --navy:       #0B1E3D;
-            --navy-mid:   #112952;
-            --navy-light: #1A3A6B;
-            --amber:      var(--theme-primary);
-            --amber-pale: #FEF3C7;
-            --emerald:    #059669;
-            --emerald-pale: #D1FAE5;
-            --rose:       #E11D48;
-            --rose-pale:  #FFE4E6;
-            --slate-100:  #F1F5F9;
-            --slate-200:  #E2E8F0;
-            --slate-400:  #94A3B8;
-            --slate-600:  #475569;
-            --slate-800:  #1E293B;
-            --white:      #FFFFFF;
+            --navy:         #084b87;
+            --navy-mid:     #0756a6;
+            --navy-light:   #0b66b2;
+            --amber:        #0b65b1;
+            --amber-pale:   #e8f2fc;
+            --emerald:      #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose:         #e5485d;
+            --rose-pale:    #fff0f1;
+            --violet:       #7844d6;
+            --violet-pale:  #f1ebff;
+            --sky:          #0874c5;
+            --sky-pale:     #e8f3ff;
+            --slate-50:     #f5f9fd;
+            --slate-100:    #edf3f9;
+            --slate-200:    #dce7f1;
+            --slate-300:    #c5d5e5;
+            --slate-400:    #8da4bb;
+            --slate-500:    #607b96;
+            --slate-600:    #45627e;
+            --slate-700:    #2d4c69;
+            --slate-800:    #183a5a;
+            --white:        #ffffff;
+
+            --r:    6px;
+            --r-lg: 8px;
+            --shadow-sm: 0 2px 8px rgba(8,61,108,.06);
+            --shadow-md: 0 5px 16px rgba(8,61,108,.09);
+            --shadow-lg: 0 10px 28px rgba(8,61,108,.13);
         }
 
-        *, *::before, *::after { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: #F0F4FA;
+            background: #f3f7fb;
             color: var(--slate-800);
             min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
         /* Main layout */
         .main-wrap {
             max-width: 1800px;
             margin: 0 auto;
-            padding: 1.25rem 1.5rem;
+            padding: 1.1rem 1.25rem 1.5rem;
         }
 
-        /* Page header */
+        /* Page header — flat white strip */
         .pg-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            background: var(--navy);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 8px 32px rgba(11,30,61,0.25);
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: .25rem 0 .9rem;
+            margin-bottom: .55rem;
+            box-shadow: none;
         }
 
         .pg-title {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            color: var(--white);
-            font-size: 1.35rem;
+            gap: 0.7rem;
+            color: #064b86;
+            font-size: 1.42rem;
             font-weight: 700;
+            letter-spacing: -.35px;
         }
+        .pg-title span { color: #0871c2; }
 
         .pg-title-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(245,158,11,0.2);
-            border: 1px solid rgba(245,158,11,0.35);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--amber);
+            width: 40px; height: 40px;
+            background: #e8f2fc;
+            border: 1px solid #cfe2f5;
+            border-radius: var(--r-lg);
+            display: flex; align-items: center; justify-content: center;
+            color: #0866b2;
+            font-size: 1.05rem;
+            flex-shrink: 0;
         }
-
-        .pg-title span { color: var(--amber); }
 
         .btn-new-receiving {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            background: var(--amber);
-            color: var(--navy);
+            gap: .4rem;
+            background: #0866b2;
+            color: #fff;
             font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.55rem 1.1rem;
-            border-radius: 8px;
+            font-size: .75rem;
+            padding: .5rem .8rem;
+            border-radius: var(--r);
+            border: 1px solid #0866b2;
             text-decoration: none;
             transition: all 0.18s;
-            box-shadow: 0 2px 8px rgba(245,158,11,0.35);
+            box-shadow: 0 3px 8px rgba(8,102,178,.18);
+            letter-spacing: .01em;
         }
+        .btn-new-receiving i { font-size: .82rem; }
         .btn-new-receiving:hover {
-            background: #FBBF24;
+            background: #064f91;
+            border-color: #064f91;
             transform: translateY(-1px);
-            color: var(--navy);
+            color: #fff;
         }
 
         /* Alerts */
         .alert-custom {
             display: flex;
             align-items: center;
-            gap: 0.65rem;
-            padding: 0.75rem 1.1rem;
-            border-radius: 10px;
-            font-size: 0.875rem;
+            gap: 0.6rem;
+            padding: .7rem .9rem;
+            border-radius: var(--r-lg);
+            font-size: .78rem;
             font-weight: 500;
-            margin-bottom: 1rem;
+            margin-bottom: .85rem;
         }
         .alert-success-custom {
             background: var(--emerald-pale);
-            border-left: 4px solid var(--emerald);
-            color: #065F46;
+            border-left: 3px solid var(--emerald);
+            color: #056f58;
         }
         .alert-danger-custom {
             background: var(--rose-pale);
-            border-left: 4px solid var(--rose);
-            color: #9F1239;
+            border-left: 3px solid var(--rose);
+            color: #c9314a;
         }
 
         /* Card panel */
         .card-panel {
             background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(11,30,61,0.08);
+            border: 1px solid #dce7f1;
+            border-radius: var(--r-lg);
+            box-shadow: 0 2px 7px rgba(8,61,108,.045);
             overflow: hidden;
         }
 
-        /* Toolbar */
+        /* Toolbar — deep blue like table header */
         .toolbar {
-            background: var(--navy);
-            padding: 0.9rem 1.25rem;
+            background: #07569b;
+            padding: .65rem .9rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: .6rem;
         }
 
         .toolbar-left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: .55rem;
             flex-wrap: wrap;
         }
 
         .toolbar-label {
-            color: rgba(255,255,255,0.75);
-            font-size: 0.82rem;
+            color: rgba(255,255,255,.85);
+            font-size: .78rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: .35rem;
         }
+        .toolbar-label i { font-size: .82rem; color: #b8dcff; }
 
         .tbtn {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: .35rem;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
+            font-size: .72rem;
             font-weight: 600;
-            padding: 0.42rem 0.9rem;
-            border-radius: 7px;
-            border: none;
+            padding: .4rem .7rem;
+            border-radius: var(--r);
+            border: 1px solid transparent;
             cursor: pointer;
             transition: all 0.15s;
             text-decoration: none;
+            letter-spacing: .01em;
         }
-        .tbtn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .tbtn i { font-size: .78rem; }
+        .tbtn:hover { transform: translateY(-1px); }
 
-        .tbtn-success  { background: var(--emerald); color: #fff; }
-        .tbtn-primary  { background: var(--navy-light); color: #fff; border: 1px solid rgba(255,255,255,0.12); }
-        .tbtn-warning  { background: var(--amber); color: var(--navy); }
-        .tbtn-danger   { background: var(--rose); color: #fff; }
-        .tbtn-info     { background: #0284C7; color: #fff; }
-        .tbtn-ghost    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.15); }
+        .tbtn-success  { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+        .tbtn-success:hover { background: #056f58; border-color: #056f58; }
+        .tbtn-primary  { background: #0866b2; color: #fff; border-color: #0866b2; }
+        .tbtn-primary:hover { background: #064f91; border-color: #064f91; }
+        .tbtn-warning  { background: #eaf4ff; color: #0756a6; border-color: #cfe2f5; }
+        .tbtn-warning:hover { background: #0756a6; color: #fff; border-color: #0756a6; }
+        .tbtn-danger   { background: var(--rose-pale); color: #c9314a; border-color: #f5b8c2; }
+        .tbtn-danger:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+        .tbtn-info     { background: #e8f3ff; color: #07569b; border-color: #cfe2f5; }
+        .tbtn-info:hover { background: #07569b; color: #fff; border-color: #07569b; }
+        .tbtn-ghost    { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.2); }
+        .tbtn-ghost:hover { background: rgba(255,255,255,.2); }
 
         /* Filter bar */
         .filter-bar {
-            background: var(--slate-100);
-            border-bottom: 1px solid var(--slate-200);
-            padding: 0.8rem 1.25rem;
+            background: #f5f9fd;
+            border-bottom: 1px solid #dce7f1;
+            padding: .6rem .9rem;
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: .55rem;
         }
 
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: .35rem;
         }
 
         .filter-label {
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--slate-600);
+            font-size: .66rem;
+            font-weight: 700;
+            color: var(--slate-500);
             text-transform: uppercase;
+            letter-spacing: .06em;
             white-space: nowrap;
         }
 
         .filter-input {
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.825rem;
-            padding: 0.38rem 0.65rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
-            background: var(--white);
+            font-size: .76rem;
+            padding: .35rem .6rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--r);
+            background: #fff;
             outline: none;
+            color: var(--slate-800);
+            transition: border-color .18s, box-shadow .18s;
+            appearance: none;
+        }
+        select.filter-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right .55rem center;
+            padding-right: 1.8rem;
+            cursor: pointer;
         }
         .filter-input:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            border-color: #0b68b4;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
         }
 
         /* Summary bar */
         .summary-bar {
             display: flex;
             align-items: center;
-            gap: 2rem;
-            padding: 0.7rem 1.25rem;
-            background: linear-gradient(90deg, #EBF0FA 0%, #F1F5F9 100%);
-            border-bottom: 1px solid var(--slate-200);
+            gap: 1.5rem;
+            padding: .65rem .9rem;
+            background: #f5f9fd;
+            border-bottom: 1px solid #dce7f1;
             flex-wrap: wrap;
         }
 
         .summary-stat {
             display: flex;
             flex-direction: column;
-            gap: 0.1rem;
+            gap: .1rem;
         }
 
         .summary-stat-label {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--slate-400);
+            font-size: .62rem;
+            font-weight: 700;
+            color: var(--slate-500);
             text-transform: uppercase;
+            letter-spacing: .06em;
         }
 
         .summary-stat-value {
             font-family: 'DM Mono', monospace;
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--navy);
+            font-size: .85rem;
+            font-weight: 600;
+            color: #084b87;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Table */
@@ -260,103 +313,132 @@
         table.recv-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.845rem;
+            font-size: .74rem;
         }
 
         table.recv-table thead th {
-            background: var(--slate-100);
-            color: var(--slate-600);
-            font-size: 0.73rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 0.65rem 0.85rem;
-            border-bottom: 2px solid var(--slate-200);
+            background: #07569b;
+            color: #fff;
+            font-size: .66rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: .015em;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(255,255,255,.13);
             position: sticky;
             top: 0;
             z-index: 5;
+            text-align: left;
+            white-space: nowrap;
         }
 
         table.recv-table tbody td {
-            padding: 0.6rem 0.85rem;
-            border-bottom: 1px solid var(--slate-200);
+            padding: .52rem .68rem;
+            border: 1px solid #e5edf5;
             vertical-align: middle;
+            color: #244866;
         }
 
-        table.recv-table tbody tr:hover td {
-            background: #EFF4FF;
-        }
+        table.recv-table tbody tr:nth-child(even) td { background: #f8fbfe; }
+        table.recv-table tbody tr:hover td { background: #edf6ff; }
 
-        .product-name { font-weight: 600; color: var(--navy); }
-        .mono { font-family: 'DM Mono', monospace; font-size: 0.825rem; }
-        .amount-total { font-weight: 500; color: var(--navy); }
+        .product-name { font-weight: 600; color: #164a78; font-size: .76rem; }
+        .mono { font-family: 'DM Mono', monospace; font-size: .72rem; color: #31516e; }
+        .amount-total { font-weight: 600; color: #084b87; }
 
         /* Badges */
         .badge-pill {
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 0.25rem 0.6rem;
+            gap: .3rem;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: .22rem .55rem;
             border-radius: 20px;
+            letter-spacing: .01em;
+            white-space: nowrap;
         }
-        .badge-cash    { background: var(--emerald-pale); color: #065F46; }
-        .badge-credit  { background: var(--amber-pale); color: #92400E; }
-        .badge-approved { background: var(--emerald-pale); color: #065F46; }
-        .badge-pending  { background: var(--slate-100); color: var(--slate-600); }
-        .badge-returned { background: #EDE9FE; color: #5B21B6; }
+        .badge-cash     { background: var(--emerald-pale); color: #056f58; }
+        .badge-credit   { background: var(--amber-pale);   color: #07569b; }
+        .badge-approved { background: var(--emerald-pale); color: #056f58; }
+        .badge-pending  { background: var(--slate-100);    color: var(--slate-600); }
+        .badge-returned { background: var(--violet-pale);  color: var(--violet); }
 
         .person-cell {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: .4rem;
+            font-size: .72rem;
         }
         .person-avatar {
             width: 24px;
             height: 24px;
-            border-radius: 50%;
-            background: var(--slate-200);
+            border-radius: 6px;
+            background: linear-gradient(135deg, #0756a6, #0870bd);
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65rem;
+            font-size: .62rem;
             font-weight: 700;
+            flex-shrink: 0;
         }
 
-        .action-wrap { display: flex; gap: 0.35rem; align-items: center; }
+        .action-wrap { display: flex; gap: .25rem; align-items: center; }
         .act-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
-            border: none;
+            width: 27px;
+            height: 26px;
+            border-radius: 5px;
+            border: 1px solid;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.12s;
+            transition: all 0.15s;
+            background: #fff;
+            font-size: .72rem;
+            font-family: inherit;
         }
-        .act-btn:hover { filter: brightness(0.9); transform: scale(1.08); }
-        .act-delete  { background: var(--rose-pale); color: var(--rose); }
-        .act-approve { background: var(--emerald-pale); color: var(--emerald); }
-        .act-undo    { background: var(--amber-pale); color: #D97706; }
-        .act-print   { background: #E0F2FE; color: #0284C7; }
+        .act-btn i { font-size: .72rem; }
+        .act-btn:hover { transform: translateY(-1px); }
+        .act-delete  { background: var(--rose-pale); color: #c9314a; border-color: #f5b8c2; }
+        .act-delete:hover  { background: var(--rose); color: #fff; border-color: var(--rose); }
+        .act-approve { background: var(--emerald-pale); color: #056f58; border-color: #b8e5d5; }
+        .act-approve:hover { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+        .act-undo    { background: var(--amber-pale); color: #0756a6; border-color: #cfe2f5; }
+        .act-undo:hover { background: #0756a6; color: #fff; border-color: #0756a6; }
+        .act-print   { background: #e8f3ff; color: #07569b; border-color: #cfe2f5; }
+        .act-print:hover { background: #07569b; color: #fff; border-color: #07569b; }
 
         .form-check-input {
             width: 15px;
             height: 15px;
             cursor: pointer;
+            border: 1.5px solid #c5d5e5;
+            border-radius: 4px;
+        }
+        .form-check-input:checked {
+            background-color: #0866b2;
+            border-color: #0866b2;
+        }
+        .form-check-input:focus {
+            border-color: #0b68b4;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
         }
 
-        .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--slate-400); }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--slate-400); }
+        .empty-state i { font-size: 2.2rem; margin-bottom: .65rem; display: block; opacity: .35; }
+        .empty-state p { font-size: .78rem; }
 
         .collapsed-hint {
             padding: 2rem 1.25rem;
             text-align: center;
             color: var(--slate-400);
+            font-size: .78rem;
         }
+        .collapsed-hint i { margin-right: .3rem; }
 
-        /* PRINT STYLES - Hidden by default, appear only when printing */
+        /* PRINT STYLES */
         @media print {
             .sidenav, .pg-header, .toolbar, .filter-bar, .summary-bar,
             .act-btn, .action-wrap form, .tbtn, .btn-new-receiving,
@@ -383,25 +465,25 @@
                 display: flex !important;
                 justify-content: space-between !important;
                 margin-bottom: 20px !important;
-                border-bottom: 2px solid #0B1E3D !important;
+                border-bottom: 2px solid #084b87 !important;
                 padding-bottom: 10px !important;
             }
 
             .print-title {
-                font-size: 24px !important;
+                font-size: 22px !important;
                 font-weight: bold !important;
-                color: #0B1E3D !important;
+                color: #084b87 !important;
             }
 
             .print-date {
                 font-size: 12px !important;
-                color: #666 !important;
+                color: #607b96 !important;
             }
 
             .print-summary {
                 margin: 15px 0 !important;
                 padding: 10px !important;
-                background: #f5f5f5 !important;
+                background: #f4f9fd !important;
                 border-radius: 8px !important;
             }
 
@@ -412,13 +494,13 @@
             }
 
             .print-table th, .print-table td {
-                border: 1px solid #ddd !important;
+                border: 1px solid #dce7f1 !important;
                 padding: 8px !important;
                 text-align: left !important;
             }
 
             .print-table th {
-                background: #f0f0f0 !important;
+                background: #eaf3fb !important;
                 font-weight: bold !important;
             }
 
@@ -429,6 +511,19 @@
 
         .receiving-print-area {
             display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-wrap { padding: .8rem; }
+            .pg-title { font-size: 1.2rem; }
+            .pg-title-icon { width: 34px; height: 34px; font-size: .9rem; }
+            .toolbar { padding: .55rem .75rem; }
+            .toolbar-left { width: 100%; }
+            .filter-bar { padding: .5rem .75rem; }
+            .summary-bar { gap: 1rem; padding: .5rem .75rem; }
+            .summary-stat-value { font-size: .78rem; }
+            .table-scroll { max-height: none; }
         }
     </style>
 </head>
@@ -464,7 +559,7 @@
                 {{-- Main Card --}}
                 <div class="card-panel">
 
-                    {{-- Toolbar with Print Button --}}
+                    {{-- Toolbar --}}
                     <div class="toolbar">
                         <div class="toolbar-left">
                             <button type="button" class="tbtn tbtn-ghost" onclick="toggleTableData()" id="toggleBtn">
@@ -475,14 +570,12 @@
                                 <i class="bi bi-receipt"></i> {{ __('messages.receivings_list') }}
                             </div>
                         </div>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                            <!-- NEW: Print Selected Button -->
+                        <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
                             @if (canUser('print_receiving'))
                             <button type="button" class="tbtn tbtn-info" onclick="printSelectedItems()">
                                 <i class="bi bi-printer-fill"></i> Print Selected
                             </button>
-                            <!-- NEW: Print All Button -->
-                            <button type="button" class="tbtn tbtn-info" onclick="printAllItems()" style="background:#0F5B8C;">
+                            <button type="button" class="tbtn tbtn-info" onclick="printAllItems()" style="background:#07569b;border-color:#07569b;color:#fff;">
                                 <i class="bi bi-printer"></i> Print All
                             </button>
                             @endif
@@ -567,10 +660,10 @@
                         <div class="summary-stat"><span class="summary-stat-label">Items</span><span class="summary-stat-value">{{ number_format($products->count()) }}</span></div>
                         <div class="summary-stat"><span class="summary-stat-label">Total Qty</span><span class="summary-stat-value">{{ number_format($totalQty) }}</span></div>
                         <div class="summary-stat"><span class="summary-stat-label">Total Value</span><span class="summary-stat-value">Tsh {{ number_format($totalValue, 2) }}</span></div>
-                        <div class="summary-stat"><span class="summary-stat-label">Approved Qty</span><span class="summary-stat-value" style="color:#059669;">{{ number_format($approvedQty) }}</span></div>
-                        <div class="summary-stat"><span class="summary-stat-label">Approved Value</span><span class="summary-stat-value" style="color:#059669;">Tsh {{ number_format($approvedValue, 2) }}</span></div>
-                        <div class="summary-stat"><span class="summary-stat-label">Pending / Diff</span><span class="summary-stat-value" style="color:#92400E;">{{ number_format($pendingQty) }}</span></div>
-                        <div class="summary-stat"><span class="summary-stat-label">Pending Value</span><span class="summary-stat-value" style="color:#92400E;">Tsh {{ number_format($pendingValue, 2) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Approved Qty</span><span class="summary-stat-value" style="color:#07866b;">{{ number_format($approvedQty) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Approved Value</span><span class="summary-stat-value" style="color:#07866b;">Tsh {{ number_format($approvedValue, 2) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Pending / Diff</span><span class="summary-stat-value" style="color:#07569b;">{{ number_format($pendingQty) }}</span></div>
+                        <div class="summary-stat"><span class="summary-stat-label">Pending Value</span><span class="summary-stat-value" style="color:#07569b;">Tsh {{ number_format($pendingValue, 2) }}</span></div>
                         <div class="summary-stat"><span class="summary-stat-label">Return Value</span><span class="summary-stat-value">{{ number_format($totalReturnValue, 2) }}</span></div>
                     </div>
 
@@ -609,31 +702,20 @@
                                         data-requested="{{ $item->requestedQuantity }}" data-diff="{{ $item->quantityDiff }}"
                                         data-approved-return="{{ $item->approvedReturnQuantity ?? 0 }}" data-pending-return="{{ $item->unapprovedReturnQuantity ?? 0 }}">
                                         <td><input type="checkbox" name="product_ids[]" value="{{ $item->id }}" class="item-checkbox form-check-input"></td>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>{{ date('M d, Y', strtotime($item->created_at)) }}</td>
+                                        <td style="color:var(--slate-400);font-size:.72rem;">{{ $index + 1 }}</td>
+                                        <td style="white-space:nowrap;font-size:.74rem;">{{ date('M d, Y', strtotime($item->created_at)) }}</td>
                                         <td><span class="product-name">{{ $item->productName }}</span></td>
                                         <td><span class="mono">{{ number_format($item->quantity - (($item->approvedReturnQuantity ?? 0))) }}</span></td>
-                                        <!--<td><span class="mono">{{ number_format($item->requestedQuantity) }}</span></td> -->
                                          <td><span class="mono">
                                             {{ ($item->status == 'Approved' ? $item->quantity : 0) - ($item->approvedReturnQuantity ?? 0) - ($item->unapprovedReturnQuantity ?? 0) }}
                                         </span></td>
-                                        <!--<td><span class="mono">{{ number_format($item->quantityDiff) }}</span></td> -->
                                          <td><span class="mono">{{ number_format($item->quantity - ($item->status == 'Approved' ? $item->quantity : 0) - ($item->unapprovedReturnQuantity ?? 0)) }}</span></td>
                                         <td><span class="mono">Tsh {{ number_format($item->price, 2) }}</span></td>
                                         <td><span class="mono amount-total">Tsh {{ number_format(($item->quantity - ($item->approvedReturnQuantity)) * $item->price, 2) }}</span></td>
-                                        <!--<td>
-                                            @if($item->status == 'Approved')<span class="badge-pill badge-approved">Approved</span>
-                                            @elseif($item->status == 'Returned')<span class="badge-pill badge-returned">Returned</span>
-                                            @else<span class="badge-pill badge-pending">Pending</span>@endif
-                                         </td>-->
                                         <td>
                                             @if($item->isDebt == 1)<span class="badge-pill badge-credit">Credit</span>
                                             @else<span class="badge-pill badge-cash">Cash</span>@endif
                                          </td>
-                                      <!--  <td>
-                                            <div class="person-cell"><div class="person-avatar">{{ substr(DB::table('accounts')->where('id', $item->supplier)->value('name') ?? 'U', 0, 2) }}</div>
-                                            {{ DB::table('accounts')->where('id', $item->supplier)->value('name') ?? 'Unknown Supplier' }}</div>
-                                         </td> -->
                                         <td>
                                             <div class="person-cell"><div class="person-avatar">{{ substr(DB::table('accounts')->where('id', $item->account)->value('name') ?? 'U', 0, 2) }}</div>
                                             {{ DB::table('accounts')->where('id', $item->account)->value('name') ?? 'Unknown' }}</div>

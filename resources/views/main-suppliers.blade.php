@@ -1077,72 +1077,6 @@
                                     </td>
                                 </tr>
 
-                                {{-- Edit Modal for each vendor --}}
-                                <div class="modal fade" id="editVendor{{ $vendor->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <div class="modal-title">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                    <h5>Edit Shop</h5>
-                                                </div>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <form action="updateVendor" method="post">
-                                                    @csrf
-                                                    <input type="hidden" name="vendor_id" value="{{ $vendor->id }}">
-
-                                                    <div class="field-row">
-                                                        <div class="field">
-                                                            <label class="field-label">Name <span class="req">*</span></label>
-                                                            <input type="text" class="field-input" name="name" value="{{ $vendor->name }}" required>
-                                                        </div>
-                                                        <div class="field">
-                                                            <label class="field-label">Contact <span class="req">*</span></label>
-                                                            <input type="text" class="field-input" name="contact" value="{{ $vendor->contact }}" required>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="field">
-                                                        <label class="field-label">Address <span class="req">*</span></label>
-                                                        <input type="text" class="field-input" name="address" value="{{ $vendor->location }}" required>
-                                                    </div>
-
-                                                    <div class="field-row">
-                                                        <div class="field">
-                                                            <label class="field-label">Business Type <span class="req">*</span></label>
-                                                            <select name="type" class="field-input" required>
-                                                                <option value="Wholesale"    {{ $vendor->businessType == 'Wholesale'    ? 'selected' : '' }}>Wholesale</option>
-                                                                <option value="Manufacturer" {{ $vendor->businessType == 'Manufacturer' ? 'selected' : '' }}>Manufacturer</option>
-                                                                <option value="Distributor"  {{ $vendor->businessType == 'Distributor'  ? 'selected' : '' }}>Distributor</option>
-                                                                <option value="Retailer"     {{ $vendor->businessType == 'Retailer'     ? 'selected' : '' }}>Retailer</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="field">
-                                                            <label class="field-label">Bank Name</label>
-                                                            <input type="text" class="field-input" name="bank" value="{{ $vendor->bank }}" placeholder="Optional">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="field">
-                                                        <label class="field-label">Account Number</label>
-                                                        <input type="text" class="field-input" name="account" value="{{ $vendor->account }}" placeholder="Optional">
-                                                    </div>
-
-                                                    <div class="field">
-                                                        <label class="field-label">Description</label>
-                                                        <textarea name="description" class="field-input" placeholder="Additional information about this supplier">{{ $vendor->description }}</textarea>
-                                                    </div>
-
-                                                    <button type="submit" class="btn-submit">
-                                                        <i class="bi bi-check-circle-fill"></i> Update Supplier
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 @endforeach
                             </tbody>
                         </table>
@@ -1156,13 +1090,83 @@
                     @endif
                 </div>
 
+                {{-- Edit modals are rendered OUTSIDE the table so Bootstrap can show
+                     them without a backdrop covering the page. --}}
+                @foreach ($fetch as $vendor)
+                <div class="modal fade" id="editVendor{{ $vendor->id }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div class="modal-title">
+                                    <i class="bi bi-pencil-fill"></i>
+                                    <h5>Edit Shop</h5>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="updateVendor" method="post">
+                                    @csrf
+                                    <input type="hidden" name="vendor_id" value="{{ $vendor->id }}">
+
+                                    <div class="field-row">
+                                        <div class="field">
+                                            <label class="field-label">Name <span class="req">*</span></label>
+                                            <input type="text" class="field-input" name="name" value="{{ $vendor->name }}" required>
+                                        </div>
+                                        <div class="field">
+                                            <label class="field-label">Contact <span class="req">*</span></label>
+                                            <input type="text" class="field-input" name="contact" value="{{ $vendor->contact }}" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="field">
+                                        <label class="field-label">Address <span class="req">*</span></label>
+                                        <input type="text" class="field-input" name="address" value="{{ $vendor->location }}" required>
+                                    </div>
+
+                                    <div class="field-row">
+                                        <div class="field">
+                                            <label class="field-label">Business Type <span class="req">*</span></label>
+                                            <select name="type" class="field-input" required>
+                                                <option value="Wholesale"    {{ $vendor->businessType == 'Wholesale'    ? 'selected' : '' }}>Wholesale</option>
+                                                <option value="Manufacturer" {{ $vendor->businessType == 'Manufacturer' ? 'selected' : '' }}>Manufacturer</option>
+                                                <option value="Distributor"  {{ $vendor->businessType == 'Distributor'  ? 'selected' : '' }}>Distributor</option>
+                                                <option value="Retailer"     {{ $vendor->businessType == 'Retailer'     ? 'selected' : '' }}>Retailer</option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label class="field-label">Bank Name</label>
+                                            <input type="text" class="field-input" name="bank" value="{{ $vendor->bank }}" placeholder="Optional">
+                                        </div>
+                                    </div>
+
+                                    <div class="field">
+                                        <label class="field-label">Account Number</label>
+                                        <input type="text" class="field-input" name="account" value="{{ $vendor->account }}" placeholder="Optional">
+                                    </div>
+
+                                    <div class="field">
+                                        <label class="field-label">Description</label>
+                                        <textarea name="description" class="field-input" placeholder="Additional information about this supplier">{{ $vendor->description }}</textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn-submit">
+                                        <i class="bi bi-check-circle-fill"></i> Update Supplier
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+
             </div>
         </main>
 
 {{-- ══════════════════════════════════════
      ADD SUPPLIER MODAL
 ══════════════════════════════════════ --}}
-<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">

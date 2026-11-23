@@ -450,9 +450,68 @@
                 <div class="grand-row">
                     <span class="grand-label">Grand total</span>
                     <span class="grand-val">Tsh {{ number_format($grandTotal) }}</span>
-    </div>
+                </div>
 
-     {{-- ── Footer ── --}}
+                @if(!isset($public) && isset($sales) && $sales)
+                {{-- ── Signature Verification ─ --}}
+                <div class="signature-section" style="margin-top:1.25rem; padding:1rem; border:1.5px solid var(--slate-200); border-radius:var(--r-lg); background:var(--white);">
+                    <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--slate-400); margin-bottom:.75rem; display:flex; align-items:center; gap:6px;">
+                        <i class="bi bi-pen" style="color:var(--amber);"></i> Delivery Verification
+                    </div>
+
+                    @if($sales->delivery_verified_at)
+                    <div style="background:var(--emerald-pale); border:1px solid var(--emerald); border-radius:var(--r); padding:.75rem 1rem; margin-bottom:.75rem;">
+                        <div style="font-size:12px; font-weight:700; color:var(--emerald); margin-bottom:4px;">
+                            <i class="bi bi-check-circle-fill"></i> Verified & Delivered
+                        </div>
+                        <div style="font-size:11.5px; color:var(--emerald);">
+                            Verified by: <strong>{{ $sales->verified_by }}</strong> on {{ \Carbon\Carbon::parse($sales->verified_at)->format('d M Y, h:i A') }}
+                        </div>
+                        <div style="font-size:11.5px; color:var(--emerald);">
+                            Receipt generated: {{ \Carbon\Carbon::parse($sales->created_at)->format('d M Y, h:i A') }}
+                        </div>
+                        @if($sales->signature)
+                        <div style="margin-top:.75rem; padding-top:.75rem; border-top:1px dashed var(--emerald);">
+                            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--emerald); margin-bottom:.5rem;">Signature</div>
+                            <img src="{{ $sales->signature }}" alt="Signature" style="height:80px; border:1px dashed var(--emerald); border-radius:4px; background:var(--white); padding:4px;">
+                        </div>
+                        @endif
+                    </div>
+
+                    <button type="button" onclick="copyWhatsAppMessage('{{ $sales->sales_id }}', '{{ addslashes($sales->cName ?? 'Mfungwa') }}', '{{ $sales->cPhone ?? '' }}', '{{ $sales->salesName ?? $sales->sales_id }}')" class="btn-amber" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--r); background:var(--emerald); color:var(--white); font-size:13px; font-weight:700; border:none; cursor:pointer; box-shadow:0 3px 14px rgba(5,150,105,.35);">
+                        <i class="bi bi-whatsapp"></i> Copy WhatsApp Message
+                    </button>
+                    @else
+                    <form action="{{ url('verifyDelivery') }}" method="POST" id="verifyForm">
+                        @csrf
+                        <input type="hidden" name="sales_id" value="{{ $sales->sales_id }}">
+                        <input type="hidden" name="signature" id="signatureData">
+
+                        <div style="margin-bottom:.75rem;">
+                            <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--slate-500); margin-bottom:5px;">Saini hapa (Sign here)</label>
+                            <canvas id="signatureCanvas" style="border:1.5px dashed var(--slate-300); border-radius:var(--r); background:var(--white); cursor:crosshair; width:100%; height:140px; touch-action:none;"></canvas>
+                            <div style="font-size:10px; color:var(--slate-400); margin-top:4px;">Andika kwa kutumia mouse au kidole</div>
+                        </div>
+
+                        <div style="margin-bottom:.75rem;">
+                            <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--slate-500); margin-bottom:5px;">Jina la Mthibitishaji (Verifier Name)</label>
+                            <input type="text" name="verified_by" class="field-input" style="width:100%; font-size:13px; padding:8px 12px; border:1.5px solid var(--slate-200); border-radius:var(--r); background:var(--white); color:var(--slate-800); outline:none;" required placeholder="Weka jina lako hapa...">
+                        </div>
+
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="submit" class="btn-confirm" style="padding:9px 20px; border-radius:var(--r); background:var(--emerald); color:var(--white); border:none; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 14px rgba(5,150,105,.25);">
+                                <i class="bi bi-check-circle-fill"></i> Thibitisha Uwasilishaji
+                            </button>
+                            <button type="button" onclick="clearSignature()" style="padding:9px 16px; border-radius:var(--r); border:1.5px solid var(--slate-200); background:transparent; font-size:13px; color:var(--slate-600); cursor:pointer;">
+                                <i class="bi bi-eraser"></i> Futa Saini
+                            </button>
+                        </div>
+                    </form>
+                    @endif
+                </div>
+                @endif
+
+                {{-- ── Footer ── --}}
         <div class="rcpt-footer">
             <div class="footer-dots">
                 <div class="footer-dot fd-amber"></div>
@@ -495,6 +554,137 @@ document.addEventListener('keydown', function(e) {
         e.stopPropagation();
     }
 }, true);
+</script>
+@endif
+
+@if(!isset($public))
+<script>
+(function() {
+    const canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let hasContent = false;
+
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        ctx.strokeStyle = '#0B1E3D';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches && e.touches[0];
+        const clientX = touch ? touch.clientX : e.clientX;
+        const clientY = touch ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top,
+        };
+    }
+
+    function startDraw(e) {
+        e.preventDefault();
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+        e.preventDefault();
+        if (!drawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        hasContent = true;
+    }
+
+    function stopDraw(e) {
+        if (e) e.preventDefault();
+        drawing = false;
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchcancel', stopDraw);
+
+    window.clearSignature = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasContent = false;
+        document.getElementById('signatureData').value = '';
+    };
+
+    const form = document.getElementById('verifyForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!hasContent) {
+                alert('Tafadhali saini kabla ya kuthibitisha.');
+                return;
+            }
+            const dataUrl = canvas.toDataURL('image/png');
+            document.getElementById('signatureData').value = dataUrl;
+            form.submit();
+        });
+    }
+})();
+
+function copyWhatsAppMessage(salesId, customerName, phone, receiptId) {
+    const receiptUrl = '{{ url('/receipt') }}' + '?sales_id=' + encodeURIComponent(salesId);
+   const message = `📋 *RIPOTI YA UPOKEAJI MALI (RISITI #${receiptId})*
+
+Habari Wakurugenzi/Mameneja,
+
+Taarifa fupi kuhusu huduma kwa wateja:
+• *Mteja:* ${customerName}
+• *Hali:* Mali imekwisha kupokewa na kuthibitishwa kikamilifu.
+• *Kitambulisho cha Risiti:* #${receiptId}
+
+Kuona risiti nzima na maelezo ya ziada, fungua hapa: ${receiptUrl}
+
+Asante.`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(function() {
+            alert('Ujumbe umewekwa kwenye clipboard. Sasa unaweza kuwasiliana na mteja kupitia WhatsApp.');
+        }).catch(function() {
+            fallbackCopyMessage(message);
+        });
+    } else {
+        fallbackCopyMessage(message);
+    }
+}
+
+function fallbackCopyMessage(message) {
+    const textarea = document.createElement('textarea');
+    textarea.value = message;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        alert('Ujumbe umewekwa kwenye clipboard. Sasa unaweza kuwasiliana na mteja kupitia WhatsApp.');
+    } catch (err) {
+        alert('Imeshindwa kuiga ujumbe. Tafadhali jaribu tena.');
+    }
+    document.body.removeChild(textarea);
+}
 </script>
 @endif
 @include('footer')

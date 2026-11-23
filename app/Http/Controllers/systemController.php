@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\accountModel;
 use App\Models\logModal;
 use App\Models\ActiveSession;
+use App\Models\debtTransfer;
 use App\Models\usersModel;
 use App\Models\productsModel;
 use App\Models\stock;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\customerModel;
 use App\Models\ordersModel;
 use App\Models\debtsModel;
+use App\Models\debtComment;
 use App\Models\UserAccount;
 use App\Models\BankingChip;
 use Carbon\Carbon;
@@ -858,7 +860,7 @@ public function uploadProfilePicture(Request $req) {
                 $debtQuery->whereDate('created_at', '<=', Carbon::parse($endDate)->toDateString());
             }        
             
-            $totalDebt = $debtQuery->sum('totalPrice') - $debtQuery->sum('paid');
+            $totalDebt = $debtQuery->sum('credit') < 1 ? $debtQuery->sum('totalPrice') : $debtQuery->sum('credit');
  
             // Count actual debt records (Debt + Partial) with date filter
             $debtCountQuery = ordersModel::where('account', $shop['id'])
@@ -924,7 +926,7 @@ public function uploadProfilePicture(Request $req) {
         // Get all customers with invoices (Debt, Partial, and Paid for full picture)
         // First, get all unique customer names with any invoice status
         $customerNames = ordersModel::where('account', $shop->id)
-            ->whereIn('status', ['Debt', 'Partial', 'Paid'])
+            ->whereIn('status', ['Debt', 'Partial', 'Paid', 'Paid Debt'])
             ->where('cName', '!=', '')
             ->distinct('cName')
             ->pluck('cName');
@@ -937,13 +939,15 @@ public function uploadProfilePicture(Request $req) {
         
         // Get all invoice data grouped by customer with payment info
         $invoiceData = ordersModel::where('account', $shop->id)
-            ->whereIn('status', ['Debt', 'Partial', 'Paid'])
+            ->whereIn('status', ['Debt', 'Partial', 'Paid', 'Paid Debt'])
             ->where('cName', '!=', '')
             ->where('orderName', '!=', '')
+            ->where('credit', '>', 0)
             ->selectRaw('
                 cName,
                 orderName,
-                SUM(totalPrice - paid) as total_debt,
+                SUM(credit) as tcredit,
+                SUM(totalprice) as tprice,
                 MAX(status) as status,
                 MAX(created_at) as last_order_date
             ')
@@ -951,6 +955,26 @@ public function uploadProfilePicture(Request $req) {
             ->get()
             ->groupBy('cName');
         
+        // Build return totals per invoice (salesName = orderName) to reduce outstanding debt
+        $returnData = salsModel::where('account', $shop->id)
+            ->where('status', 'Return')
+            ->where('transactionType', 'Credit')
+            ->selectRaw('salesName, account,
+                MAX(CASE WHEN transactionType = "Credit" THEN COALESCE(return_amount, totalPrice, 0) ELSE 0 END) as credit_return_total,
+                MAX(CASE WHEN transactionType = "Cash" THEN COALESCE(return_amount, totalPrice, 0) ELSE 0 END) as cash_return_total')
+            ->groupBy('salesName', 'account')
+            ->get()
+            ->keyBy('salesName');
+
+        // All order names per customer (any status) so returns show even for fully-returned orders
+        $customerAllOrderNames = ordersModel::where('account', $shop->id)
+            ->whereIn('cName', $customerNames)
+            ->where('orderName', '!=', '')
+            ->select('cName', 'orderName')
+            ->distinct()
+            ->get()
+            ->groupBy('cName');
+
         // Build debtors array with payment info
         $debtors = collect();
         foreach ($customerNames as $customerName) {
@@ -959,12 +983,18 @@ public function uploadProfilePicture(Request $req) {
             
             $totalDebt = 0;
             $totalPaid = 0;
+            $totalReturns = 0;
             $invoiceCount = 0;
             $paidInvoiceCount = 0;
             $lastActivity = null;
-            
+
+            // Madeni payments are per-customer, not per-invoice — compute once.
+            $madeniPaid = \App\Models\madeni::where('supplierId', $customer->name ?? $customerName)
+                ->where('account', $shop->id)
+                ->sum('amount');
+
             foreach ($customerInvoices as $invoice) {
-                $invoiceTotal = $invoice->total_debt ?? 0;
+                $invoiceTotal = $invoice->tcredit < 1 ? $invoice->tprice : $invoice->tcredit;
                 $totalDebt += $invoiceTotal;
                 $invoiceCount++;
                 
@@ -977,25 +1007,47 @@ public function uploadProfilePicture(Request $req) {
                     $paidAmount = debtsModel::where('orderId', $firstOrder->order_id)
                         ->where('account', $shop->id)
                         ->sum('amount');
+
                     $totalPaid += $paidAmount;
                     
-                    if ($paidAmount >= $invoiceTotal) {
+                    if (($paidAmount + $madeniPaid) >= $invoiceTotal) {
                         $paidInvoiceCount++;
                     }
                 }
+
+                // Reduce outstanding debt by returns recorded against this invoice
+                $matchedReturn = $returnData[$invoice->orderName] ?? null;
+                $invoiceReturns = $matchedReturn
+                    ? (float)$matchedReturn->credit_return_total + (float)$matchedReturn->cash_return_total
+                    : 0;
+                $totalReturns += $invoiceReturns;
                 
                 if (!$lastActivity || strtotime($invoice->last_order_date) > strtotime($lastActivity)) {
                     $lastActivity = $invoice->last_order_date;
                 }
             }
-            
-            $remaining = max(0, $totalDebt - $totalPaid);
+
+            // Apply per-customer madeni payments once (not per-invoice).
+            $totalPaid += $madeniPaid;
+
+            // Customer's total returns across ALL their orders (incl. fully-returned ones excluded from active debt)
+            $displayReturns = 0;
+            $allNames = $customerAllOrderNames->get($customerName, collect());
+            foreach ($allNames as $co) {
+                $mr = $returnData[$co->orderName] ?? null;
+                if ($mr) {
+                    $displayReturns += (float)$mr->credit_return_total + (float)$mr->cash_return_total;
+                }
+            }
+
+            $remaining = max(0, $totalDebt - $totalPaid - $displayReturns);
             
             $debtors->push((object)[
                 'cName' => $customerName,
                 'cPhone' => $customer->id ?? 'N/A',
                 'total_debt' => $totalDebt,
                 'total_paid' => $totalPaid,
+                'returns' => $displayReturns,
                 'remaining' => $remaining,
                 'order_count' => $invoiceCount,
                 'paid_invoices' => $paidInvoiceCount,
@@ -1033,56 +1085,134 @@ public function uploadProfilePicture(Request $req) {
         $startDate = $endDate = null;
     }
 
-    // Get all order items for this customer with Debt or Partial status
-    $debtProductsQuery = ordersModel::leftJoin('products', function($join) {
-            $join->on('orders.productId', '=', 'products.product_id')
-                 ->on('orders.account', '=', 'products.account');
-        })
-        ->where('orders.account', $shopName)
+    // Distinct order names for this customer across ALL statuses (used to match return sales),
+    // so returns against fully-returned (excluded) orders are also matched.
+    $orderNames = ordersModel::where('account', $shopName)
+        ->where('cName', $customerName)
+        ->where('orderName', '!=', '')
+        ->where('credit', '>', 0)
+        ->distinct()
+        ->pluck('orderName');
+
+    $returnData = salsModel::where('account', $shopName)
+        ->whereIn('salesName', $orderNames) // Matching orderName to salesName
+        ->where('status', 'Return')
+        ->where('transactionType', 'Credit')
+        ->selectRaw('salesName, account,
+            MAX(CASE WHEN transactionType = "Credit" THEN COALESCE(return_amount, totalPrice, 0) ELSE 0 END) as credit_return_total,
+            MAX(CASE WHEN transactionType = "Cash" THEN COALESCE(return_amount, totalPrice, 0) ELSE 0 END) as cash_return_total')
+        ->groupBy('salesName', 'account')
+        ->get()
+        ->keyBy('salesName'); // Key by salesName for easy lookup during iteration
+
+    // Get all order items for this customer: normal debt orders PLUS fully-returned orders
+    // (status='Return') that have a matching return, so the return is visible and reduces
+    // that invoice's remaining balance to zero.
+    $debtOrderIdsQuery = ordersModel::where('orders.account', $shopName)
+    ->where('credit', '>', 0)
         ->where('orders.cName', $customerName)
-        ->whereIn('orders.status', ['Debt', 'Partial'])
+        ->where(function($q) use ($returnData) {
+            $q->whereIn('orders.status', ['Debt', 'Partial', 'Paid Debt', 'Paid']);
+            if ($returnData->isNotEmpty()) {
+                $q->orWhere(function($q2) use ($returnData) {
+                    $q2->where('orders.status', 'Return')
+                       ->whereIn('orders.orderName', $returnData->keys());
+                });
+            }
+        })
         ->where('orders.orderName', '!=', '')
-        ->where('orders.productId', '!=', '');
+        ->select('orders.id')
+        ->distinct();
 
-    if (!empty($startDate)) {
-        $debtProductsQuery->whereDate('orders.created_at', '>=', Carbon::parse($startDate)->toDateString());
-    }
+if (!empty($startDate)) {
+    $debtOrderIdsQuery->whereDate('orders.created_at', '>=', Carbon::parse($startDate)->toDateString());
+}
 
-    if (!empty($endDate)) {
-        $debtProductsQuery->whereDate('orders.created_at', '<=', Carbon::parse($endDate)->toDateString());
-    }
+if (!empty($endDate)) {
+    $debtOrderIdsQuery->whereDate('orders.created_at', '<=', Carbon::parse($endDate)->toDateString());
+}
 
-    $debtProducts = $debtProductsQuery
-        ->select('orders.*', 'products.name01')
-        ->orderByDesc('orders.created_at')
-        ->get();
+$debtOrderIds = $debtOrderIdsQuery->pluck('orders.id');
+
+$debtProducts = ordersModel::whereIn('orders.id', $debtOrderIds)
+    ->orderByDesc('orders.created_at')
+    ->get();
+
+$productIds = $debtProducts->pluck('productId')->filter()->unique();
+$productNames = productsModel::whereIn('product_id', $productIds)
+    ->get()
+    ->keyBy('product_id');
+
+// Pass $returnData into the item iterator as well if needed
+$debtProducts->each(function($item) use ($productNames, $returnData) {
+    $item->name01 = $productNames[$item->productId]->name01 ?? null;
     
-    // Get unique invoice numbers for grouping
-    $invoices = $debtProducts->groupBy('orderName');
+    // Optional: map return totals directly on the raw item rows
+    $matchedReturn = $returnData[$item->orderName] ?? null;
+    $item->credit_return_total = $matchedReturn ? (float)$matchedReturn->credit_return_total : 0.0;
+    $item->cash_return_total = $matchedReturn ? (float)$matchedReturn->cash_return_total : 0.0;
+});
+
+// Get unique invoice numbers for grouping
+$invoices = $debtProducts->groupBy('orderName');
+
+// Load recorded debt/return transfers for this customer (used to rebalance remaining)
+$transfers = debtTransfer::where('shop', $shopName)
+    ->where('customer', $customerName)
+    ->get();
+
+// Calculate paid amounts for each invoice from debtsModel table
+$invoicePayments = [];
+foreach ($invoices as $invoiceName => $items) {
+    // Get the first item to get order_id / customer info
+    $firstItem = $items->first();
     
-    // Calculate paid amounts for each invoice from debtsModel table
-    $invoicePayments = [];
-    foreach ($invoices as $invoiceName => $items) {
-        // Get the first item to get order_id
-        $firstItem = $items->first();
-        
-        // Calculate total debt - use credit if available, otherwise use totalPrice
-        
-        $totalDebt = $items->where('credit', '>', 0)->sum('credit') == 0 ? $items->sum('totalPrice') : $items->sum('credit');
-        
-        // Get amount already paid from debtsModel table
-        $paidAmount = debtsModel::where('orderId', $firstItem->order_id)
-            ->where('account', $shopName)
-            ->sum('amount');
-        
-        // Calculate remaining (ensure it doesn't go below 0)
-        $remaining = max(0, $totalDebt - $paidAmount);
-        
-        $invoicePayments[$invoiceName] = [
-            'paid' => $paidAmount,
-            'total' => $totalDebt,
-            'remaining' => $remaining
-        ];
+    // Calculate total debt
+    $cre = $items->sum('credit');
+    $tot = $items->sum('totalPrice');
+    // Fallback to total price if credit column is 0 or null
+    $totalDebt = ($cre > 0) ? $cre : $tot;
+    
+    // --- LOOKUP ATTACHED RETURN RECORDS FOR THIS INVOICE ---
+    $matchedReturn = $returnData[$invoiceName] ?? null;
+    
+    $creditReturnTotal = $matchedReturn ? (float)$matchedReturn->credit_return_total : 0.0;
+    $cashReturnTotal = $matchedReturn ? (float)$matchedReturn->cash_return_total : 0.0;
+    
+    // Combine returns that reduce the overall outstanding debt balance
+    $totalReturns = $creditReturnTotal + $cashReturnTotal;
+    
+    // Fetch payments made toward this specific order
+    $paidAmount = debtsModel::where('orderId', $firstItem->order_id)
+        ->where('account', $shopName)
+        ->sum('amount');
+
+    // Fetch general payments made via the madeni table
+    $madeniPaid = \App\Models\madeni::where('supplierId', $firstItem->cName)
+        ->where('account', $shopName)
+        ->sum('amount');
+    
+    $totalPaid = $paidAmount + $madeniPaid;
+
+    // --- APPLY TRANSFERS ---
+    // A return/credit transferred INTO this invoice reduces its remaining (the target debt).
+    // The SOURCE invoice is intentionally left unchanged so a transferred return stays a
+    // return and a transferred credit stays a credit (its nature is preserved).
+    $transferredIn  = (float) $transfers->where('to_invoice', $invoiceName)->sum('amount');
+    $transferredOut = (float) $transfers->where('from_invoice', $invoiceName)->sum('amount');
+    
+    // Deduct payments, returns and incoming transfers from the initial debt balance
+    $remaining = max(0, $totalDebt - $totalPaid - $totalReturns - $transferredIn);
+    
+    // Store final computed structures into your key tracker
+    $invoicePayments[$invoiceName] = [
+        'paid' => $totalPaid,
+        'total' => $totalDebt,
+        'returns' => $totalReturns,
+        'transferred_in' => $transferredIn,
+        'transferred_out' => $transferredOut,
+        'remaining' => $remaining
+    ];
     }
     
     // Get available chip balance from last chip entry
@@ -1096,16 +1226,275 @@ public function uploadProfilePicture(Request $req) {
             $availableChip = $lastChip->available_chip;
         }
     }
-    
+
+    // Load debt comments for these invoices
+    $invoiceOrderIds = $debtProducts->pluck('order_id')->filter()->unique();
+    $debtComments = debtComment::whereIn('order_id', $invoiceOrderIds)
+        ->where(function ($query) use ($shopName) {
+            $query->where('account', $shopName)
+                ->orWhereNull('account');
+        })
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->groupBy('order_id');
+
     $data = compact(
         'customerName', 'shopName', 'debtProducts', 'invoices', 'invoicePayments',
-        'startDate', 'endDate', 'availableChip'
+        'startDate', 'endDate', 'availableChip', 'debtComments', 'transfers'
     );
-    
+
     return view('customerDebtProducts', $data);
 }
-    
-    // Undo latest debt payment for a specific invoice
+
+    /**
+     * Transfer a return/credit (or debt) from one invoice to another so the balance evens out.
+     * The transferred amount reduces the target invoice's remaining and adds back to the
+     * source invoice's remaining (the return credit is moved, not duplicated).
+     */
+    public function transferDebt(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to transfer debt.')) {
+            return $permissionCheck;
+        }
+
+        $customer    = $request->input('customer');
+        $shop        = $request->input('shop');
+        $fromInvoice = $request->input('from_invoice');
+        $toInvoice   = $request->input('to_invoice');
+        $amount      = (float) $request->input('amount', 0);
+        $transferDate = $request->input('transfer_date') ?: date('Y-m-d');
+
+        // Validate
+        if (!$customer || !$shop || !$fromInvoice || !$toInvoice) {
+            return redirect()->back()->with('error', 'Customer, shop and both invoices are required.');
+        }
+
+        if ($fromInvoice === $toInvoice) {
+            return redirect()->back()->with('error', 'Cannot transfer to the same invoice.');
+        }
+
+        if ($amount <= 0) {
+            return redirect()->back()->with('error', 'Transfer amount must be greater than 0.');
+        }
+
+        // Verify both invoices belong to the customer / shop
+        $fromExists = ordersModel::where('account', $shop)
+            ->where('cName', $customer)
+            ->where('orderName', $fromInvoice)
+            ->exists();
+        $toExists = ordersModel::where('account', $shop)
+            ->where('cName', $customer)
+            ->where('orderName', $toInvoice)
+            ->exists();
+
+        if (!$fromExists || !$toExists) {
+            return redirect()->back()->with('error', 'Selected invoice(s) not found for this customer.');
+        }
+
+        try {
+            $transfer = new debtTransfer();
+            $transfer->customer     = $customer;
+            $transfer->shop         = $shop;
+            $transfer->from_invoice = $fromInvoice;
+            $transfer->to_invoice   = $toInvoice;
+            $transfer->transfer_date = $transferDate;
+            $transfer->amount       = $amount;
+            $transfer->served_by    = $user->name ?? null;
+            $transfer->save();
+
+            // Log it
+            $log = new logModal();
+            $log->title = 'Debt Transferred';
+            $log->description = 'Transferred ' . number_format($amount, 2) . " from #{$fromInvoice} to #{$toInvoice} for {$customer} (date {$transferDate}) by " . ($user->name ?? 'system');
+            $log->save();
+
+            return redirect()->back()->with('success', "Transferred " . number_format($amount, 2) . " from #{$fromInvoice} to #{$toInvoice}.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Transfer failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a recorded debt/return transfer (undoes the rebalancing).
+     */
+    public function deleteTransfer(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('view_shop_debts', 'You do not have permission to delete transfers.')) {
+            return $permissionCheck;
+        }
+
+        try {
+            $transfer = debtTransfer::findOrFail($id);
+
+            $from = $transfer->from_invoice;
+            $to = $transfer->to_invoice;
+            $amount = $transfer->amount;
+            $customer = $transfer->customer;
+
+            $transfer->delete();
+
+            $log = new logModal();
+            $log->title = 'Debt Transfer Deleted';
+            $log->description = 'Deleted transfer of ' . number_format($amount, 2) . " (#{$from} -> #{$to}) for {$customer} by " . ($user->name ?? 'system');
+            $log->save();
+
+            return redirect()->back()->with('success', 'Transfer deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Delete failed: ' . $e->getMessage());
+        }
+    }
+
+    public function saveDebtComment(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('add_debt_comments', 'You do not have permission to add comments.')) {
+            return $permissionCheck;
+        }
+
+        $request->validate([
+            'order_id' => 'required',
+            'comment' => 'required|string|max:1000',
+        ]);
+
+        $shopName = getCurrentShopId();
+        $orderId = $request->input('order_id');
+
+        debtComment::where('order_id', $orderId)
+            ->where('account', $shopName)
+            ->delete();
+
+        debtComment::create([
+            'order_id' => $orderId,
+            'order_name' => $request->input('order_name'),
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'comment' => $request->input('comment'),
+            'account' => $shopName,
+        ]);
+
+        return redirect()->back()->with('success', 'Comment saved successfully.');
+    }
+
+    public function deleteDebtComment(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('add_debt_comments', 'You do not have permission to delete comments.')) {
+            return $permissionCheck;
+        }
+
+        $request->validate([
+            'comment_id' => 'required',
+        ]);
+
+        $comment = debtComment::where('id', $request->input('comment_id'))
+            ->where('account', getCurrentShopId())
+            ->first();
+
+        if ($comment) {
+            $comment->delete();
+        }
+
+        return redirect()->back()->with('success', 'Comment deleted successfully.');
+    }
+
+public function cleanupDebtDuplicates(Request $request)
+{
+    $user = Auth::user();
+
+    if ($permissionCheck = $this->ensureUserPermission('delete_orders', 'You do not have permission to cleanup duplicates.')) {
+        return $permissionCheck;
+    }
+
+    $shopName = $request->input('shop');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $confirmed = $request->input('confirmed');
+
+    $shop = accountModel::where('id', $shopName)->first();
+    if (!$shopName || !$shop) {
+        return redirect()->back()->with('error', 'Invalid shop selection');
+    }
+
+    $query = ordersModel::where('account', $shopName)
+        ->whereIn('status', ['Debt', 'Partial'])
+        ->where('orderName', '!=', '')
+        ->where('productId', '!=', '');
+
+    if (!empty($startDate)) {
+        $query->whereDate('created_at', '>=', Carbon::parse($startDate)->toDateString());
+    }
+    if (!empty($endDate)) {
+        $query->whereDate('created_at', '<=', Carbon::parse($endDate)->toDateString());
+    }
+
+    $orders = $query->orderBy('created_at')->get();
+
+    $grouped = [];
+    foreach ($orders as $order) {
+        $key = $order->orderName . '|' . $order->productId;
+        $grouped[$key][] = $order;
+    }
+
+    $duplicates = [];
+    $deleteIds = [];
+    foreach ($grouped as $key => $items) {
+        $items = collect($items);
+        if ($items->count() > 1) {
+            $keep = $items[0];
+            $duplicates[] = [
+                'orderName' => $keep->orderName,
+                'productId' => $keep->productId,
+                'keep_id' => $keep->id,
+                'duplicate_ids' => $items->slice(1)->pluck('id')->toArray(),
+                'count' => $items->count(),
+            ];
+            foreach ($items->slice(1) as $dup) {
+                $deleteIds[] = $dup->id;
+            }
+        }
+    }
+
+    if ($confirmed && !empty($deleteIds)) {
+        $deletedCount = 0;
+        DB::transaction(function () use ($deleteIds, $shopName, &$deletedCount) {
+            $items = ordersModel::whereIn('id', $deleteIds)->get();
+            foreach ($items as $item) {
+                $restoreQty = $item->pQuantity ?? 0;
+                $productId_ = $item->productId;
+                $item->delete();
+                $deletedCount++;
+
+                $product = productsModel::where('account', $shopName)
+                    ->where('product_id', $productId_)
+                    ->first();
+                if ($product) {
+                    $product->quantity += $restoreQty;
+                    $product->save();
+                }
+            }
+        });
+
+        return redirect()->route('cleanupDebtDuplicates', ['shop' => $shopName, 'start_date' => $startDate, 'end_date' => $endDate])
+            ->with('success', "Deleted $deletedCount duplicate item(s) successfully.");
+    }
+
+    return view('cleanupDebtDuplicates', [
+        'shopName' => $shopName,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'duplicates' => $duplicates,
+        'totalDuplicates' => count($deleteIds),
+        'confirmed' => $confirmed,
+    ]);
+}
+
+// Undo latest debt payment for a specific invoice
     public function undoInvoiceDebt(Request $request)
     {
         if ($permissionCheck = $this->ensureUserPermission('pay_debts', 'You do not have permission to undo debt payments.')) {
@@ -1127,16 +1516,30 @@ public function uploadProfilePicture(Request $req) {
             return redirect()->back()->with('error', 'Invoice not found');
         }
 
-        $latestPayment = debtsModel::where('orderId', $firstOrder->order_id)
+        $latestDebtsPayment = debtsModel::where('orderId', $firstOrder->order_id)
             ->where('account', $shopName)
             ->orderByDesc('id')
             ->first();
+
+        $latestMadeniPayment = \App\Models\madeni::where('supplierId', $firstOrder->cName)
+            ->where('account', $shopName)
+            ->orderByDesc('id')
+            ->first();
+
+        $latestPayment = null;
+        if ($latestDebtsPayment && $latestMadeniPayment) {
+            $latestPayment = $latestDebtsPayment->created_at > $latestMadeniPayment->created_at ? $latestDebtsPayment : $latestMadeniPayment;
+        } elseif ($latestDebtsPayment) {
+            $latestPayment = $latestDebtsPayment;
+        } elseif ($latestMadeniPayment) {
+            $latestPayment = $latestMadeniPayment;
+        }
 
         if (!$latestPayment) {
             return redirect()->back()->with('error', 'No payment found to undo for this invoice');
         }
 
-        $undoneAmount = $latestPayment->amount;
+        $undoneAmount = $latestPayment->amount ?? $latestPayment->amount;
         $latestPayment->delete();
 
         $allOrderItems = ordersModel::where('order_id', $firstOrder->order_id)
@@ -1268,6 +1671,54 @@ public function uploadProfilePicture(Request $req) {
             ($remaining > 0 ? $remaining . ' items remaining on this invoice.' : 'Invoice fully cleared.'));
     }
 
+    public function deleteSelectedDebtProducts(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($permissionCheck = $this->ensureUserPermission('delete_orders', 'You do not have permission to delete debt products.')) {
+            return $permissionCheck;
+        }
+
+        $ids = $request->input('ids', []);
+        $shopName = $request->input('shopName');
+
+        if (empty($ids) || !$shopName) {
+            return redirect()->back()->with('error', 'No items selected for deletion.');
+        }
+
+        $items = ordersModel::whereIn('id', $ids)
+            ->where('account', $shopName)
+            ->whereIn('status', ['Debt', 'Partial'])
+            ->get();
+
+        if ($items->isEmpty()) {
+            return redirect()->back()->with('error', 'No valid items found to delete.');
+        }
+
+        $deletedCount = 0;
+
+        DB::transaction(function () use ($items, $shopName, &$deletedCount) {
+            foreach ($items as $item) {
+                $restoreQty = $item->pQuantity ?? 0;
+                $productId_ = $item->productId;
+
+                $item->delete();
+                $deletedCount++;
+
+                $product = productsModel::where('account', $shopName)
+                    ->where('product_id', $productId_)
+                    ->first();
+
+                if ($product) {
+                    $product->quantity += $restoreQty;
+                    $product->save();
+                }
+            }
+        });
+
+        return redirect()->back()->with('success', $deletedCount . ' duplicate item(s) deleted successfully.');
+    }
+
     // New method: Pay debt for a specific invoice
     public function payInvoiceDebt(Request $request)
 {
@@ -1336,9 +1787,13 @@ $totalDebt = max(0, $debti - $paidi);
         ->where('account', $shopName)
         ->sum('amount');
 
-        
+    $madeniPaid = \App\Models\madeni::where('supplierId', $firstOrder->cName)
+        ->where('account', $shopName)
+        ->sum('amount');
 
-    $remainingDebt = max(0, $totalDebt - $paidAmount);
+    $totalPaidAmount = $paidAmount + $madeniPaid;
+
+    $remainingDebt = max(0, $totalDebt - $totalPaidAmount);
     
     if ($remainingDebt < 1) {
         return redirect()->route('customerDebtProducts', [
@@ -1346,7 +1801,7 @@ $totalDebt = max(0, $debti - $paidi);
             'shop' => $shopName,
             'start_date' => $startDate,
             'end_date' => $endDate
-        ])->with('error', 'This invoice ('.number_format($debti, 2).'Tsh  '.number_format($totalPaid, 2).'Tsh) is already fully paid');
+        ])->with('error', 'This invoice ('.number_format($debti, 2).'Tsh  '.number_format($totalPaidAmount, 2).'Tsh) is already fully paid');
     }
     
  
@@ -1462,7 +1917,7 @@ $totalDebt = max(0, $debti - $paidi);
     ]);
     
     // Recalculate remaining
-    $newPaidAmount = $paidAmount + $TotalPayment;
+    $newPaidAmount = $totalPaidAmount + $TotalPayment;
     $newRemaining = $totalDebt - $newPaidAmount;
     
     // Prepare redirect parameters
@@ -1571,7 +2026,6 @@ $totalDebt = max(0, $debti - $paidi);
         'status' => 'Debt'
     ]);
 
-$payment->status = 'Debt';
 
             $shopName = $request->input('shop', getCurrentShopId());
 
@@ -1756,7 +2210,7 @@ $payment->status = 'Debt';
                     'productPrice' => $validated['amount'],
                     'totalPrice' => $validated['amount'],
                     'return_amount' => 0,
-                    'credit' => 0,
+                    'credit' => $validated['amount'],
                     'bank' => 0,
                     'paid' => 0,
                     'transactionType' => 'Credit',
@@ -1903,5 +2357,29 @@ $payment->status = 'Debt';
         ]);
 
         return redirect()->back()->with('success', 'Active theme color updated');
+    }
+
+    public function updateThemeNavy(Request $request)
+    {
+        $request->validate([
+            'theme_navy' => 'required|string|size:7|regex:/^#[0-9a-fA-F]{6}$/',
+        ]);
+
+        $system = systemModel::first();
+        if (!$system) {
+            $system = new systemModel();
+        }
+
+        $system->theme_navy = $request->input('theme_navy');
+        $system->save();
+
+        logModal::create([
+            'title' => 'Theme Settings',
+            'description' => 'Primary navy color updated to ' . $request->input('theme_navy') . ' by ' . Auth::user()->name,
+            'user' => Auth::user()->name,
+            'status' => 'done'
+        ]);
+
+        return redirect()->back()->with('success', 'Primary color updated successfully');
     }
 }

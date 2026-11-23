@@ -6,7 +6,7 @@
         redirect('/signout')->send();
     }
 @endphp
-
+@include('links')
 <!-- Admin Sidebar Partial -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -17,7 +17,7 @@
     }
 
     :root {
-        --sidebar-bg: #0B1E3D;
+        --sidebar-bg: var(--theme-navy, #0B1E3D);
         --sidebar-hover-bg: rgba(var(--theme-primary-rgb, 245, 158, 11), 0.15);
         --sidebar-active-bg: var(--theme-primary);
         --sidebar-text: #ffffff;

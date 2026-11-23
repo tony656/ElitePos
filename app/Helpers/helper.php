@@ -42,14 +42,26 @@ if (! function_exists('getSessionAccountId')) {
 
  if (! function_exists('getCurrentShopId')) {
      /**
-      * Get the current shop ID from explicit shop selection only
-      * Returns null if no shop has been explicitly selected
-      */
+       * Get the current shop ID from explicit shop selection only
+       * Returns null if no shop has been explicitly selected
+       */
      function getCurrentShopId()
      {
-         return session('selected_shop_id');
+         $shopId = session('selected_shop_id');
+
+         if ($shopId !== null && !is_numeric($shopId)) {
+             $account = accountModel::where('name', $shopId)->first();
+             if ($account) {
+                 session(['selected_shop_id' => $account->id]);
+                 return $account->id;
+             }
+
+             return null;
+         }
+
+         return $shopId;
      }
- }
+  }
 
 if (! function_exists('getSessionAccountName')) {
     /**

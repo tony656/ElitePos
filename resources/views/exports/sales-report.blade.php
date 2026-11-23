@@ -14,6 +14,7 @@
                 <th>Customer</th>
                 <th>Served By</th>
                 <th>Date</th>
+                <th>Status</th>
                 <th>Total Price</th>
             </tr>
         </thead>
@@ -25,7 +26,8 @@
                     <td>{{ $sale->cName }}</td>
                     <td>{{ $sale->served_by }}</td>
                     <td>{{ $sale->created_at }}</td>
-                    <td>{{ $sale->totalPrice }}</td>
+                    <td>{{ ($sale->status ?? '') === 'Return' ? 'Return' : 'Sale' }}</td>
+                    <td>{{ ($sale->status ?? '') === 'Return' ? ($sale->return_amount ?: $sale->totalPrice) : $sale->totalPrice }}</td>
                 </tr>
             @endforeach
         </tbody>

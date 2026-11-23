@@ -644,6 +644,9 @@
         .cart-table tbody tr.offer-row td { background: #F0FDF4; }
         .cart-table tbody tr.offer-row:hover td { background: #DCFCE7; }
         .cart-table tbody tr.offer-row td:first-child { border-left: 3px solid var(--success); }
+        .cart-table tbody tr.return-row td { background: var(--danger-pale); }
+        .cart-table tbody tr.return-row:hover td { background: #FECACA; }
+        .cart-table tbody tr.return-row td:first-child { border-left: 3px solid var(--danger); }
 
         .cart-product-name {
             font-weight: 600;
@@ -1117,6 +1120,118 @@
         .text-danger { color: var(--danger); }
         .text-success { color: var(--success); }
         .position-relative { position: relative; }
+    
+
+        /* =========================================================
+           KESSY POS — BLUE INVENTORY / SALES PAGE THEME
+           Visual refresh only: existing Blade logic and IDs retained.
+        ========================================================= */
+        :root {
+            --primary-dark:#06477F;
+            --primary-mid:#07569A;
+            --primary-light:#0873C1;
+            --accent:#0B68B2;
+            --accent-dark:#07569A;
+            --accent-pale:#E5F1FC;
+            --success:#0A9B70;
+            --success-pale:#E7F7F1;
+            --danger:#E34255;
+            --danger-pale:#FDECEF;
+            --info:#7546D8;
+            --info-pale:#F0EAFE;
+            --fuchsia:#A13BC2;
+            --fuchsia-pale:#F8EAFB;
+            --sky:#087FC4;
+            --sky-pale:#E8F5FD;
+            --gray-50:#F7FAFE;
+            --gray-100:#EFF4F9;
+            --gray-200:#DFE8F1;
+            --gray-300:#CBD8E5;
+            --gray-400:#91A4B8;
+            --gray-500:#647B91;
+            --gray-600:#496176;
+            --gray-700:#304B63;
+            --gray-800:#1C3852;
+            --gray-900:#102D47;
+            --shadow-sm:0 1px 4px rgba(10,55,95,.06);
+            --shadow-md:0 4px 14px rgba(10,55,95,.08);
+            --shadow-lg:0 8px 24px rgba(10,55,95,.12);
+            --radius:9px;
+            --radius-sm:7px;
+            --radius-xs:5px;
+        }
+        body{background:#F1F5FA;color:#183A58;font-size:13px}
+        .main-wrap{max-width:1920px;padding:16px 18px}
+        .page-header{background:#fff;border:1px solid #DFE8F1;border-radius:9px;box-shadow:var(--shadow-sm);padding:13px 16px;margin-bottom:12px}
+        .page-header:before{display:none}
+        .page-title{color:#06477F;font-size:1.25rem;font-weight:800}
+        .page-subtitle{color:#647B91;font-size:.76rem;margin-top:2px}
+        .page-header-icon{width:43px;height:43px;background:#E6F1FB;border:0;color:#0868B2;border-radius:8px;font-size:1.35rem}
+        .btn-header{background:#0868B2;color:#fff;border:1px solid #0868B2;border-radius:6px;padding:.48rem .85rem;font-size:.75rem}
+        .btn-header:hover{background:#054D88;color:#fff;border-color:#054D88;transform:translateY(-1px)}
+        .layout-grid{grid-template-columns:minmax(0,1fr) 340px;gap:12px}
+        .panel{border:1px solid #DFE8F1;border-radius:9px;box-shadow:0 2px 7px rgba(10,55,95,.045)}
+        .panel-header{background:#0863A9;padding:10px 14px;font-size:.8rem}
+        .panel-header i{color:#fff}
+        .search-section{padding:11px 14px;background:#FBFDFF}
+        .field-label{color:#526D86;font-size:.66rem}
+        .field-label i{color:#0871BC}
+        .field-input,.search-wrapper input,.shop-select-inline{border:1px solid #D5E1EC;border-radius:6px;background-color:#fff;font-size:.8rem;min-height:35px}
+        .field-input:focus,.search-wrapper input:focus,.shop-select-inline:focus{border-color:#1681CB;box-shadow:0 0 0 3px rgba(8,104,178,.10)}
+        .cart-toolbar{background:#F7FAFE;padding:8px 14px}
+        .cart-label{color:#34536D;font-size:.7rem}
+        .cart-label i{color:#0871BC}
+        .cart-badge{background:#DCEEFF;color:#07569A}
+        .btn-clear{border-color:#E2AAB2;color:#D63D50;background:#fff}
+        .cart-table{font-size:.76rem;min-width:650px}
+        .cart-table thead th{background:#0863A9;color:#fff;border-color:#0A70B9;padding:9px 9px;font-size:.64rem;letter-spacing:.035em}
+        .cart-table tbody td{padding:8px 9px;border-bottom:1px solid #E7EEF5;color:#294963}
+        .cart-table tbody tr:nth-child(even) td{background:#F8FBFE}
+        .cart-table tbody tr:hover td{background:#EDF6FE}
+        .cart-table tbody tr.offer-row td{background:#ECF9F3}
+        .cart-table tbody tr.return-row td{background:#FFF0F1}
+        .cart-product-name{color:#07569A;font-size:.77rem}
+        .qty-input{border:1px solid #D5E1EC;border-radius:5px}
+        .qty-input:focus{border-color:#0871BC;background:#F0F7FE}
+        .btn-delete{border-radius:5px}
+        .sidebar-section{padding:11px 13px}
+        .section-title{color:#526D86;font-size:.68rem}
+        .section-title i{color:#0871BC}
+        .customer-info{background:#F4F9FE;border:1px solid #DCE8F3;border-left:3px solid #0871BC}
+        .meta-chip{background:#F0F5FA;border:1px solid #E3EBF3}
+        .meta-chip-value{color:#07569A}
+        .pay-distribution{background:#F7FAFE;border-color:#DFE8F1}
+        .total-card{background:linear-gradient(115deg,#06477F,#0873C1);border-radius:7px;padding:12px 13px}
+        .total-card-amount{color:#fff;font-size:1.25rem;font-weight:800}
+        .total-card-currency{color:rgba(255,255,255,.72)}
+        .btn-submit{background:#0870B9;color:#fff;border-radius:6px;box-shadow:0 3px 10px rgba(8,104,178,.2);font-size:.86rem;padding:.68rem}
+        .btn-submit:hover{background:#05558F;box-shadow:0 5px 16px rgba(8,104,178,.25)}
+        .info-box{background:#EAF5FD;border-left-color:#087FC4;color:#31536E}
+        .modal-header-navy{background:#0863A9}
+        .modal-header-emerald{background:#0A9670}
+        .btn-resume{background:#0868B2}
+        .btn-resume:hover{background:#054D88}
+        .dropdown{border-color:#D7E4EF}
+        .dropdown-item:hover{background:#EFF7FE}
+        .dropdown-item-name{color:#07569A}
+        .selected-badge{background:#0863A9}
+        .offer-banner{background:#FBF3FD;border-bottom-color:#F0D9F5}
+        .suspended-row{border-left-color:#0871BC}
+        .suspended-row-name{color:#07569A}
+        .alert-success{background:#E8F7F1;border-left-color:#0A9B70}
+        .alert-danger{background:#FDECEF;border-left-color:#E34255}
+        .stats-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px}
+        .mini-stat{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:76px;padding:11px 13px;border:1px solid #DDE8F2;border-radius:8px;background:#fff;box-shadow:0 1px 4px rgba(10,55,95,.045)}
+        .mini-stat-label{font-size:.68rem;font-weight:700;color:#60788F;margin-bottom:3px}
+        .mini-stat-value{font-size:1.2rem;font-weight:800;line-height:1.2;color:#07569A;font-family:'DM Mono',monospace}
+        .mini-stat-note{font-size:.64rem;color:#8295A8;margin-top:3px}
+        .mini-stat-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:8px;background:#E5F1FC;color:#0868B2;font-size:1.2rem;flex-shrink:0}
+        .mini-stat.green{background:#F1FBF7;border-color:#D8F0E6}.mini-stat.green .mini-stat-icon{background:#DDF5EB;color:#07966B}.mini-stat.green .mini-stat-value{color:#07845F}
+        .mini-stat.purple{background:#F8F5FF;border-color:#EAE2FC}.mini-stat.purple .mini-stat-icon{background:#EEE7FF;color:#7546D8}.mini-stat.purple .mini-stat-value{color:#7546D8}
+        .mini-stat.orange{background:#FFF8F2;border-color:#F6E7D9}.mini-stat.orange .mini-stat-icon{background:#FFEDDF;color:#E56A22}.mini-stat.orange .mini-stat-value{color:#D65A18}
+        @media(max-width:1100px){.layout-grid{grid-template-columns:1fr}.stats-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:600px){.main-wrap{padding:9px}.stats-strip{gap:7px}.mini-stat{min-height:67px;padding:8px}.mini-stat-value{font-size:1rem}.mini-stat-icon{width:35px;height:35px;font-size:1rem}.page-header{padding:11px}.page-title{font-size:1.05rem}}
+
     </style>
 </head>
 <body>
@@ -1163,6 +1278,26 @@
             <button class="alert-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
         </div>
         @endif
+
+        {{-- ── Compact sales overview cards ── --}}
+        <div class="stats-strip">
+            <div class="mini-stat">
+                <div><div class="mini-stat-label">@lang('messages.products')</div><div class="mini-stat-value">{{ number_format($cart->where('offered_items', '!=', 1)->count()) }}</div><div class="mini-stat-note">Products in current order</div></div>
+                <div class="mini-stat-icon"><i class="bi bi-box-seam-fill"></i></div>
+            </div>
+            <div class="mini-stat green">
+                <div><div class="mini-stat-label">@lang('messages.items')</div><div class="mini-stat-value">{{ number_format($cart->sum('pQuantity')) }}</div><div class="mini-stat-note">Total quantity in cart</div></div>
+                <div class="mini-stat-icon"><i class="bi bi-cart-check-fill"></i></div>
+            </div>
+            <div class="mini-stat purple">
+                <div><div class="mini-stat-label">@lang('messages.sales_type')</div><div class="mini-stat-value" style="font-size:.98rem">{{ session('orderType', 'Sell') }}</div><div class="mini-stat-note">Current transaction</div></div>
+                <div class="mini-stat-icon"><i class="bi bi-receipt-cutoff"></i></div>
+            </div>
+            <div class="mini-stat orange">
+                <div><div class="mini-stat-label">@lang('messages.total')</div><div class="mini-stat-value" style="font-size:1rem">Tsh {{ number_format($cart->sum(function($row){ return ((float)($row->productPrice ?? 0) * (float)($row->pQuantity ?? 0)) - (float)($row->discount ?? 0) + (float)($row->discount_increase ?? 0); })) }}</div><div class="mini-stat-note">Current cart value</div></div>
+                <div class="mini-stat-icon"><i class="bi bi-cash-stack"></i></div>
+            </div>
+        </div>
 
         {{-- ── Layout Grid ── --}}
         <div class="layout-grid">
@@ -1307,7 +1442,7 @@
                                         }
                                     }
                                 @endphp
-                                <tr class="{{ $qualifies ? 'offer-row' : '' }}">
+                                <tr class="{{ $qualifies ? 'offer-row' : '' }} {{ session('orderType', 'Sell') == 'Return' ? 'return-row' : '' }}">
                                     <td data-label="@lang('messages.products_col_product')">
                                         <div class="cart-product-name" title="{{ $productName }}">
                                             {{ $productName }}
@@ -1809,10 +1944,12 @@ function addProductToOrder(id, name, price) {
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '{{ url("newOrder") }}';
+    const orderTypeSel = document.getElementById('orderType');
+    const orderType = orderTypeSel ? orderTypeSel.value : 'Sell';
     form.innerHTML = `
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <input type="hidden" name="pId" value="${id}">
-        <input type="hidden" name="orderType" value="Sell">
+        <input type="hidden" name="orderType" value="${orderType}">
         <input type="hidden" name="served" value="${document.getElementById('servedHidden').value}">
     `;
     document.body.appendChild(form);
@@ -2193,7 +2330,17 @@ document.getElementById('confirmReturnBtn').addEventListener('click', async () =
 // ════════════════════════════════════════════
 let offerCtx = null;
 
-document.querySelector('form[action="payout"]').addEventListener('submit', function() {
+document.querySelector('form[action="payout"]').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    if (btn && btn.dataset.submitted) {
+        e.preventDefault();
+        return false;
+    }
+    if (btn) {
+        btn.dataset.submitted = 'true';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+    }
     const items = JSON.parse(sessionStorage.getItem('offeredItems') || '[]');
     document.getElementById('offeredItemsInput').value = JSON.stringify(items);
 });

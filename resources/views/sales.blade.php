@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        /* ── CSS Variables ── */
         :root {
             --primary-dark:     #0B1E3D;
             --primary-mid:      #112952;
@@ -56,13 +55,11 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-        /* ── Main Wrapper ── */
         .main-wrap {
             max-width: 1920px;
             margin: 0 auto;
@@ -78,12 +75,11 @@
             .main-wrap { padding: 1rem; }
         }
 
-        /* ── Page Header ── */
         .page-header {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
             border-radius: var(--radius);
             padding: 1.5rem 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
             box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
@@ -189,7 +185,6 @@
             flex-wrap: wrap;
         }
 
-        /* ── Shop Select ── */
         .shop-select-wrapper {
             display: flex;
             align-items: center;
@@ -232,7 +227,6 @@
             color: var(--white);
         }
 
-        /* ── Export Button ── */
         .btn-export {
             display: inline-flex;
             align-items: center;
@@ -260,7 +254,6 @@
 
         .btn-export i { font-size: 1.1rem; }
 
-        /* ── Alert Messages ── */
         .alert {
             padding: 0.9rem 1.25rem;
             border-radius: var(--radius-sm);
@@ -306,7 +299,136 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── Stats Grid ── */
+        .top-filter-bar {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-bar-inner {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1 1 160px;
+            min-width: 140px;
+        }
+
+        .filter-field label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .filter-field input,
+        .filter-field select {
+            padding: 0.55rem 0.75rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--gray-50);
+            font-size: 0.875rem;
+            color: var(--gray-800);
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .filter-shop-select {
+            padding: 0.55rem 0.75rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--gray-50);
+            font-size: 0.875rem;
+            color: var(--gray-800);
+            outline: none;
+            transition: var(--transition);
+            font-family: inherit;
+            width: 100%;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(100,116,139,0.8)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+
+        .filter-shop-select:focus,
+        .filter-field input:focus,
+        .filter-field select:focus {
+            border-color: var(--primary-light);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(26, 58, 107, 0.08);
+        }
+
+        .filter-shop-select option {
+            background: var(--white);
+            color: var(--gray-800);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-apply {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.6rem 1.1rem;
+            background: var(--primary-dark);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn-apply:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.6rem 1.1rem;
+            background: var(--white);
+            color: var(--gray-600);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn-reset:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -401,76 +523,6 @@
             font-weight: 600;
         }
 
-        /* ── Content Grid ── */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 1.5rem;
-            align-items: start;
-            width: 100%;
-        }
-
-        @media (max-width: 1200px) {
-            .content-grid { 
-                grid-template-columns: 1fr 300px;
-                gap: 1.25rem;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .content-grid { 
-                grid-template-columns: 1fr;
-                gap: 1.25rem;
-            }
-        }
-
-        /* ── Search Panel ── */
-        .search-panel {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 0.85rem 1.25rem;
-            margin-bottom: 1.25rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .search-wrapper {
-            position: relative;
-        }
-
-        .search-wrapper .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray-400);
-            font-size: 1.1rem;
-        }
-
-        .search-wrapper input {
-            width: 100%;
-            padding: 0.7rem 1rem 0.7rem 3rem;
-            border: 1.5px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            background: var(--gray-50);
-            font-size: 0.875rem;
-            color: var(--gray-800);
-            outline: none;
-            transition: var(--transition);
-            font-family: inherit;
-        }
-
-        .search-wrapper input::placeholder {
-            color: var(--gray-400);
-        }
-
-        .search-wrapper input:focus {
-            border-color: var(--primary-light);
-            background: var(--white);
-            box-shadow: 0 0 0 4px rgba(26, 58, 107, 0.08);
-        }
-
-        /* ── Table Card ── */
         .table-card {
             background: var(--white);
             border: 1px solid var(--gray-200);
@@ -529,14 +581,12 @@
             border-bottom: none;
         }
 
-        /* ── Amount Mono ── */
         .amount-mono {
             font-family: 'DM Mono', monospace;
             font-weight: 600;
             font-size: 0.8rem;
         }
 
-        /* ── Status Badges ── */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -572,7 +622,6 @@
 
         .status-badge i { font-size: 0.6rem; }
 
-        /* ── Action Buttons ── */
         .action-group {
             display: flex;
             gap: 0.4rem;
@@ -644,7 +693,6 @@
             border-color: var(--gray-600);
         }
 
-        /* ── Empty State ── */
         .empty-state {
             text-align: center;
             padding: 3rem 1.5rem;
@@ -675,315 +723,6 @@
             color: var(--gray-500);
         }
 
-        /* ── Sidebar ── */
-        .sidebar-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            width: 100%;
-        }
-
-        .sidebar-section {
-            width: 100%;
-        }
-
-        /* ── Calendar ── */
-        .calendar-card {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 1.25rem;
-            box-shadow: var(--shadow-sm);
-            width: 100%;
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.85rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .calendar-header h6 {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .calendar-header .calendar-hint {
-            font-size: 0.65rem;
-            color: var(--gray-400);
-        }
-
-        .calendar-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .calendar-nav-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-xs);
-            background: transparent;
-            border: 1.5px solid var(--gray-200);
-            color: var(--gray-700);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            flex-shrink: 0;
-        }
-
-        .calendar-nav-btn:hover {
-            background: var(--primary-dark);
-            color: var(--white);
-            border-color: var(--primary-dark);
-        }
-
-        .calendar-month-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-
-        .calendar-grid {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .calendar-grid th {
-            padding: 0.4rem 0.2rem;
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: var(--gray-500);
-            text-align: center;
-        }
-
-        .calendar-grid td {
-            padding: 0.4rem 0.2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.78rem;
-            color: var(--gray-700);
-            border-radius: var(--radius-xs);
-        }
-
-        .calendar-grid td:hover {
-            background: var(--accent-pale);
-            color: #92400E;
-        }
-
-        .calendar-grid td.today {
-            background: var(--primary-dark);
-            color: var(--white);
-            font-weight: 700;
-        }
-
-        .calendar-grid td.has-sale {
-            background: var(--success-pale);
-            color: #065F46;
-            font-weight: 600;
-        }
-
-        .calendar-grid td.has-sale:hover {
-            background: var(--success);
-            color: var(--white);
-        }
-
-        /* ── Summary Card ── */
-        .summary-card {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 1.25rem;
-            box-shadow: var(--shadow-sm);
-            width: 100%;
-        }
-
-        .summary-card h6 {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 0 0 1rem 0;
-            padding-bottom: 0.85rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.6rem 0;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-        }
-
-        .summary-row .label {
-            font-size: 0.8rem;
-            color: var(--gray-500);
-        }
-
-        .summary-row .value {
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: var(--gray-800);
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 1024px) {
-            .header-content { 
-                flex-direction: column; 
-                align-items: stretch; 
-            }
-            
-            .header-actions { 
-                width: 100%; 
-                flex-direction: column; 
-                align-items: stretch;
-            }
-            
-            .shop-select-wrapper { 
-                width: 100%; 
-                flex-wrap: wrap; 
-            }
-            
-            .shop-select { 
-                flex: 1; 
-                min-width: 120px; 
-            }
-            
-            .btn-export { 
-                width: 100%; 
-                justify-content: center; 
-            }
-        }
-
-        @media (max-width: 992px) {
-            .content-grid { 
-                grid-template-columns: 1fr;
-                gap: 1.25rem;
-            }
-            
-            .sidebar-wrapper {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1.25rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header-left { 
-                flex-wrap: wrap; 
-                width: 100%;
-            }
-            
-            .header-icon-wrapper { 
-                width: 44px; 
-                height: 44px; 
-                font-size: 1.25rem; 
-            }
-            
-            .header-title h1 { 
-                font-size: 1.15rem; 
-            }
-            
-            .page-header { 
-                padding: 1.25rem; 
-            }
-
-            .sidebar-wrapper {
-                grid-template-columns: 1fr;
-            }
-
-            /* Mobile table */
-            .sales-table thead { display: none; }
-            
-            .sales-table tbody tr {
-                display: block;
-                margin-bottom: 0.75rem;
-                border: 1px solid var(--gray-200);
-                border-radius: var(--radius-sm);
-                padding: 0.75rem;
-                background: var(--white);
-            }
-            
-            .sales-table tbody td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem 0;
-                border-bottom: 1px solid var(--gray-100);
-                text-align: left !important;
-            }
-            
-            .sales-table tbody td:last-child {
-                border-bottom: none;
-                padding-top: 0.75rem;
-                border-top: 1px solid var(--gray-200);
-                margin-top: 0.5rem;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            
-            .sales-table tbody td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                color: var(--gray-500);
-                font-size: 0.7rem;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-            }
-            
-            .action-group { 
-                width: 100%; 
-                justify-content: flex-end; 
-            }
-            
-            .action-group .d-flex { 
-                flex-wrap: wrap; 
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .content-grid { grid-template-columns: 1fr; }
-            .stat-card { padding: 1rem; }
-            .stat-value { font-size: 1.3rem; }
-            .header-actions { gap: 0.5rem; }
-            .shop-select { min-width: 100px; font-size: 0.75rem; }
-            .btn-export { font-size: 0.75rem; padding: 0.45rem 1rem; }
-        }
-
-        @media (max-width: 360px) {
-            .main-wrap { padding: 0.5rem; }
-            .page-header { padding: 0.75rem; }
-            .header-title h1 { font-size: 1rem; }
-            .header-subtitle { font-size: 0.75rem; }
-            .back-button { width: 36px; height: 36px; }
-            .header-icon-wrapper { width: 38px; height: 38px; font-size: 1rem; }
-        }
-
-        /* ── Helper Utilities ── */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-muted { color: var(--gray-500); }
@@ -1000,6 +739,134 @@
         .flex-wrap { flex-wrap: wrap; }
         .flex-column { flex-direction: column; }
         .w-100 { width: 100%; }
+
+        @media (max-width: 1024px) {
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .shop-select-wrapper {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .shop-select {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .btn-export {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-left {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .header-icon-wrapper {
+                width: 44px;
+                height: 44px;
+                font-size: 1.25rem;
+            }
+
+            .header-title h1 {
+                font-size: 1.15rem;
+            }
+
+            .page-header {
+                padding: 1.25rem;
+            }
+
+            .filter-bar-inner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-actions {
+                width: 100%;
+            }
+
+            .btn-apply,
+            .btn-reset {
+                flex: 1;
+            }
+
+            .sales-table thead { display: none; }
+
+            .sales-table tbody tr {
+                display: block;
+                margin-bottom: 0.75rem;
+                border: 1px solid var(--gray-200);
+                border-radius: var(--radius-sm);
+                padding: 0.75rem;
+                background: var(--white);
+            }
+
+            .sales-table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid var(--gray-100);
+                text-align: left !important;
+            }
+
+            .sales-table tbody td:last-child {
+                border-bottom: none;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--gray-200);
+                margin-top: 0.5rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .sales-table tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--gray-500);
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            .action-group {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .action-group .d-flex {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-card { padding: 1rem; }
+            .stat-value { font-size: 1.3rem; }
+            .header-actions { gap: 0.5rem; }
+            .shop-select { min-width: 100px; font-size: 0.75rem; }
+            .btn-export { font-size: 0.75rem; padding: 0.45rem 1rem; }
+        }
+
+        @media (max-width: 360px) {
+            .main-wrap { padding: 0.5rem; }
+            .page-header { padding: 0.75rem; }
+            .header-title h1 { font-size: 1rem; }
+            .header-subtitle { font-size: 0.75rem; }
+            .back-button { width: 36px; height: 36px; }
+            .header-icon-wrapper { width: 38px; height: 38px; font-size: 1rem; }
+        }
     </style>
 </head>
 <body>
@@ -1009,7 +876,7 @@
 <main class="main-content">
     <div class="main-wrap">
 
-        {{-- ── Page Header ── --}}
+        {{-- Page Header --}}
         <div class="page-header">
             <div class="header-content">
                 <div class="header-left">
@@ -1025,27 +892,14 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    @if(isset($allShops) && count($allShops) > 1)
-                    <div class="shop-select-wrapper">
-                        <span class="shop-select-label"><i class="bi bi-shop"></i> {{ __('messages.shop_label') }}</span>
-                        <select class="shop-select" onchange="changeShop(this.value)">
-                            @foreach($allShops as $shop)
-                            <option value="{{ $shop['id'] }}" 
-                                {{ (getCurrentShopId() == $shop['id'] ? 'selected' : '') }}>
-                                {{ $shop['name'] }} ({{ $shop['location'] ?? __('messages.na') }})
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    @endif
-                    <a href="{{ route('sales.export', ['selectedDate' => request('selectedDate')]) }}" class="btn-export">
+                    <a href="{{ route('sales.export', ['selectedDate' => request('selectedDate'), 'from_date' => request('from_date'), 'to_date' => request('to_date'), 'shop_id' => request('shop_id')]) }}" class="btn-export">
                         <i class="bi bi-download"></i> {{ __('messages.excel_report') }}
                     </a>
                 </div>
             </div>
         </div>
 
-        {{-- ── Alerts ── --}}
+        {{-- Alerts --}}
         @if(session('success'))
         <div class="alert alert-success">
             <span><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</span>
@@ -1060,7 +914,47 @@
         </div>
         @endif
 
-        {{-- ── Stat Cards ── --}}
+        {{-- Top Filter Bar --}}
+        <form class="top-filter-bar" action="{{ route('saleDate') }}" method="post">
+            @csrf
+            <div class="filter-bar-inner">
+                @if(isset($allShops) && count($allShops) > 1)
+                <div class="filter-field">
+                    <label>Shop</label>
+                    <select name="shop_id" class="filter-shop-select" onchange="this.form.submit()">
+                        @foreach($allShops as $shop)
+                        <option value="{{ $shop['id'] }}"
+                            {{ (getCurrentShopId() == $shop['id'] ? 'selected' : '') }}>
+                            {{ $shop['name'] }} ({{ $shop['location'] ?? __('messages.na') }})
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+                <div class="filter-field">
+                    <label>From</label>
+                    <input type="date" name="from_date" value="{{ $fromDate ?? '' }}" max="{{ date('Y-m-d') }}">
+                </div>
+                <div class="filter-field">
+                    <label>To</label>
+                    <input type="date" name="to_date" value="{{ $toDate ?? '' }}" max="{{ date('Y-m-d') }}">
+                </div>
+                <div class="filter-field">
+                    <label>Single Date</label>
+                    <input type="date" name="selectedDate" value="{{ $selectedDate ?? '' }}" max="{{ date('Y-m-d') }}">
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-apply">
+                        <i class="bi bi-funnel"></i> {{ __('messages.apply_filter') }}
+                    </button>
+                    <a href="{{ url('sales') }}" class="btn-reset">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        {{-- Stat Cards --}}
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-top">
@@ -1115,184 +1009,129 @@
             </div>
         </div>
 
-        {{-- ── Content Grid ── --}}
-        <div class="content-grid">
-            {{-- Main Content --}}
-            <div>
-                {{-- Search Panel --}}
-                <div class="search-panel">
-                    <div class="search-wrapper">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="search" id="searchInput" class="search-input" 
-                               placeholder="{{ __('messages.search_sales_placeholder') }}" 
-                               aria-label="{{ __('messages.search_sales_placeholder') }}">
-                    </div>
-                </div>
+        {{-- Search + Table --}}
+        <div class="search-panel">
+            <div class="search-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="search" id="searchInput" class="search-input"
+                       placeholder="{{ __('messages.search_sales_placeholder') }}"
+                       aria-label="{{ __('messages.search_sales_placeholder') }}">
+            </div>
+        </div>
 
-                {{-- Sales Table --}}
-                <div class="table-card">
-                    <div class="table-responsive">
-                        <table class="sales-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>{{ __('messages.date') }}</th>
-                                    <th>{{ __('messages.sales_id') }}</th>
-                                    <th>{{ __('messages.customer') }}</th>
-                                    <th>{{ __('messages.sales_agent') }}</th>
-                                    <th>{{ __('messages.status') }}</th>
-                                    <th class="text-center">{{ __('messages.col_qty') }}</th>
-                                    <th class="text-right">{{ __('messages.paid') }}</th>
-                                    <th class="text-right">{{ __('messages.credit') }}</th>
-                                    <th class="text-right">{{ __('messages.bank') }}</th>
-                                    <th class="text-right">{{ __('messages.total') }}</th>
-                                    <th class="text-right">{{ __('messages.actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if($sales->isEmpty())
-                                <tr>
-                                    <td colspan="12">
-                                        <div class="empty-state">
-                                            <div class="empty-icon">
-                                                <i class="bi bi-inbox"></i>
-                                            </div>
-                                            <h4>{{ __('messages.no_sales_found') }}</h4>
-                                            <p>{{ __('messages.sales_transactions_will_appear') }}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @else
-                                    @foreach ($sales as $index => $sale)
-                                    @php
-                                        if($sale->status == 'Debt') {
-                                            $statusClass = 'danger';
-                                            $statusIcon = 'bi-exclamation-circle';
-                                            $statusText = __('messages.credit');
-                                        } else if($sale->status == 'Return') {
-                                            $statusClass = 'secondary';
-                                            $statusIcon = 'bi-arrow-return-left';
-                                            $statusText = __('messages.returned');
-                                        } else {
-                                            $statusClass = 'success';
-                                            $statusIcon = 'bi-check-circle';
-                                            $statusText = $sale->transactionType ?? __('messages.cash_status');
-                                        }
-                                    @endphp
-                                    <tr>
-                                        <td data-label="#">{{ $index + 1 }}</td>
-                                        <td data-label="{{ __('messages.date') }}">{{ date('M d, Y', strtotime($sale->created_at)) }}</td>
-                                        <td data-label="{{ __('messages.sales_id') }}"><span class="fw-bold">{{ $sale->salesName }}</span></td>
-                                        <td data-label="{{ __('messages.customer') }}">{{ $sale->cName }}</td>
-                                        <td data-label="{{ __('messages.sales_agent') }}">{{ $sale->served_by }}</td>
-                                        <td data-label="{{ __('messages.status') }}">
-                                            <span class="status-badge {{ $statusClass }}">
-                                                <i class="bi {{ $statusIcon }}"></i> {{ $statusText }}
-                                            </span>
-                                        </td>
-                                        <td data-label="{{ __('messages.col_qty') }}" class="text-center">
-                                            <span class="amount-mono">{{ number_format($sale->totalQuantity ?? 0) }}</span>
-                                        </td>
-                                        <td data-label="{{ __('messages.paid') }}" class="text-right">
-                                            <span class="amount-mono">Tsh {{ number_format($sale->totalPaid ?? 0) }}</span>
-                                        </td>
-                                        <td data-label="{{ __('messages.credit') }}" class="text-right">
-                                            <span class="amount-mono">Tsh {{ number_format($sale->totalCredit ?? 0) }}</span>
-                                        </td>
-                                        <td data-label="{{ __('messages.bank') }}" class="text-right">
-                                            <span class="amount-mono">Tsh {{ number_format($sale->totalBank ?? 0) }}</span>
-                                        </td>
-                                        <td data-label="{{ __('messages.total') }}" class="text-right">
-                                            <span class="amount-mono fw-bold">Tsh {{ number_format(($sale->totalPaid ?? 0) + ($sale->totalCredit ?? 0) + ($sale->totalBank ?? 0)) }}</span>
-                                        </td>
-                                        <td data-label="{{ __('messages.actions') }}">
-                                            <div class="action-group">
-                                                <button class="btn-action track" 
-                                                        onclick="copyAndTrack('{{ $sale->salesName }}')"
-                                                        title="{{ __('messages.track_this_sale') }}">
-                                                    <i class="bi bi-diagram-3"></i>
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="sales-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ __('messages.date') }}</th>
+                            <th>{{ __('messages.sales_id') }}</th>
+                            <th>{{ __('messages.customer') }}</th>
+                            <th>{{ __('messages.sales_agent') }}</th>
+                            <th>{{ __('messages.status') }}</th>
+                            <th class="text-center">{{ __('messages.col_qty') }}</th>
+                            <th class="text-right">{{ __('messages.paid') }}</th>
+                            <th class="text-right">{{ __('messages.credit') }}</th>
+                            <th class="text-right">{{ __('messages.bank') }}</th>
+                            <th class="text-right">{{ __('messages.total') }}</th>
+                            <th class="text-right">{{ __('messages.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if($sales->isEmpty())
+                        <tr>
+                            <td colspan="12">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
+                                    <h4>{{ __('messages.no_sales_found') }}</h4>
+                                    <p>{{ __('messages.sales_transactions_will_appear') }}</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @else
+                            @foreach ($sales as $index => $sale)
+                            @php
+                                if($sale->status == 'Debt') {
+                                    $statusClass = 'danger';
+                                    $statusIcon = 'bi-exclamation-circle';
+                                    $statusText = __('messages.credit');
+                                } else if($sale->status == 'Return') {
+                                    $statusClass = 'secondary';
+                                    $statusIcon = 'bi-arrow-return-left';
+                                    $statusText = __('messages.returned');
+                                } else {
+                                    $statusClass = 'success';
+                                    $statusIcon = 'bi-check-circle';
+                                    $statusText = $sale->transactionType ?? __('messages.cash_status');
+                                }
+
+                                // For returns, show the returned amount; otherwise paid + credit + bank
+                                if($sale->status == 'Return') {
+                                    $rowTotal = $sale->totalReturn ?: ($sale->totalPrice ?? 0);
+                                } else {
+                                    $rowTotal = ($sale->totalPaid ?? 0) + ($sale->totalCredit ?? 0) + ($sale->totalBank ?? 0);
+                                }
+                            @endphp
+                            <tr>
+                                <td data-label="#">{{ $index + 1 }}</td>
+                                <td data-label="{{ __('messages.date') }}">{{ date('M d, Y', strtotime($sale->created_at)) }}</td>
+                                <td data-label="{{ __('messages.sales_id') }}"><span class="fw-bold">{{ $sale->salesName }}</span></td>
+                                <td data-label="{{ __('messages.customer') }}">{{ $sale->cName }}</td>
+                                <td data-label="{{ __('messages.sales_agent') }}">{{ $sale->served_by }}</td>
+                                <td data-label="{{ __('messages.status') }}">
+                                    <span class="status-badge {{ $statusClass }}">
+                                        <i class="bi {{ $statusIcon }}"></i> {{ $statusText }}
+                                    </span>
+                                </td>
+                                <td data-label="{{ __('messages.col_qty') }}" class="text-center">
+                                    <span class="amount-mono">{{ number_format($sale->totalQuantity ?? 0) }}</span>
+                                </td>
+                                <td data-label="{{ __('messages.paid') }}" class="text-right">
+                                    <span class="amount-mono">Tsh {{ number_format($sale->totalPaid ?? 0) }}</span>
+                                </td>
+                                <td data-label="{{ __('messages.credit') }}" class="text-right">
+                                    <span class="amount-mono">Tsh {{ number_format($sale->totalCredit ?? 0) }}</span>
+                                </td>
+                                <td data-label="{{ __('messages.bank') }}" class="text-right">
+                                    <span class="amount-mono">Tsh {{ number_format($sale->totalBank ?? 0) }}</span>
+                                </td>
+                                <td data-label="{{ __('messages.total') }}" class="text-right">
+                                    <span class="amount-mono fw-bold">Tsh {{ number_format($rowTotal) }}</span>
+                                </td>
+                                <td data-label="{{ __('messages.actions') }}">
+                                    <div class="action-group">
+                                        <button class="btn-action track"
+                                                onclick="copyAndTrack('{{ $sale->salesName }}')"
+                                                title="{{ __('messages.track_this_sale') }}">
+                                            <i class="bi bi-diagram-3"></i>
+                                        </button>
+                                        <form method="post" style="display: inline;">
+                                            @csrf
+                                            <input type="hidden" name="account" value="{{ $sale->account }}">
+                                            <div class="d-flex align-center gap-1">
+                                                <button class="btn-action view" formaction="/viewSales"
+                                                        name="sales_id" value="{{ $sale->sales_id }}"
+                                                        title="{{ __('messages.view_sale') }}">
+                                                    <i class="bi bi-eye"></i>
                                                 </button>
-                                                <form method="post" style="display: inline;">
-                                                    @csrf
-                                                    <input type="hidden" name="account" value="{{ $sale->account }}">
-                                                    <div class="d-flex align-center gap-1">
-                                                        <button class="btn-action view" formaction="/viewSales" 
-                                                                name="sales_id" value="{{ $sale->sales_id }}"
-                                                                title="{{ __('messages.view_sale') }}">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
-                                                        <button class="btn-action undo" formaction="/undoSales" 
-                                                                name="salesName" value="{{ $sale->salesName }}"
-                                                                title="{{ __('messages.undo_sale') }}">
-                                                            <i class="bi bi-x-circle"></i>
-                                                        </button>
-                                                    </div>
-                                                </form>
+                                                <button class="btn-action undo" formaction="/undoSales"
+                                                        name="salesName" value="{{ $sale->salesName }}"
+                                                        title="{{ __('messages.undo_sale') }}">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
                                             </div>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
             </div>
-
-            {{-- Sidebar --}}
-            @if (Auth::user()->levelStatus === 'Admin')
-            <div class="sidebar-wrapper">
-                {{-- Calendar Widget --}}
-                <div class="sidebar-section">
-                    <div class="calendar-card">
-                        <div class="calendar-header">
-                            <h6><i class="bi bi-calendar3"></i> {{ __('messages.filter_by_date') }}</h6>
-                            <span class="calendar-hint">{{ __('messages.click_date') }}</span>
-                        </div>
-
-                        <div class="calendar-nav">
-                            <button id="prevMonth" class="calendar-nav-btn" aria-label="{{ __('messages.previous_month') }}">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                            <span class="calendar-month-label" id="currentMonthYear"></span>
-                            <button id="nextMonth" class="calendar-nav-btn" aria-label="{{ __('messages.next_month') }}">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
-
-                        <div id="calendar"></div>
-
-                        <form id="dateForm" action="{{ route('saleDate') }}" method="post">
-                            @csrf
-                            <input type="hidden" id="selectedDate" name="selectedDate">
-                        </form>
-                    </div>
-                </div>
-
-                {{-- Summary Card --}}
-                <div class="sidebar-section">
-                    <div class="summary-card">
-                        <h6><i class="bi bi-pie-chart"></i> {{ __('messages.summary') }}</h6>
-                        <div class="summary-row">
-                            <span class="label">{{ __('messages.total_sales') }}</span>
-                            <span class="value">Tsh {{ number_format($Tsale ?? 0) }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span class="label">{{ __('messages.transactions') }}</span>
-                            <span class="value">{{ $sales->count() }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span class="label">{{ __('messages.avg_sale') }}</span>
-                            <span class="value">Tsh {{ number_format(($sales->count() > 0 ? ($Tsale ?? 0) / $sales->count() : 0)) }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span class="label">{{ __('messages.total_debt') }}</span>
-                            <span class="value" style="color:var(--danger);">Tsh {{ number_format($Tdebt ?? 0) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
         </div>
 
     </div>
@@ -1300,27 +1139,6 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    let saleDates = @json($monthlySaleDates);
-
-    function fetchSalesDates(year, month) {
-        const shopId = new URLSearchParams(window.location.search).get('shop_id');
-        let url = `/getSalesDates?year=${year}&month=${month}`;
-        if (shopId) {
-            url += `&shop_id=${shopId}`;
-        }
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                saleDates = data.dates;
-                createCalendar(month, year);
-            })
-            .catch(error => console.error('{{ __('messages.error_fetching_sales_dates') }}', error));
-    }
-
-    function checkSalesForDate(dateString) {
-        return saleDates.includes(dateString);
-    }
-
     $(document).ready(function() {
         $('#searchInput').on('keyup', function() {
             const value = $(this).val().toLowerCase();
@@ -1329,108 +1147,6 @@
             });
         });
     });
-
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-
-    function createCalendar(month, year) {
-        const calendar = document.getElementById('calendar');
-        calendar.innerHTML = '';
-
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDay = new Date(year, month, 1).getDay();
-
-        const monthNames = [
-            '{{ __('messages.january') }}', '{{ __('messages.february') }}', '{{ __('messages.march') }}', 
-            '{{ __('messages.april') }}', '{{ __('messages.may') }}', '{{ __('messages.june') }}',
-            '{{ __('messages.july') }}', '{{ __('messages.august') }}', '{{ __('messages.september') }}',
-            '{{ __('messages.october') }}', '{{ __('messages.november') }}', '{{ __('messages.december') }}'
-        ];
-        document.getElementById('currentMonthYear').innerText = `${monthNames[month]} ${year}`;
-
-        const today = new Date();
-        const todayDay = today.getDate();
-        const todayMonth = today.getMonth();
-        const todayYear = today.getFullYear();
-
-        const daysHeader = ['{{ __('messages.day_sun') }}', '{{ __('messages.day_mon') }}', '{{ __('messages.day_tue') }}', 
-                           '{{ __('messages.day_wed') }}', '{{ __('messages.day_thu') }}', '{{ __('messages.day_fri') }}', 
-                           '{{ __('messages.day_sat') }}'];
-        
-        const table = document.createElement('table');
-        table.classList.add('calendar-grid');
-
-        const headerRow = document.createElement('tr');
-        daysHeader.forEach(day => {
-            const th = document.createElement('th');
-            th.innerText = day;
-            headerRow.appendChild(th);
-        });
-        table.appendChild(headerRow);
-
-        let row = document.createElement('tr');
-
-        for (let i = 0; i < firstDay; i++) {
-            const td = document.createElement('td');
-            row.appendChild(td);
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const td = document.createElement('td');
-            td.innerText = day;
-
-            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-            if (day === todayDay && month === todayMonth && year === todayYear) {
-                td.classList.add('today');
-            }
-
-            if (saleDates.includes(dateString)) {
-                td.classList.add('has-sale');
-            }
-
-            td.addEventListener('click', function() {
-                const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                if (checkSalesForDate(formattedDate)) {
-                    document.getElementById('selectedDate').value = formattedDate;
-                    document.getElementById('dateForm').submit();
-                }
-            });
-
-            row.appendChild(td);
-
-            if ((day + firstDay) % 7 === 0) {
-                table.appendChild(row);
-                row = document.createElement('tr');
-            }
-        }
-
-        if (row.children.length > 0) {
-            table.appendChild(row);
-        }
-
-        calendar.appendChild(table);
-    }
-
-    document.getElementById('prevMonth').addEventListener('click', function() {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        fetchSalesDates(currentYear, currentMonth + 1);
-    });
-
-    document.getElementById('nextMonth').addEventListener('click', function() {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        fetchSalesDates(currentYear, currentMonth + 1);
-    });
-
-    createCalendar(currentMonth, currentYear);
 
     function changeShop(shopId) {
         const url = new URL(window.location.href);

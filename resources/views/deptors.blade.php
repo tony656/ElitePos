@@ -324,9 +324,10 @@
                         foreach ($suppliers as $order) {
                             $p = DB::table('madeni')->where('receivingsId', $order->receivingId)->orwhere('receivingsId', $order->receivingName)->where('supplierId', $order->supplier)->sum('amount');
                             
-                            $totalCredit  += ($order->total_price - $returns);
+                            $orderReturns = $order->return_total ?? 0;
+                            $totalCredit  += ($order->total_price - $orderReturns);
                             $totalPaidAll += $p;
-                            if ((($order->total_price - $returns) - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
+                            if ((($order->total_price - $orderReturns) - $p) > 0 && $order->isPaid == 0) $totalCreditOrds++;
                         }
                     }
                     $totalRemaining = $totalCredit - $totalPaidAll;
@@ -409,7 +410,8 @@
                                     @php
                                         $paid = DB::table('madeni')->where('account', $order->account)->where('receivingsId', $order->receivingId)->sum('amount');
  
-                                        $remaining = ($order->total_price - $returns) - $paid;
+                                        $orderReturns = $order->return_total ?? 0;
+                                        $remaining = ($order->total_price - $orderReturns) - $paid;
                                         $isFullyPaid = $order->isPaid == 1 || $remaining <= 0;
 
                                         $vendor = DB::table('accounts')->where('id', $order->account)->first();
@@ -438,7 +440,7 @@
                                             @endif
                                         </td>
                                         <td><span class="mono-val">{{ number_format($order->quantity) }}</span></td>
-                                        <td><span class="mono-val credit-val">{{ number_format($order->total_price - $returns) }}</span></td>
+                                        <td><span class="mono-val credit-val">{{ number_format($order->total_price - ($order->return_total ?? 0)) }}</span></td>
                                         <td><span class="mono-val paid-val">{{ number_format($paid) }}</span></td>
                                         <td>
                                             <span class="mono-val remaining-val {{ $remaining > 0 ? 'credit-val' : 'paid-val' }}">
@@ -454,7 +456,7 @@
                                                     data-date="{{ $date }}"
                                                     data-paid="{{ $paid }}"
                                                     data-orderid="{{ $order->receivingId }}"
-                                                    data-totalamount="{{ $order->total_price - $returns }}">
+                                                    data-totalamount="{{ $order->total_price - ($order->return_total ?? 0) }}">
                                                     <i class="bi bi-cash-coin"></i> Pay
                                                 </button>
                                                 @endif
@@ -679,6 +681,22 @@
             body.innerHTML = `<div style="text-align:center;padding:2.5rem;color:var(--rose);">
                 <i class="bi bi-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
                 <p style="font-size:13px;">Error loading products. Please try again.</p></div>`;
+        });
+    });
+
+    // Prevent double-click on payment modals
+    document.querySelectorAll('form[action="supplierPay"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const btn = this.querySelector('button[type="submit"]');
+            if (btn && btn.dataset.submitted) {
+                e.preventDefault();
+                return false;
+            }
+            if (btn) {
+                btn.dataset.submitted = 'true';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+            }
         });
     });
 </script>

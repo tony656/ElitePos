@@ -11,21 +11,22 @@ class madeni extends Model
 
     protected $table = 'madeni';
 
-     protected $fillable = [
-        'supplier_id',
-        'receivings_id',
-        'amount_paid',
+    protected $fillable = [
+        'supplierId',
+        'receivingsId',
+        'amount',
         'payment_date',
         'payment_method',
         'reference_number',
-        'notes'
+        'notes',
+        'account',
     ];
 
     protected $casts = [
-        'amount_paid' => 'decimal:2',
+        'amount' => 'decimal:2',
         'payment_date' => 'datetime',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -33,7 +34,7 @@ class madeni extends Model
      */
     public function receiving()
     {
-        return $this->belongsTo(recevingModel::class, 'receivingId');
+        return $this->belongsTo(recevingModel::class, 'receivingsId', 'receivingId');
     }
 
     /**
@@ -41,7 +42,7 @@ class madeni extends Model
      */
     public static function getTotalPaidForOrder($receivingId)
     {
-        return self::where('receivings_id', $receivingId)->sum('amount_paid');
+        return self::where('receivingsId', $receivingId)->sum('amount');
     }
 
     /**

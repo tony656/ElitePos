@@ -3,730 +3,794 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ __('messages.shop_report') }} — {{ is_string($dateParam) && str_contains($dateParam, 'to') ? $dateParam : date('F d, Y', strtotime($dateParam)) }}</title>
     @include("links")
+    
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* ── Reset & Variables ── */
+        :root {
+            --navy:         #084b87;
+            --navy-mid:     #0756a6;
+            --navy-light:   #0b66b2;
+            --amber:        #0b65b1;
+            --amber-pale:   #e8f2fc;
+            --emerald:      #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose:         #e5485d;
+            --rose-pale:    #fff0f1;
+            --violet:       #7844d6;
+            --violet-pale:  #f1ebff;
+            --sky:          #0874c5;
+            --sky-pale:     #e8f3ff;
+            --fuchsia:      #c026a8;
+            --fuchsia-pale: #fceafa;
+            --slate-50:     #f5f9fd;
+            --slate-100:    #edf3f9;
+            --slate-200:    #dce7f1;
+            --slate-300:    #c5d5e5;
+            --slate-400:    #8da4bb;
+            --slate-500:    #607b96;
+            --slate-600:    #45627e;
+            --slate-700:    #2d4c69;
+            --slate-800:    #183a5a;
+            --white:        #ffffff;
+            --font:         'DM Sans', system-ui, sans-serif;
+            --radius:       8px;
+            --radius-sm:    6px;
+            --shadow-sm:    0 2px 8px rgba(8, 61, 108, .06);
+            --shadow-md:    0 5px 16px rgba(8, 61, 108, .09);
+            --shadow-lg:    0 10px 28px rgba(8, 61, 108, .13);
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --bg:        #F7F6F2;
-            --surface:   #FFFFFF;
-            --border:    #E4E2DA;
-            --border-md: #CECCC4;
-            --text:      #0B1E3D;
-            --muted:     #7A7870;
-            --accent:    var(--theme-primary);
-            --green:     #1A6B45;
-            --green-bg:  #E6F4ED;
-            --red:       #B63A2F;
-            --red-bg:    #FDECEA;
-            --amber:     var(--theme-primary);
-            --amber-bg:  #FEF3D7;
-            --purple:    #1A3A6B;
-            --purple-bg: #EEECFA;
-            --shadow:    0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-            --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
-            --radius:    12px;
-            --radius-sm: 8px;
-            --font:      'DM Sans', system-ui, sans-serif;
-            --mono:      'DM Mono', monospace;
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         body {
-            background: var(--bg);
-            color: var(--text);
+            font-family: var(--font);
+            background: #f3f7fb;
+            color: var(--slate-800);
+            min-height: 100vh;
             font-size: 14px;
             line-height: 1.6;
-            font-family: var(--font);
         }
 
-        /* ── Layout ── */
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar-wrap { flex-shrink: 0; }
-        
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            padding: 2rem 2.5rem;
-            max-width: calc(100vw - 280px);
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
-        @media (max-width: 1024px) {
-            .main-content { padding: 1.5rem; max-width: 100%; }
+        .wrap { padding: 1.1rem 1.25rem 1.5rem; max-width: 1800px; margin: 0 auto; }
+
+        /* ── Page header ── */
+        .pg-header {
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: .25rem 0 .9rem;
+            margin-bottom: .55rem;
+            box-shadow: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            overflow: visible;
         }
-        @media (max-width: 768px) {
-            .main-content { padding: 1rem; }
+        .pg-header::before, .pg-header::after { display: none; }
+        .pg-left { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+        .header-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
+            flex-shrink: 0;
         }
+        .pg-title-text h1 { font-size: 1.42rem; font-weight: 700; color: #064b86; letter-spacing: -0.35px; margin: 0; display: flex; align-items: center; gap: 0.35rem; }
+        .pg-title-text h1 span { color: #0871c2; }
+        .pg-title-text p  { font-size: .78rem; color: #647f99; font-weight: 400; letter-spacing: 0.01em; margin-top: 1px; }
+        .pg-right { display: flex; gap: 8px; align-items: center; position: relative; z-index: 1; flex-wrap: wrap; }
+
+        /* ── Buttons ── */
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: .58rem 1rem;
+            font-size: .78rem;
+            font-weight: 600;
+            background: #0866b2;
+            color: #fff;
+            border: 1px solid #0866b2;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 3px 8px rgba(8, 102, 178, .18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.01em;
+        }
+        .btn-header:hover { background: #064f91; border-color: #064f91; color: #fff; transform: translateY(-1px); }
+        .btn-header:active { transform: translateY(0); }
+        .btn-header-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: .58rem 1rem;
+            font-size: .78rem;
+            font-weight: 600;
+            background: transparent;
+            color: var(--slate-600);
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.01em;
+        }
+        .btn-header-outline:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
 
         /* ── Alerts ── */
         .alert {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.9rem 1.25rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 1.5rem;
-            font-size: 13px;
+            padding: .7rem .9rem;
+            border-radius: var(--radius);
+            margin-bottom: .85rem;
+            font-size: .78rem;
             font-weight: 500;
-            animation: slideDown 0.3s ease;
         }
-        .alert-success { 
-            background: var(--green-bg); 
-            color: var(--green); 
-            border-left: 4px solid var(--green);
-        }
-        .alert-danger { 
-            background: var(--red-bg);   
-            color: var(--red);   
-            border-left: 4px solid var(--red);
-        }
-        .btn-close-sm {
+        .alert-success { background: var(--emerald-pale); color: #056f58; border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: #c9314a; border-left: 3px solid var(--rose); }
+        .close-btn {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 20px;
             color: inherit;
-            opacity: 0.5;
-            padding: 0 4px;
-            transition: var(--transition);
+            font-size: 1.05rem;
+            opacity: 0.6;
             line-height: 1;
+            font-family: inherit;
         }
-        .btn-close-sm:hover { opacity: 1; }
+        .close-btn:hover { opacity: 1; }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Page Header ── */
-        .page-header {
-            background: linear-gradient(135deg, #0B1E3D 0%, #1a3a6b 100%);
-            color: #fff;
-            padding: 1.75rem 2rem;
-            border-radius: var(--radius);
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            overflow: hidden;
-        }
-        .page-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .page-header-left { position: relative; z-index: 1; }
-        .page-title { 
-            font-size: 26px; 
-            font-weight: 700; 
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .page-title .badge-date {
-            font-size: 13px;
-            font-weight: 500;
-            background: rgba(255,255,255,0.15);
-            padding: 2px 14px;
-            border-radius: 20px;
-            letter-spacing: 0.3px;
-        }
-        .page-sub { 
-            font-size: 14px; 
-            color: rgba(255,255,255,0.7); 
-            margin-top: 4px;
-            font-weight: 400;
-        }
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── Date Form ── */
-        .date-form {
-            display: flex;
-            align-items: center;
-            background: rgba(255,255,255,0.12);
+        /* ── Filters ── */
+        .filters-card {
+            background: var(--white);
+            border: 1px solid #dce7f1;
             border-radius: var(--radius-sm);
-            padding: 4px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            padding: .8rem .95rem;
+            margin-bottom: .8rem;
         }
-        .date-form input[type=date] {
-            border: none;
-            outline: none;
-            padding: 7px 12px;
-            font-size: 13px;
-            background: transparent;
-            color: #fff;
-            font-family: var(--font);
-            min-width: 140px;
-        }
-        .date-form input[type=date]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-        .date-form .date-sep {
-            color: rgba(255,255,255,0.3);
-            padding: 0 4px;
-            font-weight: 300;
-        }
-        .date-form button {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 7px 18px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font);
+        .filters-row {
             display: flex;
+            gap: .7rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filter-group { flex: 1; min-width: 140px; }
+        .filter-label {
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
+        }
+        .filter-ctrl {
+            width: 100%;
+            font-family: var(--font);
+            font-size: .78rem;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
+        }
+        .filter-ctrl:focus {
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
+        }
+        select.filter-ctrl {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
             align-items: center;
-            gap: 6px;
+            padding-bottom: 1px;
+            flex-shrink: 0;
         }
-        .date-form button:hover { 
-            opacity: 0.85;
-            transform: scale(1.02);
-        }
-
-        /* ── Icon Buttons ── */
-        .btn-icon {
+        .btn-filter {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            text-decoration: none;
-            transition: var(--transition);
-            font-family: var(--font);
-            backdrop-filter: blur(4px);
-        }
-        .btn-icon:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.3);
-            transform: translateY(-1px);
-        }
-        .btn-icon i { font-size: 16px; }
-
-        /* ── Metric Cards ── */
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 14px;
-            margin-bottom: 2rem;
-        }
-        @media (max-width: 1200px) { .metrics { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 768px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px) { .metrics { grid-template-columns: 1fr; } }
-
-        .metric {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.25rem 1.5rem;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        .metric:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        .metric::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            border-radius: var(--radius) var(--radius) 0 0;
-        }
-        .metric.purple::after { background: var(--purple); }
-        .metric.green::after  { background: var(--green); }
-        .metric.red::after    { background: var(--red); }
-        .metric.amber::after  { background: var(--amber); }
-        .metric.blue::after   { background: #1A6B9B; }
-
-        .metric .metric-icon {
-            font-size: 20px;
-            color: var(--muted);
-            opacity: 0.6;
-            margin-bottom: 4px;
-        }
-        .metric-label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-        .metric-value {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-        }
-        .metric-sub {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 4px;
-            font-weight: 400;
-        }
-        .metric .metric-value { color: var(--text); }
-        .metric.purple .metric-value { color: var(--purple); }
-        .metric.green .metric-value  { color: var(--green); }
-        .metric.red .metric-value    { color: var(--red); }
-        .metric.amber .metric-value  { color: var(--amber); }
-        .metric.blue .metric-value   { color: #1A6B9B; }
-
-        /* ── Panel ── */
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            gap: 1rem;
-            flex-wrap: wrap;
-            background: #FAFAF7;
-        }
-        .panel-title {
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text);
-        }
-        .panel-title i {
-            color: var(--purple);
-            font-size: 20px;
-        }
-        .panel-title .count-badge {
-            background: var(--purple-bg);
-            color: var(--purple);
-            font-size: 12px;
-            padding: 0 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .panel-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        /* ── Search & Sort ── */
-        .search-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid var(--border-md);
-            border-radius: var(--radius-sm);
-            padding: 6px 12px;
-            background: var(--surface);
-            transition: var(--transition);
-        }
-        .search-wrap:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
-        }
-        .search-wrap i {
-            color: var(--muted);
-            font-size: 14px;
-        }
-        .search-wrap input {
+            gap: 5px;
+            padding: .55rem .9rem;
             border: none;
-            background: transparent;
-            outline: none;
-            font-size: 13px;
-            color: var(--text);
-            width: 180px;
-            font-family: var(--font);
-        }
-        .search-wrap input::placeholder { color: var(--muted); }
-
-        .sort-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid var(--border-md);
-            border-radius: var(--radius-sm);
-            padding: 6px 12px;
-            background: var(--surface);
-        }
-        .sort-wrap i {
-            color: var(--muted);
-            font-size: 14px;
-        }
-        .sort-wrap label {
-            font-size: 11px;
+            border-radius: var(--radius);
+            font-size: .8rem;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        .sort-wrap select {
-            border: none;
-            background: transparent;
-            outline: none;
-            font-size: 13px;
-            color: var(--text);
             cursor: pointer;
-            min-width: 140px;
-            font-family: var(--font);
-            padding: 2px 0;
-        }
-        .sort-wrap select:focus {
-            outline: none;
-        }
-
-        /* ── Table ── */
-        .tbl-scroll {
-            overflow-x: auto;
-            position: relative;
-            padding: 0 4px 4px 4px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 13px;
-            min-width: 1400px;
-        }
-
-        thead {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        thead th {
-            background: #F0EFEA;
-            color: var(--muted);
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 12px 14px;
-            text-align: right;
-            white-space: nowrap;
-            border-bottom: 2px solid var(--border-md);
-            position: relative;
-            z-index: 20;
-            transition: background 0.2s;
-            cursor: default;
-        }
-        thead th i {
-            font-size: 13px;
-            margin-right: 4px;
-        }
-        thead th:first-child,
-        thead th:nth-child(2) {
-            text-align: left;
-        }
-        thead th:first-child {
-            border-radius: 0 0 0 0;
-        }
-        thead th:last-child {
-            border-radius: 0 0 0 0;
-        }
-
-        /* Sticky columns */
-        thead th:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 30;
-            background: #F0EFEA;
-        }
-        thead th:nth-child(2) {
-            position: sticky;
-            left: 48px;
-            z-index: 30;
-            background: #F0EFEA;
-            text-align: left;
-        }
-
-        tbody td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-        }
-        tbody td:nth-child(2) {
-            position: sticky;
-            left: 48px;
-            z-index: 10;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover {
-            background: #F9F8F4;
-        }
-        tbody tr:hover td:first-child,
-        tbody tr:hover td:nth-child(2) {
-            background: #F9F8F4;
-        }
-        tbody tr.expanded {
-            background: #F3F2EE;
-        }
-        tbody tr.expanded td:first-child,
-        tbody tr.expanded td:nth-child(2) {
-            background: #F3F2EE;
-        }
-        tbody tr.warn-row {
-            background: #FFFBF0;
-        }
-        tbody tr.warn-row td:first-child,
-        tbody tr.warn-row td:nth-child(2) {
-            background: #FFFBF0;
-        }
-        tbody tr.warn-row:hover {
-            background: #FFF5D6;
-        }
-        tbody tr.warn-row:hover td:first-child,
-        tbody tr.warn-row:hover td:nth-child(2) {
-            background: #FFF5D6;
-        }
-
-        td {
-            padding: 12px 14px;
-            text-align: right;
-            vertical-align: middle;
-            font-size: 13px;
-        }
-        td:first-child,
-        td:nth-child(2) {
-            text-align: left;
-        }
-
-        /* ── Shop Cell ── */
-        .shop-cell {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            background: var(--purple-bg);
-            color: var(--purple);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+            background: #0866b2;
+            color: #fff;
+        }
+        .btn-filter:hover:not(:disabled) { background: #064f91; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,102,178,.25); }
+        .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-reset:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+
+        /* ── Metrics ── */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .7rem;
+            margin-bottom: .85rem;
+        }
+        @media (max-width: 900px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+        .metric-card {
+            background: var(--white);
+            border: 1px solid #dce8f3;
+            border-radius: var(--radius);
+            padding: .8rem .95rem;
+            box-shadow: none;
+            animation: none;
+        }
+        .metric-card::before { display: none; }
+        .metric-card::after { width: 90px; height: 90px; opacity: .25; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .metric-inner { display: flex; align-items: center; gap: .8rem; }
+        .metric-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; flex-shrink: 0;
+        }
+        .mi-emerald { background: var(--emerald-pale); color: var(--emerald); }
+        .mi-navy    { background: rgba(8,75,135,0.08); color: var(--navy-light); }
+        .mi-amber   { background: var(--amber-pale); color: var(--amber); }
+        .mi-violet  { background: var(--violet-pale); color: var(--violet); }
+        .mi-rose    { background: var(--rose-pale); color: var(--rose); }
+        .mi-blue    { background: var(--sky-pale); color: var(--sky); }
+        .mc-emerald { --mc: var(--emerald); }
+        .mc-navy    { --mc: var(--navy); }
+        .mc-amber   { --mc: var(--amber); }
+        .mc-violet  { --mc: var(--violet); }
+        .mc-rose    { --mc: var(--rose); }
+        .mc-blue    { --mc: var(--sky); }
+        .metric-label {
+            font-size: .68rem;
             font-weight: 700;
-            letter-spacing: 0.5px;
-            transition: var(--transition);
+            color: #59748f;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-bottom: .18rem;
         }
-        .shop-row:hover .avatar {
-            transform: scale(1.05);
+        .metric-value {
+            font-family: var(--font);
+            font-size: 1.45rem;
+            color: #084b87;
+            font-weight: 700;
+            line-height: 1.12;
+            letter-spacing: -.35px;
         }
-        .shop-name {
-            font-weight: 600;
-            color: var(--text);
-        }
-        .shop-loc {
-            font-size: 11px;
-            color: var(--muted);
+        .metric-sub {
+            font-size: 10px;
+            color: var(--slate-400);
+            margin-top: 2px;
         }
 
-        /* ── Numeric values ── */
+        /* ── Panel / Table ── */
+        .panel {
+            background: var(--white);
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            overflow: hidden;
+        }
+        .panel-head {
+            padding: .75rem .9rem;
+            background: #fff;
+            border-bottom: 1px solid #dce7f1;
+        }
+        .panel-head-left { display: flex; align-items: center; gap: .6rem; }
+        .panel-head-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
+            flex-shrink: 0;
+        }
+        .panel-title { font-size: .96rem; font-weight: 700; color: #084b87; margin: 0; }
+        .panel-title::before {
+            content: '';
+            width: 3px; height: 17px;
+            background: #0b68b4;
+            border-radius: 2px;
+            display: inline-block;
+            margin-right: .4rem;
+        }
+        .shop-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: .72rem;
+            font-weight: 600;
+            padding: .22rem .55rem;
+            background: #edf3f9;
+            color: var(--slate-500);
+            border-radius: 20px;
+            margin-left: auto;
+        }
+
+        /* Table */
+        .tbl-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e5edf5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .76rem;
+            min-width: 1400px;
+        }
+        /* Sticky shop name column when scrolling horizontally */
+        #shopTable thead th:first-child,
+        #shopTable tbody td:first-child {
+            width: 55px;
+        }
+        #shopTable thead th:nth-child(2),
+        #shopTable tbody td:nth-child(2) {
+            position: sticky;
+            left: 55px;
+            background: #fff;
+            z-index: 2;
+            box-shadow: 2px 0 6px -2px rgba(0,0,0,.08);
+        }
+        #shopTable tbody td:nth-child(2) .shop-cell {
+            background: #fff;
+        }
+        #shopTable tbody tr:nth-child(even) td:nth-child(2) { background: #f8fbfe; }
+        #shopTable tbody tr:hover td:nth-child(2) { background: #edf6ff; }
+        thead th {
+            background: #07569b;
+            color: #fff;
+            font-size: .66rem;
+            font-weight: 600;
+            letter-spacing: .015em;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(255,255,255,.13);
+            white-space: nowrap;
+            text-align: left;
+        }
+        thead th:last-child { text-align: right; }
+        tbody td {
+            padding: .52rem .68rem;
+            border: 1px solid #e5edf5;
+            color: #244866;
+            font-size: .74rem;
+            vertical-align: middle;
+        }
+        tbody tr:nth-child(even) td { background: #f8fbfe; }
+        tbody tr:hover td { background: #edf6ff; }
+        td.text-right { text-align: right; }
+
+        .date-val { font-size: .74rem; color: #31516e; font-variant-numeric: tabular-nums; }
+        .date-val span { display: block; font-size: .68rem; color: #7189a0; margin-top: 1px; }
+        .cust-name { font-weight: 600; color: #164a78; font-size: .76rem; margin-bottom: .08rem; }
+
+        .shop-cell {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .shop-avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--navy-light);
+            color: var(--white);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .78rem; font-weight: 700;
+        }
+        .shop-name { font-weight: 600; color: #164a78; font-size: .76rem; }
+        .shop-loc { font-size: .68rem; color: var(--slate-500); }
+
         .num { font-variant-numeric: tabular-nums; font-weight: 500; }
         .num.fw6 { font-weight: 600; }
 
-        /* ── Badges ── */
-        .badge {
-            display: inline-block;
-            padding: 3px 12px;
+        .inv-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: .22rem .55rem;
             border-radius: 20px;
-            font-size: 10.5px;
+            background: var(--emerald-pale);
+            color: var(--emerald);
+            font-size: .68rem;
             font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+            letter-spacing: .03em;
         }
-        .badge-ok   { background: var(--green-bg); color: var(--green); }
-        .badge-over { background: var(--amber-bg); color: var(--amber); }
-        .badge-bad  { background: var(--red-bg);   color: var(--red); }
 
-        .txt-green { color: var(--green); font-weight: 600; }
-        .txt-red   { color: var(--red); font-weight: 600; }
+        .amount-val { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; font-size: .74rem; }
+        .shop-tag {
+            display: inline-block;
+            padding: .22rem .5rem;
+            border-radius: 5px;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            font-size: .68rem;
+            font-weight: 600;
+        }
+
+        /* Badges */
+        .badge-ok   { background: var(--emerald-pale); color: var(--emerald); padding: .22rem .55rem; border-radius: 20px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+        .badge-over { background: var(--amber-pale); color: var(--amber); padding: .22rem .55rem; border-radius: 20px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+        .badge-bad  { background: var(--rose-pale); color: var(--rose); padding: .22rem .55rem; border-radius: 20px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+
+        .txt-green { color: var(--emerald); font-weight: 600; }
+        .txt-red   { color: var(--rose); font-weight: 600; }
         .txt-amber { color: var(--amber); font-weight: 600; }
-        .txt-muted { color: var(--muted); }
+        .txt-muted { color: var(--slate-500); }
 
-        .ico-ok   { color: var(--green); font-size: 18px; }
-        .ico-warn { color: var(--amber); font-size: 18px; cursor: help; }
+        .ico-ok   { color: var(--emerald); font-size: .85rem; }
+        .ico-warn { color: var(--amber); font-size: .85rem; cursor: help; }
 
-        /* ── Detail Row ── */
+        /* Action buttons */
+        .action-cell { display: flex; gap: .28rem; justify-content: center; flex-wrap: wrap; }
+        .action-icon-btn {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            border: 0;
+            color: #fff !important;
+            background: #0870bd !important;
+            font-size: .75rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-icon-btn.view   { background: var(--sky) !important; }
+        .action-icon-btn.delete { background: var(--rose) !important; }
+        .action-icon-btn:hover { background: #064f91 !important; transform: translateY(-1px); }
+        .action-icon-btn.delete:hover { background: var(--rose) !important; }
+        .action-icon-btn.view:hover { background: #0756a6 !important; }
+
+        /* Detail row */
         .detail-row { display: none; }
         .detail-row.open { display: table-row; }
         .detail-row td {
-            background: #F3F2EE;
+            background: #f8fbfe;
             padding: 0;
         }
-        .detail-row.warn-row td {
-            background: #FFFBF0;
-        }
-
         .detail-inner {
-            padding: 1.5rem 2rem;
-            border-left: 4px solid var(--purple);
+            padding: .9rem;
+            background: #fff;
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
             margin: 0 4px;
         }
         .detail-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 1.25rem;
+            gap: .75rem;
         }
         .detail-item label {
-            font-size: 10px;
+            font-size: .66rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
+            letter-spacing: .06em;
+            color: var(--slate-500);
             display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
+            margin-bottom: .25rem;
         }
         .detail-item span {
-            font-size: 15px;
+            font-size: .76rem;
             font-weight: 600;
-            color: var(--text);
+            color: var(--slate-800);
         }
         .detail-actions {
-            margin-top: 1.25rem;
+            margin-top: .75rem;
             display: flex;
-            gap: 10px;
+            gap: .5rem;
             flex-wrap: wrap;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
+            padding-top: .75rem;
+            border-top: 1px solid #dce7f1;
         }
-
-        /* ── Footer ── */
-        tfoot td {
-            background: #F0EFEA;
-            border-top: 2px solid var(--border-md);
-            font-size: 12px;
+        .balance-issues {
+            margin-top: .75rem;
+            padding: .75rem 1rem;
+            background: var(--rose-pale);
+            border: 1px solid #f5b8c2;
+            border-radius: var(--radius-sm);
+        }
+        .balance-issues-title {
+            font-size: .7rem;
             font-weight: 700;
-            padding: 12px 14px;
-            text-align: right;
-            color: var(--text);
+            color: var(--rose);
+            margin-bottom: .4rem;
+            display: flex;
+            align-items: center;
+            gap: .3rem;
         }
-        tfoot td:first-child,
-        tfoot td:nth-child(2) {
-            text-align: left;
-            color: var(--text);
-        }
-        tfoot td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            background: #F0EFEA;
-        }
-        tfoot td:nth-child(2) {
-            position: sticky;
-            left: 48px;
-            z-index: 10;
-            background: #F0EFEA;
-        }
+        .balance-issues ul { margin: 0; padding-left: 1.2rem; font-size: .72rem; color: var(--rose); }
+        .balance-issues li { margin-bottom: .25rem; }
 
-        /* ── Empty State ── */
+        /* Empty state */
         .empty-state {
             text-align: center;
-            padding: 4rem 2rem;
-            color: var(--muted);
+            padding: 2.5rem 1.5rem;
+            border: 1px dashed #c5d5e5;
+            border-radius: var(--radius-sm);
+            background: #f8fbfe;
+            margin: 1rem;
         }
-        .empty-state i {
-            font-size: 48px;
-            color: var(--border-md);
-            margin-bottom: 16px;
-            display: block;
+        .empty-icon { font-size: 2.2rem; margin-bottom: .6rem; opacity: .35; color: var(--slate-400); }
+        .empty-state h4 { font-size: .9rem; font-weight: 600; color: var(--slate-600); margin-bottom: 4px; }
+        .empty-state p  { font-size: .78rem; color: var(--slate-400); }
+
+        /* ── Alerts ── */
+        .alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .7rem .9rem;
+            border-radius: var(--radius);
+            margin-bottom: .85rem;
+            font-size: .78rem;
+            font-weight: 500;
         }
-        .empty-state h4 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text);
+        .alert-success { background: var(--emerald-pale); color: #056f58; border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: #c9314a; border-left: 3px solid var(--rose); }
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            font-size: 1.05rem;
+            opacity: 0.6;
+            line-height: 1;
+            font-family: inherit;
         }
-        .empty-state p {
-            font-size: 14px;
-        }
+        .close-btn:hover { opacity: 1; }
 
         /* ── Modal ── */
-        .modal-overlay {
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: 0 10px 28px rgba(8, 61, 108, .13);
+        }
+        .modal-header {
+            background: linear-gradient(120deg, #064b86, #0870bd);
+            color: #fff;
+            border-bottom: none;
+            padding: .75rem .9rem;
+        }
+        .modal-header .modal-title { font-size: .96rem; font-weight: 700; color: #fff; margin: 0; }
+        .modal-header .btn-close { filter: invert(1); opacity: .7; }
+        .modal-header .btn-close:hover { opacity: 1; }
+        .modal-body { padding: .9rem; font-size: .78rem; }
+        .modal-footer { border-top: 1px solid #dce7f1; padding: .75rem .9rem; background: #fff; }
+
+        .field { margin-bottom: 1rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label {
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
+        }
+        .field-label .req { color: var(--rose); }
+        .field-input {
+            width: 100%;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
+        }
+        .field-input:focus {
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
+        }
+        .field-input::placeholder { color: var(--slate-400); }
+        .field-input.readonly { background: #f8fbfe; color: var(--slate-500); }
+        select.field-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+        textarea.field-input { resize: vertical; min-height: 72px; }
+
+        .modal-search-wrap { position: relative; }
+        .modal-search-wrap i {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-400);
+            font-size: .85rem;
+            pointer-events: none;
+        }
+        .modal-search-wrap .field-input { padding-left: 2.35rem; }
+
+        .input-prefix-wrap {
+            display: flex;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-prefix-wrap:focus-within { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
+        .input-prefix {
+            background: var(--slate-100);
+            padding: .58rem .8rem;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            border-right: 1px solid #d4e1ed;
+            white-space: nowrap;
+        }
+        .input-prefix-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: .58rem .8rem;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: transparent;
+        }
+
+        .modal-footer-custom {
+            padding: .75rem .9rem;
+            border-top: 1px solid #dce7f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
+        }
+        .btn-cancel {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+        .btn-cancel:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: none;
+            background: var(--emerald);
+            color: #fff;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+        .btn-submit:hover { background: #056f58; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(7,134,107,.28); }
+        .btn-submit-rose {
+            background: var(--rose);
+        }
+        .btn-submit-rose:hover { background: #c92d43; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(229,72,93,.28); }
+
+        /* Required items list */
+        .required-item-row {
+            display: flex;
+            gap: .4rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: .5rem;
+        }
+        .required-item-row .field { margin-bottom: 0; }
+        .required-item-row .field-label { margin-bottom: .25rem; font-size: .66rem; }
+
+        .btn-remove-req {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            background: #fff0f1;
+            color: var(--rose);
+            border: 1px solid #f5b8c2;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+        }
+        .btn-remove-req:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+        /* Wizard / tooltip */
+        .wizard-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.4);
+            background: rgba(8, 61, 108, 0.4);
             backdrop-filter: blur(4px);
             z-index: 9999;
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.25s ease;
         }
-        .modal-overlay.open { display: flex; }
+        .wizard-overlay.open { display: flex; }
 
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
-        .modal-box {
-            background: var(--surface);
-            border-radius: var(--radius);
+        .wizard-box {
+            background: var(--white);
+            border-radius: var(--radius-sm);
             width: 100%;
-            max-width: 500px;
+            max-width: 420px;
             margin: 1rem;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-lg);
             animation: slideUp 0.3s ease;
             max-height: 90vh;
             overflow-y: auto;
@@ -735,467 +799,130 @@
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .modal-top {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
+        .wizard-head {
+            background: linear-gradient(120deg, #064b86, #0870bd);
+            color: #fff;
+            padding: .75rem .9rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .modal-top h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .modal-top h2 i {
-            color: var(--amber);
-        }
-        .modal-body { padding: 1.5rem; }
-        .modal-foot {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem 1.5rem;
-            background: var(--bg);
-            border-radius: var(--radius-sm);
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
-        }
-        .info-item label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--muted);
-            display: block;
-            margin-bottom: 3px;
-            font-weight: 600;
-        }
-        .info-item span {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text);
-        }
-        .info-item.big span {
-            font-size: 22px;
-            color: var(--green);
-        }
-        .info-divider {
-            grid-column: 1/-1;
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 4px 0;
-        }
-
-        .field-group { margin-bottom: 1rem; }
-        .field-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--text);
-        }
-        .input-row {
-            display: flex;
-            border: 2px solid var(--border-md);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            transition: var(--transition);
-        }
-        .input-row:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
-        }
-        .input-prefix {
-            background: var(--bg);
-            padding: 10px 14px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--muted);
-            border-right: 2px solid var(--border-md);
-            white-space: nowrap;
-            font-family: var(--mono);
-        }
-        .input-row input[type=number] {
-            flex: 1;
-            border: none;
-            outline: none;
-            padding: 10px 14px;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-            background: transparent;
-            font-family: var(--font);
-            min-width: 0;
-        }
-        .input-row input[type=number]::-webkit-inner-spin-button {
-            opacity: 1;
-        }
-
-        .quick-amounts {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
-        .quick-btn {
-            background: var(--bg);
-            border: 1px solid var(--border-md);
-            border-radius: var(--radius-sm);
-            padding: 5px 14px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            color: var(--text);
-            transition: var(--transition);
-            font-family: var(--font);
-        }
-        .quick-btn:hover {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 10px 24px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary:hover {
-            opacity: 0.85;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-        }
-        .btn-secondary {
-            background: transparent;
-            color: var(--muted);
-            border: 2px solid var(--border-md);
-            padding: 10px 24px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-secondary:hover {
-            background: var(--bg);
-            color: var(--text);
-        }
-        .btn-danger {
-            background: var(--red);
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-danger:hover {
-            opacity: 0.85;
-            transform: translateY(-1px);
-        }
-
-        /* ── Tooltip / Wizard ── */
-        .wizard-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(2px);
-        }
-        .wizard-overlay.open { display: flex; }
-
-        .wizard-tooltip {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            width: 380px;
-            max-width: calc(100vw - 40px);
-            z-index: 10001;
-            animation: slideUp 0.3s ease;
-            overflow: hidden;
-        }
-        .wizard-tooltip-header {
-            padding: 1.25rem 1.5rem;
-            background: linear-gradient(135deg, var(--purple) 0%, #1a3a6b 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .wizard-tooltip-title {
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .wizard-tooltip-step {
-            background: rgba(255,255,255,0.2);
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 500;
-        }
-        .wizard-tooltip-close {
+        .wizard-head-left { display: flex; align-items: center; gap: .5rem; }
+        .wizard-head h5 { font-size: .86rem; font-weight: 700; color: #fff; margin: 0; }
+        .wizard-step { font-size: .66rem; background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 10px; }
+        .wizard-close {
             background: none;
             border: none;
-            color: white;
-            font-size: 22px;
+            color: #fff;
+            font-size: 1rem;
+            opacity: .7;
             cursor: pointer;
-            opacity: 0.7;
-            transition: var(--transition);
             line-height: 1;
             padding: 0 4px;
         }
-        .wizard-tooltip-close:hover { opacity: 1; }
-        .wizard-tooltip-body { padding: 1.5rem; }
-        .wizard-tooltip-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-        .wizard-tooltip-fullname {
-            font-size: 18px;
+        .wizard-close:hover { opacity: 1; }
+        .wizard-body { padding: .9rem; font-size: .76rem; }
+        .wizard-label {
+            font-size: .66rem;
             font-weight: 700;
-            color: var(--purple);
-            margin-bottom: 10px;
-        }
-        .wizard-tooltip-explanation {
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--text);
-            margin-bottom: 1rem;
-        }
-        .wizard-tooltip-calculation {
-            background: var(--bg);
-            border-left: 3px solid var(--green);
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            color: var(--text);
-            margin-bottom: 0.75rem;
-        }
-        .wizard-tooltip-calculation .calc-label {
-            font-size: 9px;
             text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 3px;
-            font-weight: 600;
-            letter-spacing: 0.06em;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .3rem;
+            display: block;
         }
-        .wizard-tooltip-balance {
-            background: var(--green-bg);
-            border: 1px solid #B2DFC5;
+        .wizard-fullname { font-size: .82rem; font-weight: 700; color: var(--navy); margin-bottom: .5rem; }
+        .wizard-explanation { font-size: .72rem; line-height: 1.5; color: var(--slate-700); margin-bottom: .6rem; }
+        .wizard-calc {
+            background: var(--slate-50);
+            border-left: 3px solid #0b68b4;
+            padding: .5rem .75rem;
             border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            font-size: 13px;
-            color: var(--text);
+            font-size: .7rem;
+            color: var(--slate-800);
+            margin-bottom: .5rem;
         }
-        .wizard-tooltip-balance strong {
-            color: var(--green);
+        .wizard-calc-label {
+            font-size: .64rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--slate-500);
+            margin-bottom: .15rem;
+            letter-spacing: .06em;
         }
-        .wizard-tooltip-footer {
-            padding: 0.75rem 1.5rem 1.25rem;
+        .wizard-balance {
+            background: var(--emerald-pale);
+            border: 1px solid #cfe0ef;
+            border-radius: var(--radius-sm);
+            padding: .5rem .75rem;
+            font-size: .74rem;
+            color: var(--slate-800);
+            margin-bottom: .5rem;
+        }
+        .wizard-balance strong { color: var(--emerald); }
+        .wizard-foot {
+            padding: .75rem .9rem;
+            border-top: 1px solid #dce7f1;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            border-top: 1px solid var(--border);
-        }
-        .wizard-tooltip-progress {
-            font-size: 12px;
-            color: var(--muted);
-            font-weight: 500;
-        }
-        .wizard-tooltip-nav {
-            display: flex;
-            gap: 6px;
-        }
-        .wizard-tooltip-btn {
-            padding: 6px 14px;
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid var(--border-md);
-            background: var(--surface);
-            color: var(--text);
-            transition: var(--transition);
-            font-family: var(--font);
-            display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: .5rem;
         }
-        .wizard-tooltip-btn:hover {
-            background: var(--bg);
-            border-color: var(--border);
+        .wizard-progress { font-size: .7rem; color: var(--slate-500); }
+        .wizard-nav { display: flex; gap: .4rem; }
+        .wizard-btn {
+            padding: .45rem .8rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-size: .7rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .wizard-tooltip-btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
+        .wizard-btn:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+        .wizard-btn-primary {
+            background: #0866b2;
+            border-color: #0866b2;
+            color: #fff;
         }
-        .wizard-tooltip-btn-primary:hover {
-            background: #e58e0b;
-            border-color: #e58e0b;
-        }
-        .wizard-tooltip-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .wizard-tooltip-btn-skip {
+        .wizard-btn-primary:hover { background: #064f91; border-color: #064f91; }
+        .wizard-skip {
             background: transparent;
             border: none;
-            color: var(--muted);
-            font-size: 12px;
+            color: var(--slate-500);
+            font-size: .7rem;
             cursor: pointer;
             text-decoration: underline;
-            font-family: var(--font);
-            padding: 6px 10px;
+            padding: .45rem .6rem;
         }
-        .wizard-tooltip-btn-skip:hover {
-            color: var(--text);
-        }
-        .wizard-close-hint {
+        .wizard-skip:hover { color: var(--slate-800); }
+        .wizard-hint {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(11, 30, 61, 0.9);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 24px;
-            font-size: 13px;
+            background: rgba(8, 61, 108, 0.9);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: .72rem;
             font-weight: 500;
             z-index: 10002;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s;
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
-        .wizard-close-hint.show { opacity: 1; }
+        .wizard-hint.show { opacity: 1; }
 
-        /* ── Responsive tweaks ── */
         @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 1.25rem;
-            }
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            .date-form {
-                width: 100%;
-                flex-wrap: wrap;
-            }
-            .date-form input[type=date] {
-                flex: 1;
-                min-width: 100px;
-                padding: 6px 10px;
-            }
-            .date-form button {
-                flex: 0 0 auto;
-            }
-            .btn-icon {
-                justify-content: center;
-                flex: 1;
-            }
-            .panel-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .panel-controls {
-                flex-direction: column;
-                width: 100%;
-            }
-            .search-wrap, .sort-wrap {
-                width: 100%;
-            }
-            .search-wrap input { width: 100%; }
-            .sort-wrap select { min-width: 100px; }
-            .detail-inner { padding: 1rem; }
-            .detail-grid { grid-template-columns: 1fr 1fr; }
-            .info-grid { grid-template-columns: 1fr; }
-            .wizard-tooltip { width: 95%; }
-        }
-        @media (max-width: 480px) {
-            .detail-grid { grid-template-columns: 1fr; }
-            .modal-box { margin: 0.5rem; }
-            .metric { padding: 1rem; }
-            .metric-value { font-size: 22px; }
-        }
-
-        /* ── Scrollbar styling ── */
-        .tbl-scroll::-webkit-scrollbar {
-            height: 8px;
-        }
-        .tbl-scroll::-webkit-scrollbar-track {
-            background: var(--bg);
-            border-radius: 4px;
-        }
-        .tbl-scroll::-webkit-scrollbar-thumb {
-            background: var(--border-md);
-            border-radius: 4px;
-        }
-        .tbl-scroll::-webkit-scrollbar-thumb:hover {
-            background: var(--muted);
-        }
-
-        /* ── Sticky shadow indicator ── */
-        .tbl-scroll.scrolling-right thead th:first-child::after,
-        .tbl-scroll.scrolling-right thead th:nth-child(2)::after,
-        .tbl-scroll.scrolling-right tbody td:first-child::after,
-        .tbl-scroll.scrolling-right tbody td:nth-child(2)::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: -6px;
-            bottom: 0;
-            width: 6px;
-            background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
-            pointer-events: none;
+            .wrap { padding: .8rem; }
+            .pg-header { padding: .25rem 0 .7rem; }
+            .filters-row { flex-direction: column; align-items: stretch; }
+            .filter-actions { width: 100%; justify-content: flex-end; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            table { min-width: 1000px; }
         }
     </style>
 </head>
@@ -1206,187 +933,193 @@
 
     {{-- Alerts --}}
     @if(session('success'))
-        <div class="alert alert-success">
-            <span><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</span>
-            <button class="btn-close-sm" onclick="this.closest('.alert').remove()">×</button>
-        </div>
+    <div class="alert alert-success">
+        <span><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</span>
+        <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+    </div>
     @endif
     @if(session('error'))
-        <div class="alert alert-danger">
-            <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
-            <button class="btn-close-sm" onclick="this.closest('.alert').remove()">×</button>
-        </div>
+    <div class="alert alert-danger">
+        <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
+        <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+    </div>
     @endif
 
-    {{-- Page Header --}}
-    <div class="page-header">
-        <div class="page-header-left">
-            <div class="page-title">
-                <i class="bi bi-bar-chart-fill"></i> {{ __('messages.shop_report') }}
-                <span class="badge-date">
-                    @if(is_string($dateParam) && str_contains($dateParam, 'to'))
-                        {{ $dateParam }}
-                    @else
-                        {{ date('M d, Y', strtotime($dateParam)) }}
-                    @endif
+    <div class="wrap">
+
+        {{-- Page header --}}
+        <div class="pg-header">
+            <div class="pg-left">
+                <div class="header-icon"><i class="bi bi-bar-chart-fill"></i></div>
+                <div class="pg-title-text">
+                    <h1>{{ __('messages.shop_report') }}</h1>
+                    <p><i class="bi bi-info-circle"></i> {{ __('messages.overview_of_all_shop_performance') }}</p>
+                </div>
+            </div>
+            <div class="pg-right">
+                <form method="GET" action="shopReport" id="dateFilterForm" style="display: contents;">
+                    <div class="filter-group" style="flex:0 0 auto; min-width:auto;">
+                        <label class="filter-label" style="margin-bottom:0;">Date Range</label>
+                        <div style="display:flex; align:center; gap:.3rem;">
+                            <input type="date" name="date_from" id="dateFromInput" class="filter-ctrl" value="{{ $dateFrom ?? '' }}" style="padding-left:.6rem; width:130px;" placeholder="{{ __('messages.from') }}">
+                            <span style="font-size:.72rem; color:var(--slate-500); margin-top:.12rem;">—</span>
+                            <input type="date" name="date_to" id="dateToInput" class="filter-ctrl" value="{{ $dateTo ?? '' }}" style="padding-left:.6rem; width:130px;" placeholder="{{ __('messages.to') }}">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-filter" style="margin-left:.4rem;">
+                        <i class="bi bi-funnel"></i> {{ __('messages.filter') }}
+                    </button>
+                </form>
+                <a href="{{ url('shopReport') }}" class="btn-reset">
+                    <i class="bi bi-x"></i> {{ __('messages.reset') }}
+                </a>
+                <button class="btn-header-outline" onclick="exportToExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> {{ __('messages.excel') }}
+                </button>
+                <button class="btn-header-outline" onclick="exportToPDF()">
+                    <i class="bi bi-file-earmark-pdf"></i> {{ __('messages.pdf') }}
+                </button>
+            </div>
+        </div>
+
+        {{-- Metrics --}}
+        <div class="metrics-grid">
+            <div class="metric-card mc-navy">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-navy"><i class="bi bi-shop"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.total_shops') }}</div>
+                        <div class="metric-value">{{ $activeShopsCount }}</div>
+                        <div class="metric-sub">{{ $shopsWithSalesCount }} {{ __('messages.with_sales_today') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card mc-rose">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-rose"><i class="bi bi-cash-stack"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.total_sales') }}</div>
+                        <div class="metric-value">{{ number_format($totals->total_sales) }}</div>
+                        <div class="metric-sub"><i class="bi bi-cash"></i> {{ number_format($totals->cash_sales) }} · <i class="bi bi-credit-card"></i> {{ number_format($totals->credit_sales) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card mc-emerald">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-emerald"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.total_profit') }}</div>
+                        <div class="metric-value">{{ number_format($totals->profit) }}</div>
+                        <div class="metric-sub">{{ __('messages.after_expenses_and_debt') }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card mc-amber">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-amber"><i class="bi bi-bullseye"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.cash_expected') }}</div>
+                        <div class="metric-value">{{ number_format($totals->cash_amount) }}</div>
+                        <div class="metric-sub">{{ __('messages.submitted') }} {{ number_format($totals->cash_submitted) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card mc-blue">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-blue"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.cash_submitted') }}</div>
+                        <div class="metric-value">{{ number_format($totals->cash_submitted) }}</div>
+                        <div class="metric-sub">{{ __('messages.cash_expected') }} {{ number_format($totals->cash_amount) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card mc-rose">
+                <div class="metric-inner">
+                    <div class="metric-icon mi-rose"><i class="bi bi-exclamation-diamond"></i></div>
+                    <div>
+                        <div class="metric-label">{{ __('messages.unbalanced_shops') }}</div>
+                        <div class="metric-value">{{ $unbalancedShopsCount }}</div>
+                        <div class="metric-sub">{{ $unbalancedReasonsText ?: __('messages.all_balanced') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Main Table Panel --}}
+        <div class="panel">
+            <div class="panel-head">
+                <div class="panel-head-left">
+                    <div class="panel-head-icon"><i class="bi bi-table"></i></div>
+                    <span class="panel-title">{{ __('messages.all_shops') }}</span>
+                </div>
+                <span class="shop-pill">
+                    <i class="bi bi-shop"></i> {{ $shopReports->count() }} {{ __('messages.shops') }}
                 </span>
             </div>
-            <div class="page-sub">
-                <i class="bi bi-info-circle"></i> {{ __('messages.overview_of_all_shop_performance') }}
-            </div>
-        </div>
-        <div class="header-actions">
-            <form method="GET" action="shopReport" id="dateFilterForm" style="display: contents;">
-                <div class="date-form">
-                    <input type="date" name="date_from" id="dateFromInput" value="{{ $dateFrom ?? '' }}" placeholder="{{ __('messages.from') }}">
-                    <span class="date-sep"><i class="bi bi-arrow-right"></i></span>
-                    <input type="date" name="date_to" id="dateToInput" value="{{ $dateTo ?? '' }}" placeholder="{{ __('messages.to') }}">
-                    <button type="submit"><i class="bi bi-funnel"></i> {{ __('messages.filter') }}</button>
-                </div>
-            </form>
-            <button class="btn-icon" onclick="exportToExcel()">
-                <i class="bi bi-file-earmark-excel"></i> {{ __('messages.excel') }}
-            </button>
-            <button class="btn-icon" onclick="exportToPDF()">
-                <i class="bi bi-file-earmark-pdf"></i> {{ __('messages.pdf') }}
-            </button>
-        </div>
-    </div>
 
-    {{-- Metric Cards --}}
-    <div class="metrics">
-        <div class="metric purple">
-            <div class="metric-icon"><i class="bi bi-shop"></i></div>
-            <div class="metric-label">{{ __('messages.total_shops') }}</div>
-            <div class="metric-value">{{ $activeShopsCount }}</div>
-            <div class="metric-sub">{{ $shopsWithSalesCount }} {{ __('messages.with_sales_today') }}</div>
-        </div>
-        <div class="metric red">
-            <div class="metric-icon"><i class="bi bi-cash-stack"></i></div>
-            <div class="metric-label">{{ __('messages.total_sales') }}</div>
-            <div class="metric-value">{{ number_format($totals->total_sales) }}</div>
-            <div class="metric-sub"><i class="bi bi-cash"></i> {{ number_format($totals->cash_sales) }} · <i class="bi bi-credit-card"></i> {{ number_format($totals->credit_sales) }}</div>
-        </div>
-        <div class="metric green">
-            <div class="metric-icon"><i class="bi bi-graph-up-arrow"></i></div>
-            <div class="metric-label">{{ __('messages.total_profit') }}</div>
-            <div class="metric-value">{{ number_format($totals->profit) }}</div>
-            <div class="metric-sub">{{ __('messages.after_expenses_and_debt') }}</div>
-        </div>
-        <div class="metric amber">
-            <div class="metric-icon"><i class="bi bi-bullseye"></i></div>
-            <div class="metric-label">{{ __('messages.cash_expected') }}</div>
-            <div class="metric-value">{{ number_format($totals->cash_amount) }}</div>
-            <div class="metric-sub">{{ __('messages.submitted') }} {{ number_format($totals->cash_submitted) }}</div>
-        </div>
-        <div class="metric blue">
-            <div class="metric-icon"><i class="bi bi-check-circle"></i></div>
-            <div class="metric-label">{{ __('messages.cash_submitted') }}</div>
-            <div class="metric-value">{{ number_format($totals->cash_submitted) }}</div>
-            <div class="metric-sub">{{ __('messages.cash_expected') }} {{ number_format($totals->cash_amount) }}</div>
-        </div>
-        <div class="metric red">
-            <div class="metric-icon"><i class="bi bi-exclamation-diamond"></i></div>
-            <div class="metric-label">{{ __('messages.unbalanced_shops') }}</div>
-            <div class="metric-value">{{ $unbalancedShopsCount }}</div>
-            <div class="metric-sub">{{ $unbalancedReasonsText ?: __('messages.all_balanced') }}</div>
-        </div>
-    </div>
-
-    {{-- Main Table Panel --}}
-    <div class="panel">
-        <div class="panel-header">
-            <div class="panel-title">
-                <i class="bi bi-table"></i> {{ __('messages.all_shops') }}
-                <span class="count-badge">{{ $shopReports->count() }} {{ __('messages.shops') }}</span>
-            </div>
-            <div class="panel-controls">
-                <div class="search-wrap">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="shopSearch" placeholder="{{ __('messages.search_shops') }}" oninput="filterShops()">
-                </div>
-                <div class="sort-wrap">
-                    <i class="bi bi-arrow-up-down"></i>
-                    <label>{{ __('messages.sort_by') }}</label>
-                    <select id="sortSelect" onchange="sortShops()">
-                        <option value="name_asc">{{ __('messages.name_az') }}</option>
-                        <option value="name_desc">{{ __('messages.name_za') }}</option>
-                        <option value="balanced">{{ __('messages.balanced') }}</option>
-                        <option value="unbalanced">{{ __('messages.unbalanced') }}</option>
-                        <option value="status_settled">{{ __('messages.status_settled') }}</option>
-                        <option value="status_underpaid">{{ __('messages.status_underpaid') }}</option>
-                        <option value="status_overpaid">{{ __('messages.status_overpaid') }}</option>
-                        <option value="sales_high">{{ __('messages.sales_high_low') }}</option>
-                        <option value="sales_low">{{ __('messages.sales_low_high') }}</option>
-                        <option value="profit_high">{{ __('messages.profit_high_low') }}</option>
-                        <option value="profit_low">{{ __('messages.profit_low_high') }}</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="tbl-scroll" id="tableScroll">
-            @if($shopReports->isEmpty())
+            <div class="tbl-wrap" id="tableScroll">
+                @if($shopReports->isEmpty())
                 <div class="empty-state">
-                    <i class="bi bi-inbox"></i>
+                    <div class="empty-icon"><i class="bi bi-inbox"></i></div>
                     <h4>{{ __('messages.no_shops_found') }}</h4>
                     <p>{{ __('messages.no_active_shops_found_for') }} {{ date('F d, Y', strtotime($dateParam)) }}.</p>
                 </div>
-            @else
-            <table id="shopTable">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>{{ __('messages.shop_name') }}</th>
-                        <th title="{{ __('messages.cash_sale') }}">{{ __('messages.c_sale') }}</th>
-                        <th title="{{ __('messages.credit_sale') }}">{{ __('messages.cr_sale') }}</th>
-                        <th title="{{ __('messages.bank_sale_colon') }}">{{ __('messages.b_s') }}</th>
-                        <th title="{{ __('messages.total_sales') }}">{{ __('messages.t_sales') }}</th>
-                        <th title="{{ __('messages.total_return') }}">{{ __('messages.t_ret') }}</th>
-                        <th title="{{ __('messages.offered_items_colon') }}">{{ __('messages.offered') }}</th>
-                        <th title="{{ __('messages.discount_colon') }}">{{ __('messages.dsc') }}</th>
-                        <th title="{{ __('messages.expenses_colon') }}">{{ __('messages.exp') }}</th>
-                        <th title="{{ __('messages.profit_loss_colon') }}">{{ __('messages.p_l') }}</th>
-                        <th title="{{ __('messages.paid_invoices_colon') }}">{{ __('messages.p_inv') }}</th>
-                        <th title="{{ __('messages.cash_receivings_colon') }}">{{ __('messages.ca_r') }}</th>
-                        <th title="{{ __('messages.credit_receivings_colon') }}">{{ __('messages.cr_r') }}</th>
-                        <th title="{{ __('messages.chip_deposit_colon') }}"> {{ __('messages.chip_d') }}</th>
-                        <th title="{{ __('messages.chip_used_colon') }}">{{ __('messages.chip_u') }}</th>
-                        <th title="{{ __('messages.cash_amount_expected_colon') }}">{{ __('messages.c_a') }}</th>
-                        <th title="{{ __('messages.cash_submit_colon') }}">{{ __('messages.c_s') }}</th>
-                        <th title="{{ __('messages.bank_deposit_colon') }}">{{ __('messages.b_d') }}</th>
-                        
-                        <th title="{{ __('messages.bank_difference_colon') }}">{{ __('messages.b_diff') }}</th>
-                        <th title="{{ __('messages.difference_colon') }}">{{ __('messages.diff') }}</th>
-                        <th title="{{ __('messages.main_store_difference') }}">{{ __('messages.m_s_diff') }}</th>
-                        <th title="{{ __('messages.cost_worth_inventory_colon') }}">{{ __('messages.inventory') }}</th>
-                        <th><i class="bi bi-info-circle"></i> {{ __('messages.status') }}</th>
-                        <th>{{ __('messages.balance') }}</th>
-                    </tr>
-                </thead>
-                <tbody id="shopTableBody">
-                    @foreach ($shopReports as $index => $shop)
+                @else
+                <table id="shopTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ __('messages.shop_name') }}</th>
+                            <th title="{{ __('messages.cash_sale') }}">{{ __('messages.c_sale') }}</th>
+                            <th title="{{ __('messages.credit_sale') }}">{{ __('messages.cr_sale') }}</th>
+                            <th title="{{ __('messages.bank_sale_colon') }}">{{ __('messages.b_s') }}</th>
+                            <th title="{{ __('messages.total_sales') }}">{{ __('messages.t_sales') }}</th>
+                            <th title="{{ __('messages.total_return') }}">{{ __('messages.t_ret') }}</th>
+                            <th title="{{ __('messages.offered_items_colon') }}">{{ __('messages.offered') }}</th>
+                            <th title="{{ __('messages.discount_colon') }}">{{ __('messages.dsc') }}</th>
+                            <th title="{{ __('messages.expenses_colon') }}">{{ __('messages.exp') }}</th>
+                            <th title="{{ __('messages.profit_loss_colon') }}">{{ __('messages.p_l') }}</th>
+                            <th title="{{ __('messages.paid_invoices_colon') }}">{{ __('messages.p_inv') }}</th>
+                            <th title="{{ __('messages.cash_receivings_colon') }}">{{ __('messages.ca_r') }}</th>
+                            <th title="{{ __('messages.credit_receivings_colon') }}">{{ __('messages.cr_r') }}</th>
+                            <th title="{{ __('messages.chip_deposit_colon') }}">{{ __('messages.chip_d') }}</th>
+                            <th title="{{ __('messages.chip_used_colon') }}">{{ __('messages.chip_u') }}</th>
+                            <th title="{{ __('messages.cash_amount_expected_colon') }}">{{ __('messages.c_a') }}</th>
+                            <th title="{{ __('messages.cash_submit_colon') }}">{{ __('messages.c_s') }}</th>
+                            <th title="{{ __('messages.bank_deposit_colon') }}">{{ __('messages.b_d') }}</th>
+                            <th title="{{ __('messages.bank_difference_colon') }}">{{ __('messages.b_diff') }}</th>
+                            <th title="{{ __('messages.difference_colon') }}">{{ __('messages.diff') }}</th>
+                            <th title="{{ __('messages.main_store_difference') }}">{{ __('messages.m_s_diff') }}</th>
+                            <th title="{{ __('messages.cost_worth_inventory_colon') }}">{{ __('messages.inventory') }}</th>
+                            <th><i class="bi bi-info-circle"></i> {{ __('messages.status') }}</th>
+                            <th>{{ __('messages.balance') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shopTableBody">
+                        @foreach ($shopReports as $index => $shop)
                         @php
                             $cashSale   = $shop->cash_sales;
                             $return     = $shop->total_return;
                             $creditSale = $shop->credit_sales;
+                            $bankSales = $shop->sales_bank ?? 0;
                             $totalSale  = $shop->total_sales;
                             $cashAmount = $shop->cash_amount;
                             $cashSubmit = $shop->cash_submitted;
 
-                            $mainDiff = ($shop->main_store - $shop->credit_receivings - $shop->total_return) < 1 && ($shop->main_store - $shop->credit_receivings - $shop->total_return) > -1;
+                            $mainDiff = ($shop->main_store - $shop->credit_receivings - $shop->total_return) < 1 && ($shop->main_store - $shop->credit_receivings - ($shop->total_return - $shop->returned_receivings)) > -1;
                             $bankDiff = $shop->bank_diff < 1 && $shop->bank_diff > -1;
                             $diff = $cashAmount - $cashSubmit;
 
-                            $profitVal = $totalSale + ($return + $return)
+                            $profitVal = $totalSale - ($shop->total_return ?? 0)
                                 - ($shop->expenses ?? 0)
                                 - ($shop->cash_receivings ?? 0)
                                 - ($shop->credit_receivings ?? 0);
 
                             $diffClass = abs($diff) < 0.01 ? 'txt-muted' : ($diff > 0 ? 'txt-red' : 'txt-green');
 
-                            $salesBalanced = abs(($cashSale + $creditSale) - $totalSale) < 0.01;
-                            $cashBalanced  = abs($diff) < 0.01;
+                            $salesBalanced = abs(($cashSale + $creditSale + $bankSales) - $totalSale) < 0.04;
+                            $cashBalanced  = abs($diff) < 0.04;
                             $inventory = abs($shop->cost_worth) < 0.01 && abs($shop->cost_worth) > -0.01;
                             $isBalanced    = $salesBalanced && $cashBalanced && $bankDiff && $mainDiff;
 
@@ -1413,7 +1146,7 @@
                             <td class="txt-muted">{{ $index + 1 }}</td>
                             <td>
                                 <div class="shop-cell">
-                                    <div class="avatar">{{ $initials }}</div>
+                                    <div class="shop-avatar">{{ $initials }}</div>
                                     <div>
                                         <div class="shop-name">{{ $shop->shop_name }}</div>
                                         <div class="shop-loc"><i class="bi bi-geo-alt"></i> {{ $shop->location }}</div>
@@ -1435,25 +1168,24 @@
                             <td class="num">{{ number_format($shop->totalChip) }}</td>
                             <td class="num">{{ number_format($shop->chip_used) }}</td>
                             <td class="num">{{ number_format($cashAmount) }}</td>
-                            <td class="num">{{ number_format($cashSubmit) }}</td>
-                            <td class="num">{{ number_format($shop->total_bank) }}</td>
-                            
+                            <td class="num">{{ number_format($cashSubmit, 2) }}</td>
+                            <td class="num">{{ number_format($shop->total_bank, 2) }}</td>
                             <td class="num">{{ number_format($shop->bank_diff) }}</td>
                             <td class="num fw6 {{ $diffClass }}">{{ number_format(abs($diff)) }}</td>
-                            <td class="num">{{ number_format($shop->main_store - $shop->credit_receivings - $shop->total_return ) }}</td>
+                            <td class="num">{{ number_format($shop->main_store - $shop->credit_receivings - ($shop->returned_receivings), 2 ) }}</td>
                             <td class="num">{{ number_format($shop->cost_worth ?? 0) }}</td>
                             <td><span class="badge {{ $statusBadge }}">{{ $statusText }}</span></td>
                             <td>
                                 @if(!$isBalanced)
-                                    <span class="ico-warn" title="{{ implode(' | ', $balanceIssues) }}"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                                <span class="ico-warn" title="{{ implode(' | ', $balanceIssues) }}"><i class="bi bi-exclamation-triangle-fill"></i></span>
                                 @else
-                                    <span class="ico-ok"><i class="bi bi-check-circle-fill"></i></span>
+                                <span class="ico-ok"><i class="bi bi-check-circle-fill"></i></span>
                                 @endif
                             </td>
                         </tr>
 
                         <tr id="detail-{{ $index }}" class="detail-row {{ !$isBalanced ? 'warn-row' : '' }}">
-                            <td colspan="25">
+                            <td colspan="26">
                                 <div class="detail-inner">
                                     <div class="detail-grid">
                                         <div class="detail-item">
@@ -1493,190 +1225,191 @@
                                     </div>
 
                                     @if(!$isBalanced && count($balanceIssues) > 0)
-                                        <div style="margin-top:1rem; padding: 0.75rem 1rem; background: var(--red-bg); border: 1px solid #F5C6C2; border-radius: var(--radius-sm);">
-                                            <div style="font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 6px;"><i class="bi bi-exclamation-triangle-fill"></i> {{ __('messages.balance_issues_detected') }}</div>
-                                            <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--red);">
-                                                @foreach($balanceIssues as $issue)
-                                                    <li style="margin-bottom: 4px;">{{ $issue }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
+                                    <div class="balance-issues">
+                                        <div class="balance-issues-title"><i class="bi bi-exclamation-triangle-fill"></i> {{ __('messages.balance_issues_detected') }}</div>
+                                        <ul>
+                                            @foreach($balanceIssues as $issue)
+                                            <li>{{ $issue }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
                                     @endif
 
                                     <div class="detail-actions">
-                                        <button class="btn-primary" style="font-size:13px; padding:8px 20px;"
+                                        <button class="btn-submit" style="font-size:.72rem; padding:.4rem .8rem;"
                                             onclick="event.stopPropagation(); openCashModal({{ $index }})">
                                             <i class="bi bi-cash-coin"></i> {{ __('messages.submit_cash') }}
                                         </button>
                                         @if($shop->cash_submitted > 0)
-                                            <form method="POST" action="{{ url('cashDelete') }}" style="display: inline;" onsubmit="return confirm('{{ __('messages.delete_cash_submission_for') }} {{ $shop->shop_name }}?');">
-                                                @csrf
-                                                <input type="hidden" name="shop_id" value="{{ $shop->shop_id }}">
-                                                <input type="hidden" name="date" value="{{ $dateParam }}">
-                                                <button type="submit" class="btn-danger"><i class="bi bi-trash3"></i> {{ __('messages.delete') }}</button>
-                                            </form>
+                                        <form method="POST" action="{{ url('cashDelete') }}" style="display: inline;" onsubmit="return confirm('{{ __('messages.delete_cash_submission_for') }} {{ $shop->shop_name }}?');">
+                                            @csrf
+                                            <input type="hidden" name="shop_id" value="{{ $shop->shop_id }}">
+                                            <input type="hidden" name="date" value="{{ $dateParam }}">
+                                            <button type="submit" class="btn-submit btn-submit-rose" style="font-size:.72rem; padding:.4rem .8rem;">
+                                                <i class="bi bi-trash3"></i> {{ __('messages.delete') }}
+                                            </button>
+                                        </form>
                                         @endif
                                     </div>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
-                </tbody>
+                        @endforeach
+                    </tbody>
 
-                <tfoot>
-                    <tr>
-                        <td colspan="2"><i class="bi bi-calculator"></i> {{ __('messages.totals') }}</td>
-                        <td class="num">{{ number_format($totals->cash_sales) }}</td>
-                        <td class="num">{{ number_format($totals->credit_sales) }}</td>
-                        <td class="num fw6">{{ number_format($totals->total_sales - $totals->total_return) }}</td>
-                        <td class="num">{{ number_format($totals->total_return ?? 0) }}</td>
-                        <td class="num">{{ number_format($totals->offer ?? 0) }}</td>
-                        <td class="num">{{ number_format($totals->discount) }}</td>
-                        <td class="num">{{ number_format($totals->expenses) }}</td>
-                        <td class="num {{ $totals->profit >= 0 ? 'txt-green' : 'txt-red' }}">{{ number_format($totals->profit) }}</td>
-                        <td class="num">{{ number_format($totals->paid_invoices) }}</td>
-                        <td class="num">{{ number_format($totals->cash_receivings) }}</td>
-                        <td class="num">{{ number_format($totals->credit_receivings) }}</td>
-                        <td class="num">{{ number_format($totals->totalChip) }}</td>
-                        <td class="num">{{ number_format($totals->chip_used) }}</td>
-                        <td class="num">{{ number_format($totals->cash_amount) }}</td>
-                        <td class="num">{{ number_format($totals->cash_submitted) }}</td>
-                        <td class="num">{{ number_format($totals->total_bank) }}</td>
-                        <td class="num">{{ number_format($totals->sales_bank ?? 0) }}</td>
-                        @php
-                            $totalDiff = $totals->cash_amount - $totals->cash_submitted;
-                            $totalDiffClass = abs($totalDiff) < 0.01 ? '' : ($totalDiff > 0 ? 'txt-red' : 'txt-green');
-                        @endphp
-                        <td class="num {{ $totalDiffClass }} fw6">{{ number_format(abs($totalDiff)) }}</td>
-                        <td class="num">{{ number_format($totals->main_store) }}</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-            @endif
+                    <tfoot>
+                        <tr>
+                            <td colspan="2"><i class="bi bi-calculator"></i> {{ __('messages.totals') }}</td>
+                            <td class="num">{{ number_format($totals->cash_sales) }}</td>
+                            <td class="num">{{ number_format($totals->credit_sales) }}</td>
+                            <td class="num fw6">{{ number_format($totals->total_sales - $totals->total_return) }}</td>
+                            <td class="num">{{ number_format($totals->total_return ?? 0) }}</td>
+                            <td class="num">{{ number_format($totals->offer ?? 0) }}</td>
+                            <td class="num">{{ number_format($totals->discount) }}</td>
+                            <td class="num">{{ number_format($totals->expenses) }}</td>
+                            <td class="num {{ $totals->profit >= 0 ? 'txt-green' : 'txt-red' }}">{{ number_format($totals->profit) }}</td>
+                            <td class="num">{{ number_format($totals->paid_invoices) }}</td>
+                            <td class="num">{{ number_format($totals->cash_receivings) }}</td>
+                            <td class="num">{{ number_format($totals->credit_receivings) }}</td>
+                            <td class="num">{{ number_format($totals->totalChip) }}</td>
+                            <td class="num">{{ number_format($totals->chip_used) }}</td>
+                            <td class="num">{{ number_format($totals->cash_amount) }}</td>
+                            <td class="num">{{ number_format($totals->cash_submitted) }}</td>
+                            <td class="num">{{ number_format($totals->total_bank) }}</td>
+                            <td class="num">{{ number_format($totals->sales_bank ?? 0) }}</td>
+                            @php
+                                $totalDiff = $totals->cash_amount - $totals->cash_submitted;
+                                $totalDiffClass = abs($totalDiff) < 0.01 ? '' : ($totalDiff > 0 ? 'txt-red' : 'txt-green');
+                            @endphp
+                            <td class="num {{ $totalDiffClass }} fw6">{{ number_format(abs($totalDiff)) }}</td>
+                            <td class="num">{{ number_format($totals->main_store) }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                @endif
+            </div>
         </div>
-    </div>
 
+    </div>
 </main>
 
-{{-- Column Tooltip Wizard --}}
+ {{-- Column Tooltip Wizard --}}
 <div class="wizard-overlay" id="wizardOverlay">
-    <div class="wizard-tooltip" id="wizardTooltip">
-        <div class="wizard-tooltip-header">
-            <div class="wizard-tooltip-title">
-                <span class="wizard-tooltip-step" id="tooltipStep">1/22</span>
-                <span id="tooltipTitle">C.Sale</span>
+    <div class="wizard-box" id="wizardTooltip">
+        <div class="wizard-head">
+            <div class="wizard-head-left">
+                <span class="wizard-step" id="tooltipStep">1/22</span>
+                <h5 id="tooltipTitle">C.Sale</h5>
             </div>
-            <button class="wizard-tooltip-close" onclick="closeWizard()"><i class="bi bi-x-lg"></i></button>
+            <button class="wizard-close" onclick="closeWizard()"><i class="bi bi-x-lg"></i></button>
         </div>
-        <div class="wizard-tooltip-body">
-            <div class="wizard-tooltip-label"><i class="bi bi-info-circle"></i> {{ __('messages.column_explanation') }}</div>
-            <div class="wizard-tooltip-fullname" id="tooltipFullName">{{ __('messages.cash_sales_wizard') }}</div>
-            <div class="wizard-tooltip-explanation" id="tooltipExplanation">
+        <div class="wizard-body">
+            <div class="wizard-label"><i class="bi bi-info-circle"></i> {{ __('messages.column_explanation') }}</div>
+            <div class="wizard-fullname" id="tooltipFullName">{{ __('messages.cash_sales_wizard') }}</div>
+            <div class="wizard-explanation" id="tooltipExplanation">
                 {{ __('messages.total_cash_sales_made_by_shop_today') }}
             </div>
-            <div class="wizard-tooltip-calculation">
-                <div class="calc-label"><i class="bi bi-calculator"></i> {{ __('messages.calculation') }}</div>
+            <div class="wizard-calc">
+                <div class="wizard-calc-label"><i class="bi bi-calculator"></i> {{ __('messages.calculation') }}</div>
                 <div id="tooltipCalculation">{{ __('messages.sum_of_all_cash_sales') }}</div>
             </div>
-            <div class="wizard-tooltip-balance">
+            <div class="wizard-balance">
                 <strong><i class="bi bi-scale"></i> {{ __('messages.balance_colon') }}</strong> <span id="tooltipBalance">{{ __('messages.part_of_total_sales') }}</span>
             </div>
         </div>
-        <div class="wizard-tooltip-footer">
-            <div class="wizard-tooltip-progress" id="tooltipProgress">{{ __('messages.wizard_step_progress', ['step' => 1, 'total' => 22]) }}</div>
-            <div class="wizard-tooltip-nav">
-                <button class="wizard-tooltip-btn-skip" onclick="closeWizard()">{{ __('messages.skip') }}</button>
-                <button class="wizard-tooltip-btn" id="prevBtn" onclick="prevStep()"><i class="bi bi-chevron-left"></i> {{ __('messages.previous') }}</button>
-                <button class="wizard-tooltip-btn wizard-tooltip-btn-primary" id="nextBtn" onclick="nextStep()">{{ __('messages.next') }} <i class="bi bi-chevron-right"></i></button>
+        <div class="wizard-foot">
+            <div class="wizard-progress" id="tooltipProgress">{{ __('messages.wizard_step_progress', ['step' => 1, 'total' => 22]) }}</div>
+            <div class="wizard-nav">
+                <button class="wizard-skip" onclick="closeWizard()">{{ __('messages.skip') }}</button>
+                <button class="wizard-btn" id="prevBtn" onclick="prevStep()"><i class="bi bi-chevron-left"></i> {{ __('messages.previous') }}</button>
+                <button class="wizard-btn wizard-btn-primary" id="nextBtn" onclick="nextStep()">{{ __('messages.next') }} <i class="bi bi-chevron-right"></i></button>
             </div>
         </div>
     </div>
-    <div class="wizard-close-hint" id="closeHint"><i class="bi bi-escape"></i> {{ __('messages.press_esc_or_click_outside_to_close') }}</div>
+    <div class="wizard-hint" id="closeHint"><i class="bi bi-escape"></i> {{ __('messages.press_esc_or_click_outside_to_close') }}</div>
 </div>
 
-{{-- Cash Submit Modal --}}
-<div class="modal-overlay" id="cashModal">
-    <div class="modal-box">
-        <div class="modal-top">
-            <h2><i class="bi bi-cash-coin"></i> {{ __('messages.submit_cash') }}</h2>
-            <button class="btn-close-sm" onclick="closeModal()">×</button>
-        </div>
-        <form id="cashForm" method="POST" action="{{ url('cashSubmit') }}">
-            @csrf
-            <div class="modal-body">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <label><i class="bi bi-shop"></i> {{ __('messages.shop') }}</label>
-                        <span id="m-shop">—</span>
+ {{-- Cash Submit Modal --}}
+<div class="modal fade" id="cashModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cash-coin"></i> {{ __('messages.submit_cash') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cashForm" method="POST" action="{{ url('cashSubmit') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-shop"></i> {{ __('messages.shop') }}</label>
+                        <input type="text" class="field-input readonly" id="m-shop" value="—" readonly>
                     </div>
-                    <div class="info-item">
-                        <label><i class="bi bi-calendar3"></i> {{ __('messages.date') }}</label>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-calendar3"></i> {{ __('messages.date') }}</label>
                         @if(canUser("cash_submit_date"))
-                            <input type="date" name="date" id="m-date" style="width:100%; font-weight:600; font-size:14px; color:var(--text); background:var(--surface); border:1px solid var(--border-md); border-radius:var(--radius-sm); padding:4px 8px;">
+                        <input type="date" class="field-input" name="date" id="m-date" value="{{ date('Y-m-d') }}">
                         @else
-                            <input type="hidden" name="date" id="m-date" value="{{ date('Y-m-d') }}">
-                            <span style="font-weight:600;">{{ date('Y-m-d') }}</span>
+                        <input type="hidden" name="date" id="m-date" value="{{ date('Y-m-d') }}">
+                        <input type="text" class="field-input readonly" value="{{ date('Y-m-d') }}" readonly>
                         @endif
                     </div>
-                    <hr class="info-divider">
-                    <div class="info-item">
-                        <label><i class="bi bi-bar-chart"></i> {{ __('messages.total_sales') }}</label>
-                        <span id="m-sales">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-bar-chart"></i> {{ __('messages.total_sales') }}</label>
+                        <input type="text" class="field-input readonly" id="m-sales" value="0" readonly>
                     </div>
-                    <div class="info-item">
-                        <label><i class="bi bi-cash"></i> {{ __('messages.cash_sales') }}</label>
-                        <span id="m-cash-sales">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-cash"></i> {{ __('messages.cash_sales') }}</label>
+                        <input type="text" class="field-input readonly" id="m-cash-sales" value="0" readonly>
                     </div>
-                    <div class="info-item">
-                        <label><i class="bi bi-wallet2"></i> {{ __('messages.expenses') }}</label>
-                        <span id="m-exp">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-wallet2"></i> {{ __('messages.expenses') }}</label>
+                        <input type="text" class="field-input readonly" id="m-exp" value="0" readonly>
                     </div>
-                    <div class="info-item">
-                        <label><i class="bi bi-tag"></i> {{ __('messages.discount') }}</label>
-                        <span id="m-dsc">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-tag"></i> {{ __('messages.discount') }}</label>
+                        <input type="text" class="field-input readonly" id="m-dsc" value="0" readonly>
                     </div>
-                    <hr class="info-divider">
-                    <div class="info-item big">
-                        <label><i class="bi bi-bullseye"></i> {{ __('messages.expected_cash') }}</label>
-                        <span id="m-expected">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-bullseye"></i> {{ __('messages.expected_cash') }}</label>
+                        <input type="text" class="field-input readonly" id="m-expected" value="0" readonly>
                     </div>
-                    <div class="info-item">
-                        <label><i class="bi bi-coin"></i> {{ __('messages.remaining') }}</label>
-                        <span id="m-remaining" style="color:var(--red);font-weight:700;">0</span>
+                    <div class="field">
+                        <label class="field-label"><i class="bi bi-coin"></i> {{ __('messages.remaining') }}</label>
+                        <input type="text" class="field-input readonly" id="m-remaining" value="0" readonly style="color:var(--rose);font-weight:600;">
                     </div>
-                </div>
 
-                <div class="field-group">
-                    <label>{{ __('messages.modal_cash_amount_to_submit') }}</label>
-                    <div class="input-row">
-                        <span class="input-prefix">TSh</span>
-                        <input type="number" id="cashAmount" name="submitted_cash" step="0.01" min="0.01" required placeholder="0.00">
+                    <div class="field">
+                        <label class="field-label">{{ __('messages.modal_cash_amount_to_submit') }} <span class="req">*</span></label>
+                        <div class="input-prefix-wrap">
+                            <span class="input-prefix">TSh</span>
+                            <input type="number" id="cashAmount" name="submitted_cash" step="0.01" min="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="quick-amounts">
+                            <button type="button" class="btn-add" style="font-size:.66rem; padding:.35rem .6rem;" onclick="setAmt(5000)">5,000</button>
+                            <button type="button" class="btn-add" style="font-size:.66rem; padding:.35rem .6rem;" onclick="setAmt(10000)">10,000</button>
+                            <button type="button" class="btn-add" style="font-size:.66rem; padding:.35rem .6rem;" onclick="setAmt(20000)">20,000</button>
+                            <button type="button" class="btn-add" style="font-size:.66rem; padding:.35rem .6rem;" onclick="setAmt(50000)">50,000</button>
+                            <button type="button" class="btn-add" style="font-size:.66rem; padding:.35rem .6rem;" onclick="setAmt(100000)">100,000</button>
+                        </div>
                     </div>
-                    <div class="quick-amounts">
-                        <button type="button" class="quick-btn" onclick="setAmt(5000)">5,000</button>
-                        <button type="button" class="quick-btn" onclick="setAmt(10000)">10,000</button>
-                        <button type="button" class="quick-btn" onclick="setAmt(20000)">20,000</button>
-                        <button type="button" class="quick-btn" onclick="setAmt(50000)">50,000</button>
-                        <button type="button" class="quick-btn" onclick="setAmt(100000)">100,000</button>
-                    </div>
-                </div>
 
-                <input type="hidden" name="shop_id" id="m-shop-id">
-                <input type="hidden" name="sales" id="m-sales-hidden">
-            </div>
-            <div class="modal-foot">
-                <button type="button" class="btn-secondary" onclick="closeModal()"><i class="bi bi-x-circle"></i> {{ __('messages.cancel') }}</button>
-                <button type="submit" class="btn-primary"><i class="bi bi-check-circle"></i> {{ __('messages.submit_cash') }}</button>
-            </div>
-        </form>
+                    <input type="hidden" name="shop_id" id="m-shop-id">
+                    <input type="hidden" name="sales" id="m-sales-hidden">
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> {{ __('messages.cancel') }}</button>
+                    <button type="submit" class="btn-submit"><i class="bi bi-check-circle"></i> {{ __('messages.submit_cash') }}</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const shopData = @json($shopReports);
 
@@ -1829,17 +1562,8 @@
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('m-date').value = `${year}-${month}-${day}`;
-        document.getElementById('cashModal').classList.add('open');
+        new bootstrap.Modal(document.getElementById('cashModal')).show();
     }
-
-    function closeModal() {
-        document.getElementById('cashModal').classList.remove('open');
-        document.getElementById('cashAmount').value = '';
-    }
-
-    document.getElementById('cashModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
 
     function setAmt(n) { document.getElementById('cashAmount').value = n; }
 
@@ -1871,7 +1595,7 @@
     // ── Column Wizard ──
     const wizardData = [
         { title: 'C.Sale', fullName: @json(__('messages.cash_sales_wizard')), explanation: @json(__('messages.total_cash_sales_made_by_shop_today')), calculation: @json(__('messages.sum_of_all_cash_sales')), balance: @json(__('messages.part_of_total_sales')) },
-        { title: 'Cr.Sale', fullName: @json(__('messages.credit_sale')), explanation: @json(__('messages.total_credit_sales')), calculation: @json(__('messages.sum_of_all_cash_sales')), balance: @json(__('messages.part_of_total_sales')) },
+        { title: 'Cr.Sale', fullName: @json(__('messages.credit_sale')), explanation: @json(__('messages.total_credit_sales')), calculation: @json(__('messages.calc_sum_cash_sales')), balance: @json(__('messages.part_of_total_sales')) },
         { title: 'T.Sales', fullName: @json(__('messages.total_sales')), explanation: @json(__('messages.total_sales_net')), calculation: @json(__('messages.calc_cash_plus_credit')), balance: @json(__('messages.part_of_total_sales')) },
         { title: 'T.Ret', fullName: @json(__('messages.total_return')), explanation: @json(__('messages.total_return_sum')), calculation: @json(__('messages.calc_sum_returns')), balance: @json(__('messages.part_of_total_sales')) },
         { title: 'Offered', fullName: @json(__('messages.offered')), explanation: @json(__('messages.total_offered_items')), calculation: @json(__('messages.calc_sum_offered')), balance: @json(__('messages.part_of_total_sales')) },

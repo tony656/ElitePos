@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><?php echo e(config("app.name")); ?> — Shop Invoices</title>
+    <?php echo $__env->make("links", \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<style>
+        *, *::before, *::after { box-sizing: border-box; }
+        :root {
+            --blue: #0759A6;
+            --blue-dark: #06477F;
+            --blue-mid: #0B67B7;
+            --blue-light: #E8F2FC;
+            --green: #07966B;
+            --green-light: #E7F7F0;
+            --red: #E63950;
+            --red-light: #FFF0F1;
+            --purple: #7B3FE4;
+            --purple-light: #F1EBFF;
+            --orange: #F07824;
+            --orange-light: #FFF3E9;
+            --ink: #19324D;
+            --muted: #71849A;
+            --line: #DCE6F0;
+            --surface: #FFFFFF;
+            --page: #F2F6FB;
+            --font: 'Sora', system-ui, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 8px;
+            --r-lg: 12px;
+            --r-xl: 15px;
+        }
+
+        html { min-height: 100%; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--page);
+            color: var(--ink);
+            font-family: var(--font);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        button, input, select, textarea { font: inherit; }
+        a { -webkit-tap-highlight-color: transparent; }
+        ::selection { background: #CDE4FB; color: var(--blue-dark); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #EDF2F7; }
+        ::-webkit-scrollbar-thumb { background: #C4D2E1; border-radius: 8px; }
+
+        .wrap { padding: 1.25rem 1.4rem 2.5rem; max-width: 1700px; margin: 0 auto; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(9px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .au { animation: fadeUp .32s ease both; }
+        .au1 { animation-delay: .03s; }
+        .au2 { animation-delay: .07s; }
+        .au3 { animation-delay: .11s; }
+        .au4 { animation-delay: .15s; }
+
+        /* Alerts */
+        .alert {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 10px 14px; border-radius: 9px;
+            margin-bottom: 12px; font-size: 12px; font-weight: 600;
+            border: 1px solid transparent;
+        }
+        .alert-success { background: var(--green-light); color: #087A59; border-color: #C8ECDD; }
+        .alert-danger { background: var(--red-light); color: #C92D43; border-color: #F6D1D6; }
+        .close-btn { background: none; border: 0; cursor: pointer; color: inherit; font-size: 18px; line-height: 1; }
+
+        /* Header */
+        .pg-header {
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 14px; flex-wrap: wrap;
+            padding: 16px 19px; margin-bottom: 14px;
+            color: white; background: linear-gradient(110deg, #064B8D 0%, #0870C5 100%);
+            border-radius: 11px; box-shadow: 0 4px 13px rgba(5, 75, 141, .15);
+        }
+        .pg-header::before, .pg-header::after {
+            content: ''; position: absolute; border-radius: 50%; pointer-events: none;
+            background: rgba(255,255,255,.07);
+        }
+        .pg-header::before { width: 180px; height: 180px; right: -35px; top: -95px; }
+        .pg-header::after { width: 110px; height: 110px; right: 105px; bottom: -75px; }
+        .pg-left, .pg-right { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; }
+        .header-icon {
+            width: 42px; height: 42px; flex: 0 0 42px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.16); color: #fff; font-size: 19px;
+            border: 1px solid rgba(255,255,255,.16);
+        }
+        .pg-title-text h1 { margin: 0; color: #fff; font-size: 17px; line-height: 1.3; font-weight: 700; letter-spacing: -.25px; }
+        .pg-title-text p { margin: 3px 0 0; color: rgba(255,255,255,.78); font-size: 11.5px; }
+        .pg-right { flex-wrap: wrap; }
+        .btn-amber {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 9px 15px; border: 1px solid rgba(255,255,255,.25); border-radius: 7px;
+            background: #fff; color: var(--blue); font-size: 12px; font-weight: 700;
+            text-decoration: none; cursor: pointer; transition: .18s ease;
+            box-shadow: 0 2px 7px rgba(0,0,0,.10);
+        }
+        .btn-amber:hover { color: var(--blue-dark); background: #EDF6FF; transform: translateY(-1px); }
+
+        /* Search and filters */
+        .controls-bar {
+            display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+            padding: 11px 13px; margin-bottom: 13px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 10px; box-shadow: 0 2px 7px rgba(28,66,105,.035);
+        }
+        .search-wrap { position: relative; flex: 1 1 190px; min-width: 150px; }
+        .search-wrap i {
+            position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+            color: #8296AA; font-size: 13px; pointer-events: none;
+        }
+        .search-input {
+            width: 100%; height: 36px; padding: 7px 11px 7px 32px;
+            border: 1px solid #D8E3EE; border-radius: 7px;
+            background: #FBFDFF; color: var(--ink); outline: none; font-size: 11.5px;
+            transition: .18s ease;
+        }
+        .search-input:focus, .field-input:focus, .date-input-ctrl:focus {
+            border-color: #4C99D8; box-shadow: 0 0 0 3px rgba(11,103,183,.09);
+        }
+        .search-input::placeholder { color: #93A4B5; }
+        .date-filter {
+            display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+            padding: 4px 7px; border: 1px solid #DCE6F0; border-radius: 7px; background: #FBFDFF;
+        }
+        .date-filter label { color: #71849A; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+        .date-input-ctrl {
+            width: 118px; border: 1px solid #E2EAF2; border-radius: 5px;
+            padding: 5px 6px; background: #fff; color: var(--ink); outline: none; font-size: 11px;
+        }
+        .date-sep { color: #A0AFBE; font-size: 12px; }
+        .btn-filter {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 11px; border: 0; border-radius: 6px;
+            background: var(--blue); color: white; font-size: 11px; font-weight: 700;
+            white-space: nowrap; cursor: pointer; transition: .18s ease;
+        }
+        .btn-filter:hover { background: var(--blue-dark); }
+        .btn-clear-filter {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 10px; border-radius: 6px; background: var(--red-light);
+            color: #D33449; font-size: 11px; font-weight: 700; text-decoration: none;
+        }
+        .btn-clear-filter:hover { background: #FFE1E4; color: #B92339; }
+        .view-toggle {
+            display: flex; overflow: hidden; flex: 0 0 auto;
+            border: 1px solid #D9E4EF; border-radius: 7px; background: #F8FBFE;
+        }
+        .view-btn {
+            width: 35px; height: 34px; display: flex; align-items: center; justify-content: center;
+            border: 0; background: transparent; color: #8194A8; font-size: 14px; cursor: pointer;
+        }
+        .view-btn + .view-btn { border-left: 1px solid #E1E9F1; }
+        .view-btn.active { background: var(--blue); color: #fff; }
+        .view-btn:not(.active):hover { background: #EAF3FC; color: var(--blue); }
+
+        /* Statistics */
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+            gap: 11px; margin-bottom: 14px;
+        }
+        .metric-card {
+            display: flex; align-items: center; gap: 12px; min-width: 0;
+            padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+            background: #fff; box-shadow: 0 2px 7px rgba(28,66,105,.035);
+            position: relative; overflow: hidden;
+        }
+        .metric-card::after { content: ''; position: absolute; right: -20px; top: -28px; width: 85px; height: 85px; border-radius: 50%; background: currentColor; opacity: .035; }
+        .mc-navy { background: #F0F7FF; border-color: #D9EAFB; color: var(--blue); }
+        .mc-emerald { background: #EFFAF5; border-color: #D5F0E3; color: var(--green); }
+        .mc-rose { background: #FFF4F4; border-color: #F8DEDF; color: var(--red); }
+        .metric-icon {
+            width: 42px; height: 42px; flex: 0 0 42px; display: flex; align-items: center; justify-content: center;
+            border-radius: 9px; color: #fff; font-size: 18px; box-shadow: 0 3px 8px rgba(0,0,0,.09);
+        }
+        .mi-navy { background: linear-gradient(145deg,#0874C9,#07529A); }
+        .mi-emerald { background: linear-gradient(145deg,#12AD7C,#07845D); }
+        .mi-rose { background: linear-gradient(145deg,#F05265,#D92F49); }
+        .metric-body { min-width: 0; }
+        .metric-label { margin-bottom: 2px; color: #6E8298; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .045em; }
+        .metric-value {
+            color: var(--blue-dark); font-family: var(--mono); font-size: 21px;
+            line-height: 1.2; font-weight: 600; letter-spacing: -.6px;
+        }
+        .metric-value.green { color: #07845D; }
+        .metric-value.red { color: #D92F49; }
+
+        /* Shop cards */
+        .card-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+            gap: 11px;
+        }
+        .shop-card {
+            display: block; position: relative; overflow: hidden;
+            padding: 14px; border: 1px solid #DCE6F0; border-radius: 10px;
+            background: #fff; color: inherit; text-decoration: none;
+            box-shadow: 0 2px 7px rgba(28,66,105,.035); transition: .18s ease;
+        }
+        .shop-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--blue); opacity: 0; transition: .18s ease; }
+        .shop-card:hover { transform: translateY(-2px); border-color: #8ABBE5; box-shadow: 0 7px 18px rgba(14,83,145,.10); color: inherit; }
+        .shop-card:hover::before { opacity: 1; }
+        .shop-card.all-paid { background: #FCFFFD; border-color: #D5EDE2; }
+        .shop-card.all-paid::before { background: var(--green); }
+        .shop-card.all-paid:hover { border-color: #86D2B1; box-shadow: 0 7px 18px rgba(5,150,105,.09); }
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+        .shop-avatar {
+            width: 39px; height: 39px; display: flex; align-items: center; justify-content: center;
+            flex: 0 0 39px; border-radius: 8px; background: linear-gradient(145deg,#0B70BF,#064D91);
+            color: white; font-size: 12px; font-weight: 700; letter-spacing: .4px;
+        }
+        .shop-card.all-paid .shop-avatar { background: linear-gradient(145deg,#12A879,#07815B); }
+        .card-badge {
+            display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px;
+            border-radius: 20px; font-size: 9px; font-weight: 700; white-space: nowrap;
+        }
+        .badge-debt { background: var(--red-light); color: #D33449; }
+        .badge-paid { background: var(--green-light); color: #07845D; }
+        .card-name { margin-bottom: 2px; color: #153B61; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+        .card-location { display: flex; align-items: center; gap: 4px; color: #8A9BAD; font-size: 10.5px; }
+        .card-divider { border: 0; border-top: 1px solid #EAF0F5; margin: 11px 0; }
+        .card-stats { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+        .cs-label { margin-bottom: 2px; color: #8294A6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .045em; }
+        .cs-value { color: #294966; font-family: var(--mono); font-size: 15px; font-weight: 600; }
+        .cs-value.green { color: #07845D; }
+        .cs-value.red { color: #D92F49; }
+        .card-cta { display: flex; align-items: center; gap: 5px; margin-top: 10px; color: var(--blue); font-size: 10.5px; font-weight: 700; }
+        .shop-card.all-paid .card-cta { color: #07845D; }
+
+        /* List view */
+        .shop-list {
+            overflow: hidden; border: 1px solid var(--line); border-radius: 10px;
+            background: #fff; box-shadow: 0 2px 7px rgba(28,66,105,.035);
+        }
+        .list-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+            border-bottom: 1px solid #EAF0F5; color: inherit; text-decoration: none; transition: background .15s ease;
+        }
+        .list-item:last-child { border-bottom: 0; }
+        .list-item:nth-child(even) { background: #FBFDFF; }
+        .list-item:hover { background: #EFF6FD; color: inherit; }
+        .list-info { flex: 1; min-width: 0; }
+        .list-name { color: #153B61; font-size: 12px; font-weight: 700; }
+        .list-location { margin-top: 2px; color: #8A9BAD; font-size: 10px; }
+        .list-stats { display: flex; align-items: center; gap: 25px; flex: 0 0 auto; }
+        .ls-label { color: #8496A8; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .ls-value { margin-top: 2px; color: #294966; font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: right; }
+        .ls-value.green { color: #07845D; }
+        .ls-value.red { color: #D92F49; }
+        .list-chevron { color: #A9B8C7; font-size: 13px; }
+        .list-item:hover .list-chevron { color: var(--blue); }
+        .hidden { display: none !important; }
+        .empty-state { padding: 42px 18px; text-align: center; color: #91A1B1; }
+        .empty-state i { display: block; margin-bottom: 8px; color: #AFC0D0; font-size: 34px; }
+        .empty-state h4 { margin: 0 0 4px; color: #4D657D; font-size: 13px; font-weight: 700; }
+        .empty-state p { margin: 0; font-size: 11px; }
+
+        /* Modal */
+        .modal-content { overflow: hidden; border: 1px solid #DCE6F0; border-radius: 12px; box-shadow: 0 18px 55px rgba(12,47,82,.20); }
+        .modal-top {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 16px; background: linear-gradient(110deg,#064B8D,#0870C5);
+        }
+        .modal-top-left { display: flex; align-items: center; gap: 9px; }
+        .modal-top-icon {
+            width: 33px; height: 33px; display: flex; align-items: center; justify-content: center;
+            border-radius: 7px; background: rgba(255,255,255,.17); color: #fff; font-size: 15px;
+        }
+        .modal-top h5 { margin: 0; color: #fff; font-size: 13px; font-weight: 700; }
+        .modal-top .btn-close { filter: invert(1); opacity: .8; }
+        .modal-body { padding: 18px 17px; background: #fff; }
+        .field { margin-bottom: 12px; }
+        .field-label { display: block; margin-bottom: 5px; color: #627A91; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .045em; }
+        .field-label .req { color: var(--red); }
+        .field-input {
+            width: 100%; min-height: 37px; padding: 8px 10px;
+            border: 1px solid #D8E3EE; border-radius: 7px; background: #FBFDFF;
+            color: var(--ink); outline: none; font-size: 11.5px; transition: .18s ease;
+        }
+        .field-input::placeholder { color: #9AAABA; }
+        textarea.field-input { min-height: 72px; resize: vertical; }
+        .input-prefix-wrap { display: flex; overflow: hidden; border: 1px solid #D8E3EE; border-radius: 7px; background: #FBFDFF; }
+        .input-prefix-wrap:focus-within { border-color: #4C99D8; box-shadow: 0 0 0 3px rgba(11,103,183,.09); }
+        .input-prefix { display: flex; align-items: center; padding: 8px 11px; border-right: 1px solid #D8E3EE; background: #EDF4FA; color: #52708D; font-size: 11px; font-weight: 700; }
+        .input-prefix-wrap input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 8px 10px; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 12px; }
+        .modal-search-wrap { position: relative; }
+        .modal-search-wrap i { position: absolute; top: 50%; left: 11px; transform: translateY(-50%); color: #8A9BAD; font-size: 12px; pointer-events: none; }
+        .modal-search-wrap .field-input { padding-left: 31px; }
+        .cust-results {
+            position: absolute; z-index: 1050; top: calc(100% + 4px); left: 0; right: 0;
+            display: none; max-height: 220px; overflow-y: auto;
+            border: 1px solid #A9CBE8; border-radius: 8px; background: #fff;
+            box-shadow: 0 8px 22px rgba(12,47,82,.14);
+        }
+        .cust-item { padding: 9px 11px; border-bottom: 1px solid #EDF2F7; cursor: pointer; }
+        .cust-item:last-child { border-bottom: 0; }
+        .cust-item:hover { background: #F0F7FE; border-left: 3px solid var(--blue); padding-left: 8px; }
+        .cust-item-name { color: #24435F; font-size: 11.5px; font-weight: 700; }
+        .cust-item-sub { margin-top: 1px; color: #8496A8; font-family: var(--mono); font-size: 10px; }
+        .cust-item-none { padding: 12px; color: #8496A8; font-size: 11px; text-align: center; }
+        .selected-tag { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 4px 9px; border-radius: 20px; background: var(--green-light); color: #07845D; font-size: 10.5px; font-weight: 700; }
+        .modal-footer-custom { display: flex; justify-content: flex-end; gap: 8px; padding: 11px 17px; border-top: 1px solid #E5EDF4; background: #FBFDFF; }
+        .btn-cancel { padding: 8px 14px; border: 1px solid #D6E1EC; border-radius: 7px; background: #fff; color: #5F7489; font-size: 11px; font-weight: 600; cursor: pointer; }
+        .btn-cancel:hover { background: #F0F5FA; }
+        .btn-submit {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px;
+            border: 0; border-radius: 7px; background: var(--blue); color: #fff;
+            font-size: 11px; font-weight: 700; cursor: pointer; transition: .18s ease;
+            box-shadow: 0 3px 8px rgba(7,89,166,.18);
+        }
+        .btn-submit:hover { background: var(--blue-dark); transform: translateY(-1px); }
+
+        @media (max-width: 900px) {
+            .wrap { padding: 1rem; }
+            .controls-bar { align-items: stretch; }
+            .search-wrap { flex-basis: 100%; }
+            .date-filter { flex: 1 1 auto; }
+        }
+        @media (max-width: 640px) {
+            .metrics-grid { grid-template-columns: 1fr; gap: 8px; }
+            .metric-card { padding: 10px 12px; }
+            .metric-value { font-size: 19px; }
+            .pg-header { align-items: flex-start; padding: 13px; }
+            .pg-title-text h1 { font-size: 15px; }
+            .pg-right { width: 100%; }
+            .btn-amber { width: 100%; }
+            .controls-bar { flex-direction: column; }
+            .date-filter { width: 100%; }
+            .date-input-ctrl { flex: 1; min-width: 90px; }
+            .view-toggle { align-self: flex-end; }
+            .card-grid { grid-template-columns: 1fr; }
+            .list-stats { gap: 12px; }
+        }
+        @media (max-width: 420px) {
+            .list-stats { display: none; }
+            .wrap { padding: .75rem; }
+            .date-filter { gap: 5px; }
+            .date-filter label { font-size: 9px; }
+            .date-input-ctrl { width: 100px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+<?php echo $__env->make("sidenav", \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
+        <main class="main-content">
+            <div class="wrap">
+
+                
+                <?php if(session('success')): ?>
+                <div class="alert alert-success au au1">
+                    <span><?php echo e(session('success')); ?></span>
+                    <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+                </div>
+                <?php endif; ?>
+                <?php if(session('error')): ?>
+                <div class="alert alert-danger au au1">
+                    <span><?php echo e(session('error')); ?></span>
+                    <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+                </div>
+                <?php endif; ?>
+
+                
+                <div class="pg-header au au1">
+                    <div class="pg-left">
+                        <div class="header-icon"><i class="bi bi-shop"></i></div>
+                        <div class="pg-title-text">
+                            <h1><?php echo e(__('messages.shops_with_invoices')); ?></h1>
+                            <p><?php echo e(__('messages.select_shop_view_customers_debts')); ?></p>
+                        </div>
+                    </div>
+                    <div class="pg-right">
+                        <button class="btn-amber" data-bs-toggle="modal" data-bs-target="#manualInvoiceModal">
+                            <i class="bi bi-plus-lg"></i> <?php echo e(__('messages.manual_invoice')); ?>
+
+                        </button>
+                    </div>
+                </div>
+
+                
+                <div class="controls-bar au au2">
+                    <div class="search-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="shopSearch" class="search-input" placeholder="<?php echo e(__('messages.search_shops_placeholder')); ?>">
+                    </div>
+
+                    <form method="GET" action="<?php echo e(url('shopInvoices')); ?>" style="display:contents;">
+                        <div class="date-filter">
+                            <label><?php echo e(__('messages.from')); ?></label>
+                            <input type="date" name="start_date" class="date-input-ctrl" value="<?php echo e($startDate ?? ''); ?>">
+                            <span class="date-sep">—</span>
+                            <label><?php echo e(__('messages.to')); ?></label>
+                            <input type="date" name="end_date" class="date-input-ctrl" value="<?php echo e($endDate ?? ''); ?>">
+                            <button type="submit" class="btn-filter">
+                                <i class="bi bi-funnel"></i> <?php echo e(__('messages.filter')); ?>
+
+                            </button>
+                        </div>
+                        <?php if($startDate || $endDate): ?>
+                            <a href="<?php echo e(url('shopInvoices')); ?>" class="btn-clear-filter">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        <?php endif; ?>
+                    </form>
+
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="cardViewBtn" onclick="setView('card')" title="<?php echo e(__('messages.card_view')); ?>">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </button>
+                        <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="<?php echo e(__('messages.list_view')); ?>">
+                            <i class="bi bi-list-ul"></i>
+                        </button>
+                    </div>
+                </div>
+
+                
+                <div class="metrics-grid au au3">
+                    <div class="metric-card mc-navy">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-navy"><i class="bi bi-shop"></i></div>
+                            <div class="metric-body">
+                                <div class="metric-label"><?php echo e(__('messages.total_shops')); ?></div>
+                                <div class="metric-value" id="metricShops"><?php echo e(count($shopsWithInvoices)); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card mc-emerald">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-emerald"><i class="bi bi-receipt"></i></div>
+                            <div class="metric-body">
+                                <div class="metric-label"><?php echo e(__('messages.total_invoices')); ?></div>
+                                <div class="metric-value green" id="metricInvoices"><?php echo e($shopsWithInvoices->sum('invoice_count')); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card mc-rose">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-rose"><i class="bi bi-exclamation-circle"></i></div>
+                            <div class="metric-body">
+                                <div class="metric-label"><?php echo e(__('messages.total_debts')); ?></div>
+                                <div class="metric-value red" id="metricDebts"><?php echo e($shopsWithInvoices->sum('debt_count')); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="cardView" class="card-grid au au4">
+                    <?php $__empty_1 = true; $__currentLoopData = $shopsWithInvoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <?php
+                        $initials = strtoupper(substr($shop['name'], 0, 1));
+                        $parts = explode(' ', trim($shop['name']));
+                        if (count($parts) > 1) $initials .= strtoupper(substr($parts[1], 0, 1));
+                        $allPaid = $shop['debt_count'] == 0;
+                    ?>
+                    <a href="<?php echo e(url('shopDebtors/'.$shop['id'])); ?>"
+                       class="shop-card <?php echo e($allPaid ? 'all-paid' : ''); ?>"
+                       data-name="<?php echo e(strtolower($shop['name'])); ?>">
+                        <div class="card-top">
+                            <div class="shop-avatar"><?php echo e($initials); ?></div>
+                            <?php if($allPaid): ?>
+                                <span class="card-badge badge-paid"><i class="bi bi-check-circle-fill"></i> <?php echo e(__('messages.all_paid')); ?></span>
+                            <?php else: ?>
+                                <span class="card-badge badge-debt"><i class="bi bi-exclamation-circle-fill"></i> <?php echo e($shop['debt_count']); ?> <?php echo e(__('messages.debts')); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-name"><?php echo e($shop['name']); ?></div>
+                        <hr class="card-divider">
+                        <div class="card-stats">
+                            <div>
+                                <div class="cs-label"><?php echo e(__('messages.invoices')); ?></div>
+                                <div class="cs-value"><?php echo e($shop['invoice_count']); ?></div>
+                            </div>
+                       
+                            <div>
+                                <div class="cs-label"><?php echo e(__('messages.shop_debts')); ?></div>
+                                <div class="cs-value <?php echo e($shop['debt_count'] > 0 ? 'red' : 'green'); ?>"><?php echo e($shop['debt_count']); ?></div>
+                            </div>
+                        </div>
+                        <div class="card-cta">
+                            <?php echo e(__('messages.view_details')); ?> <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                    <div style="grid-column:1/-1;">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <h4><?php echo e(__('messages.no_shops_found')); ?></h4>
+                            <p><?php echo e(__('messages.no_shops_invoices_recorded')); ?></p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                
+                <div id="listView" class="shop-list hidden au au4">
+                    <?php $__empty_1 = true; $__currentLoopData = $shopsWithInvoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <?php
+                        $initials = strtoupper(substr($shop['name'], 0, 1));
+                        $parts = explode(' ', trim($shop['name']));
+                        if (count($parts) > 1) $initials .= strtoupper(substr($parts[1], 0, 1));
+                    ?>
+                    <a href="<?php echo e(url('shopDebtors/'.$shop['id'])); ?>"
+                       class="list-item"
+                       data-name="<?php echo e(strtolower($shop['name'])); ?>">
+                        <div class="shop-avatar"><?php echo e($initials); ?></div>
+                        <div class="list-info">
+                            <div class="list-name"><?php echo e($shop['name']); ?></div>
+                        </div>
+                        <div class="list-stats">
+                            <div>
+                                <div class="ls-label"><?php echo e(__('messages.invoices')); ?></div>
+                                <div class="ls-value"><?php echo e($shop['invoice_count']); ?></div>
+                            </div>
+                          
+                            <div>
+                                <div class="ls-label"><?php echo e(__('messages.shop_debts')); ?></div>
+                                <div class="ls-value <?php echo e($shop['debt_count'] > 0 ? 'red' : 'green'); ?>"><?php echo e($shop['debt_count']); ?></div>
+                            </div>
+                        </div>
+                        <i class="bi bi-chevron-right list-chevron"></i>
+                    </a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                    <h4><?php echo e(__('messages.no_shops_found')); ?></h4>
+                    <p><?php echo e(__('messages.no_shops_invoices_recorded')); ?></p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                
+                <div id="noResults" class="empty-state hidden" style="background:var(--white); border:1.5px solid var(--slate-200); border-radius:var(--r-xl);">
+                    <i class="bi bi-search"></i>
+                    <h4><?php echo e(__('messages.no_debt_invoices_match_filters')); ?></h4>
+                    <p><?php echo e(__('messages.no_shops_match_search')); ?></p>
+                </div>
+
+            </div>
+        </main>
+
+
+<div class="modal fade" id="manualInvoiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-top">
+                <div class="modal-top-left">
+                    <div class="modal-top-icon"><i class="bi bi-receipt"></i></div>
+                    <h5><?php echo e(__('messages.create_manual_invoice')); ?></h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="<?php echo e(url('createManualInvoice')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <div class="modal-body">
+
+                    <div class="field">
+                        <label class="field-label"><?php echo e(__('messages.shop_label')); ?> <span class="req">*</span></label>
+                        <select class="field-input" name="account" id="shopSelect" required>
+                            <option value=""><?php echo e(__('messages.select_a_shop')); ?></option>
+                            <?php $__currentLoopData = $shops; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shop): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($shop['id']); ?>"><?php echo e($shop['name']); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+
+                    <div class="field" style="position:relative;">
+                        <label class="field-label"><?php echo e(__('messages.customer')); ?> <span class="req">*</span></label>
+                        <div class="modal-search-wrap">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="field-input" id="customerSearch"
+                                   placeholder="<?php echo e(__('messages.search_by_name_or_phone')); ?>"
+                                   name="customer_search" autocomplete="off" required>
+                        </div>
+                        <input type="hidden" name="customer_id"   id="customerId">
+                        <input type="hidden" name="customer_name" id="customerNameHidden">
+                        <div class="cust-results" id="customerSearchResults"></div>
+                        <div id="selectedCustomerTag"></div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label"><?php echo e(__('messages.invoice_date')); ?> <span class="req">*</span></label>
+                        <?php if(canUser("invoice_date")): ?>
+                        <input type="date" class="field-input" name="invoice_date" value="<?php echo e(date('Y-m-d')); ?>" required>
+                        <?php else: ?>
+                        <input type="hidden" name="invoice_date" value="<?php echo e(date('Y-m-d')); ?>">
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label"><?php echo e(__('messages.amount_tzs')); ?> <span class="req">*</span></label>
+                        <div class="input-prefix-wrap">
+                            <span class="input-prefix">Tsh</span>
+                            <input type="number" name="amount" min="0" step="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label"><?php echo e(__('messages.notes_optional')); ?></label>
+                        <textarea class="field-input" name="notes" placeholder="Additional notes…"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"><?php echo e(__('messages.cancel')); ?></button>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-circle-fill"></i> <?php echo e(__('messages.create_invoice')); ?>
+
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ── View toggle ── */
+    let currentView = localStorage.getItem('shopInvView') || 'card';
+
+    function setView(v) {
+        currentView = v;
+        document.getElementById('cardView').classList.toggle('hidden', v !== 'card');
+        document.getElementById('listView').classList.toggle('hidden', v !== 'list');
+        document.getElementById('cardViewBtn').classList.toggle('active', v === 'card');
+        document.getElementById('listViewBtn').classList.toggle('active', v === 'list');
+        localStorage.setItem('shopInvView', v);
+    }
+    setView(currentView);
+
+    /* ── Shop search ── */
+    document.getElementById('shopSearch').addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('#cardView .shop-card');
+        const items = document.querySelectorAll('#listView .list-item');
+        let visible = 0;
+
+        function filter(els) {
+            els.forEach(el => {
+                const match = !q || el.dataset.name.includes(q);
+                el.classList.toggle('hidden', !match);
+                if (match) visible++;
+            });
+        }
+
+        filter(cards);
+        filter(items);
+        document.getElementById('noResults').classList.toggle('hidden', visible > 0 || !q);
+    });
+
+    /* ── Customer search in modal ── */
+    const custInput   = document.getElementById('customerSearch');
+    const custResults = document.getElementById('customerSearchResults');
+    const custTag     = document.getElementById('selectedCustomerTag');
+
+    custInput && custInput.addEventListener('input', function () {
+        const q = this.value.trim();
+        const shopSelect = document.getElementById('shopSelect');
+        const selectedShop = shopSelect ? shopSelect.value : '';
+        
+        if (q.length < 2) { custResults.style.display = 'none'; return; }
+        if (!selectedShop) {
+            custResults.innerHTML = '<div class="cust-item-none">Please select a shop first</div>';
+            custResults.style.display = 'block';
+            return;
+        }
+
+        fetch(`<?php echo e(url('searchCustomers')); ?>?query=${encodeURIComponent(q)}&account=${encodeURIComponent(selectedShop)}`)
+            .then(r => r.json())
+            .then(data => {
+                custResults.innerHTML = data.length
+                    ? data.map(c => `
+                        <div class="cust-item" onclick="selectCustomer(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
+                            <div class="cust-item-name">${c.name}</div>
+                            <div class="cust-item-sub">${c.phone || 'No phone'} · Limit: ${Number(c.limits||0).toLocaleString()}</div>
+                        </div>`).join('')
+                    : '<div class="cust-item-none">No customers found</div>';
+                custResults.style.display = 'block';
+            })
+            .catch(() => {
+                custResults.innerHTML = '<div class="cust-item-none" style="color:var(--rose);">Error loading customers</div>';
+                custResults.style.display = 'block';
+            });
+    });
+
+    function selectCustomer(id, name) {
+        document.getElementById('customerId').value         = id;
+        document.getElementById('customerNameHidden').value = name;
+        custInput.value = name;
+        custResults.style.display = 'none';
+        custTag.innerHTML = `<span class="selected-tag"><i class="bi bi-check-circle-fill"></i> ${name}</span>`;
+    }
+
+    document.addEventListener('click', function (e) {
+        if (custInput && custResults &&
+            !custInput.contains(e.target) && !custResults.contains(e.target)) {
+            custResults.style.display = 'none';
+        }
+    });
+</script>
+<?php echo $__env->make('footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
+</body>
+</html><?php /**PATH C:\Users\HomePC\Music\leruma pos\resources\views/shopInvoices.blade.php ENDPATH**/ ?>

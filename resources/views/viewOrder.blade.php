@@ -1265,6 +1265,20 @@
     function formatNumber(num) {
         return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
     }
+
+    // Prevent double-click on payout button
+    document.querySelector('form[action=""]')?.addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[formaction="payout"]');
+        if (btn && btn.dataset.submitted) {
+            e.preventDefault();
+            return false;
+        }
+        if (btn) {
+            btn.dataset.submitted = 'true';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+        }
+    });
 </script>
 @include('footer')
 

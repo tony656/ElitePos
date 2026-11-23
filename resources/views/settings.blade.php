@@ -510,6 +510,29 @@
                         </div>
                     </div>
 
+                    <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:flex-start; margin-top:1rem;">
+                        <div style="flex:1; min-width:280px;">
+                            <label class="field-label">Primary Color (Sidenav, Headers)</label>
+                            <div style="display:flex; align-items:center; gap:1rem; margin-top:0.5rem;">
+                                <div id="activeNavyPreview" style="width:56px; height:56px; border-radius:12px; background:{{ $getData->theme_navy ?? '#0B1E3D' }}; border:3px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+                                <div>
+                                    <div style="font-weight:700; font-size:1.1rem; color:var(--navy);">{{ $getData->theme_navy ?? '#0B1E3D' }}</div>
+                                    <div style="font-size:0.8rem; color:var(--slate-500);">Controls sidenav, table headers, modals</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:280px;">
+                            <form action="{{ route('settings.themeNavy') }}" method="post" style="display:flex; flex-direction:column; gap:0.75rem;">
+                                @csrf
+                                <label class="field-label">Change Primary Color</label>
+                                <div style="display:flex; gap:0.75rem; align-items:center;">
+                                    <input type="color" class="field-input" name="theme_navy" value="{{ $getData->theme_navy ?? '#0B1E3D' }}" style="width:60px; height:42px; padding:0.25rem; cursor:pointer;" required>
+                                    <button type="submit" class="btn-save" style="margin:0;">Apply Color</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                     <hr style="margin:1.5rem 0; border-color:var(--slate-200);">
 
                     <div style="display:flex; flex-wrap:wrap; gap:1.5rem; align-items:flex-start;">

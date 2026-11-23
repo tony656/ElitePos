@@ -920,7 +920,7 @@ private function calculateStatistics($transfers)
         $chip->available_chip = $newAvailable;
         $chip->transfer_date = $req->transfer_date;
         $chip->created_by = Auth::user()->name;
-        $chip->account = $Account;
+        $chip->account = $Account ?? 7;
         $chip->save();
 
         if ($chip) {

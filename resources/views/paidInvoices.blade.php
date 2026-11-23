@@ -3,424 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{config("app.name")}} — Paid Invoices</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{{config("app.name")}} - Paid Invoices</title>
     @include("links")
     
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
-            --navy:         #0B1E3D;
-            --navy-mid:     #112952;
-            --navy-light:   #1A3A6B;
-            --amber:        var(--theme-primary);
-            --amber-pale:   #FEF3C7;
-            --emerald:      #059669;
-            --emerald-pale: #D1FAE5;
-            --rose:         #E11D48;
-            --rose-pale:    #FFE4E6;
-            --violet:       #7C3AED;
-            --violet-pale:  #EDE9FE;
-            --sky:          #0284C7;
-            --sky-pale:     #E0F2FE;
-            --slate-50:     #F8FAFC;
-            --slate-100:    #F1F5F9;
-            --slate-200:    #E2E8F0;
-            --slate-300:    #CBD5E1;
-            --slate-400:    #94A3B8;
-            --slate-500:    #64748B;
-            --slate-600:    #475569;
-            --slate-700:    #334155;
-            --slate-800:    #1E293B;
-            --white:        #FFFFFF;
-
-            --font: 'Sora', system-ui, sans-serif;
-            --mono: 'JetBrains Mono', monospace;
-            --r:    8px;
-            --r-lg: 13px;
-            --r-xl: 16px;
+            --navy:         #084b87;
+            --navy-mid:     #0756a6;
+            --navy-light:   #0b66b2;
+            --amber:        #0b65b1;
+            --amber-pale:   #e8f2fc;
+            --emerald:      #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose:         #e5485d;
+            --rose-pale:    #fff0f1;
+            --violet:       #7844d6;
+            --violet-pale:  #f1ebff;
+            --sky:          #0874c5;
+            --sky-pale:     #e8f3ff;
+            --fuchsia:      #c026a8;
+            --fuchsia-pale: #fceafa;
+            --slate-50:     #f5f9fd;
+            --slate-100:    #edf3f9;
+            --slate-200:    #dce7f1;
+            --slate-300:    #c5d5e5;
+            --slate-400:    #8da4bb;
+            --slate-500:    #607b96;
+            --slate-600:    #45627e;
+            --slate-700:    #2d4c69;
+            --slate-800:    #183a5a;
+            --white:        #ffffff;
+            --font:         'DM Sans', system-ui, sans-serif;
+            --radius:       8px;
+            --radius-sm:    6px;
+            --shadow-sm:    0 2px 8px rgba(8, 61, 108, .06);
+            --shadow-md:    0 5px 16px rgba(8, 61, 108, .09);
+            --shadow-lg:    0 10px 28px rgba(8, 61, 108, .13);
         }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font);
-            background: #ECF0F8;
+            background: #f3f7fb;
             color: var(--slate-800);
             min-height: 100vh;
             font-size: 14px;
             line-height: 1.6;
         }
 
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--slate-100); }
-        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
-        .wrap { padding: 1.5rem 1.75rem 3rem; }
+        .wrap { padding: 1.1rem 1.25rem 1.5rem; max-width: 1800px; margin: 0 auto; }
 
-        /* ── Animations ── */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .au  { animation: fadeUp 0.38s ease both; }
-        .au1 { animation-delay: 0.04s; }
-        .au2 { animation-delay: 0.10s; }
-        .au3 { animation-delay: 0.16s; }
-        .au4 { animation-delay: 0.22s; }
-        .au5 { animation-delay: 0.28s; }
-
-        /* ══ BREADCRUMB ══ */
-        .breadcrumb {
-            display: flex; align-items: center; gap: 6px;
-            margin-bottom: 1.1rem; flex-wrap: wrap;
-        }
-        .bc-link {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 12px; color: var(--slate-400); text-decoration: none;
-            transition: color 0.15s;
-        }
-        .bc-link:hover { color: var(--navy); }
-        .bc-sep { font-size: 12px; color: var(--slate-300); }
-        .bc-cur { font-size: 12px; font-weight: 600; color: var(--slate-700); }
-
-        /* ══ PAGE HEADER ══ */
+        /* ── Page header ── */
         .pg-header {
-            background: var(--navy); border-radius: var(--r-xl);
-            padding: 1.2rem 1.6rem; margin-bottom: 1.4rem;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 1rem; flex-wrap: wrap;
-            position: relative; overflow: hidden;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: .25rem 0 .9rem;
+            margin-bottom: .55rem;
+            box-shadow: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            overflow: visible;
         }
-        .pg-header::before {
-            content: ''; position: absolute; top: -50px; right: -30px;
-            width: 180px; height: 180px; border-radius: 50%;
-            background: var(--navy-light); opacity: 0.45; pointer-events: none;
+        .pg-header::before, .pg-header::after { display: none; }
+
+        /* ── Alerts ── */
+        .alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .7rem .9rem;
+            border-radius: var(--radius);
+            margin-bottom: .85rem;
+            font-size: .78rem;
+            font-weight: 500;
         }
-        .pg-header::after {
-            content: ''; position: absolute; bottom: -55px; right: 100px;
-            width: 120px; height: 120px; border-radius: 50%;
-            background: var(--emerald); opacity: 0.07; pointer-events: none;
+        .alert-success { background: var(--emerald-pale); color: #056f58; border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: #c9314a; border-left: 3px solid var(--rose); }
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            font-size: 1.05rem;
+            opacity: 0.6;
+            line-height: 1;
+            font-family: inherit;
         }
+        .close-btn:hover { opacity: 1; }
         .pg-left { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
         .header-icon {
-            width: 40px; height: 40px; border-radius: var(--r);
-            background: var(--emerald); display: flex; align-items: center;
-            justify-content: center; font-size: 18px; color: var(--white); flex-shrink: 0;
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
+            flex-shrink: 0;
         }
-        .pg-title-text h1 { font-size: 16px; font-weight: 700; color: var(--white); letter-spacing: -0.2px; }
-        .pg-title-text p  { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+        .pg-title-text h1 { font-size: 1.42rem; font-weight: 700; color: #064b86; letter-spacing: -0.35px; margin: 0; display: flex; align-items: center; gap: 0.35rem; }
+        .pg-title-text h1 span { color: #0871c2; }
+        .pg-title-text p  { font-size: .78rem; color: #647f99; font-weight: 400; letter-spacing: 0.01em; margin-top: 1px; }
         .pg-right { display: flex; gap: 8px; align-items: center; position: relative; z-index: 1; flex-wrap: wrap; }
 
-        .btn-amber {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: var(--r);
-            background: var(--amber); color: var(--navy);
-            font-family: var(--font); font-size: 13px; font-weight: 700;
-            border: none; cursor: pointer;
-            box-shadow: 0 3px 14px rgba(245,158,11,0.35);
-            transition: all 0.18s;
+        /* ── Buttons ── */
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: .58rem 1rem;
+            font-size: .78rem;
+            font-weight: 600;
+            background: #0866b2;
+            color: #fff;
+            border: 1px solid #0866b2;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 3px 8px rgba(8, 102, 178, .18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.01em;
         }
-        .btn-amber:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); color: var(--navy); }
+        .btn-header:hover { background: #064f91; border-color: #064f91; color: #fff; transform: translateY(-1px); }
+        .btn-header:active { transform: translateY(0); }
 
-        /* ══ FILTERS ══ */
+        /* ── Filters ── */
         .filters-card {
-            background: var(--white); border: 1.5px solid var(--slate-200);
-            border-radius: var(--r-lg); padding: 1rem 1.2rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 1px 4px rgba(11,30,61,0.05);
+            background: var(--white);
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            padding: .8rem .95rem;
+            margin-bottom: .8rem;
         }
         .filters-row {
-            display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+            display: flex;
+            gap: .7rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
         }
         .filter-group { flex: 1; min-width: 140px; }
         .filter-label {
-            display: block; font-size: 10.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.07em;
-            color: var(--slate-400); margin-bottom: 5px;
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
         }
         .filter-ctrl {
-            width: 100%; font-family: var(--font); font-size: 13px;
-            padding: 8px 12px; border: 1.5px solid var(--slate-200);
-            border-radius: var(--r); background: var(--white);
-            color: var(--slate-800); outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-            appearance: none;
+            width: 100%;
+            font-family: var(--font);
+            font-size: .78rem;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
         }
         .filter-ctrl:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
         }
         select.filter-ctrl {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 12px center;
-            padding-right: 2.25rem; cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
         }
-        .filter-actions { display: flex; gap: 8px; align-items: center; padding-bottom: 1px; flex-shrink: 0; }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding-bottom: 1px;
+            flex-shrink: 0;
+        }
         .btn-filter {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 8px 16px; border-radius: var(--r);
-            background: var(--navy); color: var(--white);
-            font-family: var(--font); font-size: 13px; font-weight: 600;
-            border: none; cursor: pointer; transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .55rem .9rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+            background: #0866b2;
+            color: #fff;
         }
-        .btn-filter:hover { background: var(--navy-light); }
+        .btn-filter:hover:not(:disabled) { background: #064f91; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,102,178,.25); }
         .btn-reset {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 8px 14px; border-radius: var(--r);
-            border: 1.5px solid var(--slate-200); background: transparent;
-            font-family: var(--font); font-size: 13px; color: var(--slate-600);
-            cursor: pointer; text-decoration: none; transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .btn-reset:hover { background: var(--slate-100); color: var(--slate-800); }
+        .btn-reset:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
 
-        /* ══ METRICS ══ */
+        /* ── Metrics ── */
         .metrics-grid {
-            display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
-            gap: 1rem; margin-bottom: 1.4rem;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .7rem;
+            margin-bottom: .85rem;
         }
         @media (max-width: 900px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 480px) { .metrics-grid { grid-template-columns: 1fr; } }
 
         .metric-card {
-            background: var(--white); border: 1.5px solid var(--slate-200);
-            border-radius: var(--r-lg); padding: 1.1rem 1.2rem;
-            box-shadow: 0 1px 4px rgba(11,30,61,0.05);
-            position: relative; overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--white);
+            border: 1px solid #dce8f3;
+            border-radius: var(--radius);
+            padding: .8rem .95rem;
+            box-shadow: none;
+            animation: none;
         }
-        .metric-card::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: var(--mc);
+        .metric-card::before { display: none; }
+        .metric-card::after { width: 90px; height: 90px; opacity: .25; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .metric-inner { display: flex; align-items: center; gap: .8rem; }
+        .metric-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; flex-shrink: 0;
         }
+        .mi-emerald { background: var(--emerald-pale); color: var(--emerald); }
+        .mi-navy    { background: rgba(8,75,135,0.08); color: var(--navy-light); }
+        .mi-amber   { background: var(--amber-pale); color: var(--amber); }
+        .mi-violet  { background: var(--violet-pale); color: var(--violet); }
         .mc-emerald { --mc: var(--emerald); }
         .mc-navy    { --mc: var(--navy); }
         .mc-amber   { --mc: var(--amber); }
         .mc-violet  { --mc: var(--violet); }
-
-        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(11,30,61,0.1); }
-        .metric-inner { display: flex; align-items: center; gap: 12px; }
-        .metric-icon {
-            width: 42px; height: 42px; border-radius: var(--r); flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        .metric-label {
+            font-size: .68rem;
+            font-weight: 700;
+            color: #59748f;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-bottom: .18rem;
         }
-        .mi-emerald { background: var(--emerald-pale); color: var(--emerald); }
-        .mi-navy    { background: rgba(11,30,61,0.08); color: var(--navy); }
-        .mi-amber   { background: var(--amber-pale);   color: #92400e; }
-        .mi-violet  { background: var(--violet-pale);  color: var(--violet); }
+        .metric-value {
+            font-family: var(--font);
+            font-size: 1.45rem;
+            color: #084b87;
+            font-weight: 700;
+            line-height: 1.12;
+            letter-spacing: -.35px;
+        }
 
-        .metric-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--slate-400); margin-bottom: 4px; }
-        .metric-value { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--navy); letter-spacing: -0.5px; line-height: 1; }
-
-        /* ══ PANEL / TABLE ══ */
+        /* ── Panel / Table ── */
         .panel {
-            background: var(--white); border: 1.5px solid var(--slate-200);
-            border-radius: var(--r-xl); overflow: hidden;
-            box-shadow: 0 1px 4px rgba(11,30,61,0.05);
+            background: var(--white);
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            overflow: hidden;
         }
         .panel-head {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 1.4rem; border-bottom: 1.5px solid var(--slate-200);
-            background: var(--slate-50); gap: 1rem; flex-wrap: wrap;
+            padding: .75rem .9rem;
+            background: #fff;
+            border-bottom: 1px solid #dce7f1;
         }
-        .panel-head-left { display: flex; align-items: center; gap: 10px; }
+        .panel-head-left { display: flex; align-items: center; gap: .6rem; }
         .panel-head-icon {
-            width: 30px; height: 30px; border-radius: var(--r);
-            background: var(--emerald-pale); color: var(--emerald);
-            display: flex; align-items: center; justify-content: center; font-size: 13px;
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
+            flex-shrink: 0;
         }
-        .panel-title { font-size: 13.5px; font-weight: 700; color: var(--navy); }
-
+        .panel-title { font-size: .96rem; font-weight: 700; color: #084b87; margin: 0; }
+        .panel-title::before {
+            content: '';
+            width: 3px; height: 17px;
+            background: #0b68b4;
+            border-radius: 2px;
+            display: inline-block;
+            margin-right: .4rem;
+        }
         .shop-pill {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 12px; font-weight: 600; padding: 4px 12px;
-            background: rgba(11,30,61,0.07); color: var(--navy);
-            border-radius: 20px; font-family: var(--mono);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: .72rem;
+            font-weight: 600;
+            padding: .22rem .55rem;
+            background: #edf3f9;
+            color: var(--slate-500);
+            border-radius: 20px;
+            margin-left: auto;
         }
 
         /* Table */
-        .tbl-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
+        .tbl-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e5edf5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .76rem;
+        }
         thead th {
-            background: var(--navy); color: rgba(255,255,255,0.65);
-            font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.07em; padding: 10px 16px;
-            white-space: nowrap; border: none; text-align: left;
+            background: #07569b;
+            color: #fff;
+            font-size: .66rem;
+            font-weight: 600;
+            letter-spacing: .015em;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(255,255,255,.13);
+            white-space: nowrap;
+            text-align: left;
         }
-
-        tbody tr { border-bottom: 1px solid var(--slate-100); transition: background 0.12s; }
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover td { background: #F7F9FF; }
-        td { padding: 11px 16px; vertical-align: middle; }
-
-        /* Cell types */
-        .date-val {
-            font-family: var(--mono); font-size: 12px; color: var(--slate-500);
+        thead th:last-child { text-align: right; }
+        tbody td {
+            padding: .52rem .68rem;
+            border: 1px solid #e5edf5;
+            color: #244866;
+            font-size: .74rem;
+            vertical-align: middle;
         }
-        .date-val span { display: block; font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+        tbody tr:nth-child(even) td { background: #f8fbfe; }
+        tbody tr:hover td { background: #edf6ff; }
+        td.text-right { text-align: right; }
 
-        .cust-name { font-weight: 600; color: var(--navy); font-size: 13px; }
-
+        .date-val { font-size: .74rem; color: #31516e; font-variant-numeric: tabular-nums; }
+        .date-val span { display: block; font-size: .68rem; color: #7189a0; margin-top: 1px; }
+        .cust-name { font-weight: 600; color: #164a78; font-size: .76rem; margin-bottom: .08rem; }
         .inv-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 10px; border-radius: 20px;
-            background: var(--emerald-pale); color: var(--emerald);
-            font-size: 11px; font-weight: 700; font-family: var(--mono);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: .22rem .55rem;
+            border-radius: 20px;
+            background: var(--emerald-pale);
+            color: var(--emerald);
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .03em;
         }
-
-        .amount-val { font-family: var(--mono); font-weight: 700; color: var(--emerald); font-size: 13px; }
-
+        .amount-val { font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; font-size: .74rem; }
         .shop-tag {
-            display: inline-block; padding: 3px 10px; border-radius: 20px;
-            background: var(--slate-100); color: var(--slate-600);
-            font-size: 11.5px; font-weight: 600;
+            display: inline-block;
+            padding: .22rem .5rem;
+            border-radius: 5px;
+            background: var(--slate-100);
+            color: var(--slate-600);
+            font-size: .68rem;
+            font-weight: 600;
         }
+
+        /* Action buttons */
+        .action-cell { display: flex; gap: .28rem; justify-content: center; }
+        .action-icon-btn {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            border: 0;
+            color: #fff !important;
+            background: #0870bd !important;
+            font-size: .75rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-icon-btn.delete { background: var(--rose) !important; }
+        .action-icon-btn:hover { background: #064f91 !important; transform: translateY(-1px); }
+        .action-icon-btn.delete:hover { background: var(--rose) !important; }
 
         /* Empty state */
-        .empty-state { text-align: center; padding: 4rem 1.5rem; color: var(--slate-400); }
-        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.3; }
-        .empty-state h4 { font-size: 15px; font-weight: 600; color: var(--slate-600); margin-bottom: 5px; }
-        .empty-state p  { font-size: 13px; }
-
-        /* ══ MODAL ══ */
-        .modal-content { border: none; border-radius: var(--r-xl); overflow: hidden; box-shadow: 0 20px 60px rgba(11,30,61,0.2); }
-        .modal-top {
-            background: var(--navy); padding: 1.15rem 1.4rem;
-            display: flex; align-items: center; justify-content: space-between;
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            border: 1px dashed #c5d5e5;
+            border-radius: var(--radius-sm);
+            background: #f8fbfe;
+            margin: 1rem;
         }
-        .modal-top-left { display: flex; align-items: center; gap: 10px; }
-        .modal-top-icon {
-            width: 32px; height: 32px; border-radius: var(--r);
-            background: var(--amber); display: flex; align-items: center;
-            justify-content: center; color: var(--navy); font-size: 14px;
-        }
-        .modal-top h5 { font-size: 15px; font-weight: 700; color: var(--white); margin: 0; }
-        .modal-top .btn-close { filter: invert(1) brightness(0.75); }
-        .modal-body { padding: 1.5rem 1.4rem; }
+        .empty-icon { font-size: 2.2rem; margin-bottom: .6rem; opacity: .35; color: var(--slate-400); }
+        .empty-state h4 { font-size: .9rem; font-weight: 600; color: var(--slate-600); margin-bottom: 4px; }
+        .empty-state p  { font-size: .78rem; color: var(--slate-400); }
 
-        .field { margin-bottom: 12px; }
+        /* ── Modal ── */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: 0 10px 28px rgba(8, 61, 108, .13);
+        }
+        .modal-header {
+            background: linear-gradient(120deg, #064b86, #0870bd);
+            color: #fff;
+            border-bottom: none;
+            padding: .75rem .9rem;
+        }
+        .modal-header .modal-title { font-size: .96rem; font-weight: 700; color: #fff; margin: 0; }
+        .modal-header .btn-close { filter: invert(1); opacity: .7; }
+        .modal-header .btn-close:hover { opacity: 1; }
+        .modal-body { padding: .9rem; font-size: .78rem; }
+        .modal-footer { border-top: 1px solid #dce7f1; padding: .75rem .9rem; background: #fff; }
+
+        .field { margin-bottom: 1rem; }
+        .field:last-child { margin-bottom: 0; }
         .field-label {
-            display: block; font-size: 11px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.06em;
-            color: var(--slate-500); margin-bottom: 5px;
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
         }
         .field-label .req { color: var(--rose); }
         .field-input {
-            width: 100%; font-family: var(--font); font-size: 13.5px;
-            padding: 9px 12px; border: 1.5px solid var(--slate-200);
-            border-radius: var(--r); background: var(--white);
-            color: var(--slate-800); outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-            appearance: none;
+            width: 100%;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
         }
-        .field-input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(26,58,107,0.1); }
+        .field-input:focus {
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
+        }
         .field-input::placeholder { color: var(--slate-400); }
+        .field-input.readonly { background: #f8fbfe; color: var(--slate-500); }
         select.field-input {
-            cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 12px center;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
             padding-right: 2.25rem;
+            cursor: pointer;
         }
         textarea.field-input { resize: vertical; min-height: 72px; }
 
         .modal-search-wrap { position: relative; }
-        .modal-search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--slate-400); font-size: 13px; pointer-events: none; }
-        .modal-search-wrap .field-input { padding-left: 32px; }
-
-        .input-prefix-wrap { display: flex; border: 1.5px solid var(--slate-200); border-radius: var(--r); overflow: hidden; transition: border-color 0.18s, box-shadow 0.18s; }
-        .input-prefix-wrap:focus-within { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(26,58,107,0.1); }
-        .input-prefix { background: var(--slate-100); padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--slate-500); border-right: 1.5px solid var(--slate-200); white-space: nowrap; }
-        .input-prefix-wrap input { flex: 1; border: none; outline: none; padding: 9px 12px; font-family: var(--mono); font-size: 13.5px; color: var(--slate-800); background: transparent; }
+        .modal-search-wrap i {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-400);
+            font-size: .85rem;
+            pointer-events: none;
+        }
+        .modal-search-wrap .field-input { padding-left: 2.35rem; }
 
         .cust-results {
-            position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1050;
-            background: var(--white); border: 1.5px solid var(--navy-light); border-radius: var(--r);
-            max-height: 220px; overflow-y: auto;
-            box-shadow: 0 8px 24px rgba(11,30,61,0.14); display: none;
+            position: fixed;
+            z-index: 1000;
+            background: var(--white);
+            border: 1px solid #0b66b2;
+            border-radius: var(--radius);
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            width: 340px;
         }
-        .cust-item { padding: 9px 13px; cursor: pointer; border-bottom: 1px solid var(--slate-100); transition: background 0.12s; }
+        .cust-item {
+            padding: 0.6rem 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--slate-100);
+            transition: background 0.15s;
+        }
         .cust-item:last-child { border-bottom: none; }
-        .cust-item:hover { background: var(--slate-50); border-left: 3px solid var(--amber); padding-left: 10px; }
-        .cust-item-name { font-size: 13px; font-weight: 600; color: var(--slate-800); }
-        .cust-item-sub  { font-size: 11.5px; color: var(--slate-400); font-family: var(--mono); margin-top: 1px; }
-        .cust-item-none { padding: 12px; text-align: center; font-size: 13px; color: var(--slate-400); }
+        .cust-item:hover, .cust-item.selected { background: #edf6ff; border-left: 3px solid #0b68b4; padding-left: calc(0.9rem - 3px); }
+        .cust-item-name { font-size: .8rem; font-weight: 600; color: var(--navy); }
+        .cust-item-sub { font-size: .72rem; color: var(--slate-500); font-weight: 600; margin-top: 2px; }
+        .cust-item-none { padding: 1rem; text-align: center; font-size: .78rem; color: var(--slate-400); }
         .selected-tag {
-            display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
-            background: var(--emerald-pale); color: var(--emerald);
-            padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            background: var(--emerald-pale);
+            color: var(--emerald);
+            padding: .22rem .55rem;
+            border-radius: 20px;
+            font-size: .68rem;
+            font-weight: 700;
+        }
+
+        .input-prefix-wrap {
+            display: flex;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-prefix-wrap:focus-within { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
+        .input-prefix {
+            background: var(--slate-100);
+            padding: .58rem .8rem;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            border-right: 1px solid #d4e1ed;
+            white-space: nowrap;
+        }
+        .input-prefix-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: .58rem .8rem;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: transparent;
         }
 
         .modal-footer-custom {
-            padding: 1rem 1.4rem; border-top: 1.5px solid var(--slate-200);
-            display: flex; justify-content: flex-end; gap: 8px;
+            padding: .75rem .9rem;
+            border-top: 1px solid #dce7f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
         }
         .btn-cancel {
-            padding: 9px 18px; border-radius: var(--r);
-            border: 1.5px solid var(--slate-200); background: transparent;
-            font-family: var(--font); font-size: 13px; color: var(--slate-600); cursor: pointer; transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
         }
-        .btn-cancel:hover { background: var(--slate-100); }
+        .btn-cancel:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
         .btn-submit {
-            padding: 9px 20px; border-radius: var(--r);
-            background: var(--amber); color: var(--navy); border: none;
-            font-family: var(--font); font-size: 13px; font-weight: 700;
-            cursor: pointer; display: flex; align-items: center; gap: 6px;
-            box-shadow: 0 3px 14px rgba(245,158,11,0.3); transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: none;
+            background: var(--emerald);
+            color: #fff;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
         }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,0.4); }
+        .btn-submit:hover { background: #056f58; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(7,134,107,.28); }
+
+        /* Delete confirmation */
+        .btn-delete-small {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            background: #fff0f1;
+            color: var(--rose);
+            border: 1px solid #f5b8c2;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+        }
+        .btn-delete-small:hover { background: var(--rose); color: #fff; border-color: var(--rose); transform: translateY(-1px); }
 
         @media (max-width: 768px) {
-            .wrap { padding: 1rem; }
-            .filters-row { flex-direction: column; }
-            .filter-actions { width: 100%; }
+            .wrap { padding: .8rem; }
+            .pg-header { padding: .25rem 0 .7rem; }
+            .filters-row { flex-direction: column; align-items: stretch; }
+            .filter-actions { width: 100%; justify-content: flex-end; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .table-wrap { max-height: none; }
         }
-    
-        /* Delete button */
-        .btn-delete {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: var(--r);
-            background: var(--rose-pale); color: var(--rose);
-            font-size: 14px; border: none; cursor: pointer;
-            transition: all 0.15s;
-        }
-        .btn-delete:hover {
-            background: var(--rose); color: var(--white);
-            transform: translateY(-1px);
-        }
-</style>
+    </style>
 </head>
 <body>
     @include("sidenav")
 
     <main class="main-content">
         {{-- ── Alerts ── --}}
-            @if(session('success'))
-            <div class="alert-bar alert-ok">
-                <span><i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}</span>
-                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
-            </div>
-            @endif
-            @if(session('error'))
-            <div class="alert-bar alert-err">
-                <span><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ session('error') }}</span>
-                <button onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
-            </div>
-            @endif
+        @if(session('success'))
+        <div class="alert alert-success">
+            <span>{{ session('success') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert alert-danger">
+            <span>{{ session('error') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+
         <div class="wrap">
 
-            {{-- Breadcrumb --}}
-            <div class="breadcrumb au au1">
-                <a href="{{ url('home') }}" class="bc-link"><i class="bi bi-house"></i> Home</a>
-                <span class="bc-sep">/</span>
-                <a href="{{ url('shopInvoices') }}" class="bc-link">{{ __('messages.shops_with_invoices') }}</a>
-                <span class="bc-sep">/</span>
-                <span class="bc-cur">Paid Invoices</span>
-            </div>
-
+            {{-- Breadcrumb (kept simple) --}}
             {{-- Page header --}}
-            <div class="pg-header au au1">
+            <div class="pg-header">
                 <div class="pg-left">
                     <div class="header-icon"><i class="bi bi-check-circle-fill"></i></div>
                     <div class="pg-title-text">
@@ -429,19 +661,20 @@
                     </div>
                 </div>
                 <div class="pg-right">
-                    <button class="btn-amber" data-bs-toggle="modal" data-bs-target="#manualInvoiceModal">
+                    <button class="btn-header" data-bs-toggle="modal" data-bs-target="#manualInvoiceModal">
                         <i class="bi bi-plus-lg"></i> {{ __('messages.manual_invoice') }}
                     </button>
                 </div>
             </div>
 
             {{-- Filters --}}
-            <div class="filters-card au au2">
+            <div class="filters-card">
                 <form method="GET" action="{{ url('paidInvoices') }}">
                     <div class="filters-row">
                         <div class="filter-group">
                             <label class="filter-label">{{ __('messages.shop_label') }}</label>
                             <select name="shop" class="filter-ctrl">
+                                <option value="">{{ __('messages.all_shops') }}</option>
                                 @foreach($shops as $shop)
                                 <option value="{{ $shop['id'] }}" {{ $shopName == $shop['id'] ? 'selected' : '' }}>
                                     {{ $shop['name'] }}
@@ -470,13 +703,13 @@
             </div>
 
             {{-- Metrics --}}
-            <div class="metrics-grid au au3">
+            <div class="metrics-grid">
                 <div class="metric-card mc-emerald">
                     <div class="metric-inner">
                         <div class="metric-icon mi-emerald"><i class="bi bi-cash-stack"></i></div>
                         <div>
                             <div class="metric-label">{{ __('messages.total_paid') }}</div>
-                            <div class="metric-value" style="font-size:16px;">{{ number_format($totalPaid) }}</div>
+                            <div class="metric-value">{{ number_format($totalPaid) }}</div>
                             <div style="font-size:10px; color:var(--slate-400); margin-top:2px;">TZS</div>
                         </div>
                     </div>
@@ -511,7 +744,7 @@
             </div>
 
             {{-- Payment table --}}
-            <div class="panel au au4">
+            <div class="panel">
                 <div class="panel-head">
                     <div class="panel-head-left">
                         <div class="panel-head-icon"><i class="bi bi-list-check"></i></div>
@@ -532,7 +765,7 @@
                                 <th>@lang('messages.invoice')</th>
                                 <th>@lang('messages.amount_paid')</th>
                                 <th>@lang('messages.shop_label')</th>
-                                <th>@lang('messages.actions')</th>
+                                <th style="text-align:right;">@lang('messages.actions')</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -557,16 +790,15 @@
                                     $accountName = $account ? $account->name : 'Unknown';
                                 @endphp
                                 <td><span class="shop-tag">{{ $accountName }}</span></td>
-                                <td>
+                                <td class="text-right">
                                     <form action="{{ url('deletePaidInvoice') }}" method="POST" class="delete-form" style="display:inline;">
                                         @csrf
                                         <input type="hidden" name="payment_id" value="{{ $payment->id }}">
-                                        <button type="submit" class="btn-delete" onclick="return confirmDelete(event, '{{ $payment->orderId }}', {{ $payment->amount }})">
+                                        <button type="submit" class="btn-delete-small" title="Delete" onclick="return confirmDelete(event, '{{ $payment->orderId }}', {{ $payment->amount }})">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                     </form>
                                 </td>
-                                
                             </tr>
                             @endforeach
                         </tbody>
@@ -574,7 +806,7 @@
                 </div>
                 @else
                 <div class="empty-state">
-                    <i class="bi bi-inbox"></i>
+                    <div class="empty-icon"><i class="bi bi-inbox"></i></div>
                     <h4>{{ __('messages.no_payments_found') }}</h4>
                     <p>{{ __('messages.no_payments_match_filters') }}</p>
                 </div>
@@ -584,133 +816,131 @@
         </div>
     </main>
 
-{{-- Manual Invoice Modal --}}
-<div class="modal fade" id="manualInvoiceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-top">
-                <div class="modal-top-left">
-                    <div class="modal-top-icon"><i class="bi bi-receipt"></i></div>
-                    <h5>{{ __('messages.create_manual_invoice') }}</h5>
+    {{-- Manual Invoice Modal --}}
+    <div class="modal fade" id="manualInvoiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('messages.create_manual_invoice') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ url('createManualInvoice') }}" method="POST">
-                @csrf
-                <div class="modal-body">
+                <form action="{{ url('createManualInvoice') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
 
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.shop_label') }} <span class="req">*</span></label>
-                        <select class="field-input" name="account" id="shopSelect" required>
-                            <option value="">{{ __('messages.select_a_shop') }}</option>
-                            @foreach($shops as $shop)
+                        <div class="field">
+                            <label class="field-label">{{ __('messages.shop_label') }} <span class="req">*</span></label>
+                            <select class="field-input" name="account" id="shopSelect" required>
+                                <option value="">{{ __('messages.select_a_shop') }}</option>
+                                @foreach($shops as $shop)
                                 <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="field" style="position:relative;">
-                        <label class="field-label">{{ __('messages.customer') }} <span class="req">*</span></label>
-                        <div class="modal-search-wrap">
-                            <i class="bi bi-search"></i>
-                            <input type="text" class="field-input" id="customerSearch"
-                                   placeholder="{{ __('messages.search_by_name_or_phone') }}"
-                                   name="customer_search" autocomplete="off" required>
+                                @endforeach
+                            </select>
                         </div>
-                        <input type="hidden" name="customer_id"   id="customerId">
-                        <input type="hidden" name="customer_name" id="customerNameHidden">
-                        <div class="cust-results" id="customerSearchResults"></div>
-                        <div id="selectedCustomerTag"></div>
-                    </div>
 
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.invoice_date') }} <span class="req">*</span></label>
-                        <input type="date" class="field-input" name="invoice_date" value="{{ date('Y-m-d') }}" required>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.amount_tzs') }} <span class="req">*</span></label>
-                        <div class="input-prefix-wrap">
-                            <span class="input-prefix">Tsh</span>
-                            <input type="number" name="amount" min="0" step="0.01" placeholder="0.00" required>
+                        <div class="field" style="position:relative;">
+                            <label class="field-label">{{ __('messages.customer') }} <span class="req">*</span></label>
+                            <div class="modal-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input type="text" class="field-input" id="customerSearch"
+                                       placeholder="{{ __('messages.search_by_name_or_phone') }}"
+                                       name="customer_search" autocomplete="off" required>
+                            </div>
+                            <input type="hidden" name="customer_id"   id="customerId">
+                            <input type="hidden" name="customer_name" id="customerNameHidden">
+                            <div class="cust-results" id="customerSearchResults"></div>
+                            <div id="selectedCustomerTag"></div>
                         </div>
-                    </div>
 
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.notes_optional') }}</label>
-                        <textarea class="field-input" name="notes" placeholder="Additional notes…"></textarea>
-                    </div>
+                        <div class="field">
+                            <label class="field-label">{{ __('messages.invoice_date') }} <span class="req">*</span></label>
+                            <input type="date" class="field-input" name="invoice_date" value="{{ date('Y-m-d') }}" required>
+                        </div>
 
-                </div>
-                <div class="modal-footer-custom">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="btn-submit">
-                        <i class="bi bi-check-circle-fill"></i> {{ __('messages.create_invoice') }}
-                    </button>
-                </div>
-            </form>
+                        <div class="field">
+                            <label class="field-label">{{ __('messages.amount_tzs') }} <span class="req">*</span></label>
+                            <div class="input-prefix-wrap">
+                                <span class="input-prefix">Tsh</span>
+                                <input type="number" name="amount" min="0" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">{{ __('messages.notes_optional') }}</label>
+                            <textarea class="field-input" name="notes" placeholder="Additional notes…"></textarea>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer-custom">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-circle-fill"></i> {{ __('messages.create_invoice') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    const custInput   = document.getElementById('customerSearch');
-    const custResults = document.getElementById('customerSearchResults');
-    const custTag     = document.getElementById('selectedCustomerTag');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const custInput   = document.getElementById('customerSearch');
+        const custResults = document.getElementById('customerSearchResults');
+        const custTag     = document.getElementById('selectedCustomerTag');
 
-    custInput && custInput.addEventListener('input', function () {
-        const q = this.value.trim();
-        const shopSelect = document.getElementById('shopSelect');
-        const selectedShop = shopSelect ? shopSelect.value : '';
-        
-        if (q.length < 2) { custResults.style.display = 'none'; return; }
-        if (!selectedShop) {
-            custResults.innerHTML = '<div class="cust-item-none">Please select a shop first</div>';
-            custResults.style.display = 'block';
-            return;
+        custInput && custInput.addEventListener('input', function () {
+            const q = this.value.trim();
+            const shopSelect = document.getElementById('shopSelect');
+            const selectedShop = shopSelect ? shopSelect.value : '';
+
+            if (q.length < 2) { custResults.style.display = 'none'; return; }
+            if (!selectedShop) {
+                custResults.innerHTML = '<div class="cust-item-none">Please select a shop first</div>';
+                custResults.style.display = 'block';
+                return;
+            }
+
+            fetch(`{{ url('searchCustomers') }}?query=${encodeURIComponent(q)}&account=${encodeURIComponent(selectedShop)}`)
+                .then(r => r.json())
+                .then(data => {
+                    custResults.innerHTML = data.length
+                        ? data.map(c => `
+                            <div class="cust-item" onclick="selectCustomer(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
+                                <div class="cust-item-name">${c.name}</div>
+                                <div class="cust-item-sub">${c.phone || 'No phone'} · Limit: ${Number(c.limits||0).toLocaleString()}</div>
+                            </div>`).join('')
+                        : '<div class="cust-item-none">No customers found</div>';
+                    custResults.style.display = 'block';
+                })
+                .catch(() => {
+                    custResults.innerHTML = '<div class="cust-item-none" style="color:var(--rose);">Error loading customers</div>';
+                    custResults.style.display = 'block';
+                });
+        });
+
+        function confirmDelete(event, invoiceId, amount) {
+            event.preventDefault();
+
+            if (confirm(`Are you sure you want to delete this payment?\n\nInvoice: ${invoiceId}\nAmount: Tsh ${Number(amount).toLocaleString()}`)) {
+                event.target.closest('form').submit();
+            }
+            return false;
         }
 
-        fetch(`{{ url('searchCustomers') }}?query=${encodeURIComponent(q)}&account=${encodeURIComponent(selectedShop)}`)
-            .then(r => r.json())
-            .then(data => {
-                custResults.innerHTML = data.length
-                    ? data.map(c => `
-                        <div class="cust-item" onclick="selectCustomer(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
-                            <div class="cust-item-name">${c.name}</div>
-                            <div class="cust-item-sub">${c.phone || 'No phone'} · Limit: ${Number(c.limits||0).toLocaleString()}</div>
-                        </div>`).join('')
-    function confirmDelete(event, invoiceId, amount) {
-        event.preventDefault();
-        
-        if (confirm(`Are you sure you want to delete this payment?\n\nInvoice: ${invoiceId}\nAmount: Tsh ${Number(amount).toLocaleString()}`)) {
-            event.target.closest('form').submit();
-        }
-        return false;
-    }
-
-                    : '<div class="cust-item-none">No customers found</div>';
-                custResults.style.display = 'block';
-            })
-            .catch(() => {
-                custResults.innerHTML = '<div class="cust-item-none" style="color:var(--rose);">Error loading customers</div>';
-                custResults.style.display = 'block';
-            });
-    });
-
-    function selectCustomer(id, name) {
-        document.getElementById('customerId').value         = id;
-        document.getElementById('customerNameHidden').value = name;
-        custInput.value = name;
-        custResults.style.display = 'none';
-        custTag.innerHTML = `<span class="selected-tag"><i class="bi bi-check-circle-fill"></i> ${name}</span>`;
-    }
-
-    document.addEventListener('click', function (e) {
-        if (custInput && custResults &&
-            !custInput.contains(e.target) && !custResults.contains(e.target)) {
+        function selectCustomer(id, name) {
+            document.getElementById('customerId').value         = id;
+            document.getElementById('customerNameHidden').value = name;
+            custInput.value = name;
             custResults.style.display = 'none';
+            custTag.innerHTML = `<span class="selected-tag"><i class="bi bi-check-circle-fill"></i> ${name}</span>`;
         }
-    });
-</script>
+
+        document.addEventListener('click', function (e) {
+            if (custInput && custResults &&
+                !custInput.contains(e.target) && !custResults.contains(e.target)) {
+                custResults.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

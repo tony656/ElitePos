@@ -131,12 +131,13 @@
             <div class="page-header">
                 <div>
                     <div class="page-title">{{ __('messages.shop_daily_item_report') }}</div>
-                    <div class="page-sub">{{ __('messages.shop_daily_item_report_sub') ?? 'Requested, received and sold items per shop' }} — {{ date('F d, Y', strtotime($fromDate ?? date('Y-m-d'))) }} to {{ date('F d, Y', strtotime($toDate ?? date('Y-m-d'))) }}</div>
+                    <div class="page-sub">{{ __('messages.shop_daily_item_report_sub') ?? 'Requested, received and sold items per shop' }} ({{ $shopFilter === 'all' ? 'All Shops' : ($shopNameMap[$shopFilter] ?? $shopFilter) }}) — {{ date('F d, Y', strtotime($fromDate ?? date('Y-m-d'))) }} to {{ date('F d, Y', strtotime($toDate ?? date('Y-m-d'))) }}</div>
                 </div>
                 <div class="header-actions">
                     <form method="GET" action="{{ url('shop-daily-item-report') }}" class="date-form">
                         <select name="shop" class="filter-input" onchange="this.form.submit()" style="border:none;outline:none;padding:7px 12px;font-size:13px;background:transparent;color:var(--text);min-width:160px;" required>
                             <option value="">-- Select Shop --</option>
+                            <option value="all" {{ $shopFilter === 'all' ? 'selected' : '' }}>All Shops</option>
                             @foreach($allShops as $shop)
                                 <option value="{{ $shop['id'] }}" {{ $shopFilter == $shop['id'] ? 'selected' : '' }}>
                                     {{ $shop['name'] }}
@@ -186,19 +187,19 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Shop</th>
                                 <th>Product</th>
                                 <th>Req. Qty</th>
                                 <th>Rec. Qty</th>
+                                
+                                <th>Diff Rec/Req</th>
                                 <th>Sold Qty</th>
-                                <th>Δ Rec–Req</th>
-                                <th>Δ Sold–Rec</th>
-                                <th>Req. Value</th>
-                                <th>Rec. Value</th>
-                                <th>Sold Value</th>
+                                <th>Diff Sold/Rec</th>
+                                <th>Req. amount</th>
+                                <th>Rec. amount</th>
+                                <th>Total Sales</th>
                                 <th>Discount</th>
                                 <th>Offer</th>
-                                <th>Δ Val</th>
+                                <th>Diff Val</th>
                                 <th>Mark</th>
                             </tr>
                         </thead>
@@ -269,12 +270,12 @@
                                 @endphp
                                 <tr>
                                     <td class="num">{{ $index++ }}</td>
-                                    <td>{{ $shopNameMap[$row['shopId']] ?? 'Unknown' }}</td>
                                     <td>{{ $row['productName'] }}</td>
                                     <td class="num">{{ number_format($row['requestedQty']) }}</td>
                                     <td class="num">{{ number_format($row['receivedQty']) }}</td>
-                                    <td class="num">{{ number_format($row['soldQty']) }}</td>
+                                    
                                     <td class="num" style="color:{{ $diffRecReq >= 0 ? 'var(--green)' : 'var(--red)' }};">{{ $diffRecReq > 0 ? '+' : '' }}{{ number_format($diffRecReq) }}</td>
+                                    <td class="num">{{ number_format($row['soldQty']) }}</td>
                                     <td class="num" style="color:{{ $diffSoldRec >= 0 ? 'var(--green)' : 'var(--red)' }};">{{ $diffSoldRec > 0 ? '+' : '' }}{{ number_format($diffSoldRec) }}</td>
                                     <td class="num" style="color:var(--purple);">Tsh {{ number_format($row['requestValue'], 2) }}</td>
                                     <td class="num" style="color:var(--green);">Tsh {{ number_format($row['receivedValue'], 2) }}</td>

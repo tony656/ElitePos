@@ -6,365 +6,339 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{config("app.name")}} - {{ __('messages.requested_items') }}</title>
     @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* =========================================================
+           KESSY POS BLUE THEME
+           Existing Blade markup, IDs, forms and JavaScript retained.
+           ========================================================= */
         :root {
-            --navy: #0B1E3D;
-            --navy-mid: #112952;
-            --navy-light: #1A3A6B;
-            --amber: var(--theme-primary);
-            --amber-pale: #FEF3C7;
-            --emerald: #059669;
-            --emerald-pale: #D1FAE5;
-            --rose: #E11D48;
-            --rose-pale: #FFE4E6;
-            --violet: #7C3AED;
-            --violet-pale: #EDE9FE;
-            --sky: #0284C7;
-            --sky-pale: #E0F2FE;
-            --slate-50: #F8FAFC;
-            --slate-100: #F1F5F9;
-            --slate-200: #E2E8F0;
-            --slate-300: #CBD5E1;
-            --slate-400: #94A3B8;
-            --slate-500: #64748B;
-            --slate-600: #475569;
-            --slate-700: #334155;
-            --slate-800: #1E293B;
-            --white: #FFFFFF;
-            --radius: 12px;
-            --shadow-sm: 0 1px 3px rgba(11,30,61,.08);
-            --shadow: 0 4px 20px rgba(11,30,61,.12);
-            --shadow-lg: 0 10px 40px rgba(11,30,61,.15);
+            --navy: #084b87;
+            --navy-mid: #0756a6;
+            --navy-light: #0b66b2;
+            --amber: #0b65b1;
+            --amber-pale: #e8f2fc;
+            --emerald: #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose: #e5485d;
+            --rose-pale: #fff0f1;
+            --violet: #7844d6;
+            --violet-pale: #f1ebff;
+            --sky: #0874c5;
+            --sky-pale: #e8f3ff;
+            --slate-50: #f5f9fd;
+            --slate-100: #edf3f9;
+            --slate-200: #dce7f1;
+            --slate-300: #c5d5e5;
+            --slate-400: #8da4bb;
+            --slate-500: #607b96;
+            --slate-600: #45627e;
+            --slate-700: #2d4c69;
+            --slate-800: #183a5a;
+            --white: #ffffff;
+            --radius: 8px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 2px 8px rgba(8,61,108,.06);
+            --shadow: 0 5px 16px rgba(8,61,108,.09);
+            --shadow-lg: 0 10px 28px rgba(8,61,108,.13);
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: var(--slate-50);
+            background: #f3f7fb;
             color: var(--slate-800);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
         /* ===== PAGE HEADER ===== */
         .page-header {
-            background: var(--white);
-            border-bottom: 1px solid var(--slate-200);
-            padding: 1.2rem 2rem;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: .25rem 0 .9rem;
+            margin: 1.1rem 1.25rem .55rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
             flex-wrap: wrap;
-            box-shadow: var(--shadow-sm);
+            box-shadow: none;
         }
 
-        .page-header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        .page-header-left { display: flex; align-items: center; gap: 1rem; }
 
         .back-btn {
             display: inline-flex;
             align-items: center;
-            gap: .4rem;
+            gap: .35rem;
             color: var(--slate-500);
             text-decoration: none;
-            font-size: .85rem;
-            font-weight: 500;
-            padding: .4rem .75rem;
-            border-radius: var(--radius);
+            font-size: .76rem;
+            font-weight: 600;
+            padding: .4rem .7rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid #d4e1ed;
+            background: #fff;
             transition: all .15s;
         }
-        .back-btn:hover { background: var(--slate-100); color: var(--navy); }
+        .back-btn:hover { background: #eff6ff; border-color: #0b68b4; color: var(--navy); }
 
         .page-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.3rem;
+            font-size: 1.42rem;
             font-weight: 700;
-            color: var(--navy);
+            color: #064b86;
+            letter-spacing: -.35px;
         }
+        .page-title span { color: #0871c2; }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            flex-wrap: wrap;
-        }
+        .header-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 
         /* ===== BUTTONS ===== */
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: .4rem;
-            padding: .5rem 1.2rem;
-            border-radius: var(--radius);
-            font-size: .85rem;
+            gap: .35rem;
+            padding: .43rem .68rem;
+            border-radius: var(--radius-sm);
+            font-size: .73rem;
             font-weight: 600;
             cursor: pointer;
-            border: none;
+            border: 1px solid transparent;
             text-decoration: none;
             transition: all .2s ease;
             white-space: nowrap;
+            font-family: inherit;
+            letter-spacing: .01em;
         }
-        .btn-primary { background: var(--navy); color: var(--white); }
-        .btn-primary:hover { background: var(--navy-light); color: var(--white); transform: translateY(-2px); box-shadow: var(--shadow); }
-        
-        .btn-success { background: var(--emerald); color: var(--white); }
-        .btn-success:hover { background: #047857; color: var(--white); transform: translateY(-2px); box-shadow: var(--shadow); }
-        
-        .btn-outline { background: transparent; color: var(--slate-700); border: 1px solid var(--slate-200); }
-        .btn-outline:hover { background: var(--slate-100); border-color: var(--navy); }
-        
-        .btn-ghost { background: transparent; color: var(--navy); border: 1px solid rgba(11,30,61,.15); }
-        .btn-ghost:hover { background: var(--slate-100); border-color: var(--navy); }
-        
-        .btn-sm { padding: .35rem .75rem; font-size: .8rem; }
-        .btn-warning { background: var(--amber); color: var(--navy); }
-        .btn-warning:hover { background: #d97706; color: var(--navy); transform: translateY(-2px); }
-
-        .btn-print {
-            background: var(--slate-600);
-            color: var(--white);
-        }
-        .btn-print:hover {
-            background: var(--slate-700);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
+        .btn i { font-size: .85rem; }
+        .btn-primary { background: #0866b2; color: #fff; border-color: #0866b2; }
+        .btn-primary:hover { background: #064f91; border-color: #064f91; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,102,178,.25); }
+        .btn-success { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+        .btn-success:hover { background: #056f58; border-color: #056f58; color: #fff; transform: translateY(-1px); }
+        .btn-outline { background: #fff; color: #42617e; border-color: #d4e1ed; }
+        .btn-outline:hover { border-color: #0b68b4; color: #0756a6; background: #eff6ff; }
+        .btn-ghost { background: #fff; color: var(--navy); border-color: #d4e1ed; }
+        .btn-ghost:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+        .btn-warning { background: #eaf4ff; color: #0756a6; border-color: #0b68b4; }
+        .btn-warning:hover { background: #0756a6; color: #fff; border-color: #0756a6; transform: translateY(-1px); }
+        .btn-sm { padding: .35rem .6rem; font-size: .7rem; }
+        .btn-print { background: #07569b; color: #fff; border-color: #07569b; }
+        .btn-print:hover { background: #064b86; border-color: #064b86; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,61,108,.25); }
 
         /* ===== STATS GRID ===== */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.2rem;
-            margin: 1.5rem 2rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .7rem;
+            margin: .25rem 1.25rem .85rem;
         }
 
         .stat-card {
+            min-height: 88px;
             background: var(--white);
             border-radius: var(--radius);
-            padding: 1.5rem 1.8rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--slate-200);
+            padding: .8rem .95rem;
+            box-shadow: none;
+            border: 1px solid #dce7f1;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            transition: all .3s ease;
+            transition: all .25s ease;
             position: relative;
             overflow: hidden;
         }
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
+        .stat-card::after { display: none; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: #cfe0ef; }
 
-        .stat-card-blue::after { background: var(--navy); }
-        .stat-card-amber::after { background: var(--amber); }
-        .stat-card-emerald::after { background: var(--emerald); }
+        .stat-card-blue    { background: #eff6ff; }
+        .stat-card-amber   { background: #effaf6; }
+        .stat-card-emerald { background: #f1f5ff; }
 
         .stat-label {
-            font-size: .75rem;
+            font-size: .68rem;
             font-weight: 600;
-            color: var(--slate-500);
-            letter-spacing: .05em;
-            text-transform: uppercase;
-            margin-bottom: .3rem;
+            color: #59748f;
+            letter-spacing: 0;
+            text-transform: none;
+            margin-bottom: .18rem;
         }
         .stat-value {
-            font-family: 'Syne', sans-serif;
-            font-size: 2rem;
+            font-size: 1.45rem;
             font-weight: 700;
-            line-height: 1;
-            color: var(--navy);
+            line-height: 1.12;
+            color: #084b87;
+            letter-spacing: -.35px;
+            font-variant-numeric: tabular-nums;
         }
 
         .stat-icon {
-            width: 48px; height: 48px;
-            border-radius: 12px;
+            width: 43px; height: 43px;
+            border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
-            font-size: 1.4rem;
+            font-size: 1.18rem;
             transition: transform .3s ease;
+            color: #fff;
         }
-        .stat-card:hover .stat-icon {
-            transform: scale(1.1) rotate(-5deg);
-        }
-        .stat-icon-blue { background: var(--slate-100); color: var(--navy); }
-        .stat-icon-amber { background: var(--amber-pale); color: #92400e; }
-        .stat-icon-emerald { background: var(--emerald-pale); color: var(--emerald); }
+        .stat-card:hover .stat-icon { transform: scale(1.08) rotate(-4deg); }
+        .stat-icon-blue    { background: #0866b2; }
+        .stat-icon-amber   { background: var(--emerald); }
+        .stat-icon-emerald { background: #7146cf; }
 
         /* ===== TOOLBAR ===== */
         .toolbar {
-            margin: 0 2rem 1rem;
+            margin: 0 1.25rem .8rem;
             display: flex;
-            gap: .75rem;
+            gap: .7rem;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .search-wrap {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
+        .search-wrap { flex: 1; min-width: 200px; position: relative; }
         .search-wrap i {
             position: absolute;
-            left: .85rem; top: 50%;
+            left: .8rem; top: 50%;
             transform: translateY(-50%);
             color: var(--slate-400);
             pointer-events: none;
+            font-size: .85rem;
         }
         .search-input {
             width: 100%;
-            padding: .6rem 1rem .6rem 2.4rem;
-            border: 1px solid var(--slate-200);
-            border-radius: var(--radius);
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius-sm);
             font-family: inherit;
-            font-size: .875rem;
-            background: var(--white);
+            font-size: .78rem;
+            background: #fff;
             color: var(--slate-800);
             outline: none;
             transition: all .15s;
         }
-        .search-input:focus {
-            border-color: var(--navy);
-            box-shadow: 0 0 0 3px rgba(11,30,61,.1);
-        }
+        .search-input:focus { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
 
         .filter-group {
             display: flex;
-            gap: .5rem;
+            gap: .4rem;
             align-items: center;
-            background: var(--white);
-            padding: .25rem .5rem .25rem 1rem;
-            border: 1px solid var(--slate-200);
-            border-radius: var(--radius);
+            background: #fff;
+            padding: .2rem .35rem .2rem .8rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius-sm);
             transition: all .15s;
         }
-        .filter-group:focus-within {
-            border-color: var(--navy);
-            box-shadow: 0 0 0 3px rgba(11,30,61,.1);
-        }
-        
+        .filter-group:focus-within { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
+
         .filter-group label {
-            font-size: .8rem;
-            color: var(--slate-500);
+            font-size: .72rem;
+            color: #55728e;
             white-space: nowrap;
+            font-weight: 500;
+            margin-bottom: 0;
         }
-        
+        .filter-group label i { font-size: .75rem; }
+
         .date-input, .shop-select {
-            padding: .45rem .75rem;
+            padding: .35rem .5rem;
             border: none;
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             font-family: inherit;
-            font-size: .85rem;
+            font-size: .76rem;
             background: transparent;
             color: var(--slate-800);
             outline: none;
         }
 
         .date-range-badge {
-            background: var(--slate-100);
-            padding: .3rem .8rem;
+            background: #eff6ff;
+            padding: .28rem .7rem;
             border-radius: 20px;
-            font-size: .8rem;
+            font-size: .72rem;
             color: var(--navy);
             display: inline-flex;
             align-items: center;
-            gap: .5rem;
-            border: 1px solid var(--slate-200);
+            gap: .4rem;
+            border: 1px solid #cfe2f5;
+            font-weight: 500;
         }
-        
-        .date-range-badge i {
-            cursor: pointer;
-            transition: opacity .2s;
-            color: var(--slate-400);
-        }
-        
-        .date-range-badge i:hover {
-            opacity: .7;
-            color: var(--rose);
-        }
+        .date-range-badge i { cursor: pointer; transition: opacity .2s; color: var(--slate-400); font-size: .7rem; }
+        .date-range-badge i:hover { opacity: .7; color: var(--rose); }
 
         /* ===== TABLE ===== */
         .table-card {
-            margin: 0 2rem 2rem;
-            background: var(--white);
+            margin: 0 1.25rem 1.5rem;
+            background: #fff;
             border-radius: var(--radius);
-            border: 1px solid var(--slate-200);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid #dce7f1;
+            box-shadow: 0 2px 7px rgba(8,61,108,.045);
             overflow: hidden;
             transition: all .3s ease;
         }
-        .table-card:hover {
-            box-shadow: var(--shadow);
-        }
+        .table-card:hover { box-shadow: var(--shadow); }
 
-        .tbl { width: 100%; border-collapse: collapse; }
+        .tbl { width: 100%; border-collapse: collapse; font-size: .76rem; }
 
-        .tbl thead tr {
-            background: var(--navy);
-        }
+        .tbl thead tr { background: #07569b; }
         .tbl thead th {
-            padding: .9rem 1rem;
-            font-size: .7rem;
+            padding: .62rem .68rem;
+            font-size: .66rem;
             font-weight: 600;
-            color: rgba(255,255,255,.8);
-            text-transform: uppercase;
-            letter-spacing: .08em;
+            color: #fff;
+            text-transform: none;
+            letter-spacing: .015em;
             white-space: nowrap;
+            border: 1px solid rgba(255,255,255,.13);
+            text-align: left;
         }
-        .tbl thead th:first-child { padding-left: 1.5rem; }
-        .tbl thead th:last-child  { padding-right: 1.5rem; text-align: right; }
+        .tbl thead th:last-child { text-align: right; }
 
-        .tbl tbody tr {
-            border-bottom: 1px solid var(--slate-100);
-            transition: all .15s;
-        }
-        .tbl tbody tr:last-child { border-bottom: none; }
-        .tbl tbody tr:hover { background: var(--slate-50); }
+        .tbl tbody tr { transition: all .15s; }
+        .tbl tbody tr:nth-child(even) td { background: #f8fbfe; }
+        .tbl tbody tr:hover td { background: #edf6ff; }
 
         .tbl td {
-            padding: .85rem 1rem;
-            font-size: .875rem;
+            padding: .52rem .68rem;
+            font-size: .74rem;
             vertical-align: middle;
+            border: 1px solid #e5edf5;
+            color: #244866;
         }
-        .tbl td:first-child { padding-left: 1.5rem; }
-        .tbl td:last-child  { padding-right: 1.5rem; }
 
         .td-actions { text-align: right; white-space: nowrap; }
+        .td-actions .btn { margin-left: 2px; }
+        .td-actions form.d-inline { display: inline-block; }
 
         /* ===== PILLS ===== */
         .pill {
             display: inline-flex;
             align-items: center;
             gap: .3rem;
-            padding: .3rem .8rem;
-            border-radius: 999px;
-            font-size: .75rem;
-            font-weight: 600;
+            padding: .22rem .55rem;
+            border-radius: 20px;
+            font-size: .68rem;
+            font-weight: 700;
             white-space: nowrap;
+            letter-spacing: .01em;
         }
-        .pill-you     { background: var(--slate-100); color: var(--navy); }
-        .pill-shop    { background: var(--slate-100); color: var(--slate-600); }
-        .pill-pending { background: var(--amber-pale); color: #92400e; }
-        .pill-approved{ background: var(--emerald-pale); color: var(--emerald); }
-        .pill-rejected{ background: var(--rose-pale); color: var(--rose); }
-        .pill-submitted{ background: var(--sky-pale); color: var(--sky); }
-        .pill-mixed   { background: var(--violet-pale); color: var(--violet); }
-        .pill-stock   { background: var(--amber-pale); color: #92400e; }
-        
+        .pill-you      { background: #eff6ff; color: #0756a6; }
+        .pill-shop     { background: var(--slate-100); color: var(--slate-600); }
+        .pill-pending  { background: var(--amber-pale); color: #07569b; }
+        .pill-approved { background: var(--emerald-pale); color: #056f58; }
+        .pill-rejected { background: var(--rose-pale); color: #c9314a; }
+        .pill-submitted{ background: var(--sky-pale); color: #07569b; }
+        .pill-mixed    { background: var(--violet-pale); color: var(--violet); }
+        .pill-stock    { background: var(--amber-pale); color: #07569b; }
+
         .pill::before {
             content: '';
             width: 6px; height: 6px;
@@ -375,58 +349,57 @@
         }
 
         .req-id {
-            font-family: 'Syne', sans-serif;
-            font-size: .78rem;
+            font-family: 'DM Mono', 'DM Sans', monospace;
+            font-size: .72rem;
             font-weight: 600;
             color: var(--slate-500);
         }
 
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-        }
-        .empty-state-icon { font-size: 3rem; color: var(--slate-300); margin-bottom: 1rem; }
-        .empty-state h5 { font-size: 1rem; font-weight: 600; color: var(--slate-500); margin-bottom: .4rem; }
-        .empty-state p  { font-size: .85rem; color: var(--slate-400); }
+        .empty-state { padding: 3rem 2rem; text-align: center; }
+        .empty-state-icon { font-size: 2.5rem; color: var(--slate-300); margin-bottom: .8rem; }
+        .empty-state h5 { font-size: .92rem; font-weight: 600; color: var(--slate-500); margin-bottom: .3rem; }
+        .empty-state p  { font-size: .78rem; color: var(--slate-400); }
 
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(11,30,61,0.6);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(8,61,108,.55);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 9999;
         }
-        
         .loading-spinner {
-            background: var(--white);
-            padding: 2rem;
+            background: #fff;
+            padding: 1.75rem;
             border-radius: var(--radius);
             text-align: center;
+            box-shadow: var(--shadow-lg);
         }
-        
         .spinner-border {
-            width: 3rem;
-            height: 3rem;
-            border-color: var(--navy);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-color: #0866b2;
             border-right-color: transparent;
         }
+
+        /* ===== ALERTS ===== */
+        .alert {
+            font-size: .78rem;
+            border-radius: var(--radius);
+            padding: .7rem .9rem;
+        }
+        .alert-success { background: var(--emerald-pale); color: #056f58; border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: #c9314a; border-left: 3px solid var(--rose); }
 
         /* ===== PRINT ===== */
         @media print {
             body * { visibility: hidden; }
-            .print-request-container, 
+            .print-request-container,
             .print-request-container * { visibility: visible; }
             .print-request-container {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                top: 0; left: 0; right: 0; bottom: 0;
                 background: white;
                 z-index: 10000;
                 padding: 20px;
@@ -447,7 +420,6 @@
             font-family: 'DM Sans', sans-serif;
             background: white;
         }
-
         .print-header {
             text-align: center;
             margin-bottom: 20px;
@@ -455,31 +427,20 @@
             border-bottom: 2px solid var(--navy);
         }
         .print-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
-            font-family: 'Syne', sans-serif;
             margin-bottom: 8px;
             color: var(--navy);
         }
-        .print-subtitle {
-            color: var(--slate-500);
-            font-size: 12px;
-        }
-        .print-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
+        .print-subtitle { color: var(--slate-500); font-size: 12px; }
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .print-table th, .print-table td {
             border: 1px solid var(--slate-200);
             padding: 10px;
             text-align: left;
             font-size: 12px;
         }
-        .print-table th {
-            background: var(--slate-100);
-            font-weight: 600;
-        }
+        .print-table th { background: var(--slate-100); font-weight: 600; }
         .print-footer {
             margin-top: 20px;
             text-align: center;
@@ -491,17 +452,18 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
-            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
             .stats-grid .stat-card:last-child { grid-column: span 2; }
         }
         @media (max-width: 600px) {
-            .stats-grid { grid-template-columns: 1fr; margin: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; margin: .25rem .8rem .7rem; }
             .stats-grid .stat-card:last-child { grid-column: auto; }
-            .table-card, .toolbar { margin-left: 1rem; margin-right: 1rem; }
-            .page-header { padding: 1rem; }
-            .page-title { font-size: 1rem; }
-            .filter-group { flex-wrap: wrap; padding: .5rem; }
-            .filter-group label { font-size: .7rem; }
+            .table-card, .toolbar { margin-left: .8rem; margin-right: .8rem; }
+            .page-header { padding: .25rem 0 .7rem; margin: .8rem .8rem .4rem; }
+            .page-title { font-size: 1.2rem; }
+            .filter-group { flex-wrap: wrap; padding: .4rem; }
+            .filter-group label { font-size: .68rem; }
+            .header-actions { width: 100%; }
         }
     </style>
 </head>
@@ -513,21 +475,21 @@
 
 @include("sidenav")
 <main class="main-content">
-  
+
   @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show d-flex justify-content-between" role="alert" style="margin: 0 2rem 1rem; border-radius: var(--radius);">
+      <div class="alert alert-success alert-dismissible fade show d-flex justify-content-between" role="alert" style="margin: .8rem 1.25rem .6rem;">
           {{ session('success') }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
   @endif
-  
+
   @if(session('error'))
-      <div class="alert alert-danger alert-dismissible fade show d-flex justify-content-between" role="alert" style="margin: 0 2rem 1rem; border-radius: var(--radius);">
+      <div class="alert alert-danger alert-dismissible fade show d-flex justify-content-between" role="alert" style="margin: .8rem 1.25rem .6rem;">
           {{ session('error') }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
   @endif
-  
+
         <div class="page-header">
             <div class="page-header-left">
                 <a href="#" onclick="history.back()" class="back-btn">
@@ -580,22 +542,22 @@
                 <i class="bi bi-search"></i>
                 <input type="search" class="search-input" id="search-input" placeholder="{{ __('messages.search_by_request_id') }}">
             </div>
-            
+
             <form method="GET" action="{{ url('viewRequest') }}" class="d-flex gap-2 flex-wrap align-items-center" id="filter-form" style="flex:2">
                 <div class="filter-group">
                     <label><i class="bi bi-calendar3"></i> {{ __('messages.from') }}</label>
-                    <input type="date" name="date_from" id="dateFrom" class="date-input" 
-                           value="{{ request('date_from', date('Y-m-d')) }}" 
+                    <input type="date" name="date_from" id="dateFrom" class="date-input"
+                           value="{{ request('date_from', date('Y-m-d')) }}"
                            onchange="this.form.submit()">
                 </div>
-                
+
                 <div class="filter-group">
                     <label><i class="bi bi-calendar3"></i> {{ __('messages.to') }}</label>
-                    <input type="date" name="date_to" id="dateTo" class="date-input" 
+                    <input type="date" name="date_to" id="dateTo" class="date-input"
                            value="{{ request('date_to', date('Y-m-d')) }}"
                            onchange="this.form.submit()">
                 </div>
-                
+
                 <div class="filter-group">
                     <label><i class="bi bi-shop"></i> {{ __('messages.shop_label') }}</label>
                     <select name="shop" id="shopFilter" class="shop-select" onchange="this.form.submit()">
@@ -605,11 +567,11 @@
                         @endforeach
                     </select>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary btn-sm" id="apply-filters">
                     <i class="bi bi-funnel"></i> {{ __('messages.apply') }}
                 </button>
-                
+
                 @if(request('date_from') || request('date_to') || request('shop'))
                 <a href="{{ url('viewRequest') }}" class="btn btn-outline btn-sm" id="clear-filters">
                     <i class="bi bi-x-circle"></i> {{ __('messages.clear_all') }}
@@ -617,19 +579,19 @@
                 @endif
             </form>
         </div>
-        
+
         @if(request('date_from') || request('date_to') || request('shop'))
-        <div style="margin: -0.5rem 2rem 1rem 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div style="margin: 0 1.25rem .8rem; display: flex; gap: .4rem; flex-wrap: wrap;">
             @if(request('date_from') && request('date_to'))
                 @if(request('date_from') == request('date_to'))
                 <div class="date-range-badge">
-                    <i class="bi bi-calendar-check"></i> 
+                    <i class="bi bi-calendar-check"></i>
                     {{ date('M d, Y', strtotime(request('date_from'))) }}
                     <i class="bi bi-x-circle-fill" onclick="clearDateFilter()" style="cursor:pointer"></i>
                 </div>
                 @else
                 <div class="date-range-badge">
-                    <i class="bi bi-calendar-range"></i> 
+                    <i class="bi bi-calendar-range"></i>
                     {{ date('M d', strtotime(request('date_from'))) }} - {{ date('M d, Y', strtotime(request('date_to'))) }}
                     <i class="bi bi-x-circle-fill" onclick="clearDateFilter()" style="cursor:pointer"></i>
                 </div>
@@ -645,7 +607,7 @@
                     <i class="bi bi-x-circle-fill" onclick="clearDateFilter()" style="cursor:pointer"></i>
                 </div>
             @endif
-            
+
             @if(request('shop'))
                 @php $selectedShop = collect($shops)->firstWhere('id', request('shop')); @endphp
                 <div class="date-range-badge">
@@ -730,12 +692,12 @@
                                     } else {
                                         $overallStatus = 'Mixed';
                                     }
-                                    
+
                                     $itemsJson = [];
                                     foreach ($items as $item) {
                                         $productId = $item->productId;
                                         $productName = 'Unknown Product';
-                                        
+
                                         if (!empty($productId)) {
                                             $product = DB::table('products')->where('id', $productId)->first();
                                             if (!$product) {
@@ -745,7 +707,7 @@
                                                 $productName = $product->name ?? $product->name01 ?? $product->product_name ?? 'Unknown Product';
                                             }
                                         }
-                                        
+
                                         $itemsJson[] = [
                                             'productId' => $productId,
                                             'productName' => $productName,
@@ -768,8 +730,8 @@
                                     data-payment-type="{{ $items[0]->payment_type ?? 'cash' }}"
                                     data-overall-status="{{ $overallStatus }}"
                                     data-items-json='{{ json_encode($itemsJson) }}'>
-                                    <td style="color:var(--slate-400); font-size:.8rem;">{{ $index++ }}</td>
-                                    <td style="white-space:nowrap; font-size:.83rem;">
+                                    <td style="color:var(--slate-400); font-size:.72rem;">{{ $index++ }}</td>
+                                    <td style="white-space:nowrap; font-size:.74rem;">
                                         {{ date('M d, Y', strtotime($requestDate)) }}
                                     </td>
                                     <td><span class="req-id">{{ $requestId }}</span></td>
@@ -788,12 +750,12 @@
                                         @elseif($supplierAccount)
                                             <span class="pill pill-shop">{{ $supplierAccountName }}</span>
                                         @else
-                                            <span style="color:var(--slate-400); font-size:.8rem;">—</span>
+                                            <span style="color:var(--slate-400); font-size:.72rem;">—</span>
                                         @endif
                                     </td>
 
-                                    <td><strong>{{ count($items) }}</strong></td>
-                                    <td style="white-space:nowrap;">Tsh {{ number_format($totalPrice) }}</td>
+                                    <td><strong style="color:#164a78;">{{ count($items) }}</strong></td>
+                                    <td style="white-space:nowrap; color:#31516e;">Tsh {{ number_format($totalPrice) }}</td>
                                     <td>
                                         <span class="pill {{ $items[0]->payment_type === 'cash' ? 'pill-approved' : 'pill-submitted' }}">
                                             {{ $items[0]->payment_type ? ucfirst($items[0]->payment_type) : 'Cash' }}
@@ -815,12 +777,12 @@
                                         @endphp
                                         <span class="pill {{ $pillClass }}">{{ $overallStatus }}</span>
                                     </td>
-                                    
+
                                     <td class="td-actions">
                                         @if (canUser('print_item_request'))
                                       <button type="button" class="btn btn-print btn-sm" onclick="printRequestFromRow(this)" title="{{ __('messages.print_request') }}">
                                             <i class="bi bi-printer"></i>
-                                        </button>  
+                                        </button>
                                     @endif
                                         <form method="post" class="d-inline" action="viewRequestsDetails" >
                                                 @csrf
@@ -835,7 +797,7 @@
                                                 @csrf
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
                                                 <button type="submit" title="{{ __('messages.redo_request') }}" class="btn btn-warning btn-sm">
-                                                    <i class="bi bi-arrow-clockwise"></i> 
+                                                    <i class="bi bi-arrow-clockwise"></i>
                                                 </button>
                                             </form>
                                         @endif
@@ -846,7 +808,7 @@
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
                                                 <input type="hidden" name="supplierId" value="{{ $supplierAccount }}">
                                                 <button type="submit" name="status" value="approve" class="btn btn-success btn-sm" title="{{ __('messages.approve_request') }}">
-                                                    <i class="bi bi-check2-all"></i> 
+                                                    <i class="bi bi-check2-all"></i>
                                                 </button>
                                             </form>
                                         @endif
@@ -856,8 +818,8 @@
                                                 @csrf
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
                                                 <input type="hidden" name="supplierId" value="{{ $supplierAccount }}">
-                                                <button type="submit" name="status" value="reject" class="btn btn-danger btn-sm" title="{{ __('messages.reject_request') }}">
-                                                    <i class="bi bi-x-lg"></i> 
+                                                <button type="submit" name="status" value="reject" class="btn btn-sm" title="{{ __('messages.reject_request') }}" style="background:var(--rose-pale); color:#c9314a; border-color:#f5b8c2;">
+                                                    <i class="bi bi-x-lg"></i>
                                                 </button>
                                             </form>
                                         @endif
@@ -866,7 +828,7 @@
                                             <form method="post" class="d-inline" action="{{ route('request.delete') }}" onsubmit="return confirm('{{ __('messages.delete_request_confirm') }}');">
                                                 @csrf
                                                 <input type="hidden" name="requestName" value="{{ $requestId }}">
-                                                <button type="submit" title="{{ __('messages.delete_request') }}" class="btn btn-sm" style="background: var(--rose-pale); color: var(--rose); border: none; border-radius: var(--radius); padding: .35rem .75rem;">
+                                                <button type="submit" title="{{ __('messages.delete_request') }}" class="btn btn-sm" style="background: var(--rose-pale); color: #c9314a; border-color: #f5b8c2;">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
@@ -888,7 +850,7 @@
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-2 mb-0">{{ __('messages.filtering_requests') }}</p>
+        <p class="mt-2 mb-0" style="font-size:.82rem; color:var(--slate-600);">{{ __('messages.filtering_requests') }}</p>
     </div>
 </div>
 
@@ -925,29 +887,29 @@ $(document).ready(function () {
             $(this).toggle(visible);
         });
     });
-    
+
     $('#dateFrom, #dateTo, #shopFilter').on('change', function() {
         $('#loadingOverlay').show();
         $('#filter-form').submit();
     });
-    
+
     $('#apply-filters').on('click', function(e) {
         $('#loadingOverlay').show();
     });
-    
+
     window.clearDateFilter = function() {
         $('#dateFrom').val('');
         $('#dateTo').val('');
         $('#loadingOverlay').show();
         $('#filter-form').submit();
     };
-    
+
     window.clearShopFilter = function() {
         $('#shopFilter').val('');
         $('#loadingOverlay').show();
         $('#filter-form').submit();
     };
-    
+
     $(window).on('load', function() {
         setTimeout(function() {
             $('#loadingOverlay').fadeOut();
@@ -957,7 +919,7 @@ $(document).ready(function () {
 
 function printRequestFromRow(button) {
     var row = $(button).closest('.request-row');
-    
+
     var requestId = row.data('request-id');
     var requester = row.data('requester') || 'N/A';
     var supplier = row.data('supplier') || 'N/A';
@@ -967,10 +929,10 @@ function printRequestFromRow(button) {
     var totalPrice = row.data('total-price') || 0;
     var paymentType = row.data('payment-type') || 'cash';
     var overallStatus = row.data('overall-status') || 'Pending';
-    
+
     var itemsJson = row.data('items-json');
     var items = [];
-    
+
     if (itemsJson) {
         try {
             items = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
@@ -979,17 +941,17 @@ function printRequestFromRow(button) {
             items = [];
         }
     }
-    
-    var printHtml = buildPrintHTML(requestId, requester, supplier, requestDate, 
-                                  totalItems, totalQty, totalPrice, paymentType, 
+
+    var printHtml = buildPrintHTML(requestId, requester, supplier, requestDate,
+                                  totalItems, totalQty, totalPrice, paymentType,
                                   overallStatus, items);
-    
+
     var printContainer = document.getElementById('printContainer');
     printContainer.innerHTML = printHtml;
     printContainer.style.display = 'block';
-    
+
     window.print();
-    
+
     setTimeout(function() {
         printContainer.style.display = 'none';
         printContainer.innerHTML = '';
@@ -998,7 +960,7 @@ function printRequestFromRow(button) {
 
 function buildPrintHTML(requestId, requester, supplier, requestDate, totalItems, totalQty, totalPrice, paymentType, overallStatus, items) {
     var totalPriceNum = parseFloat(String(totalPrice).replace(/[^0-9.-]/g, '')) || 0;
-    
+
     var itemsHtml = '';
     if (items && items.length > 0) {
         for (var i = 0; i < items.length; i++) {
@@ -1024,46 +986,46 @@ function buildPrintHTML(requestId, requester, supplier, requestDate, totalItems,
             </td></tr>
         `;
     }
-    
-    var statusColor = overallStatus === 'Approved' ? '#059669' : (overallStatus === 'Pending' ? '#92400e' : '#6b7280');
-    
+
+    var statusColor = overallStatus === 'Approved' ? '#07866b' : (overallStatus === 'Pending' ? '#07569b' : '#607b96');
+
     return `
         <div class="print-request-container" style="display:block; background: white; padding: 20px;">
             <div class="print-header">
                 <div class="print-title">{{ config("app.name") }} - ${printTranslations.title}</div>
                 <div class="print-subtitle">${printTranslations.requestId}: ${escapeHtml(requestId)} | Printed: ${new Date().toLocaleString()}</div>
             </div>
-            
+
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                 <div><strong>${printTranslations.requestDate}:</strong> ${escapeHtml(requestDate)}</div>
                 <div><strong>${printTranslations.fromShop}:</strong> ${escapeHtml(requester)}</div>
                 <div><strong>${printTranslations.toShop}:</strong> ${escapeHtml(supplier)}</div>
                 <div><strong>${printTranslations.status}:</strong> <span style="color: ${statusColor}; font-weight: bold;">${escapeHtml(overallStatus)}</span></div>
             </div>
-            
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; background: #f4f6fb; padding: 15px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; background: #f4f9fd; padding: 15px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
                 <div><strong>${printTranslations.totalItems}:</strong> ${Number(totalItems).toLocaleString()}</div>
                 <div><strong>${printTranslations.totalQuantity}:</strong> ${Number(totalQty).toLocaleString()}</div>
                 <div><strong>${printTranslations.paymentType}:</strong> ${escapeHtml(paymentType).toUpperCase()}</div>
-                <div><strong>${printTranslations.grandTotal}:</strong> <span style="color: #059669; font-size: 1.1em;">Tsh ${totalPriceNum.toLocaleString()}</span></div>
+                <div><strong>${printTranslations.grandTotal}:</strong> <span style="color: #07866b; font-size: 1.1em;">Tsh ${totalPriceNum.toLocaleString()}</span></div>
             </div>
-            
+
             <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                 <thead>
-                    <tr style="background: #f4f6fb;">
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: left; width: 5%;">#</th>
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: left; width: 45%;">${printTranslations.productName}</th>
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: center; width: 10%;">${printTranslations.qty}</th>
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: right; width: 15%;">${printTranslations.unitPrice}</th>
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: right; width: 15%;">${printTranslations.total}</th>
-                        <th style="border: 1px solid #e5e9f2; padding: 10px; text-align: left; width: 10%;">${printTranslations.itemStatus}</th>
+                    <tr style="background: #eaf3fb;">
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: left; width: 5%;">#</th>
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: left; width: 45%;">${printTranslations.productName}</th>
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: center; width: 10%;">${printTranslations.qty}</th>
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: right; width: 15%;">${printTranslations.unitPrice}</th>
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: right; width: 15%;">${printTranslations.total}</th>
+                        <th style="border: 1px solid #dce7f1; padding: 10px; text-align: left; width: 10%;">${printTranslations.itemStatus}</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${itemsHtml}
                 </tbody>
             </table>
-            
+
             <div class="print-footer">
                 Generated by LERUMA POS System | ${new Date().toLocaleString()}
             </div>

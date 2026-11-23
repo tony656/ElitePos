@@ -41,13 +41,18 @@ class productsController extends Controller
         abort(403, 'Unauthorized access');
     }
 
-    $shopFilter = request('shop');
+    $shopFilter = request('shop', 7);
     if(!empty($shopFilter)) {
-        
-        session([
-            'selected_shop_id' => $shopFilter
-        ]);
+        if (!is_numeric($shopFilter)) {
+            $account = accountModel::where('name', $shopFilter)->first();
+            $shopFilter = $account ? $account->id : null;
+        }
 
+        if ($shopFilter) {
+            session([
+                'selected_shop_id' => $shopFilter
+            ]);
+        }
     }
         $shopFilter = getCurrentShopId();
 
@@ -59,11 +64,39 @@ $shops = getuserAccounts();
     if(!empty($shopFilter)) {
         $query->where('account', $shopFilter);
     } 
-    
+
+    // Server-side search so results appear without raising per_page to 1000
+    $search = request('search');
+    if (!empty($search)) {
+        $query->where(function($q) use ($search) {
+            $q->where('name01', 'LIKE', "%{$search}%")
+              ->orWhere('name02', 'LIKE', "%{$search}%")
+              ->orWhere('product_id', 'LIKE', "%{$search}%");
+        });
+    }
+
     // IMPORTANT: Use paginate() instead of get()
-    $perPage = request('per_page', 600);
+    $perPage = request('per_page', 2000);
+
+    // Remember sort choice across reloads via session
+    $sort = request('sort', session('products_sort', 'name_asc'));
+    if (request('sort')) {
+        session(['products_sort' => request('sort')]);
+    }
+
+    $sortMap = [
+        'name_asc'   => ['name01', 'asc'],
+        'name_desc'  => ['name01', 'desc'],
+        'price_asc'  => ['sPrice', 'asc'],
+        'price_desc' => ['sPrice', 'desc'],
+        'stock_asc'  => ['quantity', 'asc'],
+        'stock_desc' => ['quantity', 'desc'],
+        'newest'     => ['id', 'desc'],
+    ];
+    [$sortColumn, $sortDirection] = $sortMap[$sort] ?? ['name01', 'asc'];
+
     $products = $query->where('name01', '!=', null)
-                      ->orderBy('name01', 'asc')
+                      ->orderBy($sortColumn, $sortDirection)
                       ->paginate($perPage)
                       ->appends(request()->query()); // Preserve query parameters
     
@@ -83,12 +116,12 @@ $shops = getuserAccounts();
     }
     $allProducts = $allProductsQuery->where('name01', '!=', null)->get();
     
-    $TProducts = $products->count();
+    $TProducts = $allProducts->count();
   $totalCostWorth = $allProducts->sum(function($product) {
     return $product->bPrice * $product->quantity;
 });
 
-$totalSellingWorth = $products->sum(function($product) {
+$totalSellingWorth = $allProducts->sum(function($product) {
     return $product->sPrice * $product->quantity;
 });
 $Negative = productsModel::query();
@@ -154,7 +187,7 @@ $Negative = productsModel::query();
     }
 
     $data = compact('products', 'getAllAccounts', 'negatives', 'available','TProducts', 
-                   'totalCostWorth', 'totalSellingWorth', 'offers', 'outOfSyncShops', 'currentShopMismatches');
+                   'totalCostWorth', 'totalSellingWorth', 'offers', 'outOfSyncShops', 'currentShopMismatches', 'sort');
     
     // Return view based on role
        return view('products', $data);
@@ -659,8 +692,8 @@ private function detectCategory($productName)
     return 'Others';
 }
 
+
 /**
- * Detect unit from product name
  */
 private function detectUnit($productName)
 {
@@ -1465,16 +1498,19 @@ private function createProductFromExcelRow($rowData) {
             }
         }
         
+        $itemNameLower = strtolower($itemName);
+        $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+
+        if (!$isCtn) {
+            \Log::info("createProductFromExcelRow: SKIPPED non-CTN item: {$itemName}");
+            return 'skipped';
+        }
+
         if ($existingProduct) {
-            // Update existing product - only update quantity
-            $oldQty = $existingProduct->quantity;
-            $existingProduct->quantity += $quantity;
+            $existingProduct->name01 = $itemName;
             $existingProduct->save();
 
-            // Ensure $uuid points to the existing product's product_id for stock entry
-            $uuid = $existingProduct->product_id;
-
-            \Log::info("createProductFromExcelRow: UPDATED product via {$lookupMethod}: {$itemName} | Old qty: {$oldQty} | Added: {$quantity} | New qty: {$existingProduct->quantity}");
+            \Log::info("createProductFromExcelRow: UPDATED name01 via {$lookupMethod}: {$itemName} (previous: {$existingProduct->name01})");
         } else {
             // Create new product
             \Log::info("createProductFromExcelRow: CREATING new product");
@@ -1499,14 +1535,14 @@ private function createProductFromExcelRow($rowData) {
             $product->save();
             
             \Log::info("createProductFromExcelRow: CREATED new product: {$itemName} | ID: {$product->id} | product_id: {$uuid} | qty: {$quantity}");
-        }
-        
-        // Create stock entry for new stock
-        if ($quantity > 0) {
-            \Log::info("createProductFromExcelRow: creating stock entry for qty={$quantity}, product_id=" . ($uuid ?? 'NULL'));
-            $this->createStockEntryFast($uuid, $itemName, $name02, $quantity, $bPrice, $sPrice);
-        } else {
-            \Log::info("createProductFromExcelRow: skipping stock entry (quantity=0)");
+            
+            // Create stock entry for new stock
+            if ($quantity > 0) {
+                \Log::info("createProductFromExcelRow: creating stock entry for qty={$quantity}, product_id=" . ($uuid ?? 'NULL'));
+                $this->createStockEntryFast($uuid, $itemName, $name02, $quantity, $bPrice, $sPrice);
+            } else {
+                \Log::info("createProductFromExcelRow: skipping stock entry (quantity=0)");
+            }
         }
 
         return $existingProduct ? 'updated' : 'created';
@@ -2893,7 +2929,7 @@ public function getReceivingsByDate(Request $request)
 {
     $date = $request->get('date', date('Y-m-d'));
     $account = Auth::user()->account;
-    
+
     // Get receivings for the specific date with product details
     $receivings = DB::table('restock')
         ->leftJoin('products', 'restock.product_id', '=', 'products.product_id')
@@ -2913,7 +2949,7 @@ public function getReceivingsByDate(Request $request)
         )
         ->orderBy('restock.created_at', 'desc')
         ->get();
-    
+
     // Calculate stats
     $totalValue = 0;
     $totalItems = 0;
@@ -2923,12 +2959,12 @@ public function getReceivingsByDate(Request $request)
     $pendingValue = 0;
     $creditItems = 0;
     $creditValue = 0;
-    
+
     foreach ($receivings as $item) {
         $itemTotal = $item->price * $item->quantity;
         $totalValue += $itemTotal;
         $totalItems += $item->quantity;
-        
+
         if ($item->status == 'Approved') {
             $approvedItems += $item->quantity;
             $approvedValue += $itemTotal;
@@ -2936,13 +2972,13 @@ public function getReceivingsByDate(Request $request)
             $pendingItems += $item->quantity;
             $pendingValue += $itemTotal;
         }
-        
+
         if ($item->isPaid == 0) { // 0 means credit
             $creditItems += $item->quantity;
             $creditValue += $itemTotal;
         }
     }
-    
+
     return response()->json([
         'success' => true,
         'receivings' => $receivings,
@@ -3006,8 +3042,18 @@ public function dltrestock(Request $req)
             'description' => 'Receiving record deleted for product ID: ' . $receiving->productId . ' by ' . Auth::user()->name
         ]);
 
-        recevingModel::where('id', $receivingId)->delete();
+         $product = productsModel::where('product_id', $receiving->productId)
+            ->where('account', $receiving->account)
+            ->first();
 
+        if ($product) {
+            $newStockQty = max(0, ((int) $product->quantity) + $quantity);
+            $product->quantity = $newStockQty;
+            $product->save();
+
+        recevingModel::where('id', $receivingId)->delete();
+        }
+        
         return redirect()->back()->with('success', 'Receiving record deleted successfully!');
     }
 
@@ -4696,6 +4742,134 @@ $receiving->save();
 
 
     /**
+     * Sync product quantities from the MainStore API report.
+     * Backs the "Sync Quantities" action on the products page (the former API "Compare" panel).
+     * Matches API items to local products by product_id (the MainStore item_id) and
+     * updates the quantity ONLY — prices, names, categories and the daily stock
+     * snapshots are never touched.
+     */
+    public function syncProductQuantityFromApi(Request $request)
+    {
+        $items = $request->input('items', []);
+
+        if (!is_array($items) || empty($items)) {
+            return response()->json(['error' => 'No items to sync'], 422);
+        }
+
+        // Account the quantities should be written into. The products page sync
+        // panel sends the chosen account (Main Store by default); without it we
+        // fall back to the currently selected shop.
+        $accountId = (int) $request->input('account_id', getCurrentShopId() ?? 7);
+
+        $validAccounts = array_map('intval', array_column(getuserAccounts(), 'id'));
+        // The Main Store account is always allowed — it is the source of the API data
+        $validAccounts[] = 7;
+        if (!in_array($accountId, array_unique($validAccounts), true)) {
+            return response()->json(['error' => 'Invalid account selected'], 422);
+        }
+
+        // Normalise the payload into a list of product_id (always a STRING) => quantity.
+        // Ids must stay strings: PHP turns numeric ids like "1" into integer array
+        // keys, and a numeric binding would make MySQL compare the VARCHAR
+        // product_id column numerically and match unrelated rows.
+        $seen = [];
+        $rows = [];
+        foreach ($items as $item) {
+            $productId = is_array($item) ? ($item['product_id'] ?? '') : $item;
+            $quantity = null;
+            if (is_array($item)) {
+                $quantity = $item['closing_stock'] ?? $item['quantity'] ?? $item['total'] ?? null;
+            }
+
+            $productId = trim((string) $productId);
+            if ($productId === '' || $quantity === null) {
+                continue;
+            }
+            if (isset($seen[$productId])) {
+                continue;
+            }
+            $seen[$productId] = true;
+
+            $rows[] = ['product_id' => $productId, 'quantity' => (int) $quantity];
+        }
+
+        if (empty($rows)) {
+            return response()->json(['error' => 'No valid items to sync'], 422);
+        }
+
+        $hasUpdatedAt = \Illuminate\Support\Facades\Schema::hasColumn('products', 'updated_at');
+
+        $updated = 0;
+        $notFound = [];
+
+        // Update in chunks so the CASE statement stays well within the packet limit.
+        // product_id is the ONLY field used to match, and quantity is the ONLY
+        // field written.
+        foreach (array_chunk($rows, 500) as $chunk) {
+            // Ids of this chunk that actually exist in the current shop
+            $ids = array_values(array_unique(array_map(function ($row) {
+                return (string) $row['product_id'];
+            }, $chunk)));
+
+            $existing = productsModel::where('account', $accountId)
+                ->whereIn('product_id', $ids)
+                ->pluck('product_id')
+                ->all();
+            $existing = array_map('strval', $existing);
+
+            $updated += count($existing);
+            $notFound = array_merge($notFound, array_values(array_diff($ids, $existing)));
+
+            // Only write rows whose id matched
+            $matchedRows = array_values(array_filter($chunk, function ($row) use ($existing) {
+                return in_array((string) $row['product_id'], $existing, true);
+            }));
+            if (empty($matchedRows)) {
+                continue;
+            }
+
+            $cases = [];
+            $params = [];
+            foreach ($matchedRows as $row) {
+                $cases[] = 'WHEN ? THEN ?';
+                $params[] = (string) $row['product_id'];
+                $params[] = (int) $row['quantity'];
+            }
+
+            $placeholders = implode(',', array_fill(0, count($matchedRows), '?'));
+            $timestamp = $hasUpdatedAt ? ', updated_at = ?' : '';
+
+            $sql = 'UPDATE products
+                    SET quantity = CASE product_id ' . implode(' ', $cases) . ' END' . $timestamp . '
+                    WHERE account = ? AND product_id IN (' . $placeholders . ')';
+
+            if ($hasUpdatedAt) {
+                $params[] = now()->toDateTimeString();
+            }
+            $params[] = $accountId;
+            foreach ($matchedRows as $row) {
+                $params[] = (string) $row['product_id'];
+            }
+
+            try {
+                DB::update($sql, $params);
+            } catch (\Throwable $e) {
+                \Log::error('syncProductQuantityFromApi chunk error: ' . $e->getMessage());
+            }
+        }
+
+        $skipped = count($notFound);
+
+        return response()->json([
+            'success' => true,
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'not_found' => array_slice($notFound, 0, 50),
+            'message' => "Quantity synced for {$updated} products" . ($skipped ? " ({$skipped} skipped — product id not found in that account)" : '') . '.',
+        ]);
+    }
+
+    /**
      * Get offers for a product (API endpoint)
      */
     public function getOffers($productId)
@@ -4908,7 +5082,14 @@ public function offers(Request $req)
         $shopFilter = $request->input('shop');
 
         if (!empty($shopFilter)) {
-            session(['selected_shop_id' => $shopFilter]);
+            if (!is_numeric($shopFilter)) {
+                $account = accountModel::where('name', $shopFilter)->first();
+                $shopFilter = $account ? $account->id : null;
+            }
+
+            if ($shopFilter) {
+                session(['selected_shop_id' => $shopFilter]);
+            }
         }
 
         $accountIds = !empty($shopFilter) ? [$shopFilter] : array_column(getuserAccounts(), 'id');
@@ -5385,11 +5566,21 @@ public function offers(Request $req)
      */
     public function itemsReport(Request $req)
     {
+        ini_set('memory_limit', '512M');
+
         $user = Auth::user();
-        $selectedDate = $req->input('date', date('Y-m-d'));
-        $fromDate = $req->input('from_date');
-        $toDate = $req->input('to_date');
-        $accountFilter = $req->input('shop', '7');
+        $selectedDate = is_string($req->input('date')) ? $req->input('date') : date('Y-m-d');
+        $fromDate = is_string($req->input('from_date')) ? $req->input('from_date') : null;
+        $toDate = is_string($req->input('to_date')) ? $req->input('to_date') : null;
+        $shopInput = $req->input('shop');
+        $accountFilter = '7';
+        $backupDate = is_string($req->input('backup_date')) ? $req->input('backup_date') : null;
+
+        if ($backupDate) {
+            $selectedDate = $backupDate;
+            $fromDate = $backupDate;
+            $toDate = $backupDate;
+        }
         $shops = getUserAccounts();
         // Get user's assigned accounts
         $userAccounts = $shops;
@@ -5404,64 +5595,53 @@ public function offers(Request $req)
             return redirect()->back()->with('error', 'Please select a shop to view the report.');   
         }
 
-        // ── 1. Fetch all products (remaining quantity) ──
+        // ── 1. Fetch products (paginated to bound memory) ──
         $productsQuery = productsModel::where('name01', '!=', null);
         if (!empty($accountFilter)) {
             $productsQuery->where('account', $accountFilter);
         }
-        $allProducts = $productsQuery->get(['product_id', 'name01', 'name02', 'quantity', 'bPrice', 'sPrice', 'category', 'unit']);
+        $perPage = (int) $req->input('per_page', 2000);
+        $perPage = max(1, min($perPage, 2000));
+        $products = $productsQuery->orderBy('name01', 'asc')->paginate($perPage)
+            ->appends(request()->query());
 
-        // Build product map: product_id => product data
-        $productMap = [];
-        foreach ($allProducts as $p) {
-            $productMap[$p->product_id] = $p;
-        }
-
-        // ── 2. Fetch receivings (received quantities + total price) ──
+        // ── 2. Aggregate receivings by productId via SQL (avoid materializing all rows) ──
         $receivingQuery = recevingModel::where('is_return', '!=', 1);
-        if (!empty($accountFilter)) {
-            $receivingQuery->where('account', $accountFilter);
-        }
+            $receivingQuery->where('supplier', 7);
         if (!empty($fromDate) && !empty($toDate)) {
             $receivingQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         } elseif (!empty($selectedDate)) {
             $receivingQuery->whereDate('created_at', $selectedDate);
         }
-        $allReceivings = $receivingQuery->get();
+        $receivedRows = $receivingQuery->selectRaw('productId, SUM(COALESCE(quantity, 0)) as total_qty, SUM(COALESCE(quantity, 0) * COALESCE(price, 0)) as total_price')
+            ->groupBy('productId')
+            ->get(['productId', DB::raw('SUM(COALESCE(quantity, 0)) as total_qty'), DB::raw('SUM(COALESCE(quantity, 0) * COALESCE(price, 0)) as total_price')]);
 
-        $mainStoreRec = recevingModel::where('is_return', '!=', 1);
-        if (!empty($accountFilter)) {
-            $mainStoreRec->where('supplier', 7);
+        $receivedMap = [];
+        $receivedPriceMap = [];
+        foreach ($receivedRows as $rec) {
+            $receivedMap[$rec->productId] = (int)($rec->total_qty ?? 0);
+            $receivedPriceMap[$rec->productId] = (float)($rec->total_price ?? 0);
         }
+
+        // main store receivings
+        $mainStoreRec = recevingModel::where('is_return', '!=', 1);
+        $mainStoreRec->where('supplier','!=', 7);
         if (!empty($fromDate) && !empty($toDate)) {
             $mainStoreRec->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         } elseif (!empty($selectedDate)) {
             $mainStoreRec->whereDate('created_at', $selectedDate);
         }
-        $mainReceivings = $mainStoreRec->get();
-
-        // Aggregate received quantities and total price by productId
-        $receivedMap = [];
-        $receivedPriceMap = [];
-        foreach ($allReceivings as $rec) {
-            $pid = $rec->productId;
-            if (!isset($receivedMap[$pid])) {
-                $receivedMap[$pid] = 0;
-                $receivedPriceMap[$pid] = 0;
-            }
-            $receivedMap[$pid] += (int)($rec->quantity ?? 0);
-            $receivedPriceMap[$pid] += ((int)($rec->quantity ?? 0) * (float)($rec->price ?? 0));
-        }
+        $mainRecRows = $mainStoreRec->selectRaw('productId, SUM(COALESCE(quantity, 0)) as total_qty')
+            ->groupBy('productId')
+            ->get(['productId', DB::raw('SUM(COALESCE(quantity, 0)) as total_qty')]);
 
         $mainreceivedMap = [];
-        foreach ($mainReceivings as $mainrec) {
-            $pid = $mainrec->productId;
-            if (!isset($mainreceivedMap[$pid])) {
-                $mainreceivedMap[$pid] = 0;
-            }
-            $mainreceivedMap[$pid] += (int)($mainrec->quantity ?? 0);
+        foreach ($mainRecRows as $mainrec) {
+            $mainreceivedMap[$mainrec->productId] = (int)($mainrec->total_qty ?? 0);
         }
-        // ── 3. Fetch returns (returned quantities) ──
+
+        // ── 3. Aggregate returns by productId via SQL ──
         $returnQuery = recevingModel::where('is_return', 1);
         if (!empty($accountFilter)) {
             $returnQuery->where('account', $accountFilter);
@@ -5471,49 +5651,46 @@ public function offers(Request $req)
         } elseif (!empty($selectedDate)) {
             $returnQuery->whereDate('created_at', $selectedDate);
         }
-        $allReturns = $returnQuery->get();
+        $returnRows = $returnQuery->selectRaw('productId, SUM(COALESCE(quantity, 0)) as total_qty')
+            ->groupBy('productId')
+            ->get(['productId', DB::raw('SUM(COALESCE(quantity, 0)) as total_qty')]);
 
-        // Aggregate return quantities by productId
         $returnMap = [];
-        foreach ($allReturns as $ret) {
-            $pid = $ret->productId;
-            if (!isset($returnMap[$pid])) {
-                $returnMap[$pid] = 0;
-            }
-            $returnMap[$pid] += (int)($ret->quantity ?? 0);
+        foreach ($returnRows as $ret) {
+            $returnMap[$ret->productId] = (int)($ret->total_qty ?? 0);
         }
 
-        // ── 4. Fetch sales (sold quantities + total price) ──
+        // ── 4. Aggregate sales by productId via SQL ──
         $salesQuery = salsModel::query();
-        if (!empty($accountFilter)) {
-            $salesQuery->where('account', $accountFilter);
-        }
+if (!empty($accountFilter)) {
+    $allShopIds = array_column(getUserAccounts(), 'id');   // local var
+    $salesQuery->whereIn('account', $allShopIds ?: [7]);   // or where('account', 7) if that's intended
+}
         if (!empty($fromDate) && !empty($toDate)) {
             $salesQuery->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
         } elseif (!empty($selectedDate)) {
             $salesQuery->whereDate('created_at', $selectedDate);
         }
-        $allSales = $salesQuery->get(['productId', 'pQuantity', 'totalPrice']);
+        $saleRows = $salesQuery->selectRaw('productId, SUM(COALESCE(pQuantity, 0)) as total_qty, SUM(COALESCE(totalPrice, 0) * COALESCE(pQuantity, 0)) as total_price')
+            ->groupBy('productId')
+            ->get(['productId', DB::raw('SUM(COALESCE(pQuantity, 0)) as total_qty'), DB::raw('SUM(COALESCE(totalPrice, 0) * COALESCE(pQuantity, 0)) as total_price')]);
 
-        // Aggregate sold quantities and total price by productId
         $soldMap = [];
         $soldPriceMap = [];
-        foreach ($allSales as $sale) {
-            $pid = $sale->productId;
-            if (!isset($soldMap[$pid])) {
-                $soldMap[$pid] = 0;
-                $soldPriceMap[$pid] = 0;
-            }
-            $soldMap[$pid] += (int)($sale->pQuantity ?? 0);
-            $soldPriceMap[$pid] += (float)($sale->totalPrice * $sale->pQuantity);
+        foreach ($saleRows as $sale) {
+            $soldMap[$sale->productId] = (int)($sale->total_qty ?? 0);
+            $soldPriceMap[$sale->productId] = (float)($sale->total_price ?? 0);
         }
 
-        // ── 4.5 Fetch daily stock snapshots for opening/closing stock ──
-        $productIds = array_keys($productMap);
 
+        // ── 4.5 Fetch daily stock snapshots for opening/closing stock (page products only) ──
+        // IMPORTANT: Build BOTH lookup maps — by UUID (product_id) and by numeric id —
+        // so we match whichever the snapshot table actually stores.
+
+        // Determine which dates to use
         if (!empty($fromDate) && !empty($toDate)) {
             $openingSnapshotDate = $fromDate;
-            $closingSnapshotDate = $toDate;
+            $closingSnapshotDate = $fromDate;
         } elseif (!empty($selectedDate)) {
             $openingSnapshotDate = $selectedDate;
             $closingSnapshotDate = $selectedDate;
@@ -5522,20 +5699,161 @@ public function offers(Request $req)
             $closingSnapshotDate = date('Y-m-d');
         }
 
-        $openingStockMap = [];
-        if (!empty($productIds)) {
-            $openingSnapshots = DailyStockSnapshot::whereIn('product_id', $productIds)
-                ->where('snapshot_date', $openingSnapshotDate)
-                ->get(['product_id', 'opening_stock']);
-            $openingStockMap = $openingSnapshots->pluck('opening_stock', 'product_id')->toArray();
+        // Collect both keys: UUIDs (product_id) and numeric ids (id)
+        $productCollection = $products->getCollection();
+        $productUuids = $productCollection->pluck('product_id')->unique()->all();                       // UUIDs
+        $productNumericIds = $productCollection->pluck('id')->filter()->unique()->all();
+
+        // Combine both so whereIn matches either representation
+        $snapshotKeys = array_values(array_unique(array_merge($productUuids, $productNumericIds)));
+
+        // Build product_id => category map so we can key snapshots by product_id|category
+        $productCategoryMap = [];
+        foreach ($products as $product) {
+            $productCategoryMap[$product->product_id] = $product->category ?? '';
         }
 
-        $closingStockMap = [];
-        if (!empty($productIds)) {
-            $closingSnapshots = DailyStockSnapshot::whereIn('product_id', $productIds)
+        $openingStockMap = [];   // keyed by "product_id|category"
+        $closingStockMap = [];   // keyed by "product_id|category"
+
+        if (!empty($snapshotKeys)) {
+            $openingSnapshots = DailyStockSnapshot::whereIn('product_id', $snapshotKeys)
+                ->where('snapshot_date', $openingSnapshotDate)
+                ->get(['product_id', 'category', 'opening_stock']);
+
+            foreach ($openingSnapshots as $snap) {
+                $key = $snap->product_id . '|' . ($snap->category ?? '');
+                $openingStockMap[$key] = (int) $snap->opening_stock;
+                // Also store id-only key for snapshots with NULL category (old data)
+                if ($snap->category === null || $snap->category === '') {
+                    $openingStockMap[$snap->product_id] = (int) $snap->opening_stock;
+                }
+            }
+
+            $closingSnapshots = DailyStockSnapshot::whereIn('product_id', $snapshotKeys)
                 ->where('snapshot_date', $closingSnapshotDate)
-                ->get(['product_id', 'closing_stock']);
-            $closingStockMap = $closingSnapshots->pluck('closing_stock', 'product_id')->toArray();
+                ->get(['product_id', 'category', 'closing_stock']);
+
+            foreach ($closingSnapshots as $snap) {
+                $key = $snap->product_id . '|' . ($snap->category ?? '');
+                $closingStockMap[$key] = (int) $snap->closing_stock;
+                // Also store id-only key for snapshots with NULL category (old data)
+                if ($snap->category === null || $snap->category === '') {
+                    $closingStockMap[$snap->product_id] = (int) $snap->closing_stock;
+                }
+            }
+
+            // For products missing a closing snapshot on the exact date,
+            // fall back to the most recent prior snapshot (bulk query)
+            $missingClosingPids = [];
+            foreach ($products as $product) {
+                $pid = $product->product_id;
+                $cat = $product->category ?? '';
+                $key = $pid . '|' . $cat;
+                // Check category key; also check id-only key only if product has no category
+                $hasClosing = isset($closingStockMap[$key]);
+                if (!$hasClosing && empty($cat)) {
+                    $hasClosing = isset($closingStockMap[$pid]);
+                }
+                if (!$hasClosing) {
+                    $missingClosingPids[] = $product;
+                }
+            }
+
+            if (!empty($missingClosingPids)) {
+                // Collect all product_id|category keys missing a closing snapshot
+                $missingKeys = [];
+                foreach ($missingClosingPids as $product) {
+                    $missingKeys[] = $product->product_id . '|' . ($product->category ?? '');
+                }
+                $groupedMissing = [];
+                foreach ($missingClosingPids as $product) {
+                    $groupedMissing[$product->product_id . '|' . ($product->category ?? '')] = $product;
+                }
+
+                // Get prior snapshots per product_id|category in one query per product_id
+                $priorProductIds = array_unique(array_map(fn($p) => $p->product_id, $missingClosingPids));
+                $priorClosingSnapshots = DailyStockSnapshot::whereIn('product_id', $priorProductIds)
+                    ->where('snapshot_date', '<', $closingSnapshotDate)
+                    ->orderBy('product_id', 'asc')
+                    ->orderBy('snapshot_date', 'desc')
+                    ->get(['product_id', 'category', 'closing_stock']);
+
+                // Build map of product_id|category -> latest prior closing_stock
+                $priorMap = [];
+                foreach ($priorClosingSnapshots as $snap) {
+                    $key = $snap->product_id . '|' . ($snap->category ?? '');
+                    if (!isset($priorMap[$key])) {
+                        $priorMap[$key] = (int) $snap->closing_stock;
+                    }
+                    // Also store id-only key for snapshots with NULL category
+                    if ($snap->category === null || $snap->category === '') {
+                        $priorMap[$snap->product_id] = (int) $snap->closing_stock;
+                    }
+                }
+
+                foreach ($groupedMissing as $key => $product) {
+                    if (isset($priorMap[$key])) {
+                        $closingStockMap[$key] = $priorMap[$key];
+                    }
+                    // Also check id-only key only if product has no category
+                    if (empty($product->category) && !isset($closingStockMap[$key]) && isset($priorMap[$product->product_id])) {
+                        $closingStockMap[$key] = $priorMap[$product->product_id];
+                    }
+                }
+            }
+
+            // For products missing opening stock on the exact date,
+            // fetch the previous day's closing stock to use as today's opening stock
+            $missingOpeningPids = [];
+            foreach ($products as $product) {
+                $pid = $product->product_id;
+                $cat = $product->category ?? '';
+                $key = $pid . '|' . $cat;
+                $hasOpening = isset($openingStockMap[$key]);
+                if (!$hasOpening && empty($cat)) {
+                    $hasOpening = isset($openingStockMap[$pid]);
+                }
+                if (!$hasOpening) {
+                    $missingOpeningPids[] = $product;
+                }
+            }
+
+            if (!empty($missingOpeningPids)) {
+                $priorOpeningProductIds = array_unique(array_map(fn($p) => $p->product_id, $missingOpeningPids));
+                $priorOpeningSnapshots = DailyStockSnapshot::whereIn('product_id', $priorOpeningProductIds)
+                    ->where('snapshot_date', '<', $openingSnapshotDate)
+                    ->orderBy('product_id', 'asc')
+                    ->orderBy('snapshot_date', 'desc')
+                    ->get(['product_id', 'category', 'closing_stock']);
+
+                $priorOpeningMap = [];
+                foreach ($priorOpeningSnapshots as $snap) {
+                    $key = $snap->product_id . '|' . ($snap->category ?? '');
+                    if (!isset($priorOpeningMap[$key])) {
+                        $priorOpeningMap[$key] = (int) $snap->closing_stock;
+                    }
+                    // Also store id-only key for snapshots with NULL category
+                    if ($snap->category === null || $snap->category === '') {
+                        $priorOpeningMap[$snap->product_id] = (int) $snap->closing_stock;
+                    }
+                }
+
+                $groupedOpening = [];
+                foreach ($missingOpeningPids as $product) {
+                    $groupedOpening[$product->product_id . '|' . ($product->category ?? '')] = $product;
+                }
+
+                foreach ($groupedOpening as $key => $product) {
+                    if (isset($priorOpeningMap[$key])) {
+                        $openingStockMap[$key] = $priorOpeningMap[$key];
+                    }
+                    // Also check id-only key only if product has no category
+                    if (empty($product->category) && !isset($openingStockMap[$key]) && isset($priorOpeningMap[$product->product_id])) {
+                        $openingStockMap[$key] = $priorOpeningMap[$product->product_id];
+                    }
+                }
+            }
         }
 
         // ── 5. Build report rows ──
@@ -5548,19 +5866,56 @@ public function offers(Request $req)
         $totalRemainingQty = 0;
         $totalRemainingValue = 0;
 
-        foreach ($productMap as $pid => $product) {
+        foreach ($products as $product) {
+            $pid = $product->product_id;
             $mainRecQty = $mainreceivedMap[$pid] ?? 0;
             $receivedQty  = $receivedMap[$pid]  ?? 0;
             $returnedQty  = $returnMap[$pid]    ?? 0;
-            $soldQty      = $soldMap[$pid]      ?? 0;
+            // All received items in every shop (except the mainstore/godown id 7) must be sold,
+            // so use received as the sold quantity. The mainstore only receives and distributes
+            // to other shops and does not sell, so keep the actual sales data for it.
+     
+                $soldQty = $receivedQty;
+            
             $receivedTotal = $receivedPriceMap[$pid] ?? 0;
             $soldTotal    = $soldPriceMap[$pid] ?? 0;
             $remainingQty = (int)($product->quantity ?? 0);
             $unitPrice    = (float)($product->sPrice ?? 0);
             $remainingValue = $remainingQty * $unitPrice;
 
-            $closingStock = $closingStockMap[$pid] ?? $remainingQty;
-            $openingStock = $openingStockMap[$pid] ?? max(0, $remainingQty - $receivedQty + $returnedQty + $soldQty);
+            // Key snapshots by product_id|category
+            $snapshotKey = $pid . '|' . ($product->category ?? '');
+            $snapshotKeyIdOnly = $pid;
+            // Id-only fallback only when the product itself has no category
+            // (old snapshots with NULL category). If the product has a category
+            // (CTN/PC), don't share the NULL-category snapshot with other variants.
+            $hasCategory = !empty($product->category);
+
+            // Try to get actual closing stock data for this date
+            $hasActualClosingStock = isset($closingStockMap[$snapshotKey]);
+            if (!$hasActualClosingStock && !$hasCategory) {
+                $hasActualClosingStock = isset($closingStockMap[$snapshotKeyIdOnly]);
+            }
+            $closingStock = $closingStockMap[$snapshotKey] ?? null;
+            if (!$closingStock && !$hasCategory) {
+                $closingStock = $closingStockMap[$snapshotKeyIdOnly] ?? null;
+            }
+            $openingStock = $openingStockMap[$snapshotKey] ?? null;
+            if (!$openingStock && !$hasCategory) {
+                $openingStock = $openingStockMap[$snapshotKeyIdOnly] ?? null;
+            }
+
+            // If no actual closing stock data, OR if snapshot data seems wrong (closing == opening but items sold), calculate it
+            $snapshotClosing = $hasActualClosingStock ? (int)$closingStock : null;
+            $snapshotOpening = $hasActualClosingStock ? (int)$openingStock : null;
+            
+            if (!$hasActualClosingStock || ($snapshotClosing !== null && $snapshotClosing == $snapshotOpening && $soldQty > 0)) {
+                $closingStock = max(0, ($openingStock ?? 0) + $receivedQty - $soldQty + $returnedQty);
+            } else {
+                // Use actual snapshot data
+                $closingStock = $snapshotClosing;
+                $openingStock = $snapshotOpening ?? 0;
+            }
 
             $allReportRows[] = [
                 'productId'      => $pid,
@@ -5579,93 +5934,427 @@ public function offers(Request $req)
                 'openingStock'   => $openingStock,
                 'closingStock'   => $closingStock,
             ];
-
-            $totalReceived     += $receivedQty;
-            $totalReturned     += $returnedQty;
-            $totalSold         += $soldQty;
-            $totalReceivedPrice += $receivedTotal;
-            $totalSoldPrice    += $soldTotal;
-            $totalRemainingQty += $remainingQty;
-            $totalRemainingValue += $remainingValue;
         }
 
-        // Sort by product name
+        // Grand totals across the full date range (computed from SQL aggregates, not the paged rows)
+        $totalReceived = array_sum($receivedMap);
+        $totalReturned = array_sum($returnMap);
+        $totalReceivedPrice = array_sum($receivedPriceMap);
+        if ($accountFilter != 7) {
+            $totalSold = $totalReceived;
+            $totalSoldPrice = $totalReceivedPrice;
+        } else {
+            $totalSold = array_sum($soldMap);
+            $totalSoldPrice = array_sum($soldPriceMap);
+        }
+
+        // Remaining qty/value across all products for the selected shop (lightweight aggregate query)
+        $remainingAgg = productsModel::where('name01', '!=', null);
+        if (!empty($accountFilter)) {
+            $remainingAgg->where('account', $accountFilter);
+        }
+        $remainingAgg = $remainingAgg->selectRaw('SUM(COALESCE(quantity, 0)) as total_qty, SUM(COALESCE(quantity, 0) * COALESCE(sPrice, 0)) as total_value')->first();
+        $totalRemainingQty = (int)($remainingAgg->total_qty ?? 0);
+        $totalRemainingValue = (float)($remainingAgg->total_value ?? 0);
+
+        // Sort by product name (case-insensitive, ascending)
         usort($allReportRows, function ($a, $b) {
-            return strcmp($a['productName'], $b['productName']);
+            return strcasecmp($a['productName'], $b['productName']);
         });
 
-        // Paginate report rows (15 per page)
-        $perPage = 600;
-        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
-        $currentPage = max(1, (int) $currentPage);
-        $totalItems = count($allReportRows);
-        $lastPage = max(1, (int) ceil($totalItems / $perPage));
-        $currentPage = min($currentPage, $lastPage);
-        $offset = ($currentPage - 1) * $perPage;
+        // Paginate the full report rows so all products (not just one page) are navigable
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
         $reportRows = new \Illuminate\Pagination\LengthAwarePaginator(
-            array_slice($allReportRows, $offset, $perPage),
-            $totalItems,
+            array_slice($allReportRows, ($currentPage - 1) * $perPage, $perPage),
+            count($allReportRows),
             $perPage,
             $currentPage,
-            ['path' => request()->url(), 'query' => request()->query()]
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(), 'query' => request()->query()]
         );
-
 
         // Determine API comparison date (previous day of local report date)
         $localReportDate = $toDate ?? $selectedDate ?? date('Y-m-d');
         $apiCompareDate = date('Y-m-d', strtotime($localReportDate . ' -1 day'));
 
         $data = compact(
-            'reportRows', 'selectedDate', 'fromDate', 'toDate', 'accountFilter', 'shops',
+            'reportRows', 'selectedDate', 'fromDate', 'toDate', 'accountFilter', 'shops', 'perPage', 'backupDate',
             'totalReceived', 'totalReturned', 'totalSold',
             'totalReceivedPrice', 'totalSoldPrice',
             'totalRemainingQty', 'totalRemainingValue',
             'apiCompareDate'
         );
 
-            return view('itemsReport', $data);
+        return view('itemsReport', $data);
     
     }
 
+   public function updateItemsReportStock(Request $req) {
+    $req->validate([
+        'product_id'    => 'required',
+        'snapshot_date' => 'required|date',
+        'opening_stock' => 'nullable|integer',
+        'closing_stock' => 'nullable|integer',
+    ]);
+
+    $productId = $req->input('product_id');
+    $snapshotDate = $req->input('snapshot_date');
+    $openingStock = (int) $req->input('opening_stock', 0);
+    $closingStock = (int) $req->input('closing_stock', 0);
+    $category = $req->input('category', '');
+
+    // Ensure we're using the UUID product_id even if a numeric id came through
+    $product = productsModel::where('product_id', $productId)
+        ->orWhere('id', is_numeric($productId) ? (int) $productId : 0)
+        ->first();
+
+    $canonicalProductId = $product ? $product->product_id : $productId;
+    $canonicalCategory = $product ? ($product->category ?? '') : $category;
+
+    DailyStockSnapshot::updateOrCreate(
+        [
+            'snapshot_date' => $snapshotDate,
+            'product_id'    => $canonicalProductId,
+            'category'      => $canonicalCategory,
+        ],
+        [
+            'opening_stock' => $openingStock,
+            'closing_stock' => $closingStock,
+        ]
+    );
+
+    return response()->json(['success' => true]);
+}
+
     public function mainStoreProxy(Request $req)
     {
+        // The MainStore report can take minutes on shared hosting — make sure PHP
+        // does not cut the request short before the API answers
+        @set_time_limit(300);
+
         $action = $req->input('action');
 
+        // Quantity sync from the products page. Runs on the existing proxy route so
+        // it works without registering (or re-caching) a new route.
+        if ($action === 'sync_quantity_from_api') {
+            return $this->syncProductQuantityFromApi($req);
+        }
+
         if ($action === 'stock_report') {
-            $startDate = $req->input('start_date');
-            $endDate = $req->input('end_date');
+            // The items report sends snapshot_date (a single day); the products page
+            // quantity sync sends start_date / end_date (a range). Support both.
+            $snapshotDate = $req->input('snapshot_date', $req->input('start_date', $req->input('end_date')));
+            $endDate = $req->input('end_date', $snapshotDate);
+            $localNames = $req->input('local_names', []);
+            $localProductIds = $req->input('local_product_ids', []);
 
-            if (!$startDate || !$endDate) {
-                return response()->json(['error' => 'Missing start_date or end_date'], 422);
+            if (!$snapshotDate) {
+                return response()->json(['error' => 'Missing snapshot_date'], 422);
             }
 
-            $externalTokenService = env('MAINSTORE_TOKEN_SERVICE_URL');
-
-            if ($externalTokenService) {
-                $url = rtrim($externalTokenService, '/') . '/stock/report';
-                $response = Http::withoutVerifying()
-                    ->timeout(60)
-                    ->get($url, [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ]);
-
-                if ($response->successful()) {
-                    return response()->json($response->json());
-                }
-
-                return response()->json([
-                    'error' => 'MainStore token service error: ' . $response->status()
-                ], $response->status());
+            try {
+                $token = Cache::get('mainstore_api_token');
+            } catch (\Throwable $e) {
+                $token = null;
             }
 
-            $token = Cache::get('mainstore_api_token');
             if (!$token) {
                 $token = $this->fetchMainStoreToken();
                 if (!$token) {
                     return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
                 }
-                Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+
+                try {
+                    Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                } catch (\Throwable $e) {
+                    // ignore cache failures
+                }
+            }
+
+            try {
+                $requestUrl = config('services.mainstore.url') . '/stock/report';
+                $requestParams = [
+                    'start_date' => $snapshotDate,
+                    'end_date' => $endDate,
+                ];
+
+                \Log::info('MainStore API request', [
+                    'url' => $requestUrl,
+                    'params' => $requestParams,
+                ]);
+
+                $response = Http::withoutVerifying()
+                    ->withToken($token)
+                    ->timeout(180)
+                    ->get($requestUrl, $requestParams);
+
+                if ($response->successful()) {
+                    $payload = $response->json();
+
+
+
+                    if (!empty($localProductIds) && is_array($localProductIds)) {
+                        $productIds = array_values(array_unique(array_map('trim', $localProductIds)));
+
+                        $items = collect($payload['data']['items'] ?? [])
+                            ->filter(function ($item) use ($productIds) {
+                                $itemId = isset($item['item_id']) ? (string) $item['item_id'] : '';
+
+                                return in_array($itemId, $productIds, true);
+                            })
+                            ->values()
+                            ->all();
+
+            
+                        $payload['data']['items'] = $items;
+                        $payload['data']['total_items'] = count($items);
+                    } elseif (!empty($localNames) && is_array($localNames)) {
+                        $names = array_values(array_unique(array_map('trim', $localNames)));
+                        $lowerNames = array_map(function ($name) {
+                            $name = mb_strtolower($name);
+                            $name = preg_replace('/\s+/', ' ', $name);
+                            $name = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $name);
+
+                            return trim($name);
+                        }, $names);
+
+                        $items = collect($payload['data']['items'] ?? [])
+                            ->filter(function ($item) use ($lowerNames) {
+                                $originalName = $item['item_name'] ?? '';
+                                $itemName = mb_strtolower($originalName);
+                                $itemName = preg_replace('/\s+/', ' ', $itemName);
+                                $itemName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                $itemName = trim($itemName);
+
+                                $originalLower = mb_strtolower($originalName);
+                                $hasCtn = str_contains($originalLower, 'ctn') || str_contains($originalLower, 'carton');
+
+                                if ($hasCtn) {
+                                    foreach ($lowerNames as $localName) {
+                                        if (str_contains($itemName, $localName)) {
+                                            return true;
+                                        }
+                                    }
+                                }
+
+                                return false;
+                            })
+                            ->values()
+                            ->all();
+
+                        $payload['data']['items'] = $items;
+                        $payload['data']['total_items'] = count($items);
+                    }
+
+                    return response()->json($payload);
+                }
+
+                if ($response->status() === 401 || $response->status() === 403) {
+                    try { Cache::forget('mainstore_api_token'); } catch (\Throwable $e) {}
+
+                    $newToken = $this->fetchMainStoreToken();
+                    if (!$newToken) {
+                        return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+                    }
+
+                    try {
+                        Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                    } catch (\Throwable $e) {}
+
+                    $retryResponse = Http::withoutVerifying()
+                        ->withToken($newToken)
+                        ->timeout(180)
+                        ->get(config('services.mainstore.url') . '/stock/report', [
+                            'start_date' => $snapshotDate,
+                            'end_date' => $endDate,
+                        ]);
+
+                    if ($retryResponse->successful()) {
+                        $payload = $retryResponse->json();
+
+                        if (!empty($localProductIds) && is_array($localProductIds)) {
+                            $productIds = array_values(array_unique(array_map('trim', $localProductIds)));
+
+                            $items = collect($payload['data']['items'] ?? [])
+                                ->filter(function ($item) use ($productIds) {
+                                    $itemId = isset($item['item_id']) ? (string) $item['item_id'] : '';
+
+                                    return in_array($itemId, $productIds, true);
+                                })
+                                ->values()
+                                ->all();
+
+                            $payload['data']['items'] = $items;
+                            $payload['data']['total_items'] = count($items);
+                        } elseif (!empty($localNames) && is_array($localNames)) {
+                            $names = array_values(array_unique(array_map('trim', $localNames)));
+                            $lowerNames = array_map(function ($name) {
+                                $name = mb_strtolower($name);
+                                $name = preg_replace('/\s+/', ' ', $name);
+                                $name = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $name);
+
+                                return trim($name);
+                            }, $names);
+
+                            $items = collect($payload['data']['items'] ?? [])
+                                ->filter(function ($item) use ($lowerNames) {
+                                    $originalName = $item['item_name'] ?? '';
+                                    $itemName = mb_strtolower($originalName);
+                                    $itemName = preg_replace('/\s+/', ' ', $itemName);
+                                    $itemName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                    $itemName = trim($itemName);
+
+                                    $originalLower = mb_strtolower($originalName);
+                                    $hasCtn = str_contains($originalLower, 'ctn') || str_contains($originalLower, 'carton');
+
+                                    if ($hasCtn) {
+                                        foreach ($lowerNames as $localName) {
+                                            if (str_contains($itemName, $localName)) {
+                                                return true;
+                                            }
+                                        }
+                                    }
+
+                                    return false;
+                                })
+                                ->values()
+                                ->all();
+
+                            $payload['data']['items'] = $items;
+                            $payload['data']['total_items'] = count($items);
+                        }
+
+                        return response()->json($payload);
+                    }
+
+                    return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status()], $retryResponse->status());
+                }
+
+                return response()->json(['error' => 'MainStore API error: ' . $response->status()], $response->status());
+                
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
+            }
+        }
+
+        if ($action === 'ctn') {
+            $startDate = $req->input('start_date');
+            $endDate = $req->input('end_date');
+            $localNames = $req->input('local_names', []);
+
+            if (!$startDate || !$endDate) {
+                return response()->json(['error' => 'Missing start_date or end_date'], 422);
+            }
+
+            try {
+                $token = Cache::get('mainstore_api_token');
+            } catch (\Throwable $e) {
+                $token = null;
+            }
+
+            if (!$token) {
+                $token = $this->fetchMainStoreToken();
+                if (!$token) {
+                    return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
+                }
+
+                try {
+                    Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                } catch (\Throwable $e) {
+                    // ignore cache failures
+                }
+            }
+
+            try {
+                $body = [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ];
+
+                if (!empty($localNames) && is_array($localNames)) {
+                    $body['names'] = array_values(array_unique(array_map('trim', $localNames)));
+                }
+
+                \Log::info('MainStore /stock/ctn request', [
+                    'url' => config('services.mainstore.url') . '/stock/ctn',
+                    'body' => $body,
+                ]);
+
+                $response = Http::withoutVerifying()
+                    ->withToken($token)
+                    ->timeout(30)
+                    ->acceptJson()
+                    ->post(config('services.mainstore.url') . '/stock/ctn', $body);
+
+                \Log::info('MainStore /stock/ctn response', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                if ($response->successful()) {
+                    return response()->json($response->json());
+                }
+
+                if ($response->status() === 401 || $response->status() === 403) {
+                    try { Cache::forget('mainstore_api_token'); } catch (\Throwable $e) {}
+
+                    $newToken = $this->fetchMainStoreToken();
+                    if (!$newToken) {
+                        return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+                    }
+
+                    try {
+                        Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                    } catch (\Throwable $e) {}
+
+                    $retryResponse = Http::withoutVerifying()
+                        ->withToken($newToken)
+                        ->timeout(30)
+                        ->acceptJson()
+                        ->post(config('services.mainstore.url') . '/stock/ctn', $body);
+
+                    if ($retryResponse->successful()) {
+                        return response()->json($retryResponse->json());
+                    }
+
+                    return response()->json([
+                        'error' => 'MainStore API error: ' . $retryResponse->status(),
+                        'details' => $retryResponse->body(),
+                    ], $retryResponse->status());
+                }
+
+                return response()->json([
+                    'error' => 'MainStore API error: ' . $response->status(),
+                    'details' => $response->body(),
+                ], $response->status());
+            } catch (\Exception $e) {
+                \Log::error('MainStore /ctn exception', [
+                    'message' => $e->getMessage(),
+                ]);
+
+                return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
+            }
+        }
+
+        if ($action === 'sync_products') {
+            $startDate = $req->input('start_date', date('Y-m-d'));
+            $endDate = $req->input('end_date', date('Y-m-d'));
+            $snapshotDate = $startDate;
+
+            try {
+                $token = Cache::get('mainstore_api_token');
+            } catch (\Throwable $e) {
+                $token = null;
+            }
+
+            if (!$token) {
+                $token = $this->fetchMainStoreToken();
+                if (!$token) {
+                    return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
+                }
+
+                try {
+                    Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                } catch (\Throwable $e) {}
             }
 
             try {
@@ -5678,39 +6367,1097 @@ public function offers(Request $req)
                     ]);
 
                 if ($response->successful()) {
-                    return response()->json($response->json());
-                }
+                    $payload = $response->json();
+                    $items = $payload['data']['items'] ?? [];
 
-                if ($response->status() === 401 || $response->status() === 403) {
-                    Cache::forget('mainstore_api_token');
-                    $newToken = $this->fetchMainStoreToken();
-                    if (!$newToken) {
-                        return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
-                    }
-                    Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                    // Clear the snapshots for this date first so the fresh ones can be
+                    // inserted (rows are unique on snapshot_date + product_id)
+                    DailyStockSnapshot::where('snapshot_date', $snapshotDate)->delete();
 
-                    $retryResponse = Http::withoutVerifying()
-                        ->withToken($newToken)
-                        ->timeout(30)
-                        ->get(config('services.mainstore.url') . '/stock/report', [
-                            'start_date' => $startDate,
-                            'end_date' => $endDate,
+                    $updated = 0;
+                    $created = 0;
+                    $skipped = 0;
+                    $results = [];
+                    $seenItems = [];
+                    $snapshotsToInsert = [];
+
+                    $accountId = getCurrentShopId() ?? 7;
+
+                    foreach ($items as $item) {
+                            $itemName = trim($item['item_name'] ?? '');
+                            if (empty($itemName)) {
+                                $skipped++;
+                                continue;
+                            }
+
+                            $dedupeKey = strtolower($itemName);
+                            if (isset($seenItems[$dedupeKey])) {
+                                $skipped++;
+                                continue;
+                            }
+                            $seenItems[$dedupeKey] = true;
+
+                            $itemId = $item['item_id'] ?? null;
+                            $openingStock = (int)($item['opening_stock'] ?? 0);
+                            $closingStock = (int)($item['closing_stock'] ?? $item['total'] ?? 0);
+                            $total = (int)($item['total'] ?? $closingStock);
+
+                            $itemNameLower = strtolower($itemName);
+                            $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                            $isPc = str_contains($itemNameLower, 'pc');
+                            $category = 'Others';
+                            if ($isCtn) {
+                                $category = 'CTN';
+                            } elseif ($isPc) {
+                                $category = 'PC';
+                            }
+
+                            // 1) Match on product_id — the MainStore item_id is stored in
+                            //    products.product_id, so this is the reliable link
+                            $existingProduct = null;
+                            if ($itemId) {
+                                $existingProduct = productsModel::where('product_id', $itemId)
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+
+                            // 2) Fall back to name matching for products that are not
+                            //    linked by id yet, so their quantity still syncs
+                            if (!$existingProduct) {
+                                $existingProduct = productsModel::where('name01', $itemName)
+                                    ->where('account', $accountId)
+                                    ->first();
+
+                                if (!$existingProduct) {
+                                    $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                    $baseName = trim($baseName);
+
+                                    if ($baseName !== $itemName) {
+                                        $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                            ->where('account', $accountId)
+                                            ->first();
+                                    }
+                                }
+                            }
+
+                            if ($existingProduct) {
+                                // Sync ONLY the quantity — prices (bPrice, sPrice,
+                                // wholesale, discount), name and category are never touched
+                                $existingProduct->quantity = $total;
+                                $existingProduct->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $snapshotDate,
+                                    'product_id' => $existingProduct->product_id,
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                $updated++;
+                                $results[] = "Updated: {$itemName} (qty={$total})";
+                            } else {
+                                $product = new productsModel();
+                                $product->product_id = $itemId ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+                                $product->name01 = $itemName;
+                                $product->name02 = '';
+                                $product->category = $category;
+                                $product->unit = 'pieces';
+                                $product->quantity = $total;
+                                $product->bPrice = 0;
+                                $product->sPrice = 0;
+                                $product->wholesale = 0;
+                                $product->discount = 0;
+                                $product->account = $accountId;
+                                $product->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $snapshotDate,
+                                    'product_id' => $existingProduct->product_id,
+                                    'category' => $existingProduct->category ?? '',
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                $created++;
+                                $results[] = "Created: {$itemName} (qty={$total})";
+                            }
+                        }
+
+                        if (!empty($snapshotsToInsert)) {
+
+    $deduped = [];
+    foreach ($snapshotsToInsert as $snap) {
+        $deduped[$snap['product_id'] . '|' . ($snap['category'] ?? '')] = $snap;
+    }
+    DailyStockSnapshot::insert(array_values($deduped));
+}
+
+                        \Log::info('MainStore sync_products completed', [
+                            'updated' => $updated,
+                            'created' => $created,
+                            'skipped' => $skipped,
+                            'results' => array_slice($results, 0, 50),
                         ]);
 
-                    if ($retryResponse->successful()) {
-                        return response()->json($retryResponse->json());
+                        return response()->json([
+                            'success' => true,
+                            'updated' => $updated,
+                            'created' => $created,
+                            'skipped' => $skipped,
+                            'message' => "Synced {$updated} CTN items, created {$created} PC items, skipped {$skipped} items.",
+                        ]);
                     }
 
-                    return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status()], $retryResponse->status());
-                }
+                    if ($response->status() === 401 || $response->status() === 403) {
+                        try { Cache::forget('mainstore_api_token'); } catch (\Throwable $e) {}
 
-                return response()->json(['error' => 'MainStore API error: ' . $response->status()], $response->status());
-            } catch (\Exception $e) {
+                        $newToken = $this->fetchMainStoreToken();
+                        if (!$newToken) {
+                            return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+}
+        try {
+                            Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                        } catch (\Throwable $e) {}
+
+                        $snapshotDate = $startDate;
+
+                        $retryResponse = Http::withoutVerifying()
+                            ->withToken($newToken)
+                            ->timeout(30)
+                            ->get(config('services.mainstore.url') . '/stock/report', [
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
+                            ]);
+
+                        if ($retryResponse->successful()) {
+                            $payload = $retryResponse->json();
+                            $items = $payload['data']['items'] ?? [];
+
+                            DailyStockSnapshot::where('snapshot_date', $snapshotDate)->delete();
+
+                            $updated = 0;
+                            $created = 0;
+                            $skipped = 0;
+                            $results = [];
+                            $seenItems = [];
+                            $snapshotsToInsert = [];
+
+                            foreach ($items as $item) {
+                            $itemName = trim($item['item_name'] ?? '');
+                            if (empty($itemName)) {
+                                $skipped++;
+                                continue;
+                            }
+
+                            $dedupeKey = strtolower($itemName);
+                            if (isset($seenItems[$dedupeKey])) {
+                                $skipped++;
+                                continue;
+                            }
+                            $seenItems[$dedupeKey] = true;
+
+                            $itemNameLower = strtolower($itemName);
+                            $openingStock = (int)($item['opening_stock'] ?? 0);
+                            $closingStock = (int)($item['closing_stock'] ?? 0);
+                            $added = (int)($item['added'] ?? 0);
+                            $total = (int)($item['total'] ?? $closingStock);
+                            $sales = (int)($item['sales'] ?? 0);
+                            $itemId = $item['item_id'] ?? null;
+
+                            $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                            $isPc = str_contains($itemNameLower, 'pc');
+                            $category = 'Others';
+                            if ($isCtn) {
+                                $category = 'CTN';
+                            } elseif ($isPc) {
+                                $category = 'PC';
+                            }
+
+                            $existingProduct = productsModel::where('name01', $itemName)
+                                ->where('account', getCurrentShopId() ?? getCurrentShopId())
+                                ->first();
+
+                            if (!$existingProduct) {
+                                $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                $baseName = trim($baseName);
+
+                                if ($baseName !== $itemName) {
+                                    $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                        ->where('account', getCurrentShopId() ?? getCurrentShopId())
+                                        ->first();
+                                }
+                            }
+
+                            if (!$existingProduct && ($isCtn || $isPc)) {
+                                $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                $baseName = trim($baseName);
+
+                                if ($baseName !== $itemName) {
+                                    $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                        ->where('account', getCurrentShopId() ?? getCurrentShopId())
+                                        ->first();
+                                }
+                            }
+
+                            if ($existingProduct) {
+                                $existingProduct->name01 = $itemName;
+                                $existingProduct->category = $category;
+                                $existingProduct->quantity = $total;
+                                $existingProduct->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $snapshotDate,
+                                    'product_id' => $existingProduct->product_id,
+                                    'category' => $existingProduct->category ?? '',
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                $updated++;
+                            } else {
+                                $apiItemId = $itemId;
+                                if ($apiItemId) {
+                                    $existingById = productsModel::where('product_id', $apiItemId)
+                                        ->where('account', getCurrentShopId() ?? 7)
+                                        ->first();
+                                }
+
+                                if ($existingById ?? false) {
+                                    $existingById->name01 = $itemName;
+                                    $existingById->category = $category;
+                                    $existingById->quantity = $total;
+                                    $existingById->save();
+
+                                    $snapshotsToInsert[] = [
+                                        'snapshot_date' => $snapshotDate,
+                                        'product_id' => $existingById->product_id,
+                                        'category' => $existingById->category ?? '',
+                                        'opening_stock' => $openingStock,
+                                        'closing_stock' => $closingStock,
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ];
+
+                                    $updated++;
+                                } else {
+                                    $product = new productsModel();
+                                    $product->product_id = $itemId ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+                                    $product->name01 = $itemName;
+                                    $product->name02 = '';
+                                    $product->category = $category;
+                                    $product->unit = 'pieces';
+                                    $product->quantity = $total;
+                                    $product->bPrice = 0;
+                                    $product->sPrice = 0;
+                                    $product->wholesale = 0;
+                                    $product->discount = 0;
+                                    $product->account = getCurrentShopId() ?? 7;
+                                    $product->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $snapshotDate,
+                                    'product_id' => $product->product_id,
+                                    'category' => $category,
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                    $created++;
+                                }
+                            }
+                        }
+
+                        if (!empty($snapshotsToInsert)) {
+
+    $deduped = [];
+    foreach ($snapshotsToInsert as $snap) {
+        $deduped[$snap['product_id'] . '|' . ($snap['category'] ?? '')] = $snap;
+    }
+    DailyStockSnapshot::insert(array_values($deduped));
+}
+                        return response()->json([
+                                'success' => true,
+                                'updated' => $updated,
+                                'created' => $created,
+                                'skipped' => $skipped,
+                                'message' => "Synced {$updated} CTN items, created {$created} PC items, skipped {$skipped} items.",
+]);
+                    }
+
+                return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status(), 'details' => $retryResponse->body()], $retryResponse->status());
+            }
+
+            return response()->json(['error' => 'MainStore API error: ' . $response->status(), 'details' => $response->body()], $response->status());
+        }
+        catch (\Exception $e) {
+                \Log::error('MainStore sync_products exception', [
+                    'message' => $e->getMessage(),
+                ]);
+
                 return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
             }
         }
 
         return response()->json(['error' => 'Invalid action'], 400);
+    }
+
+
+// insert_sync_method_content.php - the method body to insert
+
+    public function syncProductsFromMainStore(Request $req)
+    {
+        $date = $req->input('date', date('Y-m-d'));
+        $accountId = $req->input('shop', getCurrentShopId() ?? 7);
+
+        try {
+            $token = Cache::get('mainstore_api_token');
+        } catch (\Throwable $e) {
+            $token = null;
+        }
+
+        if (!$token) {
+            $token = $this->fetchMainStoreToken();
+            if (!$token) {
+                return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
+            }
+
+            try {
+                Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+            } catch (\Throwable $e) {}
+        }
+
+            try {
+                $requestUrl = config('services.mainstore.url') . '/stock/report';
+                $requestParams = [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ];
+
+                \Log::info('MainStore API request', [
+                    'url' => $requestUrl,
+                    'params' => $requestParams,
+                ]);
+
+                $response = Http::withoutVerifying()
+                    ->withToken($token)
+                    ->timeout(30)
+                    ->get($requestUrl, $requestParams);
+
+            if ($response->successful()) {
+                $payload = $response->json();
+                $items = $payload['data']['items'] ?? [];
+
+                DailyStockSnapshot::where('snapshot_date', $date)->delete();
+
+                $updated = 0;
+                $created = 0;
+                $skipped = 0;
+                $results = [];
+                $seenItems = [];
+                $snapshotsToInsert = [];
+
+                foreach ($items as $item) {
+                    $itemName = trim($item['item_name'] ?? '');
+                    if (empty($itemName)) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $dedupeKey = strtolower($itemName);
+                    if (isset($seenItems[$dedupeKey])) {
+                        $skipped++;
+                        continue;
+                    }
+                    $seenItems[$dedupeKey] = true;
+
+                    $itemNameLower = strtolower($itemName);
+                    $openingStock = (int)($item['opening_stock'] ?? 0);
+                    $closingStock = (int)($item['closing_stock'] ?? 0);
+                    $total = (int)($item['total'] ?? $closingStock);
+
+                    $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                    $isPc = str_contains($itemNameLower, 'pc');
+                    $category = 'Others';
+                    if ($isCtn) {
+                        $category = 'CTN';
+                    } elseif ($isPc) {
+                        $category = 'PC';
+                    }
+
+                    $existingProduct = productsModel::where('name01', $itemName)
+                        ->where('account', $accountId)
+                        ->first();
+
+                    if (!$existingProduct) {
+                        $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                        $baseName = trim($baseName);
+
+                        if ($baseName !== $itemName) {
+                            $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                ->where('account', $accountId)
+                                ->first();
+                        }
+                    }
+
+                    if (!$existingProduct && ($isCtn || $isPc)) {
+                        $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                        $baseName = trim($baseName);
+
+                        if ($baseName !== $itemName) {
+                            $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                ->where('account', $accountId)
+                                ->first();
+                        }
+                    }
+
+                    if ($existingProduct) {
+                        $existingProduct->name01 = $itemName;
+                        $existingProduct->category = $category;
+                        $existingProduct->quantity = $total;
+                            $existingProduct->save();
+
+                            $snapshotsToInsert[] = [
+                                'snapshot_date' => $date,
+                                'product_id' => $existingProduct->product_id,
+                                'category' => $existingProduct->category ?? '',
+                                'opening_stock' => $openingStock,
+                                'closing_stock' => $closingStock,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            $updated++;
+                            $results[] = "Updated: {$itemName} (qty={$total}, category={$category})";
+                        } else {
+                            $apiItemId = $item['item_id'] ?? null;
+                            if ($apiItemId) {
+                                $existingById = productsModel::where('product_id', $apiItemId)
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+
+                            if ($existingById ?? false) {
+                                $existingById->name01 = $itemName;
+                                $existingById->category = $category;
+                                $existingById->quantity = $total;
+                                $existingById->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $date,
+                                    'product_id' => $existingById->product_id,
+                                    'category' => $existingById->category ?? '',
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                            $updated++;
+                            $results[] = "Updated: {$itemName} (qty={$total}, category={$category})";
+                        } else {
+                            $apiItemId = $item['item_id'] ?? null;
+                            $productId = $apiItemId ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+
+                            // Check if product with this ID already exists (any account) - replace it
+                            $existingByIdGlobal = productsModel::where('product_id', $productId)->first();
+                            if ($existingByIdGlobal) {
+                                $existingByIdGlobal->delete();
+                            }
+
+                            $product = new productsModel();
+                            $product->product_id = $productId;
+                            $product->name01 = $itemName;
+                            $product->name02 = '';
+                            $product->category = $category;
+                            $product->unit = 'pieces';
+                            $product->quantity = $total;
+                            $product->bPrice = 0;
+                            $product->sPrice = 0;
+                            $product->wholesale = 0;
+                            $product->discount = 0;
+                            $product->account = $accountId;
+                            $product->save();
+
+                            $snapshotsToInsert[] = [
+                                'snapshot_date' => $date,
+                                'product_id' => $product->product_id,
+                                'category' => $category,
+                                'opening_stock' => $openingStock,
+                                'closing_stock' => $closingStock,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            $created++;
+                            $results[] = "Created: {$itemName} (qty={$total}, category={$category})";
+                        }
+                    }
+                }
+
+                if (!empty($snapshotsToInsert)) {
+
+    $deduped = [];
+    foreach ($snapshotsToInsert as $snap) {
+        $deduped[$snap['product_id'] . '|' . ($snap['category'] ?? '')] = $snap;
+    }
+    DailyStockSnapshot::insert(array_values($deduped));
+}
+
+                \Log::info('MainStore sync_products from new item page completed', [
+                    'updated' => $updated,
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'results' => array_slice($results, 0, 50),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'updated' => $updated,
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'message' => "Synced {$updated} items, created {$created} items, skipped {$skipped} items.",
+                    'results' => $results,
+                    'items' => $items,
+                ]);
+            }
+
+            if ($response->status() === 401 || $response->status() === 403) {
+                try { Cache::forget('mainstore_api_token'); } catch (\Throwable $e) {}
+
+                $newToken = $this->fetchMainStoreToken();
+                if (!$newToken) {
+                    return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+                }
+
+                try {
+                    Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                } catch (\Throwable $e) {}
+
+                    $retryResponse = Http::withoutVerifying()
+                        ->withToken($newToken)
+                        ->timeout(30)
+                        ->get(config('services.mainstore.url') . '/stock/report', [
+                            'snapshot_date' => $snapshotDate,
+                        ]);
+
+                    if ($retryResponse->successful()) {
+                        $payload = $retryResponse->json();
+                        $items = $payload['data']['items'] ?? [];
+
+                DailyStockSnapshot::where('snapshot_date', $localDate)->delete();
+
+                        $updated = 0;
+                        $created = 0;
+                        $skipped = 0;
+                        $results = [];
+                        $seenItems = [];
+                        $snapshotsToInsert = [];
+
+                        foreach ($items as $item) {
+                        $itemName = trim($item['item_name'] ?? '');
+                        if (empty($itemName)) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        $dedupeKey = strtolower($itemName);
+                        if (isset($seenItems[$dedupeKey])) {
+                            $skipped++;
+                            continue;
+                        }
+                        $seenItems[$dedupeKey] = true;
+
+                        $itemNameLower = strtolower($itemName);
+                        $openingStock = (int)($item['opening_stock'] ?? 0);
+                        $closingStock = (int)($item['closing_stock'] ?? $item['total'] ?? 0);
+                        $total = (int)($item['total'] ?? $closingStock);
+
+                        $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                        $isPc = str_contains($itemNameLower, 'pc');
+                        $category = 'Others';
+                        if ($isCtn) {
+                            $category = 'CTN';
+                        } elseif ($isPc) {
+                            $category = 'PC';
+                        }
+
+                        $existingProduct = productsModel::where('name01', $itemName)
+                            ->where('account', $accountId)
+                            ->first();
+
+                        if (!$existingProduct) {
+                            $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                            $baseName = trim($baseName);
+
+                            if ($baseName !== $itemName) {
+                                $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+                        }
+
+                        if (!$existingProduct && ($isCtn || $isPc)) {
+                            $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                            $baseName = trim($baseName);
+
+                            if ($baseName !== $itemName) {
+                                $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+                        }
+
+                        if ($existingProduct) {
+                            $existingProduct->name01 = $itemName;
+                            $existingProduct->category = $category;
+                            $existingProduct->quantity = $total;
+                            $existingProduct->save();
+
+                            $snapshotsToInsert[] = [
+                                'snapshot_date' => $date,
+                                'product_id' => $existingProduct->product_id,
+                                'category' => $existingProduct->category ?? '',
+                                'opening_stock' => $openingStock,
+                                'closing_stock' => $closingStock,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            $updated++;
+                            $results[] = "Updated: {$itemName} (qty={$total}, category={$category})";
+                        } else {
+                            $apiItemId = $item['item_id'] ?? null;
+                            if ($apiItemId) {
+                                $existingById = productsModel::where('product_id', $apiItemId)
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+
+                            if ($existingById ?? false) {
+                                $existingById->name01 = $itemName;
+                                $existingById->category = $category;
+                                $existingById->quantity = $total;
+                                $existingById->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $date,
+                                    'product_id' => $existingById->product_id,
+                                    'category' => $existingById->category ?? '',
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                $updated++;
+                                $results[] = "Updated: {$itemName} (qty={$total}, category={$category})";
+                            } else {
+                                $product = new productsModel();
+                                $product->product_id = $item['item_id'] ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+                                $product->name01 = $itemName;
+                                $product->name02 = '';
+                                $product->category = $category;
+                                $product->unit = 'pieces';
+                                $product->quantity = $total;
+                                $product->bPrice = 0;
+                                $product->sPrice = 0;
+                                $product->wholesale = 0;
+                                $product->discount = 0;
+                                $product->account = $accountId;
+                                $product->save();
+
+                                $snapshotsToInsert[] = [
+                                    'snapshot_date' => $date,
+                                    'product_id' => $product->product_id,
+                                    'category' => $category,
+                                    'opening_stock' => $openingStock,
+                                    'closing_stock' => $closingStock,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ];
+
+                                $created++;
+                                $results[] = "Created: {$itemName} (qty={$total}, category={$category})";
+                            }
+                        }
+                    }
+
+                    if (!empty($snapshotsToInsert)) {
+
+    $deduped = [];
+    foreach ($snapshotsToInsert as $snap) {
+        $deduped[$snap['product_id'] . '|' . ($snap['category'] ?? '')] = $snap;
+    }
+    DailyStockSnapshot::insert(array_values($deduped));
+}
+
+                    return response()->json([
+                        'success' => true,
+                        'updated' => $updated,
+                        'created' => $created,
+                        'skipped' => $skipped,
+                        'message' => "Synced {$updated} items, created {$created} items, skipped {$skipped} items.",
+                        'results' => $results,
+                        'items' => $items,
+                    ]);
+                }
+
+                return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status(), 'details' => $retryResponse->body()], $retryResponse->status());
+            }
+
+            return response()->json(['error' => 'MainStore API error: ' . $response->status(), 'details' => $response->body()], $response->status());
+        }
+        catch (\Exception $e) {
+            return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // sync_stock_range_method.php - insert between syncProductsFromMainStore and fetchMainStoreToken
+
+    public function syncStockFromMainStoreForRange(Request $req)
+    {
+        $fromDate = $req->input('from_date');
+        $toDate = $req->input('to_date');
+        $localDate = $req->input('local_date', $fromDate);
+        $accountId = $req->input('shop', getCurrentShopId() ?? 7);
+
+        if (!$fromDate || !$toDate || !$localDate) {
+            return response()->json(['error' => 'Missing from_date, to_date, or local_date'], 422);
+        }
+
+        try {
+            $token = Cache::get('mainstore_api_token');
+        } catch (\Throwable $e) {
+            $token = null;
+        }
+
+        if (!$token) {
+            $token = $this->fetchMainStoreToken();
+            if (!$token) {
+                return response()->json(['error' => 'Failed to authenticate with MainStore API'], 500);
+            }
+
+            try {
+                Cache::put('mainstore_api_token', $token, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+            } catch (\Throwable $e) {}
+        }
+
+        try {
+            $response = Http::withoutVerifying()
+                ->withToken($token)
+                ->timeout(60)
+                ->get(config('services.mainstore.url') . '/stock/report', [
+                    'start_date' => $fromDate,
+                    'end_date' => $toDate,
+                ]);
+
+            if ($response->successful()) {
+                $payload = $response->json();
+                $items = $payload['data']['items'] ?? [];
+
+                DailyStockSnapshot::where('snapshot_date', $localDate)->delete();
+
+                $updated = 0;
+                $created = 0;
+                $skipped = 0;
+                $results = [];
+                $seenItems = [];
+                $snapshotsToInsert = [];
+
+                foreach ($items as $item) {
+                    $itemName = trim($item['item_name'] ?? '');
+                    if (empty($itemName)) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $dedupeKey = strtolower($itemName);
+                    if (isset($seenItems[$dedupeKey])) {
+                        $skipped++;
+                        continue;
+                    }
+                    $seenItems[$dedupeKey] = true;
+
+                    $itemNameLower = strtolower($itemName);
+                    $openingStock = (int)($item['opening_stock'] ?? 0);
+                    $closingStock = (int)($item['closing_stock'] ?? $item['total'] ?? 0);
+                    $total = (int)($item['total'] ?? $closingStock);
+                    $receivedQty = (int)($item['added'] ?? $item['received_qty'] ?? $item['received'] ?? $item['receiving'] ?? 0);
+
+                    $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                    $isPc = str_contains($itemNameLower, 'pc');
+                    $category = 'Others';
+                    if ($isCtn) {
+                        $category = 'CTN';
+                    } elseif ($isPc) {
+                        $category = 'PC';
+                    }
+
+                    $existingProduct = productsModel::where('name01', $itemName)
+                        ->where('account', $accountId)
+                        ->first();
+
+                    if (!$existingProduct) {
+                        $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                        $baseName = trim($baseName);
+
+                        if ($baseName !== $itemName) {
+                            $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                ->where('account', $accountId)
+                                ->first();
+                        }
+                    }
+
+                    // Find or create product to get product_id, but don't update product table fields
+                    $product = productsModel::where('name01', $itemName)
+                        ->where('account', $accountId)
+                        ->first();
+
+                    if (!$product) {
+                        $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                        $baseName = trim($baseName);
+
+                        if ($baseName !== $itemName) {
+                            $product = productsModel::where('name01', 'like', $baseName . '%')
+                                ->where('account', $accountId)
+                                ->first();
+                        }
+                    }
+
+                    if (!$product) {
+                        $apiItemId = $item['item_id'] ?? null;
+                        if ($apiItemId) {
+                            $product = productsModel::where('product_id', $apiItemId)
+                                ->where('account', $accountId)
+                                ->first();
+                        }
+                    }
+
+                    if (!$product) {
+                        // Create product only if not found, but don't update quantity/prices
+                        $product = new productsModel();
+                        $product->product_id = $item['item_id'] ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+                        $product->name01 = $itemName;
+                        $product->name02 = '';
+                        $product->category = $category;
+                        $product->unit = 'pieces';
+                        $product->quantity = 0; // Don't sync quantity to product table
+                        $product->bPrice = 0;
+                        $product->sPrice = 0;
+                        $product->wholesale = 0;
+                        $product->discount = 0;
+                        $product->account = $accountId;
+                        $product->save();
+
+                        $created++;
+                        $results[] = "Created product record: {$itemName}";
+                    }
+
+                    // Always insert/update snapshot - this is the main purpose
+                    $snapshotsToInsert[] = [
+                        'snapshot_date' => $localDate,
+                        'product_id' => $product->product_id,
+                        'category' => $category,
+                        'opening_stock' => $openingStock,
+                        'closing_stock' => $closingStock,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+
+                    $updated++;
+                    $results[] = "Synced snapshot: {$itemName} (opening={$openingStock}, closing={$closingStock}, received={$receivedQty})";
+                }
+
+                if (!empty($snapshotsToInsert)) {
+
+    $deduped = [];
+    foreach ($snapshotsToInsert as $snap) {
+        $deduped[$snap['product_id'] . '|' . ($snap['category'] ?? '')] = $snap;
+    }
+    DailyStockSnapshot::insert(array_values($deduped));
+}
+
+                \Log::info('MainStore range sync from items report completed', [
+                    'updated' => $updated,
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'results' => array_slice($results, 0, 50),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'updated' => $updated,
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'message' => "Synced {$updated} items, created {$created} items, skipped {$skipped} items.",
+                    'results' => $results,
+                    'items' => $items,
+                ]);
+            }
+
+            if ($response->status() === 401 || $response->status() === 403) {
+                try { Cache::forget('mainstore_api_token'); } catch (\Throwable $e) {}
+
+                $newToken = $this->fetchMainStoreToken();
+                if (!$newToken) {
+                    return response()->json(['error' => 'Failed to re-authenticate with MainStore API'], 500);
+                }
+
+                try {
+                    Cache::put('mainstore_api_token', $newToken, now()->addMinutes((int) config('services.mainstore.token_ttl', 50)));
+                } catch (\Throwable $e) {}
+
+                $retryResponse = Http::withoutVerifying()
+                    ->withToken($newToken)
+                    ->timeout(60)
+                    ->get(config('services.mainstore.url') . '/stock/report', [
+                        'start_date' => $fromDate,
+                        'end_date' => $toDate,
+                    ]);
+
+                if ($retryResponse->successful()) {
+                    $payload = $retryResponse->json();
+                    $items = $payload['data']['items'] ?? [];
+
+                    DailyStockSnapshot::where('snapshot_date', $localDate)->delete();
+
+                    $updated = 0;
+                    $created = 0;
+                    $skipped = 0;
+                    $results = [];
+                    $seenItems = [];
+                    $snapshotsToInsert = [];
+
+                    foreach ($items as $item) {
+                        $itemName = trim($item['item_name'] ?? '');
+                        if (empty($itemName)) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        $dedupeKey = strtolower($itemName);
+                        if (isset($seenItems[$dedupeKey])) {
+                            $skipped++;
+                            continue;
+                        }
+                        $seenItems[$dedupeKey] = true;
+
+                        $itemNameLower = strtolower($itemName);
+                        $openingStock = (int)($item['opening_stock'] ?? 0);
+                        $closingStock = (int)($item['closing_stock'] ?? $item['total'] ?? 0);
+                        $total = (int)($item['total'] ?? $closingStock);
+                        $receivedQty = (int)($item['added'] ?? $item['received_qty'] ?? $item['received'] ?? $item['receiving'] ?? 0);
+
+                        $isCtn = str_contains($itemNameLower, 'ctn') || str_contains($itemNameLower, 'carton');
+                        $isPc = str_contains($itemNameLower, 'pc');
+                        $category = 'Others';
+                        if ($isCtn) {
+                            $category = 'CTN';
+                        } elseif ($isPc) {
+                            $category = 'PC';
+                        }
+
+                        $existingProduct = productsModel::where('name01', $itemName)
+                            ->where('account', $accountId)
+                            ->first();
+
+                        if (!$existingProduct) {
+                            $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                            $baseName = trim($baseName);
+
+                            if ($baseName !== $itemName) {
+                                $existingProduct = productsModel::where('name01', 'like', $baseName . '%')
+                                    ->where('account', $accountId)
+                                    ->first();
+                            }
+                        }
+
+                        // Find or create product to get product_id, but don't update product table fields
+                            $product = productsModel::where('name01', $itemName)
+                                ->where('account', $accountId)
+                                ->first();
+
+                            if (!$product) {
+                                $baseName = preg_replace('/\s*-\s*(ctn|carton|cartons|ctns)\b.*/i', '', $itemName);
+                                $baseName = trim($baseName);
+
+                                if ($baseName !== $itemName) {
+                                    $product = productsModel::where('name01', 'like', $baseName . '%')
+                                        ->where('account', $accountId)
+                                        ->first();
+                                }
+                            }
+
+                            if (!$product) {
+                                $apiItemId = $item['item_id'] ?? null;
+                                if ($apiItemId) {
+                                    $product = productsModel::where('product_id', $apiItemId)
+                                        ->where('account', $accountId)
+                                        ->first();
+                                }
+                            }
+
+                            if (!$product) {
+                                // Create product only if not found, but don't update quantity/prices
+                                $product = new productsModel();
+                                $product->product_id = $item['item_id'] ?: (string) \Ramsey\Uuid\Uuid::uuid4();
+                                $product->name01 = $itemName;
+                                $product->name02 = '';
+                                $product->category = $category;
+                                $product->unit = 'pieces';
+                                $product->quantity = 0; // Don't sync quantity to product table
+                                $product->bPrice = 0;
+                                $product->sPrice = 0;
+                                $product->wholesale = 0;
+                                $product->discount = 0;
+                                $product->account = $accountId;
+                                $product->save();
+
+                                $created++;
+                                $results[] = "Created product record: {$itemName}";
+                            }
+
+                            // Always insert/update snapshot - this is the main purpose
+                            $snapshotsToInsert[] = [
+                                'snapshot_date' => $localDate,
+                                'product_id' => $product->product_id,
+                                'category' => $category,
+                                'opening_stock' => $openingStock,
+                                'closing_stock' => $closingStock,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            $updated++;
+                            $results[] = "Synced snapshot: {$itemName} (opening={$openingStock}, closing={$closingStock}, received={$receivedQty})";
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'updated' => $updated,
+                        'created' => $created,
+                        'skipped' => $skipped,
+                        'message' => "Synced {$updated} items, created {$created} items, skipped {$skipped} items.",
+                        'results' => $results,
+                        'items' => $items,
+                    ]);
+                }
+return response()->json(['error' => 'MainStore API error: ' . $retryResponse->status(), 'details' => $retryResponse->body()], $retryResponse->status());
+            }
+
+            return response()->json(['error' => 'MainStore API error: ' . $response->status(), 'details' => $response->body()], $response->status());
+            }
+            catch (\Exception $e) {
+            return response()->json(['error' => 'MainStore API request failed: ' . $e->getMessage()], 500);
+        }
     }
 
     private function fetchMainStoreToken()

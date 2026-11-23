@@ -319,6 +319,26 @@
 
                     {{-- ══ MANUAL TAB ══ --}}
                     <div id="manual" class="tab-pane active">
+                        <div class="form-section" style="background:linear-gradient(135deg,#EFF6FF,#F0FDF4);">
+                            <div class="section-head">
+                                <div class="section-head-icon shi-amber"><i class="bi bi-cloud-download"></i></div>
+                                <span class="section-title">Sync Products from MainStore</span>
+                            </div>
+                            <p style="font-size:12px;color:var(--slate-500);margin-bottom:1rem;">Fetch products, quantities, and stock snapshots from the MainStore API for a selected date.</p>
+                            <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;">
+                                <div style="flex:1;min-width:180px;max-width:260px;">
+                                    <label class="field-label">Sync date</label>
+                                    <input type="date" id="syncDate" class="field-input" value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div>
+                                    <button type="button" id="syncMainStoreBtn" class="btn-save" style="background:var(--sky);border:none;">
+                                        <i class="bi bi-arrow-repeat"></i> Sync from MainStore
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="syncResult" style="margin-top:1rem;"></div>
+                        </div>
+
                         <form action="/addProducts" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" name="upload_type" value="manual">
@@ -751,6 +771,56 @@
             <p>File loaded successfully</p>
             <small>${filename}</small>
         </div>`;
+    }
+
+    /* ── MainStore sync ── */
+    const syncBtn = document.getElementById('syncMainStoreBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', async function () {
+            const dateInput = document.getElementById('syncDate');
+            const resultBox = document.getElementById('syncResult');
+            const date = dateInput ? dateInput.value : '{{ date('Y-m-d') }}';
+
+            resultBox.innerHTML = `<div class="alert" style="background:var(--amber-pale);color:#92400e;border-left:3px solid var(--amber);"><i class="bi bi-arrow-repeat"></i> Syncing from MainStore for <strong>${date}</strong>...</div>`;
+            syncBtn.disabled = true;
+
+            try {
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value;
+                const headers = {};
+                if (token) {
+                    headers['X-CSRF-TOKEN'] = token;
+                    headers['X-XSRF-TOKEN'] = token;
+                }
+
+                const response = await fetch('/new-products/sync-from-mainstore', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        ...headers,
+                    },
+                    body: JSON.stringify({ date: date, shop: '{{ getCurrentShopId() ?? 7 }}' }),
+                    credentials: 'same-origin',
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const results = (data.results || []).slice(0, 80);
+                    const list = results.map(r => `<li>${r}</li>`).join('');
+                    resultBox.innerHTML = `<div class="alert alert-success"><strong>${data.message}</strong></div>
+                        <div style="background:var(--white);border:1px solid var(--slate-200);border-radius:var(--r);padding:.75rem;max-height:260px;overflow:auto;">
+                            <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--slate-700);">${list}</ul>
+                        </div>`;
+                } else {
+                    resultBox.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> ${data.error || 'Sync failed'}</div>`;
+                }
+            } catch (e) {
+                resultBox.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> ${e.message}</div>`;
+            } finally {
+                syncBtn.disabled = false;
+            }
+        });
     }
 </script>
 </body>

@@ -10,10 +10,12 @@ class DailyStockSnapshot extends Model
     use HasFactory;
 
     protected $table = 'daily_stock_snapshots';
+    public $timestamps = false;
 
     protected $fillable = [
         'snapshot_date',
         'product_id',
+        'category',
         'opening_stock',
         'closing_stock',
     ];

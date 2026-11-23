@@ -3,616 +3,677 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{config("app.name")}} - {{ __('messages.products_page_title') }}</title>
-    @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=DM Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>{{config("app.name")}} - Products</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Select2 CSS -->
+    <!-- Bootstrap (for modals) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         :root {
-            --navy:          #0B1E3D;
-            --navy-mid:      #112952;
-            --navy-light:    #1A3A6B;
-            --amber:         var(--theme-primary);
-            --amber-pale:    #FEF3C7;
-            --emerald:       #059669;
-            --emerald-pale:  #D1FAE5;
-            --rose:          #E11D48;
-            --rose-pale:     #FFE4E6;
-            --violet:        #7C3AED;
-            --violet-pale:   #EDE9FE;
-            --sky:           #0284C7;
-            --sky-pale:      #E0F2FE;
-            --fuchsia:       #C026D3;
-            --fuchsia-pale:  #FAE8FF;
-            --slate-50:      #F8FAFC;
-            --slate-100:     #F1F5F9;
-            --slate-200:     #E2E8F0;
-            --slate-300:     #CBD5E1;
-            --slate-400:     #94A3B8;
-            --slate-500:     #64748B;
-            --slate-600:     #475569;
-            --slate-700:     #334155;
-            --slate-800:     #1E293B;
-            --white:         #FFFFFF;
+            --navy: #0B1E3D;
+            --navy-mid: #112952;
+            --navy-light: #1A3A6B;
+            --amber: #F59E0B;
+            --amber-pale: #FEF3C7;
+            --emerald: #059669;
+            --emerald-pale: #D1FAE5;
+            --rose: #E11D48;
+            --rose-pale: #FFE4E6;
+            --violet: #7C3AED;
+            --violet-pale: #EDE9FE;
+            --sky: #0284C7;
+            --sky-pale: #E0F2FE;
+            --fuchsia: #C026D3;
+            --fuchsia-pale: #FAE8FF;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-300: #CBD5E1;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1E293B;
+            --white: #FFFFFF;
+            --shadow-sm: 0 1px 3px rgba(11,30,61,0.06);
+            --shadow-md: 0 4px 12px rgba(11,30,61,0.08);
+            --shadow-lg: 0 8px 30px rgba(11,30,61,0.12);
         }
 
-        /* ── API Comparison Styles ── */
-        .api-compare-panel {
-            background: var(--white);
-            border: 2px solid var(--slate-200);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
-            transition: all 0.3s ease;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .api-compare-panel.has-mismatch {
-            border-color: var(--rose);
-            background: var(--rose-pale);
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--slate-50);
+            color: var(--slate-800);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .api-compare-panel.has-match {
-            border-color: var(--emerald);
-            background: var(--emerald-pale);
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+        .main-wrap {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
         }
 
-        .api-compare-panel.loading {
-            border-color: var(--sky);
-            background: var(--sky-pale);
-        }
-
-        .api-header {
+        /* ── Header ── */
+        .pg-header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 12px 40px rgba(11,30,61,0.25);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
         }
-
-        .api-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--navy);
-        }
-
-        .api-title i {
-            font-size: 1.2rem;
-        }
-
-        .api-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.82rem;
-            font-weight: 600;
-            padding: 0.3rem 0.75rem;
-            border-radius: 20px;
-        }
-
-        .api-status.idle {
-            background: var(--slate-100);
-            color: var(--slate-500);
-        }
-
-        .api-status.loading {
-            background: var(--sky-pale);
-            color: var(--sky);
-        }
-
-        .api-status.success {
-            background: var(--emerald-pale);
-            color: var(--emerald);
-        }
-
-        .api-status.error {
-            background: var(--rose-pale);
-            color: var(--rose);
-        }
-
-        .api-status.mismatch {
-            background: var(--amber-pale);
-            color: #92400E;
-        }
-
-        .api-controls {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .api-date-input {
-            font-size: 0.82rem;
-            padding: 0.4rem 0.7rem;
-            border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
-            background: var(--white);
-            color: var(--slate-800);
-            outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-        }
-
-        .api-date-input:focus {
-            border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
-        }
-
-        .api-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.75rem;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1.5px solid var(--slate-200);
-        }
-
-        .api-summary-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.15rem;
-        }
-
-        .api-summary-item .label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--slate-400);
-        }
-
-        .api-summary-item .value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--navy);
-        }
-
-        .api-summary-item .value.mismatch {
-            color: var(--rose);
-        }
-
-        .api-summary-item .value.match {
-            color: var(--emerald);
-        }
-
-        /* ── Mismatch Table ── */
-        .mismatch-table-wrap {
-            margin-top: 1rem;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--slate-200);
-            border-radius: 8px;
-        }
-
-        .mismatch-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-        }
-
-        .mismatch-table thead th {
-            background: var(--slate-100);
-            color: var(--slate-500);
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.5rem 0.7rem;
-            border-bottom: 2px solid var(--slate-200);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .mismatch-table tbody td {
-            padding: 0.5rem 0.7rem;
-            border-bottom: 1px solid var(--slate-100);
-            vertical-align: middle;
-        }
-
-        .mismatch-table tbody tr:hover td {
-            background: #F8FAFF;
-        }
-
-        .mismatch-table .diff-badge {
-            display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-        }
-
-        .mismatch-table .diff-badge.mismatch {
-            background: var(--rose-pale);
-            color: var(--rose);
-        }
-
-        .mismatch-table .diff-badge.match {
-            background: var(--emerald-pale);
-            color: var(--emerald);
-        }
-
-        .mismatch-table .diff-badge.partial {
-            background: var(--amber-pale);
-            color: #92400E;
-        }
-
-        .no-mismatch-msg {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: var(--slate-400);
-        }
-
-        .no-mismatch-msg i {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--emerald);
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
+        .pg-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
             border-radius: 50%;
-            margin-right: 0.4rem;
+            pointer-events: none;
+        }
+        .pg-header::after {
+            content: '';
+            position: absolute;
+            bottom: -60%;
+            left: 20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
         }
 
-        .status-dot.idle { background: var(--slate-300); }
-        .status-dot.loading { background: var(--sky); animation: pulse-dot 1s ease-in-out infinite; }
-        .status-dot.success { background: var(--emerald); }
-        .status-dot.error { background: var(--rose); }
-        .status-dot.mismatch { background: #92400E; }
-
-        /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--slate-100); }
-        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
-
-        /* ── Rest of your existing styles ── */
-        .main-wrap { max-width: 1900px; margin: 0 auto; padding: 1.25rem 1.5rem; }
-
-        .pg-header {
-            background: var(--navy);
-            border-radius: 12px;
-            padding: 1rem 1.4rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 8px 32px rgba(11,30,61,0.28);
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-        }
-
-        .pg-title-wrap { display: flex; flex-direction: column; gap: 0.15rem; }
+        .pg-title-wrap { display: flex; flex-direction: column; gap: 0.35rem; position: relative; z-index: 1; }
         .pg-title {
-            color: var(--white); font-size: 1.35rem; font-weight: 700;
-            display: flex; align-items: center; gap: 0.5rem;
+            color: var(--white);
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: -0.5px;
         }
         .pg-title span { color: var(--amber); }
-        .pg-subtitle { color: rgba(255,255,255,0.6); font-size: 0.84rem; }
+        .pg-subtitle {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.875rem;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
 
         .hbtn-export {
-            display: inline-flex; align-items: center; gap: 0.45rem;
-            font-size: 0.875rem; font-weight: 600;
-            padding: 0.5rem 1.1rem;
-            background: var(--amber); color: var(--navy);
-            border: none; border-radius: 8px; cursor: pointer;
-            box-shadow: 0 3px 12px rgba(245,158,11,0.3);
-            transition: all 0.18s; text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.65rem 1.4rem;
+            background: var(--amber);
+            color: var(--navy);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.01em;
         }
         .hbtn-export:hover {
-            box-shadow: 0 5px 18px rgba(245,158,11,0.4);
-            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(245,158,11,0.5);
+            transform: translateY(-2px);
             color: var(--navy);
+            background: #FBBF24;
+        }
+        .hbtn-export:active {
+            transform: translateY(0);
         }
 
+        /* ── Stats Cards ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.25rem;
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
         }
 
         .stat-card {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            padding: 1.2rem 1.3rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            padding: 1.4rem 1.5rem;
+            box-shadow: var(--shadow-sm);
             position: relative;
             overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s;
         }
         .stat-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: var(--stat-color);
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--stat-color);
+            border-radius: 14px 14px 0 0;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, var(--stat-bg) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+            pointer-events: none;
+            opacity: 0.5;
         }
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(11,30,61,0.12);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
             border-color: var(--stat-color);
         }
 
-        .stat-card.navy    { --stat-color: var(--navy); }
-        .stat-card.emerald { --stat-color: var(--emerald); }
-        .stat-card.sky     { --stat-color: var(--sky); }
+        .stat-card.navy    { --stat-color: var(--navy);    --stat-bg: rgba(11,30,61,0.06); }
+        .stat-card.emerald { --stat-color: var(--emerald); --stat-bg: rgba(5,150,105,0.08); }
+        .stat-card.sky     { --stat-color: var(--sky);     --stat-bg: rgba(2,132,199,0.08); }
 
         .stat-row {
-            display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
         }
 
         .stat-info { flex: 1; }
         .stat-label {
-            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-            color: var(--slate-400); margin-bottom: 0.4rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--slate-400);
+            margin-bottom: 0.5rem;
         }
         .stat-value {
-            font-size: 1.75rem; font-weight: 500;
-            color: var(--navy); line-height: 1.1; letter-spacing: -0.5px;
+            font-size: 1.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            line-height: 1.15;
+            letter-spacing: -0.75px;
+            font-variant-numeric: tabular-nums;
         }
         .stat-trend {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            font-size: 0.72rem; font-weight: 600;
-            padding: 0.25rem 0.6rem; border-radius: 20px;
-            margin-top: 0.35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
         }
         .stat-trend.pos { background: var(--emerald-pale); color: #065F46; }
 
         .stat-icon {
-            width: 48px; height: 48px;
-            background: var(--slate-50);
-            border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem; color: var(--stat-color);
+            width: 52px;
+            height: 52px;
+            background: var(--stat-bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--stat-color);
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(-5deg);
         }
 
+        /* ── Search Panel ── */
         .search-panel {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            padding: 1.1rem 1.25rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
         }
 
-        .search-row { display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center; }
-        .search-box { flex: 1; min-width: 280px; position: relative; }
+        .search-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
 
         .search-icon {
-            position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
-            color: var(--slate-400); font-size: 0.95rem; pointer-events: none;
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-400);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color 0.2s;
         }
 
         .search-input {
             font-size: 0.9rem;
             width: 100%;
-            padding: 0.6rem 0.75rem 0.6rem 2.4rem;
+            padding: 0.7rem 0.9rem 0.7rem 2.6rem;
             border: 1.5px solid var(--slate-200);
-            border-radius: 9px;
+            border-radius: 10px;
             background: var(--slate-50);
             color: var(--slate-800);
             outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
         }
         .search-input:focus {
             border-color: var(--navy-light);
             background: var(--white);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            box-shadow: 0 0 0 4px rgba(26,58,107,0.08);
         }
-        .search-input::placeholder { color: var(--slate-400); }
+        .search-input:focus ~ .search-icon {
+            color: var(--navy-light);
+        }
+        .search-input::placeholder { color: var(--slate-400); font-weight: 400; }
 
         .search-hint {
-            font-size: 0.74rem; color: var(--slate-400);
-            margin-top: 0.35rem; padding-left: 2.4rem;
+            font-size: 0.74rem;
+            color: var(--slate-400);
+            margin-top: 0.4rem;
+            padding-left: 2.6rem;
             display: none;
         }
         .search-hint.visible { display: block; }
 
-        .sort-wrap { display: flex; align-items: center; gap: 0.4rem; }
-        .sort-label { font-size: 0.78rem; font-weight: 600; color: var(--slate-500); white-space: nowrap; }
+        .sort-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .sort-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
         .sort-select {
-            font-size: 0.82rem;
-            padding: 0.45rem 2rem 0.45rem 0.7rem;
+            font-size: 0.85rem;
+            padding: 0.55rem 2.2rem 0.55rem 0.8rem;
             border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
+            border-radius: 9px;
             background: var(--white);
             color: var(--slate-800);
             cursor: pointer;
             outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
+            transition: border-color 0.2s, box-shadow 0.2s;
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 0.6rem center;
+            background-position: right 0.7rem center;
+            font-family: inherit;
         }
         .sort-select:focus {
             border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            box-shadow: 0 0 0 4px rgba(26,58,107,0.08);
+        }
+        .sort-select:hover {
+            border-color: var(--slate-300);
         }
 
-        .action-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-
-        .abtn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            font-size: 0.82rem; font-weight: 600;
-            padding: 0.48rem 0.9rem;
-            border-radius: 7px;
-            border: 1.5px solid;
-            cursor: pointer;
-            transition: all 0.15s;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .abtn-outline { background: var(--white); border-color: var(--slate-200); color: var(--slate-700); }
-        .abtn-outline:hover { background: var(--slate-50); border-color: var(--navy-light); color: var(--navy); }
-        .abtn-primary { background: var(--amber); border-color: var(--amber); color: var(--navy); }
-        .abtn-primary:hover { background: #FBBF24; transform: translateY(-1px); color: var(--navy); }
-
+        /* ── Table Panel ── */
         .panel {
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(11,30,61,0.04);
+            border: 1px solid var(--slate-200);
+            border-radius: 14px;
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
         }
 
         .panel-head {
-            background: var(--slate-50);
-            border-bottom: 1.5px solid var(--slate-200);
-            padding: 1.1rem 1.25rem;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+            background: linear-gradient(to bottom, var(--slate-50), var(--white));
+            border-bottom: 1px solid var(--slate-200);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.85rem;
         }
         .panel-title {
-            font-size: 1.05rem; font-weight: 700; color: var(--navy);
-            letter-spacing: -0.3px; margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: -0.3px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .panel-title small { font-weight: 400; color: var(--slate-400); font-size: 0.82rem; }
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--amber);
+            border-radius: 2px;
+        }
+        .panel-title small {
+            font-weight: 400;
+            color: var(--slate-400);
+            font-size: 0.82rem;
+        }
 
         .panel-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
         .pbtn {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            font-size: 0.8rem; font-weight: 600;
-            padding: 0.4rem 0.8rem;
-            border-radius: 7px; border: 1.5px solid;
-            cursor: pointer; transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.5rem 0.9rem;
+            border-radius: 9px;
+            border: 1.5px solid;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--white);
-        }
-        .pbtn-outline { border-color: var(--slate-200); color: var(--slate-700); }
-        .pbtn-outline:hover { background: var(--slate-50); border-color: var(--navy-light); color: var(--navy); }
-        .pbtn-danger  { border-color: var(--rose); color: var(--rose); background: transparent; }
-        .pbtn-danger:hover { background: var(--rose); color: var(--white); }
-        .pbtn-primary { border-color: var(--amber); color: var(--navy); background: var(--amber); }
-        .pbtn-primary:hover { background: #FBBF24; }
-        .pbtn-warning { border-color: #92400E; color: #92400E; background: var(--amber-pale); }
-        .pbtn-warning:hover { background: #FBBF24; color: var(--navy); }
-        .pbtn:disabled {
-            opacity: 0.4; cursor: not-allowed; pointer-events: none;
-            transform: none !important;
-        }
-
-        /* ── Rest of your table styles ── */
-        .table-wrap { overflow-x: auto; }
-        table.prod-tbl { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
-        table.prod-tbl thead th {
-            background: var(--slate-100);
-            color: var(--slate-500);
-            font-size: 0.7rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            padding: 0.65rem 0.8rem;
-            border-bottom: 2px solid var(--slate-200);
+            font-family: inherit;
+            letter-spacing: 0.01em;
             white-space: nowrap;
         }
+        .pbtn-outline {
+            border-color: var(--slate-200);
+            color: var(--slate-600);
+            background: var(--white);
+        }
+        .pbtn-outline:hover {
+            background: var(--slate-50);
+            border-color: var(--navy-light);
+            color: var(--navy);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(11,30,61,0.08);
+        }
+        .pbtn-danger {
+            border-color: var(--rose);
+            color: var(--rose);
+            background: transparent;
+        }
+        .pbtn-danger:hover {
+            background: var(--rose);
+            color: var(--white);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(225,29,72,0.3);
+        }
+        .pbtn-primary {
+            border-color: var(--amber);
+            color: var(--navy);
+            background: var(--amber);
+        }
+        .pbtn-primary:hover {
+            background: #FBBF24;
+            border-color: #FBBF24;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.35);
+        }
+        .pbtn-warning {
+            border-color: #92400E;
+            color: #92400E;
+            background: var(--amber-pale);
+        }
+        .pbtn-warning:hover {
+            background: #FBBF24;
+            border-color: #FBBF24;
+            color: var(--navy);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+        }
+        .pbtn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .pbtn i {
+            font-size: 0.95rem;
+        }
+
+        /* ── Table ── */
+        .table-wrap {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 70vh;
+            position: relative;
+        }
+
+        table.prod-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        table.prod-tbl thead {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        table.prod-tbl thead th {
+            background: var(--slate-50);
+            color: var(--slate-500);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.8rem 1rem;
+            border-bottom: 2px solid var(--slate-200);
+            white-space: nowrap;
+            position: relative;
+            z-index: 20;
+            text-align: left;
+        }
         table.prod-tbl tbody td {
-            padding: 0.7rem 0.8rem;
+            padding: 0.85rem 1rem;
             border-bottom: 1px solid var(--slate-100);
             vertical-align: middle;
             color: var(--slate-800);
+            transition: background 0.15s;
         }
-        table.prod-tbl tbody tr:hover td { background: #F8FAFF; }
+        table.prod-tbl tbody tr {
+            transition: background 0.15s;
+        }
+        table.prod-tbl tbody tr:hover td {
+            background: #F8FAFF;
+        }
+        table.prod-tbl tbody tr:last-child td {
+            border-bottom: none;
+        }
 
-        .chk-cell { width: 36px; padding-right: 0; }
+        .chk-cell { width: 44px; padding-right: 0; }
         .custom-chk {
-            width: 18px; height: 18px;
-            border: 1.5px solid var(--slate-300);
-            border-radius: 5px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--slate-300);
+            border-radius: 6px;
             cursor: pointer;
             position: relative;
             background: var(--white);
             display: inline-block;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .custom-chk:hover {
+            border-color: var(--navy-light);
         }
         .custom-chk.checked {
             background: var(--navy);
             border-color: var(--navy);
+            transform: scale(1.05);
         }
         .custom-chk.checked::after {
             content: '✓';
             position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             color: var(--white);
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 12px;
+            font-weight: 800;
         }
 
-        .prod-info { display: flex; align-items: center; gap: 0.75rem; }
+        .prod-info { display: flex; align-items: center; gap: 0.85rem; }
         .prod-avatar {
-            width: 42px; height: 42px;
-            background: var(--slate-100);
-            border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--slate-100), var(--slate-50));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--navy);
-            font-size: 0.9rem; font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 700;
             flex-shrink: 0;
             overflow: hidden;
+            border: 1px solid var(--slate-200);
+            position: relative;
         }
         .prod-avatar img {
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border-radius: 9px;
-            transition: transform 0.3s ease;
+            border-radius: 10px;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         tr:hover .prod-avatar img {
-            transform: scale(1.6);
+            transform: scale(1.5);
         }
 
         .prod-name {
-            font-weight: 600; color: var(--navy);
-            margin-bottom: 0.15rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 0.2rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
         }
-        .prod-sub { font-size: 0.78rem; color: var(--slate-500); }
+        .prod-sub {
+            font-size: 0.78rem;
+            color: var(--slate-500);
+            font-weight: 400;
+        }
 
         .offer-tag {
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            font-size: 0.7rem; font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            background: var(--fuchsia); color: var(--white);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.45rem;
+            background: linear-gradient(135deg, var(--fuchsia), #A21CAF);
+            color: var(--white);
             border-radius: 5px;
-            margin-left: 0.4rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
         }
 
         .stock-badge {
-            display: inline-flex; align-items: center;
-            font-size: 0.78rem; font-weight: 600;
-            padding: 0.3rem 0.65rem; border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+        .stock-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.7;
         }
         .stock-badge.low    { background: var(--rose-pale);    color: #9F1239; }
         .stock-badge.medium { background: var(--amber-pale);   color: #92400E; }
         .stock-badge.high   { background: var(--emerald-pale); color: #065F46; }
 
-        .price { font-weight: 500; color: var(--slate-800); font-size: 0.82rem; }
-        .price.cost { color: var(--rose); }
+        .price {
+            font-weight: 500;
+            color: var(--slate-700);
+            font-size: 0.85rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .price.cost {
+            color: var(--rose);
+            font-weight: 600;
+        }
 
         .cat-badge {
             display: inline-block;
-            font-size: 0.78rem; font-weight: 600;
-            padding: 0.28rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
             background: var(--slate-100);
             color: var(--slate-600);
-            border-radius: 6px;
+            border-radius: 7px;
+            letter-spacing: 0.01em;
+            border: 1px solid var(--slate-200);
         }
 
-        .action-cell { display: flex; gap: 0.35rem; }
+        .action-cell { display: flex; gap: 0.4rem; }
         .action-icon-btn {
-            width: 30px; height: 30px;
+            width: 34px;
+            height: 34px;
             border: 1.5px solid;
-            border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.82rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
             background: transparent;
+            font-family: inherit;
         }
         .action-icon-btn.view   { border-color: var(--sky);    color: var(--sky); }
         .action-icon-btn.delete { border-color: var(--rose);   color: var(--rose); }
@@ -621,7 +682,10 @@
         .action-icon-btn.offers  { border-color: var(--fuchsia); color: var(--fuchsia); }
         .action-icon-btn.compare { border-color: var(--violet); color: var(--violet); }
 
-        .action-icon-btn:hover { transform: scale(1.08); }
+        .action-icon-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
         .action-icon-btn.view:hover    { background: var(--sky-pale); }
         .action-icon-btn.delete:hover  { background: var(--rose-pale); }
         .action-icon-btn.restock:hover { background: var(--emerald-pale); }
@@ -630,62 +694,113 @@
         .action-icon-btn.compare:hover { background: var(--violet-pale); }
 
         .empty-state {
-            text-align: center; padding: 4rem 1.5rem;
+            text-align: center;
+            padding: 4rem 1.5rem;
             color: var(--slate-400);
         }
-        .empty-state i { font-size: 4rem; display: block; margin-bottom: 0.75rem; opacity: 0.3; }
-        .empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--slate-600); margin-bottom: 0.4rem; }
-        .empty-state p { font-size: 0.875rem; margin-bottom: 1.25rem; max-width: 420px; margin-left: auto; margin-right: auto; }
-
-        .pagination-wrap {
-            padding: 1.15rem 1.25rem;
-            border-top: 1.5px solid var(--slate-200);
-            background: var(--white);
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        .empty-state i {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+            opacity: 0.25;
+        }
+        .empty-state-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            margin-bottom: 0.4rem;
+        }
+        .empty-state p {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
         }
 
-        .pg-info { font-size: 0.82rem; color: var(--slate-500); font-weight: 500; }
-        .pg-info strong { color: var(--navy); }
+        /* ── Pagination ── */
+        .pagination-wrap {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--slate-200);
+            background: var(--white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pg-info {
+            font-size: 0.82rem;
+            color: var(--slate-500);
+            font-weight: 500;
+        }
+        .pg-info strong {
+            color: var(--navy);
+            font-weight: 700;
+        }
 
         .pg-list {
-            display: flex; list-style: none; padding: 0; margin: 0; gap: 0.4rem; flex-wrap: wrap;
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            gap: 0.35rem;
+            flex-wrap: wrap;
         }
         .pg-item { display: flex; }
-        .pg-item.disabled .pg-link { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .pg-item.disabled .pg-link {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
 
         .pg-link {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-            padding: 0.45rem 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
             border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
-            color: var(--slate-700);
+            border-radius: 9px;
+            color: var(--slate-600);
             text-decoration: none;
-            font-weight: 500; font-size: 0.82rem;
-            transition: all 0.15s;
+            font-weight: 500;
+            font-size: 0.82rem;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--white);
-            min-width: 36px;
+            min-width: 38px;
             text-align: center;
+            font-family: inherit;
         }
         .pg-link:hover:not(.pg-link-active) {
             border-color: var(--navy-light);
             color: var(--navy);
             background: var(--slate-50);
             transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(11,30,61,0.08);
         }
         .pg-link-active {
             background: var(--navy);
             color: var(--white);
             border-color: var(--navy);
             cursor: default;
+            font-weight: 600;
         }
 
-        .per-page { display: flex; align-items: center; gap: 0.5rem; }
-        .per-page-label { font-size: 0.82rem; color: var(--slate-500); font-weight: 500; white-space: nowrap; }
+        .per-page { display: flex; align-items: center; gap: 0.6rem; }
+        .per-page-label {
+            font-size: 0.82rem;
+            color: var(--slate-500);
+            font-weight: 500;
+            white-space: nowrap;
+        }
         .per-page-select {
             font-size: 0.82rem;
-            padding: 0.45rem 2rem 0.45rem 0.7rem;
+            padding: 0.5rem 2.2rem 0.5rem 0.8rem;
             border: 1.5px solid var(--slate-200);
-            border-radius: 7px;
+            border-radius: 9px;
             background: var(--white);
             color: var(--slate-800);
             cursor: pointer;
@@ -694,21 +809,27 @@
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 0.6rem center;
+            background-position: right 0.7rem center;
+            font-family: inherit;
         }
         .per-page-select:focus {
             border-color: var(--navy-light);
-            box-shadow: 0 0 0 3px rgba(26,58,107,0.1);
+            box-shadow: 0 0 0 4px rgba(26,58,107,0.08);
         }
 
+        /* ── Alerts & misc ── */
         .alert-box {
-            display: flex; align-items: center; gap: 0.6rem;
-            padding: 0.75rem 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.85rem 1.1rem;
             background: var(--rose-pale);
-            border-left: 3px solid var(--rose);
-            border-radius: 8px;
-            font-size: 0.85rem; color: #9F1239;
-            margin-bottom: 1rem;
+            border-left: 4px solid var(--rose);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #9F1239;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
         }
 
         .image-preview-tooltip {
@@ -720,9 +841,9 @@
             height: 240px;
             background: #fff;
             border: 1.5px solid var(--slate-200);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 12px 40px rgba(11,30,61,0.25);
+            box-shadow: var(--shadow-lg);
         }
         .image-preview-tooltip img {
             width: 100%;
@@ -730,180 +851,542 @@
             object-fit: cover;
         }
 
-        @media (max-width: 768px) {
-            .main-wrap { padding: 1rem; }
-            .pg-header { padding: 0.85rem 1.1rem; margin-bottom: 1rem; }
-            .pg-title { font-size: 1.15rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
-            .stat-value { font-size: 1.4rem; }
-            .panel-head { flex-direction: column; align-items: flex-start; }
-            .panel-actions { width: 100%; }
-            .search-row { flex-direction: column; align-items: stretch; }
-            .action-row { width: 100%; }
-            .abtn { flex: 1; justify-content: center; }
-            .pagination-wrap { flex-direction: column; align-items: flex-start; }
-            .api-summary { grid-template-columns: 1fr 1fr; }
+        /* ── Modal overrides ── */
+        .modal-header-navy {
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            color: var(--white);
+            border-bottom: none;
+            padding: 1.1rem 1.5rem;
         }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .modal-header-navy .modal-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.3px;
         }
-        .stat-card { animation: slideUp 0.4s ease forwards; }
-        .stat-card:nth-child(2) { animation-delay: 0.08s; }
-        .stat-card:nth-child(3) { animation-delay: 0.16s; }
-
-        .table-wrap {
-            overflow-x: auto;
+        .modal-header-navy .btn-close {
+            filter: invert(1);
+            opacity: 0.7;
+        }
+        .modal-header-navy .btn-close:hover {
+            opacity: 1;
+        }
+        .modal-content {
+            border: none;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(11,30,61,0.35);
+        }
+        .modal-body { padding: 1.75rem; }
+        .modal-footer {
+            border-top: 1px solid var(--slate-200);
+            padding: 1.1rem 1.75rem;
+        }
+        .field { margin-bottom: 1.15rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.01em;
+        }
+        .field-input {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 9px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            font-family: inherit;
+            color: var(--slate-800);
+            background: var(--white);
+        }
+        .field-input:focus {
+            border-color: var(--navy-light);
+            box-shadow: 0 0 0 4px rgba(26,58,107,0.08);
+        }
+        .mbtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 9px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1.5px solid;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+        }
+        .mbtn-outline {
+            border-color: var(--slate-200);
+            background: var(--white);
+            color: var(--slate-600);
+        }
+        .mbtn-outline:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-300);
+        }
+        .mbtn-primary {
+            border-color: var(--amber);
+            background: var(--amber);
+            color: var(--navy);
+        }
+        .mbtn-primary:hover {
+            background: #FBBF24;
+            border-color: #FBBF24;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245,158,11,0.35);
+        }
+        .mbtn-danger {
+            border-color: var(--rose);
+            background: var(--rose);
+            color: var(--white);
+        }
+        .mbtn-danger:hover {
+            background: #BE123C;
+            border-color: #BE123C;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(225,29,72,0.3);
+        }
+        .mbtn-warning {
+            border-color: #92400E;
+            background: var(--amber-pale);
+            color: #92400E;
+        }
+        .mbtn-warning:hover {
+            background: #FBBF24;
+            border-color: #FBBF24;
+            color: var(--navy);
+            transform: translateY(-1px);
+        }
+        .row-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        .selected-list {
+            max-height: 200px;
             overflow-y: auto;
-            max-height: 70vh;
-            position: relative;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 0.35rem;
+            background: var(--slate-50);
+        }
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.85rem;
+            border-bottom: 1px solid var(--slate-100);
+            font-size: 0.85rem;
+            background: var(--white);
+            border-radius: 7px;
+            margin-bottom: 0.25rem;
+        }
+        .selected-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .selected-item-name {
+            font-weight: 600;
+            color: var(--navy);
+            font-size: 0.85rem;
+        }
+        .selected-item-badge {
+            font-size: 0.72rem;
+            background: var(--slate-100);
+            padding: 0.2rem 0.6rem;
+            border-radius: 5px;
+            color: var(--slate-500);
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
 
-        table.prod-tbl thead {
-            position: sticky;
-            top: 0;
-            z-index: 20;
+        /* ── API Panel ── */
+        .api-compare-panel {
+            background: var(--white);
+            border: 1.5px solid var(--slate-200);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
         }
 
-        table.prod-tbl thead th {
+        .api-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+        }
+
+        .api-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+        .api-title i {
+            font-size: 1.2rem;
+            color: var(--sky);
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
             background: var(--slate-100);
             color: var(--slate-500);
+        }
+
+        .api-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1.5px solid var(--slate-200);
+        }
+
+        .api-summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .api-summary-item .label {
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.65rem 0.8rem;
-            border-bottom: 2px solid var(--slate-200);
-            white-space: nowrap;
-            position: relative;
-            z-index: 20;
+            letter-spacing: 0.06em;
+            color: var(--slate-400);
         }
+
+        .api-summary-item .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--navy);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Animations ── */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.12s; }
+        .stat-card:nth-child(3) { animation-delay: 0.19s; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .main-wrap { padding: 1.25rem; }
+        }
+
+        @media (max-width: 768px) {
+            .main-wrap { padding: 1rem; }
+            .pg-header { padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; border-radius: 12px; }
+            .pg-title { font-size: 1.3rem; }
+            .pg-subtitle { font-size: 0.8rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+            .stat-value { font-size: 1.5rem; }
+            .stat-card { padding: 1.2rem 1.25rem; }
+            .panel-head { flex-direction: column; align-items: flex-start; padding: 1rem 1.25rem; }
+            .panel-actions { width: 100%; }
+            .pbtn { flex: 1; justify-content: center; font-size: 0.78rem; padding: 0.5rem 0.7rem; }
+            .search-row { flex-direction: column; align-items: stretch; }
+            .search-panel { padding: 1rem 1.25rem; }
+            .pagination-wrap { flex-direction: column; align-items: flex-start; padding: 1rem 1.25rem; }
+            .row-fields { grid-template-columns: 1fr; }
+            .api-summary { grid-template-columns: 1fr 1fr; }
+            .hbtn-export { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .main-wrap { padding: 0.75rem; }
+            .pg-title { font-size: 1.15rem; }
+            .stat-value { font-size: 1.35rem; }
+            .stat-icon { width: 44px; height: 44px; font-size: 1.2rem; }
+            .panel-actions { flex-direction: column; }
+            .pbtn { width: 100%; justify-content: center; }
+            .pg-list { justify-content: center; }
+            .pg-link { padding: 0.4rem 0.7rem; font-size: 0.78rem; min-width: 34px; }
+        }
+
+
+        /* =========================================================
+           KESSY POS BLUE THEME — visual redesign overrides
+           Existing Blade markup, IDs, modals and JavaScript retained.
+           ========================================================= */
+        :root {
+            --navy: #084b87;
+            --navy-mid: #0756a6;
+            --navy-light: #0b66b2;
+            --amber: #0b65b1;
+            --amber-pale: #e8f2fc;
+            --emerald: #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose: #e5485d;
+            --rose-pale: #fff0f1;
+            --violet: #7844d6;
+            --violet-pale: #f1ebff;
+            --sky: #0874c5;
+            --sky-pale: #e8f3ff;
+            --fuchsia: #c026a8;
+            --fuchsia-pale: #fceafa;
+            --slate-50: #f5f9fd;
+            --slate-100: #edf3f9;
+            --slate-200: #dce7f1;
+            --slate-300: #c5d5e5;
+            --slate-400: #8da4bb;
+            --slate-500: #607b96;
+            --slate-600: #45627e;
+            --slate-700: #2d4c69;
+            --slate-800: #183a5a;
+            --white: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(8, 61, 108, .06);
+            --shadow-md: 0 5px 16px rgba(8, 61, 108, .09);
+            --shadow-lg: 0 10px 28px rgba(8, 61, 108, .13);
+        }
+
+        body { background: #f3f7fb; color: #183a5a; }
+        .main-wrap { max-width: 1800px; padding: 1.1rem 1.25rem 1.5rem; }
+
+        /* Page heading: clean white surface like the reference screen. */
+        .pg-header {
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            padding: .25rem 0 .9rem;
+            margin-bottom: .55rem;
+            overflow: visible;
+        }
+        .pg-header::before, .pg-header::after { display: none; }
+        .pg-title { color: #064b86; font-size: 1.42rem; letter-spacing: -.35px; }
+        .pg-title span { color: #0871c2; }
+        .pg-subtitle { color: #647f99; font-size: .78rem; }
+        .hbtn-export {
+            color: #fff;
+            background: #0866b2;
+            border: 1px solid #0866b2;
+            border-radius: 6px;
+            box-shadow: 0 3px 8px rgba(8, 102, 178, .18);
+            padding: .58rem 1rem;
+            font-size: .78rem;
+        }
+        .hbtn-export:hover { color: #fff; background: #064f91; border-color: #064f91; }
+
+        /* Compact pastel statistic cards. */
+        .stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .7rem;
+            margin-bottom: .85rem;
+        }
+        .stat-card {
+            min-height: 88px;
+            padding: .8rem .95rem;
+            border: 1px solid #dce8f3;
+            border-radius: 8px;
+            box-shadow: none;
+            animation: none;
+        }
+        .stat-card::before { display: none; }
+        .stat-card::after { width: 90px; height: 90px; opacity: .25; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card.navy { background: #eff6ff; --stat-color: #0866b2; --stat-bg: #d8eaff; }
+        .stat-card.emerald { background: #effaf6; --stat-color: #07866b; --stat-bg: #d6f3e8; }
+        .stat-card.sky { background: #f1f5ff; --stat-color: #7146cf; --stat-bg: #e4dcff; }
+        .stat-row { align-items: center; }
+        .stat-label {
+            color: #59748f;
+            font-size: .68rem;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-bottom: .18rem;
+        }
+        .stat-value {
+            color: #084b87;
+            font-size: 1.45rem;
+            line-height: 1.12;
+            letter-spacing: -.35px;
+            font-weight: 700;
+        }
+        .stat-trend {
+            padding: 0;
+            margin-top: .22rem;
+            background: transparent !important;
+            color: #6b849c !important;
+            font-size: .66rem;
+        }
+        .stat-icon {
+            width: 43px;
+            height: 43px;
+            border-radius: 9px;
+            color: #fff;
+            background: var(--stat-color);
+            font-size: 1.18rem;
+        }
+
+        /* Search and product panel. */
+        .search-panel, .panel, .api-compare-panel {
+            border: 1px solid #dce7f1;
+            border-radius: 8px;
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+        }
+        .search-panel { padding: .8rem .95rem; margin-bottom: .8rem; }
+        .search-row { gap: .7rem; }
+        .search-input {
+            background: #fff;
+            border: 1px solid #d4e1ed;
+            border-radius: 6px;
+            padding: .58rem .8rem .58rem 2.35rem;
+            font-size: .78rem;
+        }
+        .search-input:focus { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
+        .sort-select, .per-page-select {
+            border: 1px solid #d4e1ed;
+            border-radius: 6px;
+            font-size: .76rem;
+            padding-top: .48rem;
+            padding-bottom: .48rem;
+        }
+        .sort-label { color: #55728e; font-size: .75rem; }
+        .panel { overflow: hidden; background: #fff; }
+        .panel-head {
+            padding: .75rem .9rem;
+            background: #fff;
+            border-bottom: 1px solid #dce7f1;
+        }
+        .panel-title { color: #084b87; font-size: .96rem; }
+        .panel-title::before { background: #0b68b4; width: 3px; height: 17px; }
+
+        /* Buttons: blue primary, neutral outline, clear danger. */
+        .pbtn {
+            border-radius: 6px;
+            padding: .43rem .68rem;
+            font-size: .73rem;
+        }
+        .pbtn-primary {
+            border-color: #0866b2;
+            color: #fff;
+            background: #0866b2;
+        }
+        .pbtn-primary:hover { color: #fff; background: #064f91; border-color: #064f91; }
+        .pbtn-outline { border-color: #d4e1ed; color: #42617e; }
+        .pbtn-outline:hover { border-color: #0b68b4; color: #0756a6; background: #eff6ff; }
+        .pbtn-warning { border-color: #0b68b4; color: #0756a6; background: #eaf4ff; }
+        .pbtn-warning:hover { border-color: #0756a6; color: #fff; background: #0756a6; }
+        .pbtn-danger { border-color: #e5485d; color: #d9364c; }
+
+        /* Dense table with the same deep-blue header and fine grid lines. */
+        .table-wrap { max-height: 68vh; }
+        table.prod-tbl { font-size: .76rem; }
+        table.prod-tbl thead th {
+            background: #07569b;
+            color: #fff;
+            font-size: .66rem;
+            letter-spacing: .015em;
+            text-transform: none;
+            font-weight: 600;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(255,255,255,.13);
+        }
+        table.prod-tbl tbody td {
+            padding: .52rem .68rem;
+            border: 1px solid #e5edf5;
+            color: #244866;
+            font-size: .74rem;
+        }
+        table.prod-tbl tbody tr:nth-child(even) td { background: #f8fbfe; }
+        table.prod-tbl tbody tr:hover td { background: #edf6ff; }
+        .chk-cell { width: 38px; }
+        .custom-chk { width: 17px; height: 17px; border-radius: 4px; }
+        .custom-chk.checked { background: #0866b2; border-color: #0866b2; }
+        .prod-info { gap: .6rem; }
+        .prod-avatar { width: 35px; height: 35px; border-radius: 7px; }
+        .prod-name { color: #164a78; font-size: .76rem; margin-bottom: .08rem; }
+        .prod-sub { color: #7189a0; font-size: .68rem; }
+        .stock-badge { padding: .22rem .52rem; font-size: .68rem; }
+        .price { color: #31516e; font-size: .74rem; }
+        .price.cost { color: #d33c50; }
+        .cat-badge { padding: .22rem .5rem; font-size: .68rem; border-radius: 5px; }
+        .action-cell { gap: .28rem; }
+        .action-icon-btn {
+            width: 28px; height: 27px; border-radius: 5px;
+            border: 0; color: #fff !important; background: #0870bd !important;
+            font-size: .75rem;
+        }
+        .action-icon-btn:hover { background: #064f91 !important; transform: translateY(-1px); }
+
+        /* Footer and modal accents. */
+        .pagination-wrap { padding: .75rem .9rem; border-top: 1px solid #dce7f1; }
+        .pg-link { border-radius: 6px; border-color: #d6e2ed; font-size: .75rem; padding: .4rem .65rem; }
+        .pg-link-active { background: #0866b2; border-color: #0866b2; color: #fff; }
+        .modal-header-navy { background: linear-gradient(120deg, #064b86, #0870bd); }
+        .mbtn-primary { background: #0866b2; border-color: #0866b2; color: #fff; }
+        .mbtn-primary:hover { background: #064f91; border-color: #064f91; color: #fff; }
+
+        @media (min-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .main-wrap { padding: .8rem; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .stat-card { min-height: 82px; padding: .7rem; }
+            .stat-value { font-size: 1.2rem; }
+            .stat-icon { width: 37px; height: 37px; font-size: 1rem; }
+            .panel-actions { gap: .4rem; }
+            .table-wrap { max-height: none; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .pg-header { align-items: flex-start; }
+            .hbtn-export { width: auto; }
+            .search-box { min-width: 100%; }
+        }
+
     </style>
 </head>
 <body>
-@include("sidenav")
+    @include("sidenav")
 <main class="main-content">
-    @if(session('success'))
-        <div class="alert alert-success d-flex justify-content-between">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    
-    @if(session('error'))
-        <div class="alert alert-danger d-flex justify-content-between">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="main-wrap">
 
         {{-- ── Header ── --}}
         <div class="pg-header">
             <div class="pg-title-wrap">
                 <div class="pg-title">
-                    {{ __('messages.products_heading') }} <span>{{ __('messages.inventory') }}</span>
+                    Products / <span>Inventory</span>
                 </div>
-                <div class="pg-subtitle">{{ __('messages.products_subtitle') }}</div>
+                <div class="pg-subtitle">Manage your product catalog, stock levels, and pricing</div>
             </div>
             <button class="hbtn-export" onclick="downloadReport()">
-                <i class="bi bi-file-earmark-text"></i> {{ __('messages.products_export_report') }}
+                <i class="bi bi-file-earmark-text"></i> Export Report
             </button>
         </div>
 
-        {{-- ── API Comparison Panel ── --}}
-        <div class="api-compare-panel" id="apiComparePanel">
-            <div class="api-header">
-                <div class="api-title">
-                    <i class="bi bi-cloud-check-fill"></i>
-                    <span>MainStore API Comparison</span>
-                </div>
-                <div class="api-status idle" id="apiStatus">
-                    <span class="status-dot idle"></span>
-                    <span id="apiStatusText">Idle — Click "Compare" to check</span>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem;">
-                <div>
-                    <label style="font-size: 0.78rem; font-weight: 600; color: var(--slate-500);">Start Date</label>
-                    <input type="date" class="api-date-input" id="apiStartDate" value="{{ date('Y-m-d', strtotime('-7 days')) }}">
-                </div>
-                <div>
-                    <label style="font-size: 0.78rem; font-weight: 600; color: var(--slate-500);">End Date</label>
-                    <input type="date" class="api-date-input" id="apiEndDate" value="{{ date('Y-m-d') }}">
-                </div>
-                <button class="abtn abtn-primary" id="apiCompareBtn" onclick="runApiComparison()" style="margin-top: 0.5rem;">
-                    <i class="bi bi-arrow-repeat"></i> Compare
-                </button>
-                <button class="abtn abtn-outline" id="apiHideBtn" onclick="toggleApiPanel()" style="margin-top: 0.5rem;">
-                    <i class="bi bi-eye-slash"></i> Hide
-                </button>
-            </div>
-
-            <div class="api-summary" id="apiSummary" style="display: none;">
-                <div class="api-summary-item">
-                    <span class="label">Total Products in API</span>
-                    <span class="value" id="apiTotalProducts">0</span>
-                </div>
-                <div class="api-summary-item">
-                    <span class="label">Matched</span>
-                    <span class="value match" id="apiMatchedCount">0</span>
-                </div>
-                <div class="api-summary-item">
-                    <span class="label">Mismatched</span>
-                    <span class="value mismatch" id="apiMismatchCount">0</span>
-                </div>
-                <div class="api-summary-item">
-                    <span class="label">Status</span>
-                    <span class="value" id="apiComparisonStatus">—</span>
-                </div>
-            </div>
-
-            <div id="apiMismatchContainer" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; margin-bottom: 0.5rem;">
-                    <h6 style="font-size: 0.9rem; font-weight: 700; color: var(--slate-700); margin: 0;">
-                        <i class="bi bi-exclamation-triangle" style="color: var(--rose);"></i> Mismatched Products
-                    </h6>
-                    <span style="font-size: 0.78rem; color: var(--slate-400);" id="mismatchCountLabel">0 items</span>
-                </div>
-                <div class="mismatch-table-wrap">
-                    <table class="mismatch-table" id="mismatchTable">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Product Name</th>
-                                <th>Local Stock</th>
-                                <th>API Stock</th>
-                                <th>Difference</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mismatchTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="apiNoMismatch" style="display: none;">
-                <div class="no-mismatch-msg">
-                    <i class="bi bi-check-circle-fill" style="color: var(--emerald);"></i>
-                    <strong style="color: var(--emerald);">All products match!</strong>
-                    <p style="color: var(--slate-500); margin-top: 0.25rem;">No discrepancies found between local and API data.</p>
-                </div>
-            </div>
-        </div>
-
-        {{-- ── Stats ── --}}
+        {{-- ── Stats Cards ── --}}
         <div class="stats-grid">
             <div class="stat-card navy">
                 <div class="stat-row">
                     <div class="stat-info">
-                        <div class="stat-label">{{ __('messages.products_total_products') }}</div>
+                        <div class="stat-label">Total Products</div>
                         <div class="stat-value">{{ number_format($TProducts) }}</div>
-                        <div class="stat-trend pos"><i class="bi bi-arrow-up"></i> {{ __('messages.products_all_active') }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-arrow-up"></i> All Active</div>
                     </div>
                     <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
                 </div>
@@ -912,9 +1395,9 @@
             <div class="stat-card emerald">
                 <div class="stat-row">
                     <div class="stat-info">
-                        <div class="stat-label">{{ __('messages.products_inventory_worth_cost') }}</div>
-                        <div class="stat-value">Tsh {{ number_format($totalCostWorth) }}</div>
-                        <div class="stat-trend pos"><i class="bi bi-cash-stack"></i> {{ __('messages.products_cost_basis') }}</div>
+                        <div class="stat-label">Inventory Worth (Cost)</div>
+                        <div class="stat-value">Tsh {{ number_format($totalCostWorth, 2) }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-cash-stack"></i> Cost Basis</div>
                     </div>
                     <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
                 </div>
@@ -923,9 +1406,9 @@
             <div class="stat-card sky">
                 <div class="stat-row">
                     <div class="stat-info">
-                        <div class="stat-label">{{ __('messages.products_inventory_worth_selling') }}</div>
-                        <div class="stat-value">Tsh {{ number_format($totalSellingWorth) }}</div>
-                        <div class="stat-trend pos"><i class="bi bi-graph-up-arrow"></i> {{ __('messages.products_expected_revenue') }}</div>
+                        <div class="stat-label">Inventory Worth (Selling)</div>
+                        <div class="stat-value">Tsh {{ number_format($totalSellingWorth, 2) }}</div>
+                        <div class="stat-trend pos"><i class="bi bi-graph-up-arrow"></i> Expected Revenue</div>
                     </div>
                     <div class="stat-icon"><i class="bi bi-tags-fill"></i></div>
                 </div>
@@ -938,151 +1421,74 @@
                 <div class="search-box">
                     <i class="bi bi-search search-icon"></i>
                     <input type="search" class="search-input" id="searchInput"
-                        placeholder="{{ __('messages.products_search_placeholder') }}"
-                        value="{{ request('search') }}" autocomplete="off">
+                        placeholder="Search products by name, ID, or category..."
+                        autocomplete="off"
+                        value="{{ old('search', request('search') ?? '') }}">
                     <div class="search-hint" id="searchHint">
                         Press <strong>Enter</strong> to search all pages · Type to filter this page
                     </div>
-
-                    @if(request('search'))
-                    <div class="search-active-banner">
-                        <i class="bi bi-funnel-fill"></i>
-                        {{ __('messages.products_showing_results_for') }} <strong>"{{ request('search') }}"</strong>
-                        ({{ $products->total() }} found)
-                        <a href="{{ url()->current() }}">{{ __('messages.products_clear_search') }}</a>
-                    </div>
-                    @endif
                 </div>
 
                 <div class="sort-wrap">
-                    <span class="sort-label"><i class="bi bi-shop"></i> {{ __('messages.products_shop_label') }}</span>
-                    <select id="shopSelect" class="sort-select" onchange="changeShop()">
-                        <option disabled selected>{{ __('messages.products_select_shop') }}</option>
-                        @foreach($getAllAccounts as $account)
-                            <option value="{{ $account['id'] }}"
-                                {{ $account['id'] == getCurrentShopId() ? 'selected' : ''}} >
-                                {{ $account['name'] }}
-                            </option>
+                    <span class="sort-label"><i class="bi bi-shop"></i> Shop</span>
+                    <select id="shopSelect" class="sort-select">
+                        <option disabled {{ !session('selected_shop_id') ? 'selected' : '' }}>Select shop</option>
+                        @foreach($getAllAccounts as $shop)
+                            <option value="{{ $shop['id'] }}"
+                            {{ (getCurrentShopId() == $shop['id'] ? 'selected' : '') }}>
+                            {{ $shop['name'] }} ({{ $shop['location'] ?? __('messages.na') }})
+                        </option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="sort-wrap">
-                    <span class="sort-label"><i class="bi bi-sort-down"></i> {{ __('messages.products_sort_label') }}</span>
-                    <select id="sortSelect" class="sort-select" onchange="changeSort()">
-                        <option value="name_asc" {{ request('sort', 'name_asc') == 'name_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_asc') }}</option>
-                        <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_name_desc') }}</option>
-                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_asc') }}</option>
-                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_price_desc') }}</option>
-                        <option value="stock_asc" {{ request('sort') == 'stock_asc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_asc') }}</option>
-                        <option value="stock_desc" {{ request('sort') == 'stock_desc' ? 'selected' : '' }}>{{ __('messages.products_sort_stock_desc') }}</option>
-                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('messages.products_sort_newest') }}</option>
+                    <span class="sort-label"><i class="bi bi-sort-down"></i> Sort</span>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="name_asc" {{ $sort === 'name_asc' ? 'selected' : '' }}>Name (A–Z)</option>
+                        <option value="name_desc" {{ $sort === 'name_desc' ? 'selected' : '' }}>Name (Z–A)</option>
+                        <option value="price_asc" {{ $sort === 'price_asc' ? 'selected' : '' }}>Price (Low–High)</option>
+                        <option value="price_desc" {{ $sort === 'price_desc' ? 'selected' : '' }}>Price (High–Low)</option>
+                        <option value="stock_asc" {{ $sort === 'stock_asc' ? 'selected' : '' }}>Stock (Low–High)</option>
+                        <option value="stock_desc" {{ $sort === 'stock_desc' ? 'selected' : '' }}>Stock (High–Low)</option>
+                        <option value="newest" {{ $sort === 'newest' ? 'selected' : '' }}>Newest</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        @if (getCurrentShopId() != 7)
-            @if (count($available) > 0)
-                <div class="alert-box">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <p>
-                        {{ __('messages.products_unsold_warning', ['count' => count($available)]) }}
-                    </p>
-                </div>
-            @endif
-        @endif
-
-        @if (count($negatives) > 0)
-            <div class="alert-box">
-                <i class="bi bi-exclamation-triangle"></i>
-                <p>
-                    {{ __('messages.products_negative_warning', ['count' => count($negatives)]) }} <strong>{{ __('messages.products_negative_strong') }}</strong> {{ __('messages.products_negative_suffix') }}
-                </p>
-            </div>
-        @endif
-
-        @if (!empty($outOfSyncShops) && getCurrentShopId() == 7)
-            <div class="alert-box">
-                <i class="bi bi-exclamation-triangle"></i>
-                <div>
-                    <p>
-                        {{ __('messages.products_price_sync_warning', ['count' => count($outOfSyncShops)]) }}
-                    </p>
-                    <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
-                        @foreach($outOfSyncShops as $shop)
-                            @if($shop['id'] == getCurrentShopId())
-                                <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }} ({{ __('messages.products_current_shop') }})</li>
-                            @else
-                                <li><strong>{{ $shop['name'] }}</strong>: {{ $shop['count'] }} {{ __('messages.products_mismatched_products') }}</li>
-                            @endif
-                        @endforeach
-                    </ul>
-                    @if (!empty($currentShopMismatches))
-                        <details style="margin-top: 0.6rem;">
-                            <summary>{{ __('messages.products_view_current_shop_mismatches') }}</summary>
-                            <ul style="margin-left: 1.2rem; margin-top: 0.4rem; margin-bottom: 0;">
-                                @foreach($currentShopMismatches as $mm)
-                                    <li>
-                                        {{ $mm['name'] }} ({{ $mm['product_id'] }})
-                                        <br><small>
-                                            Main: Tsh {{ number_format($mm['main_bPrice'], 2) }}/{{ number_format($mm['main_sPrice'], 2) }}
-                                            &nbsp;|&nbsp;
-                                            Shop: Tsh {{ number_format($mm['shop_bPrice'], 2) }}/{{ number_format($mm['shop_sPrice'], 2) }}
-                                        </small>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </details>
-                    @endif
-                </div>
-            </div>
-        @endif
-
         {{-- ── Table Panel ── --}}
         <div class="panel">
             <div class="panel-head">
                 <h2 class="panel-title">
-                    {{ __('messages.products_list_title') }}
-                    @if(request('search'))
-                        <small>— {{ __('messages.products_search_results') }}</small>
-                    @endif
+                    Product List
                 </h2>
                 <div class="panel-actions">
                     <button class="pbtn pbtn-outline" id="selectAllBtn" onclick="toggleSelectAll()">
-                        <i class="bi bi-check2-square"></i> {{ __('messages.products_select_all') }}
+                        <i class="bi bi-check2-square"></i> Select All
                     </button>
-                    @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="pbtn pbtn-danger" id="deleteAllBtn" onclick="openDeleteModal()" disabled>
-                            <i class="bi bi-trash"></i> {{ __('messages.products_delete_all') }}
-                        </button>
-                    @endif
-                    <button class="pbtn pbtn-primary" id="printBtn" onclick="openPrintModal()" disabled>
-                        <i class="bi bi-printer"></i> {{ __('messages.products_print_order') }}
+                    <button class="pbtn pbtn-danger" id="deleteAllBtn" disabled>
+                        <i class="bi bi-trash"></i> Delete All
                     </button>
-                    @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
-                        <button class="pbtn pbtn-primary" id="duplicateBtn" onclick="openDuplicateModal()" disabled>
-                            <i class="bi bi-copy"></i> {{ __('messages.products_duplicate') }}
-                        </button>
-                        <button class="pbtn pbtn-primary" id="requestBtn" onclick="openRequestModal()">
-                            <i class="bi bi-plus-lg"></i> {{ __('messages.products_request') }}
-                        </button>
-                    @endif
-                    @if (Auth::user()->levelStatus === 'Admin')
-                        <button class="pbtn pbtn-warning" id="syncPricesBtn" onclick="openSyncPricesModal()" disabled>
-                            <i class="bi bi-arrow-repeat"></i> {{ __('messages.products_sync_prices') }}
-                        </button>
-                        <button class="pbtn pbtn-danger" id="clearQuantityBtn" onclick="openClearQuantityModal()" disabled>
-                            <i class="bi bi-dash-circle"></i> {{ __('messages.products_clear_quantity') }}
-                        </button>
-                    @endif
+                    <button class="pbtn pbtn-primary" id="printBtn" disabled>
+                        <i class="bi bi-printer"></i> Print Order
+                    </button>
+                    <button class="pbtn pbtn-primary" id="duplicateBtn" disabled>
+                        <i class="bi bi-copy"></i> Duplicate
+                    </button>
+                    <button class="pbtn pbtn-primary" id="requestBtn">
+                        <i class="bi bi-plus-lg"></i> Request
+                    </button>
+                    <button class="pbtn pbtn-warning" id="syncPricesBtn" disabled>
+                        <i class="bi bi-arrow-repeat"></i> Sync Prices
+                    </button>
+                    <button class="pbtn pbtn-danger" id="clearQuantityBtn" disabled>
+                        <i class="bi bi-dash-circle"></i> Clear Quantity
+                    </button>
+                    <button class="pbtn pbtn-primary" id="syncFromApiBtn">
+                        <i class="bi bi-cloud-download"></i> Sync from MainStore
+                    </button>
                 </div>
-            </div>
-
-            <div class="live-search-bar" id="liveSearchBar">
-                <i class="bi bi-funnel"></i>
-                {{ __('messages.products_live_showing_start') }} <strong id="liveMatchCount">0</strong> {{ __('messages.products_live_showing_mid') }} <strong>{{ $products->count() }}</strong> {{ __('messages.products_live_showing_end') }}
-                &nbsp;·&nbsp; <span class="link" onclick="submitSearch()">{{ __('messages.products_enter_to_search') }}</span>
             </div>
 
             <div class="table-wrap">
@@ -1092,126 +1498,57 @@
                             <th class="chk-cell">
                                 <div class="custom-chk" id="masterCheckbox" onclick="toggleAllCheckboxes()"></div>
                             </th>
-                            <th>{{ __('messages.products_col_product') }}</th>
-                            <th>{{ __('messages.products_col_stock') }}</th>
-                            <th>{{ __('messages.products_col_cost_price') }}</th>
-                            <th>{{ __('messages.products_col_selling_price') }}</th>
-                            <th>{{ __('messages.products_col_discount') }}</th>
-                            <th>{{ __('messages.products_col_category') }}</th>
-                            <th>{{ __('messages.products_col_actions') }}</th>
+                            <th>Product</th>
+                            <th>Stock</th>
+                            <th>Cost Price</th>
+                            <th>Selling Price</th>
+                            <th>Discount</th>
+                            <th>Category</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="productsTableBody">
-                        @if($products->isEmpty())
-                        <tr>
-                            <td colspan="8">
-                                <div class="empty-state">
-                                    <i class="bi bi-box"></i>
-                                    <div class="empty-state-title">{{ __('messages.products_no_found') }}</div>
-                                    <p>
-                                        @if(request('search'))
-                                            {{ __('messages.products_no_match_search', ['search' => request('search')]) }}
-                                        @else
-                                            {{ __('messages.products_add_first') }}
-                                        @endif
-                                    </p>
-                                    @if(request('search'))
-                                        <a href="{{ url()->current() }}" class="abtn abtn-outline">
-                                            <i class="bi bi-x-lg"></i> {{ __('messages.products_clear_search_btn') }}
-                                        </a>
-                                    @else
-                                        <a href="itemRequest" class="abtn abtn-primary">
-                                            <i class="bi bi-plus-lg"></i> {{ __('messages.products_add_new') }}
-                                        </a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
+                        @if(empty($products) || $products->isEmpty())
+                            <tr>
+                                <td colspan="9" class="empty-state">
+                                    <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+                                    <p>No products found</p>
+                                </td>
+                            </tr>
                         @else
-                            @foreach ($products as $product)
-                            @php
-                                $loss = $product->bPrice > $product->sPrice;
-                            @endphp
-                            <form method="post">
-                                @csrf
-                                <tr data-product-id="{{ $product->product_id }}"
-                                    data-searchable="{{ strtolower($product->name01 . ' ' . $product->name02 . ' ' . $product->category . ' ' . $product->product_id) }}">
+                            @foreach($products as $product)
+                                <tr data-product-id="{{ $product->product_id }}">
                                     <td class="chk-cell">
-                                        <div class="custom-chk product-checkbox"
-                                             onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
+                                        <div class="custom-chk product-checkbox" onclick="toggleCheckbox(this, '{{ $product->product_id }}')"></div>
                                     </td>
                                     <td>
                                         <div class="prod-info">
-                                            <div class="prod-avatar">
-                                                @if($product->img && $product->img != 'default.png')
-                                                    <img src="{{ asset('/public/images/' . $product->img) }}" alt="{{ $product->name01 }}">
-                                                @else
-                                                    {{ strtoupper(substr($product->name01, 0, 2)) }}
-                                                @endif
-                                            </div>
+                                            <div class="prod-avatar">{{ strtoupper(substr($product->name01, 0, 1)) }}</div>
                                             <div>
-                                                <div class="prod-name">
-                                                    {{ $product->name01 }}
-                                                    @if(in_array($product->product_id, $offers ?? []))
-                                                    <span class="offer-tag" title="Active offer">
-                                                        <i class="bi bi-gift-fill"></i> Offer
-                                                    </span>
-                                                    @endif
-                                                    <span class="api-compare-badge" id="compare-badge-{{ $product->product_id }}" style="display:none;"></span>
-                                                </div>
-                                                <div class="prod-sub">{{ $product->name02 }}</div>
+                                                <div class="prod-name">{{ $product->name01 }}</div>
+                                                @if(!empty($product->name02))
+                                                    <div class="prod-sub">{{ $product->name02 }}</div>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        @php
-                                            $stockClass = $product->quantity <= 0 ? 'low'
-                                                        : ($product->quantity < 10 ? 'medium' : 'high');
-                                        @endphp
-                                        <span class="stock-badge {{ $stockClass }}" id="stock-{{ $product->product_id }}">
-                                            {{ number_format($product->quantity) }} {{ $product->unit }}
+                                        <span class="stock-badge {{ $product->quantity == 0 ? 'low' : ($product->quantity < 10 ? 'medium' : 'high') }}">
+                                            {{ $product->quantity }} {{ $product->unit ?? 'pcs' }}
                                         </span>
                                     </td>
-                                    <td><span class="price cost">{{ number_format($product->bPrice, 2) }}</span></td>
-                                    <td>
-                                        <span class="price">{{ number_format($product->sPrice, 2) }}</span>
-                                        @if ($loss)
-                                            <span class="badge bg-warning text-light" title="Loss(Buying Price is greater than selling Price)"><i class="bi bi-exclamation-triangle"></i></span>
-                                        @endif
-                                    </td>
-                                    <td><span class="price">{{ number_format($product->discount, 2) }}</span></td>
-                                    <td><span class="cat-badge">{{ $product->category }}</span></td>
+                                    <td><span class="price cost">{{ number_format($product->bPrice ?? 0, 2) }}</span></td>
+                                    <td><span class="price">{{ number_format($product->sPrice ?? 0, 2) }}</span></td>
+                                    <td><span class="price">{{ number_format($product->discount ?? 0, 2) }}</span></td>
+                                    <td><span class="cat-badge">{{ $product->category ?? '-' }}</span></td>
                                     <td>
                                         <div class="action-cell">
-                                            @if (getCurrentShopId() != 7)
-                                            <button class="action-icon-btn return" name="product_id"
-                                                formaction="returnToMainStore" value="{{ $product->product_id }}"
-                                                title="{{ __('messages.products_return_main_store') }}"
-                                                onclick="return confirm('{{ __('messages.products_return_confirm') }}')">
-                                                <i class="bi bi-arrow-return-left"></i>
-                                            </button>
-                                            @endif
-                                            <button class="action-icon-btn view" name="product_id"
-                                                formaction="viewProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_view') }}">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            @if (Auth::user()->levelStatus === 'Admin' || canUser('main_view_items'))
-                                                <button type="button" class="action-icon-btn offers"
-                                                data-product-id="{{ $product->product_id }}"
-                                                data-product-name="{{ $product->name01 }}"
-                                                title="{{ __('messages.products_manage_offers') }}"
-                                                onclick="openOfferModal('{{ $product->product_id }}', '{{ addslashes($product->name01) }}')">
-                                                <i class="bi bi-gift"></i>
-                                            </button>
-                                            @endif
-                                            <button class="action-icon-btn delete" name="product_id" onclick="confirm('{{ __('messages.products_delete_confirm') }}')"
-                                                formaction="dltProduct" value="{{ $product->product_id }}" title="{{ __('messages.products_delete') }}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                            <button class="action-icon-btn view" title="View" data-product-id="{{ $product->product_id }}"><i class="bi bi-eye"></i></button>
+                                            <button class="action-icon-btn offers" title="Offers" data-product-id="{{ $product->product_id }}"><i class="bi bi-gift"></i></button>
+                                            <button class="action-icon-btn delete" title="Delete" data-product-id="{{ $product->product_id }}"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
-                            </form>
                             @endforeach
                         @endif
                     </tbody>
@@ -1219,1734 +1556,279 @@
             </div>
 
             {{-- Pagination --}}
-            @if(!$products->isEmpty())
-            <div class="pagination-wrap" id="paginationContainer"
-                 style="{{ request('search') ? 'display:none' : '' }}">
+            <div class="pagination-wrap" id="paginationContainer">
                 <p class="pg-info">
-                    {!! __('messages.products_showing_range', ['first' => $products->firstItem(), 'last' => $products->lastItem(), 'total' => $products->total()]) !!}
+                    Showing <strong>{{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }}</strong> of <strong>{{ $products->total() }}</strong> products
                 </p>
 
                 <nav>
                     <ul class="pg-list">
-                        @if ($products->onFirstPage())
-                            <li class="pg-item disabled">
-                                <span class="pg-link"><i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}</span>
+                        <li class="pg-item {{ $products->currentPage() == 1 ? 'disabled' : '' }}">
+                            <a class="pg-link" href="{{ $products->currentPage() > 1 ? $products->url($products->currentPage() - 1) : '#' }}"><i class="bi bi-chevron-left"></i> Previous</a>
+                        </li>
+                        @for ($i = 1; $i <= min($products->lastPage(), 3); $i++)
+                            <li class="pg-item {{ $products->currentPage() == $i ? 'active' : '' }}">
+                                <a class="pg-link {{ $products->currentPage() == $i ? 'pg-link-active' : '' }}" href="{{ $products->url($i) }}">{{ $i }}</a>
                             </li>
-                        @else
-                            <li class="pg-item">
-                                <a class="pg-link" href="{{ $products->previousPageUrl() }}">
-                                    <i class="bi bi-chevron-left"></i> {{ __('messages.products_previous') }}
-                                </a>
-                            </li>
-                        @endif
-
-                        @php
-                            $currentPage = $products->currentPage();
-                            $lastPage    = $products->lastPage();
-                            $start       = max(1, $currentPage - 2);
-                            $end         = min($lastPage, $currentPage + 2);
-                        @endphp
-
-                        @if($start > 1)
-                            <li class="pg-item"><a class="pg-link" href="{{ $products->url(1) }}">1</a></li>
-                            @if($start > 2)
-                                <li class="pg-item disabled"><span class="pg-link">…</span></li>
-                            @endif
-                        @endif
-
-                        @for($page = $start; $page <= $end; $page++)
-                            @if($page == $currentPage)
-                                <li class="pg-item active"><span class="pg-link pg-link-active">{{ $page }}</span></li>
-                            @else
-                                <li class="pg-item"><a class="pg-link" href="{{ $products->url($page) }}">{{ $page }}</a></li>
-                            @endif
                         @endfor
-
-                        @if($end < $lastPage)
-                            @if($end < $lastPage - 1)
-                                <li class="pg-item disabled"><span class="pg-link">…</span></li>
-                            @endif
-                            <li class="pg-item"><a class="pg-link" href="{{ $products->url($lastPage) }}">{{ $lastPage }}</a></li>
+                        @if ($products->lastPage() > 3)
+                            <li class="pg-item disabled"><span class="pg-link">…</span></li>
+                            <li class="pg-item"><a class="pg-link" href="{{ $products->url($products->lastPage()) }}">{{ $products->lastPage() }}</a></li>
                         @endif
-
-                        @if ($products->hasMorePages())
-                            <li class="pg-item">
-                                <a class="pg-link" href="{{ $products->nextPageUrl() }}">
-                                    {{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </li>
-                        @else
-                            <li class="pg-item disabled">
-                                <span class="pg-link">{{ __('messages.products_next') }} <i class="bi bi-chevron-right"></i></span>
-                            </li>
-                        @endif
+                        <li class="pg-item {{ $products->currentPage() == $products->lastPage() ? 'disabled' : '' }}">
+                            <a class="pg-link" href="{{ $products->currentPage() < $products->lastPage() ? $products->url($products->currentPage() + 1) : '#' }}">Next <i class="bi bi-chevron-right"></i></a>
+                        </li>
                     </ul>
                 </nav>
-
-                <div class="per-page">
-                    <span class="per-page-label">{{ __('messages.products_items_per_page') }}</span>
-                    <select id="perPageSelect" class="per-page-select" onchange="changeItemsPerPage()">
-                        @foreach([50, 100, 300, 500, 1000] as $pp)
-                        <option value="{{ $pp }}" {{ request('per_page', 50) == $pp ? 'selected' : '' }}>{{ $pp }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                
             </div>
-            @endif
         </div>{{-- /panel --}}
     </div>
 </main>
-
-<div class="image-preview-tooltip" id="imagePreviewTooltip">
-    <img src="" alt="Preview">
-</div>
-
-{{-- ── MODALS ── --}}
-
-<!-- Print Modal -->
-<div class="modal fade" id="printModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_modal_print_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="printModalBody"></div>
-            <div class="modal-footer">
-                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_close') }}</button>
-                <button type="button" class="mbtn mbtn-primary" onclick="printOrder()">
-                    <i class="bi bi-printer"></i> {{ __('messages.products_modal_print') }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Duplicate Modal -->
-<div class="modal fade" id="duplicateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_modal_duplicate_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="duplicateForm" action="{{ route('duplicateProducts') }}" method="POST">
-                    @csrf
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_select_destination_shop') }}</label>
-                        <select class="field-input" id="targetAccount" name="target_account" required>
-                            <option value="">{{ __('messages.products_choose_shop') }}</option>
-                            @foreach($getAllAccounts as $account)
-                                <option value="{{ $account['id'] }}" {{ $account['id'] == getCurrentShopId() ? 'selected' : '' }}>
-                                    {{ $account['name'] }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_duplication_options') }}</label>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
-                                <input type="checkbox" id="includeStock" name="include_stock" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
-                                <span>{{ __('messages.products_include_stock') }}</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
-                                <input type="checkbox" id="includePricing" name="include_pricing" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
-                                <span>{{ __('messages.products_include_pricing') }}</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_selected_products') }}</label>
-                        <div class="selected-list selected-products-container"></div>
-                    </div>
-                    <div id="hiddenInputs"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_cancel') }}</button>
-                <button type="button" class="mbtn mbtn-primary" id="confirmDuplicateBtn" onclick="duplicateProducts()">
-                    <span id="duplicateBtnText"><i class="bi bi-copy"></i> {{ __('messages.products_confirm_duplicate') }}</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_modal_delete_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert-box">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>{{ __('messages.products_warning') }}</strong> {{ __('messages.products_warning_undo') }}
+    <!-- Modals (simplified for demo) -->
+    <div class="modal fade" id="printModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header-navy">
+                    <h5 class="modal-title">Print Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="deleteForm" action="dltProduct" method="POST">
-                    @csrf
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_selected_products') }}</label>
-                        <div class="selected-list selected-products-container-delete"></div>
-                    </div>
-                    <div id="deleteHiddenInputs"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_cancel') }}</button>
-                <button type="button" class="mbtn mbtn-danger" id="confirmDeleteBtn" onclick="deleteSelectedProducts()">
-                    <span id="deleteBtnText"><i class="bi bi-trash"></i> {{ __('messages.products_confirm_delete') }}</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Clear Quantity Modal -->
-<div class="modal fade" id="clearQuantityModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_clear_quantity_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert-box" style="background: var(--amber-pale); border-color: var(--amber); color: #92400E;">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <strong>{{ __('messages.products_note') }}</strong> {{ __('messages.products_main_store_excluded') }}
-                </div>
-                <form id="clearQuantityForm" action="{{ route('bulk.clearQuantity') }}" method="POST">
-                    @csrf
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_select_accounts') }}</label>
-                        <select class="field-input" id="clearQuantityAccounts" name="account_ids[]" multiple required style="height: 180px;">
-                            @foreach($getAllAccounts as $account)
-                                <option value="{{ $account['id'] }}">{{ $account['name'] }}</option>
-                            @endforeach
-                        </select>
-                        <small style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem; display: block;">
-                            {{ __('messages.products_hold_ctrl', ['ctrl' => 'Ctrl', 'cmd' => 'Cmd']) }}
-                        </small>
-                    </div>
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_selected_products') }}</label>
-                        <div class="selected-list selected-products-container-clear"></div>
-                    </div>
-                    <div id="clearQuantityHiddenInputs"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_cancel') }}</button>
-                <button type="button" class="mbtn mbtn-danger" id="confirmClearQuantityBtn" onclick="clearQuantities()">
-                    <i class="bi bi-dash-circle"></i> {{ __('messages.products_clear_quantity_title') }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Sync Prices Modal -->
-<div class="modal fade" id="syncPricesModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_sync_prices_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert-box" style="background: var(--amber-pale); border-color: var(--amber); color: #92400E;">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <strong>{{ __('messages.products_note') }}</strong> {{ __('messages.products_sync_prices_note') }}
-                </div>
-                <form id="syncPricesForm" action="{{ route('bulk.syncPrices') }}" method="POST">
-                    @csrf
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_select_accounts') }}</label>
-                        <select class="field-input" id="syncPricesAccounts" name="account_ids[]" multiple required style="height: 180px;">
-                            @foreach($getAllAccounts as $account)
-                                @if($account['id'] != 7)
-                                <option value="{{ $account['id'] }}">{{ $account['name'] }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                        <small style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem; display: block;">
-                            {{ __('messages.products_hold_ctrl', ['ctrl' => 'Ctrl', 'cmd' => 'Cmd']) }}
-                        </small>
-                    </div>
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_selected_products') }}</label>
-                        <div class="selected-list selected-products-container-sync"></div>
-                    </div>
-                    <div id="syncPricesHiddenInputs"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_cancel') }}</button>
-                <button type="button" class="mbtn mbtn-warning" id="confirmSyncPricesBtn" onclick="syncPrices()">
-                    <i class="bi bi-arrow-repeat"></i> {{ __('messages.products_sync_prices_title') }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Offer Modal -->
-<div class="modal fade" id="offerModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_manage_offers') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="offerProductInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--slate-50); border-radius: 8px; border: 1px solid var(--slate-200);">
-                    <div style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 0.25rem;">{{ __('messages.products_select_product') }}</div>
-                    <div id="offerProductName" style="font-size: 1.1rem; font-weight: 700; color: var(--navy);">—</div>
-                    <div id="offerProductId" style="font-size: 0.8rem; color: var(--slate-400); margin-top: 0.25rem;">—</div>
-                </div>
-
-                <div id="existingOffersSection" style="margin-bottom: 1.5rem; display: none;">
-                    <h6 style="font-size: 0.9rem; font-weight: 700; color: var(--slate-700); margin-bottom: 0.75rem;">{{ __('messages.products_active_offers') }}</h6>
-                    <div id="offersList" class="selected-list" style="max-height: 200px; overflow-y: auto;"></div>
-                </div>
-
-                <form id="offerForm" method="POST" action="{{ route('saveOffer') }}">
-                    @csrf
-                    <input type="hidden" name="product_id" id="offerProductIdInput">
-                    
-                    <div class="row-fields">
-                        <div class="field">
-                            <label class="field-label">{{ __('messages.products_required_quantity_buy') }}</label>
-                            <input type="number" class="field-input" name="required_quantity" id="requiredQuantity"
-                                   min="1" value="1" required style="width: 100%;">
-                        </div>
-                        <div class="field">
-                            <label class="field-label">{{ __('messages.products_offer_quantity_get_free') }}</label>
-                            <input type="number" class="field-input" name="offer_quantity" id="offerQuantity"
-                                   min="1" value="1" required style="width: 100%;">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_offer_applies_to') }}</label>
-                        <input type="text" class="field-input" id="offerProductSearchInput" 
-                               list="productOptionsList" placeholder="{{ __('messages.products_search_product_placeholder') }}"
-                               autocomplete="off" style="width: 100%;">
-                        <datalist id="productOptionsList"></datalist>
-                        <input type="hidden" name="offer_product_id" id="offerProductIdHidden">
-                        <small style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem; display: block;">
-                            {{ __('messages.products_offer_search_hint') }}
-                        </small>
-                    </div>
-
-                    <div class="field">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
-                            <input type="checkbox" name="is_active" id="isActive" checked style="width: 18px; height: 18px; accent-color: var(--navy);">
-                            <span>{{ __('messages.products_offer_active') }}</span>
-                        </label>
-                    </div>
-
-                    <div id="offerFormMessage" style="margin-top: 1rem;"></div>
-
-                    <div class="modal-footer" style="border-top: 1.5px solid var(--slate-200); margin-top: 1.5rem;">
-                        <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_close') }}</button>
-                        <button type="submit" class="mbtn mbtn-primary" id="saveOfferBtn">
-                            <i class="bi bi-check-lg"></i> {{ __('messages.products_save_offer') }}
-                        </button>
-                    </div>
-                </form>
-
-                <div id="deleteOfferSection" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--slate-200);">
-                    <button type="button" class="mbtn mbtn-danger" id="deleteOfferBtn" style="width: 100%;">
-                        <i class="bi bi-trash"></i> {{ __('messages.products_delete_this_offer') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Request Modal -->
-<div class="modal fade" id="requestModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header-navy">
-                <h5 class="modal-title">{{ __('messages.products_modal_request_title') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="requestForm" action="{{ route('request.bulkSubmit') }}" method="POST" onsubmit="return prepareRequestSubmit();">
-                @csrf
-                <div class="modal-body">
-                    <div class="alert-box" style="background:var(--sky-pale);border-color:var(--sky);color:#075985;">
-                        <i class="bi bi-info-circle-fill"></i>
-                        {{ __('messages.products_request_hint') }}
-                    </div>
-                    <div class="row-fields">
-                        <div class="field">
-                            <label class="field-label">{{ __('messages.products_supplier_shop') }}</label>
-                            <select class="field-input" id="requestSupplier" name="supplier_id">
-                                <option value="">{{ __('messages.products_choose_supplier') }}</option>
-                                @foreach($getAllAccounts as $account)
-                                    <option value="{{ $account['id'] }}">{{ $account['name'] }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label class="field-label">{{ __('messages.products_payment_type') }}</label>
-                            <select class="field-input" name="payment_type">
-                                <option value="cash">{{ __('messages.products_cash') }}</option>
-                                <option value="credit">{{ __('messages.products_credit') }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label class="field-label">{{ __('messages.products_selected_items') }}</label>
-                        <div class="selected-list" id="requestSelectedList" style="max-height:280px;"></div>
-                    </div>
-                    <div id="requestHiddenInputs"></div>
+                <div class="modal-body" id="printModalBody">
+                    <p>Print preview will appear here.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">{{ __('messages.products_modal_cancel') }}</button>
-                    <button type="submit" class="mbtn mbtn-primary" id="confirmRequestBtn">
-                        <span id="requestBtnText"><i class="bi bi-plus-lg"></i> {{ __('messages.products_submit_request') }}</span>
+                    <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="mbtn mbtn-primary" onclick="printOrder()">
+                        <i class="bi bi-printer"></i> Print
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<script>
-// ============================================================
-// API COMPARISON JAVASCRIPT
-// ============================================================
-
-const API_PROXY_URL = '/main-store/proxy';
-let apiComparisonResults = {
-    matched: [],
-    mismatched: [],
-    totalApiProducts: 0,
-    apiData: []
-};
-
-function toggleApiPanel() {
-    const panel = document.getElementById('apiComparePanel');
-    const btn = document.getElementById('apiHideBtn');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        btn.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
-    } else {
-        panel.style.display = 'none';
-        btn.innerHTML = '<i class="bi bi-eye"></i> Show';
-    }
-}
-
-function updateApiStatus(status, message, details = null) {
-    const statusEl = document.getElementById('apiStatus');
-    const statusText = document.getElementById('apiStatusText');
-    
-    statusEl.className = 'api-status ' + status;
-    statusEl.querySelector('.status-dot').className = 'status-dot ' + status;
-    statusText.textContent = message;
-    
-    if (details) {
-        // Optionally show details
-    }
-}
-
-function showApiMismatches(mismatches) {
-    const container = document.getElementById('apiMismatchContainer');
-    const noMismatch = document.getElementById('apiNoMismatch');
-    const tbody = document.getElementById('mismatchTableBody');
-    const countLabel = document.getElementById('mismatchCountLabel');
-    
-    if (!mismatches || mismatches.length === 0) {
-        container.style.display = 'none';
-        noMismatch.style.display = 'block';
-        return;
-    }
-    
-    container.style.display = 'block';
-    noMismatch.style.display = 'none';
-    countLabel.textContent = mismatches.length + ' items';
-    
-    tbody.innerHTML = '';
-    mismatches.forEach((item, index) => {
-        const diff = item.local_stock - item.api_stock;
-        const statusClass = Math.abs(diff) <= 1 ? 'match' : 'mismatch';
-        const statusText = Math.abs(diff) <= 1 ? '✓ Match' : '⚠ Mismatch';
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td><strong>${escapeHtml(item.product_name)}</strong></td>
-            <td>${item.local_stock}</td>
-            <td>${item.api_stock}</td>
-            <td>${diff > 0 ? '+' : ''}${diff}</td>
-            <td><span class="diff-badge ${statusClass}">${statusText}</span></td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function updateSummary(total, matched, mismatched) {
-    document.getElementById('apiTotalProducts').textContent = total;
-    document.getElementById('apiMatchedCount').textContent = matched;
-    document.getElementById('apiMismatchCount').textContent = mismatched;
-    document.getElementById('apiSummary').style.display = 'grid';
-    
-    if (mismatched === 0 && total > 0) {
-        document.getElementById('apiComparisonStatus').textContent = '✅ All match!';
-        document.getElementById('apiComparisonStatus').style.color = 'var(--emerald)';
-    } else if (total === 0) {
-        document.getElementById('apiComparisonStatus').textContent = '— No data';
-        document.getElementById('apiComparisonStatus').style.color = 'var(--slate-400)';
-    } else {
-        document.getElementById('apiComparisonStatus').textContent = '⚠ ' + mismatched + ' mismatches';
-        document.getElementById('apiComparisonStatus').style.color = 'var(--rose)';
-    }
-}
-
-async function runApiComparison() {
-    const panel = document.getElementById('apiComparePanel');
-    panel.className = 'api-compare-panel loading';
-    
-    const startDate = document.getElementById('apiStartDate').value;
-    const endDate = document.getElementById('apiEndDate').value;
-    
-    if (!startDate || !endDate) {
-        alert('Please select both start and end dates');
-        panel.className = 'api-compare-panel';
-        return;
-    }
-    
-    updateApiStatus('loading', 'Fetching stock report from MainStore...');
-    
-    try {
-        const proxyResponse = await fetch(API_PROXY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-            },
-            body: JSON.stringify({
-                action: 'stock_report',
-                start_date: startDate,
-                end_date: endDate
-            })
-        });
-        
-        if (!proxyResponse.ok) {
-            const errorData = await proxyResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Proxy request failed: ' + proxyResponse.status);
-        }
-        
-        const reportData = await proxyResponse.json();
-        
-        // Parse the API response - assuming structure: { data: [...] } or { items: [...] } or just array
-        let apiItems = [];
-        if (Array.isArray(reportData)) {
-            apiItems = reportData;
-        } else if (reportData.data && Array.isArray(reportData.data)) {
-            apiItems = reportData.data;
-        } else if (reportData.items && Array.isArray(reportData.items)) {
-            apiItems = reportData.items;
-        } else if (reportData.stock && Array.isArray(reportData.stock)) {
-            apiItems = reportData.stock;
-        } else {
-            // Try to find any array in the response
-            for (const key in reportData) {
-                if (Array.isArray(reportData[key])) {
-                    apiItems = reportData[key];
-                    break;
-                }
-            }
-        }
-        
-        if (apiItems.length === 0) {
-            updateApiStatus('error', 'No data returned from API');
-            panel.className = 'api-compare-panel';
-            document.getElementById('apiSummary').style.display = 'grid';
-            document.getElementById('apiTotalProducts').textContent = '0';
-            document.getElementById('apiMatchedCount').textContent = '0';
-            document.getElementById('apiMismatchCount').textContent = '0';
-            document.getElementById('apiComparisonStatus').textContent = 'No data';
-            return;
-        }
-        
-        // Step 3: Compare with local data
-        updateApiStatus('loading', 'Comparing with local inventory...');
-        
-        // Build local product map (product name => stock)
-        const localProducts = {};
-        document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
-            const id = row.dataset.productId;
-            const nameEl = row.querySelector('.prod-name');
-            let name = '';
-            if (nameEl) {
-                const clone = nameEl.cloneNode(true);
-                const tags = clone.querySelectorAll('.offer-tag, .api-compare-badge');
-                tags.forEach(tag => tag.remove());
-                name = clone.textContent.trim();
-            }
-            const stockEl = document.getElementById('stock-' + id);
-            let stock = 0;
-            if (stockEl) {
-                const match = stockEl.textContent.match(/[\d,]+/);
-                if (match) stock = parseInt(match[0].replace(/,/g, ''));
-            }
-            if (name) {
-                localProducts[name.toLowerCase()] = stock;
-            }
-        });
-        
-        let matched = 0;
-        let mismatched = [];
-        let apiTotal = apiItems.length;
-        
-        apiItems.forEach((item, index) => {
-            const apiName = (item.item_name || item.name || item.product_name || item.Item_Name || '').trim();
-            const apiStock = parseInt(item.closing_stock || item.stock || item.quantity || item.total || 0);
-            
-            if (!apiName) return;
-            
-            // Try to find matching local product by name (case insensitive, trim)
-            const searchName = apiName.toLowerCase().trim();
-            let localStock = localProducts[searchName];
-            
-            // If not found, try without variation suffix (e.g., remove "- CTN", "- PCS", etc.)
-            if (localStock === undefined && searchName.includes('-')) {
-                const baseName = searchName.split('-')[0].trim();
-                for (const [key, value] of Object.entries(localProducts)) {
-                    if (key.includes(baseName) || baseName.includes(key)) {
-                        localStock = value;
-                        break;
-                    }
-                }
-            }
-            
-            // If still not found, try partial match
-            if (localStock === undefined) {
-                const words = searchName.split(/\s+/).filter(w => w.length > 2);
-                for (const [key, value] of Object.entries(localProducts)) {
-                    let matchCount = 0;
-                    for (const word of words) {
-                        if (key.includes(word)) matchCount++;
-                    }
-                    if (matchCount >= Math.min(words.length, 2)) {
-                        localStock = value;
-                        break;
-                    }
-                }
-            }
-            
-            if (localStock !== undefined) {
-                if (Math.abs(localStock - apiStock) <= 1) {
-                    matched++;
-                } else {
-                    mismatched.push({
-                        product_name: apiName,
-                        local_stock: localStock,
-                        api_stock: apiStock,
-                        diff: localStock - apiStock
-                    });
-                }
-            } else {
-                // Not found in local - mark as mismatch with local_stock = 0
-                mismatched.push({
-                    product_name: apiName,
-                    local_stock: 0,
-                    api_stock: apiStock,
-                    diff: -apiStock
-                });
-            }
-        });
-        
-        apiComparisonResults = {
-            matched: matched,
-            mismatched: mismatched,
-            totalApiProducts: apiTotal,
-            apiData: apiItems
-        };
-        
-        // Update UI
-        updateSummary(apiTotal, matched, mismatched.length);
-        showApiMismatches(mismatched);
-        
-        // Update badges on table rows
-        updateComparisonBadges(mismatched);
-        
-        if (mismatched.length === 0 && apiTotal > 0) {
-            updateApiStatus('success', 'All ' + apiTotal + ' products match!');
-            panel.className = 'api-compare-panel has-match';
-        } else if (mismatched.length > 0) {
-            updateApiStatus('mismatch', mismatched.length + ' products mismatch out of ' + apiTotal);
-            panel.className = 'api-compare-panel has-mismatch';
-        } else {
-            updateApiStatus('idle', 'No products to compare');
-            panel.className = 'api-compare-panel';
-        }
-        
-    } catch (error) {
-        console.error('API Comparison Error:', error);
-        updateApiStatus('error', 'Error: ' + error.message);
-        panel.className = 'api-compare-panel';
-        document.getElementById('apiSummary').style.display = 'grid';
-        document.getElementById('apiTotalProducts').textContent = 'Error';
-        document.getElementById('apiMatchedCount').textContent = '-';
-        document.getElementById('apiMismatchCount').textContent = '-';
-        document.getElementById('apiComparisonStatus').textContent = 'Error';
-    }
-}
-
-function updateComparisonBadges(mismatches) {
-    // Clear all existing badges
-    document.querySelectorAll('.api-compare-badge').forEach(el => el.style.display = 'none');
-    
-    // Create a map for quick lookup
-    const mismatchMap = {};
-    mismatches.forEach(item => {
-        // Try to find matching product by name
-        document.querySelectorAll('#productsTableBody tr[data-product-id]').forEach(row => {
-            const nameEl = row.querySelector('.prod-name');
-            let name = '';
-            if (nameEl) {
-                const clone = nameEl.cloneNode(true);
-                const tags = clone.querySelectorAll('.offer-tag, .api-compare-badge');
-                tags.forEach(tag => tag.remove());
-                name = clone.textContent.trim().toLowerCase();
-            }
-            if (name === item.product_name.toLowerCase()) {
-                mismatchMap[row.dataset.productId] = item;
-            }
-        });
-    });
-    
-    // Show badges on matching rows
-    for (const [productId, item] of Object.entries(mismatchMap)) {
-        const badge = document.getElementById('compare-badge-' + productId);
-        if (badge) {
-            badge.style.display = 'inline-block';
-            badge.style.marginLeft = '0.5rem';
-            badge.style.fontSize = '0.65rem';
-            badge.style.fontWeight = '700';
-            badge.style.padding = '0.15rem 0.4rem';
-            badge.style.borderRadius = '4px';
-            badge.style.background = 'var(--rose)';
-            badge.style.color = 'white';
-            badge.textContent = '⚠ API: ' + item.api_stock;
-        }
-    }
-}
-
-// ============================================================
-// EXISTING FUNCTIONS (kept as-is)
-// ============================================================
-
-function changeItemsPerPage() {
-    const perPage = document.getElementById('perPageSelect').value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('per_page', perPage);
-    url.searchParams.delete('page');
-    url.searchParams.delete('search');
-    window.location.href = url.toString();
-}
-
-function changeSort() {
-    const sort = document.getElementById('sortSelect').value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('sort', sort);
-    url.searchParams.delete('page');
-    window.location.href = url.toString();
-}
-
-function changeShop() {
-    const shop = document.getElementById('shopSelect').value;
-    const url = new URL(window.location.href);
-    if (shop) {
-        url.searchParams.set('shop', shop);
-    } else {
-        url.searchParams.delete('shop');
-    }
-    url.searchParams.delete('page');
-    window.location.href = url.toString();
-}
-
-const searchInput = document.getElementById('searchInput');
-const searchHint = document.getElementById('searchHint');
-const liveSearchBar = document.getElementById('liveSearchBar');
-const liveMatchCount = document.getElementById('liveMatchCount');
-const paginationContainer = document.getElementById('paginationContainer');
-const allRows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
-
-function debounce(fn, delay) {
-    let timer;
-    return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-    };
-}
-
-const doLiveSearch = debounce(function(term) {
-    if (term === '') {
-        allRows.forEach(row => row.style.display = '');
-        if (paginationContainer) paginationContainer.style.display = '';
-        liveSearchBar.style.display = 'none';
-        searchHint.classList.remove('visible');
-        const noRes = document.getElementById('noResultsRow');
-        if (noRes) noRes.remove();
-        return;
-    }
-
-    if (paginationContainer) paginationContainer.style.display = 'none';
-    liveSearchBar.style.display = 'flex';
-    searchHint.classList.add('visible');
-
-    let matchCount = 0;
-    allRows.forEach(row => {
-        const searchable = row.dataset.searchable || row.textContent.toLowerCase();
-        const matches = searchable.includes(term);
-        row.style.display = matches ? '' : 'none';
-        if (matches) matchCount++;
-    });
-
-    liveMatchCount.textContent = matchCount;
-
-    const existing = document.getElementById('noResultsRow');
-    if (matchCount === 0 && !existing) {
-        const tr = document.createElement('tr');
-        tr.id = 'noResultsRow';
-        tr.innerHTML = `<td colspan="8" style="text-align:center;padding:2rem;color:var(--slate-400);">
-            <i class="bi bi-search" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
-            No products matched "<strong>${term}</strong>" on this page.<br>
-            <span style="cursor:pointer;color:var(--navy);text-decoration:underline;"
-                  onclick="submitSearch()">Click here to search all pages</span>
-        <\/td>`;
-        document.getElementById('productsTableBody').appendChild(tr);
-    } else if (matchCount > 0 && existing) {
-        existing.remove();
-    }
-}, 200);
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        doLiveSearch(this.value.toLowerCase().trim());
-    });
-
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); submitSearch(); }
-        if (e.key === 'Escape') { this.value = ''; doLiveSearch(''); }
-    });
-}
-
-function submitSearch() {
-    const term = searchInput.value.trim();
-    if (!term) { window.location.href = window.location.pathname; return; }
-    const url = new URL(window.location.pathname, window.location.origin);
-    url.searchParams.set('search', term);
-    window.location.href = url.toString();
-}
-
-function toggleCheckbox(element, productId) {
-    element.classList.toggle('checked');
-    updateActionButtons();
-}
-
-function toggleAllCheckboxes() {
-    const masterCheckbox = document.getElementById('masterCheckbox');
-    const checkboxes = document.querySelectorAll('.product-checkbox');
-    const willCheck = !masterCheckbox.classList.contains('checked');
-    masterCheckbox.classList.toggle('checked');
-    checkboxes.forEach(cb => {
-        const row = cb.closest('tr');
-        if (row && row.style.display !== 'none') {
-            willCheck ? cb.classList.add('checked') : cb.classList.remove('checked');
-        }
-    });
-    updateActionButtons();
-}
-
-function toggleSelectAll() {
-    toggleAllCheckboxes();
-    const selectAllBtn = document.getElementById('selectAllBtn');
-    const masterCheckbox = document.getElementById('masterCheckbox');
-    selectAllBtn.innerHTML = masterCheckbox.classList.contains('checked')
-        ? '<i class="bi bi-x-square"></i> Deselect All'
-        : '<i class="bi bi-check2-square"></i> Select All';
-}
-
-function updateActionButtons() {
-    const count = document.querySelectorAll('.product-checkbox.checked').length;
-    const duplicateBtn = document.getElementById('duplicateBtn');
-    const printBtn = document.getElementById('printBtn');
-    const deleteAllBtn = document.getElementById('deleteAllBtn');
-    const requestBtn = document.getElementById('requestBtn');
-    const clearQuantityBtn = document.getElementById('clearQuantityBtn');
-    const syncPricesBtn = document.getElementById('syncPricesBtn');
-    if (duplicateBtn) duplicateBtn.disabled = count === 0;
-    if (printBtn) printBtn.disabled = count === 0;
-    if (deleteAllBtn) deleteAllBtn.disabled = count === 0;
-    if (requestBtn) requestBtn.disabled = count === 0;
-    if (clearQuantityBtn) clearQuantityBtn.disabled = count === 0;
-    if (syncPricesBtn) syncPricesBtn.disabled = count === 0;
-}
-
-function openRequestModal() {
-    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked'));
-    if (selected.length === 0) { alert("{{ __('messages.products_please_select_product') }}"); return; }
-
-    const container = document.getElementById('requestSelectedList');
-    const hiddenInputs = document.getElementById('requestHiddenInputs');
-    if (container) container.innerHTML = '';
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-
-    selected.forEach(cb => {
-        const row = cb.closest('tr');
-        const id = row.dataset.productId;
-        const name = row.querySelector('.prod-name').textContent.trim();
-        const sub = row.querySelector('.prod-sub').textContent.trim();
-        const stockText = row.querySelector('.stock-badge').textContent.trim();
-        const stockMatch = stockText.match(/[\d,]+/);
-        const stock = stockMatch ? parseInt(stockMatch[0].replace(/,/g, '')) : 0;
-
-        if (container) {
-            container.innerHTML += `<div class="selected-item">
-                <div style="flex:1;">
-                    <div class="selected-item-name">${escapeHtml(name)}</div>
-                    <div style="font-size:0.72rem;color:var(--slate-400);">${escapeHtml(sub)}</div>
+    <div class="modal fade" id="duplicateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header-navy">
+                    <h5 class="modal-title">Duplicate Products</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <input type="number" class="request-qty-input" data-product-id="${id}"
-                       value="1"
-                       style="width:72px;padding:0.3rem 0.4rem;font-size:0.82rem;border:1.5px solid var(--slate-200);border-radius:6px;text-align:center;margin-right:0.4rem;">
-            </div>`;
-        }
-    });
-
-    new bootstrap.Modal(document.getElementById('requestModal')).show();
-}
-
-function prepareRequestSubmit() {
-    const ids = [];
-    const qtys = [];
-    document.querySelectorAll('.request-qty-input').forEach(input => {
-        const pid = input.dataset.productId;
-        const qty = parseInt(input.value);
-        if (pid && qty > 0) {
-            ids.push(pid);
-            qtys.push(qty);
-        }
-    });
-    if (ids.length === 0) {
-        alert("{{ __('messages.products_no_valid_items') }}");
-        return false;
-    }
-    const hiddenInputs = document.getElementById('requestHiddenInputs');
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-    ids.forEach((pid, idx) => {
-        hiddenInputs.innerHTML += `<input type="hidden" name="product_ids[]" value="${pid}">`;
-        hiddenInputs.innerHTML += `<input type="hidden" name="quantities[]" value="${qtys[idx]}">`;
-    });
-    const confirmBtn = document.getElementById('confirmRequestBtn');
-    if (confirmBtn) confirmBtn.disabled = true;
-    return true;
-}
-
-function openPrintModal() {
-    const selected = document.querySelectorAll('.product-checkbox.checked');
-    if (selected.length === 0) { alert("{{ __('messages.products_please_select_product') }}"); return; }
-    const products = Array.from(selected).map(cb => {
-        const row = cb.closest('tr');
-        return {
-            name1: row.querySelector('.prod-name').textContent.trim(),
-            name2: row.querySelector('.prod-sub').textContent.trim(),
-            category: row.querySelector('.cat-badge').textContent.trim(),
-            costPrice: row.querySelectorAll('.price')[0].textContent.trim(),
-            sellPrice: row.querySelectorAll('.price')[1].textContent.trim(),
-        };
-    });
-    generatePrintContent(products);
-    new bootstrap.Modal(document.getElementById('printModal')).show();
-}
-
-function generatePrintContent(products) {
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric'
-    });
-    const rows = products.map((p, i) => `
-        <tr>
-            <td style="text-align:center;width:5%">${i + 1}<\/td>
-            <td style="width:40%">
-                <div class="prod-disp-name">${escapeHtml(p.name1)}</div>
-                <div class="prod-disp-sub">${escapeHtml(p.name2)}</div>
-             <\/td>
-            <td style="width:20%">${escapeHtml(p.category)}<\/td>
-            <td style="text-align:right;width:17%">${p.costPrice}<\/td>
-            <td style="text-align:right;width:17%">${p.sellPrice}<\/td>
-        几个人`).join('');
-
-    document.getElementById('printModalBody').innerHTML = `
-        <div class="print-order">
-            <div class="order-hd">
-                <div class="order-title">📦 PURCHASE ORDER</div>
-                <div class="order-sub">Product List for Procurement</div>
-                <div class="order-date">${currentDate}</div>
-            </div>
-            <table class="order-tbl">
-                <thead><tr>
-                    <th style="width:5%;text-align:center">No.</th>
-                    <th style="width:40%">Product Name</th>
-                    <th style="width:20%">Category</th>
-                    <th style="width:17%;text-align:right">Cost Price</th>
-                    <th style="width:17%;text-align:right">Sell Price</th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-             built
-            <div class="order-sum">
-                <div class="sum-row">
-                    <span><strong>Total Items:</strong></span>
-                    <span><strong>${products.length}</strong></span>
+                <div class="modal-body">
+                    <div class="field">
+                        <label class="field-label">Select Destination Shop</label>
+                        <select class="field-input">
+                            <option>Main Store</option>
+                            <option>Branch A</option>
+                            <option>Branch B</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Selected Products</label>
+                        <div class="selected-list">
+                            <div class="selected-item">
+                                <span class="selected-item-name">Apple iPhone 15 Pro</span>
+                                <span class="selected-item-badge">ID: PRD-001</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="sum-row total">
-                    <span>TOTAL PRODUCTS</span>
-                    <span>${products.length}</span>
+                <div class="modal-footer">
+                    <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="mbtn mbtn-primary">
+                        <i class="bi bi-copy"></i> Duplicate
+                    </button>
                 </div>
             </div>
-        </div>`;
-}
+        </div>
+    </div>
 
-function printOrder() {
-    const content = document.querySelector('.print-order').innerHTML;
-    const w = window.open('', '', 'height=700,width=900');
-    w.document.write(`<!DOCTYPE html><html><head><style>
-        body{margin:0;padding:20px;background:white}
-        table{width:100%;border-collapse:collapse;margin:20px 0}
-        th,td{border:1px solid #e2e8f0;padding:12px;text-align:left}
-        th{background:#f1f5f9;color:#0B1E3D;font-weight:600}
-        .order-hd{text-align:center;margin-bottom:30px}
-        .order-title{font-size:24px;font-weight:700;color:#0B1E3D;margin-bottom:8px}
-        .order-sub,.order-date{color:#64748b}
-        .prod-disp-name{font-weight:600;color:#0B1E3D}
-        .prod-disp-sub{font-size:.8rem;color:#64748b}
-        .sum-row{display:flex;justify-content:space-between;padding:8px 0}
-        .sum-row.total{border-top:2px solid #0B1E3D;font-weight:700;color:#0B1E3D;font-size:1.05rem}
-        .order-sum{margin-top:20px;padding-top:15px;border-top:2px solid #e2e8f0}
-    <\/style><\/head><body>${content}<\/body><\/html>`);
-    w.document.close();
-    setTimeout(() => w.print(), 250);
-}
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header-navy">
+                    <h5 class="modal-title">Delete Products</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert-box">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Selected Products</label>
+                        <div class="selected-list">
+                            <div class="selected-item">
+                                <span class="selected-item-name">Apple iPhone 15 Pro</span>
+                                <span class="selected-item-badge">ID: PRD-001</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mbtn mbtn-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="mbtn mbtn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-function openDeleteModal() {
-    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
-        id: cb.closest('tr').dataset.productId,
-        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
-    }));
-    const container = document.querySelector('.selected-products-container-delete');
-    const hiddenInputs = document.getElementById('deleteHiddenInputs');
-    if (container) container.innerHTML = '';
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-    if (selected.length === 0) {
-        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
-    } else {
-        selected.forEach(p => {
-            if (container) {
-                container.innerHTML += `<div class="selected-item">
-                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
-                    <span class="selected-item-badge">ID: ${p.id}</span>
-                </div>`;
-            }
-            if (hiddenInputs) {
-                const inp = document.createElement('input');
-                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
-                hiddenInputs.appendChild(inp);
-            }
-        });
-    }
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
-function deleteSelectedProducts() {
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    if (confirmBtn) confirmBtn.disabled = true;
-    setTimeout(() => document.getElementById('deleteForm').submit(), 500);
-}
-
-function openDuplicateModal() {
-    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
-        id: cb.closest('tr').dataset.productId,
-        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
-    }));
-    const container = document.querySelector('.selected-products-container');
-    const hiddenInputs = document.getElementById('hiddenInputs');
-    if (container) container.innerHTML = '';
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-    if (selected.length === 0) {
-        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
-    } else {
-        selected.forEach(p => {
-            if (container) {
-                container.innerHTML += `<div class="selected-item">
-                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
-                    <span class="selected-item-badge">ID: ${p.id}</span>
-                </div>`;
-            }
-            if (hiddenInputs) {
-                const inp = document.createElement('input');
-                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
-                hiddenInputs.appendChild(inp);
-            }
-        });
-    }
-    new bootstrap.Modal(document.getElementById('duplicateModal')).show();
-}
-
-function clearQuantities() {
-    const selectedAccounts = Array.from(document.querySelectorAll('#clearQuantityAccounts option:checked')).map(opt => opt.value);
-    if (selectedAccounts.length === 0) { alert("{{ __('messages.products_please_select_account') }}"); return; }
-    const form = document.getElementById('clearQuantityForm');
-    if (form) {
-        const hiddenInputs = document.getElementById('clearQuantityHiddenInputs');
-        if (hiddenInputs) hiddenInputs.innerHTML = '';
-        document.querySelectorAll('.product-checkbox.checked').forEach(cb => {
-            const inp = document.createElement('input');
-            inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = cb.closest('tr').dataset.productId;
-            hiddenInputs.appendChild(inp);
-        });
-    }
-    const confirmBtn = document.getElementById('confirmClearQuantityBtn');
-    if (confirmBtn) confirmBtn.disabled = true;
-    setTimeout(() => form.submit(), 500);
-}
-
-function openClearQuantityModal() {
-    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
-        id: cb.closest('tr').dataset.productId,
-        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
-    }));
-    const container = document.querySelector('.selected-products-container-clear');
-    const hiddenInputs = document.getElementById('clearQuantityHiddenInputs');
-    if (container) container.innerHTML = '';
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-    if (selected.length === 0) {
-        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
-    } else {
-        selected.forEach(p => {
-            if (container) {
-                container.innerHTML += `<div class="selected-item">
-                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
-                    <span class="selected-item-badge">ID: ${p.id}</span>
-                </div>`;
-            }
-            if (hiddenInputs) {
-                const inp = document.createElement('input');
-                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
-                hiddenInputs.appendChild(inp);
-            }
-        });
-    }
-    new bootstrap.Modal(document.getElementById('clearQuantityModal')).show();
-}
-
-function openSyncPricesModal() {
-    const selected = Array.from(document.querySelectorAll('.product-checkbox.checked')).map(cb => ({
-        id: cb.closest('tr').dataset.productId,
-        name: cb.closest('tr').querySelector('.prod-name').textContent.trim()
-    }));
-    const container = document.querySelector('.selected-products-container-sync');
-    const hiddenInputs = document.getElementById('syncPricesHiddenInputs');
-    if (container) container.innerHTML = '';
-    if (hiddenInputs) hiddenInputs.innerHTML = '';
-    if (selected.length === 0) {
-        if (container) container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_products_selected') }}</p>';
-    } else {
-        selected.forEach(p => {
-            if (container) {
-                container.innerHTML += `<div class="selected-item">
-                    <span class="selected-item-name">${escapeHtml(p.name)}</span>
-                    <span class="selected-item-badge">ID: ${p.id}</span>
-                </div>`;
-            }
-            if (hiddenInputs) {
-                const inp = document.createElement('input');
-                inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = p.id;
-                hiddenInputs.appendChild(inp);
-            }
-        });
-    }
-    new bootstrap.Modal(document.getElementById('syncPricesModal')).show();
-}
-
-function syncPrices() {
-    const selectedAccounts = Array.from(document.querySelectorAll('#syncPricesAccounts option:checked')).map(opt => opt.value);
-    if (selectedAccounts.length === 0) { alert("{{ __('messages.products_please_select_account') }}"); return; }
-    const form = document.getElementById('syncPricesForm');
-    if (form) {
-        const hiddenInputs = document.getElementById('syncPricesHiddenInputs');
-        if (hiddenInputs) hiddenInputs.innerHTML = '';
-        document.querySelectorAll('.product-checkbox.checked').forEach(cb => {
-            const inp = document.createElement('input');
-            inp.type = 'hidden'; inp.name = 'product_ids[]'; inp.value = cb.closest('tr').dataset.productId;
-            hiddenInputs.appendChild(inp);
-        });
-    }
-    const confirmBtn = document.getElementById('confirmSyncPricesBtn');
-    if (confirmBtn) confirmBtn.disabled = true;
-    setTimeout(() => form.submit(), 500);
-}
-
-function duplicateProducts() {
-    const form = document.getElementById('duplicateForm');
-    if (form) form.submit();
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-function downloadReport() {
-    // Simple export - can be enhanced
-    const url = new URL(window.location.href);
-    url.searchParams.set('export', 'pdf');
-    window.location.href = url.toString();
-}
-
-// ============================================================
-// OFFER MODAL FUNCTIONS
-// ============================================================
-
-let currentOfferProductId = null;
-let currentOfferId = null;
-let allProductsList = [];
-
-function loadAllProductsForSearch() {
-    $.ajax({
-        url: '{{ route("searchProductsForOffer") }}',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            allProductsList = [];
-            
-            if (response.results && response.results.length > 0) {
-                response.results.forEach(product => {
-                    allProductsList.push({
-                        id: product.id,
-                        name: product.text,
-                        stock: product.stock || 0,
-                        displayText: product.text
-                    });
-                });
-            }
-            
-            const datalist = document.getElementById('productOptionsList');
-            if (datalist) {
-                datalist.innerHTML = '';
-                allProductsList.forEach(product => {
-                    const option = document.createElement('option');
-                    option.value = product.displayText;
-                    option.setAttribute('data-id', product.id);
-                    option.setAttribute('data-name', product.name);
-                    datalist.appendChild(option);
-                });
-            }
-            
-            console.log('Loaded ' + allProductsList.length + ' products from server for search');
-        },
-        error: function(xhr) {
-            console.error('Error loading products for search:', xhr);
-            loadProductsFromPageOnly();
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple demo interactions
+        function toggleCheckbox(el, id) {
+            el.classList.toggle('checked');
+            updateActionButtons();
         }
-    });
-}
 
-function loadProductsFromPageOnly() {
-    const rows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
-    allProductsList = [];
-    rows.forEach(row => {
-        const id = row.getAttribute('data-product-id');
-        const nameEl = row.querySelector('.prod-name');
-        let name = '';
-        if (nameEl) {
-            const clone = nameEl.cloneNode(true);
-            const offerTag = clone.querySelector('.offer-tag');
-            if (offerTag) offerTag.remove();
-            name = clone.textContent.trim();
+        function toggleAllCheckboxes() {
+            const master = document.getElementById('masterCheckbox');
+            const checkboxes = document.querySelectorAll('.product-checkbox');
+            const willCheck = !master.classList.contains('checked');
+            master.classList.toggle('checked');
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                if (row && row.style.display !== 'none') {
+                    willCheck ? cb.classList.add('checked') : cb.classList.remove('checked');
+                }
+            });
+            updateActionButtons();
         }
-        const subEl = row.querySelector('.prod-sub');
-        const sub = subEl ? subEl.textContent.trim() : '';
-        const stockSpan = row.querySelector('.stock-badge');
-        let stock = 0;
-        if (stockSpan) {
-            const match = stockSpan.textContent.match(/\d+/);
-            if (match) stock = parseInt(match[0]);
+
+        function toggleSelectAll() {
+            toggleAllCheckboxes();
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const master = document.getElementById('masterCheckbox');
+            selectAllBtn.innerHTML = master.classList.contains('checked')
+                ? '<i class="bi bi-x-square"></i> Deselect All'
+                : '<i class="bi bi-check2-square"></i> Select All';
         }
-        
-        if (id && name) {
-            allProductsList.push({
-                id: id,
-                name: name,
-                description: sub,
-                stock: stock,
-                displayText: `${name} ${sub ? '('+sub+')' : ''} [Stock: ${stock}] - ID: ${id}`
+
+        function updateActionButtons() {
+            const count = document.querySelectorAll('.product-checkbox.checked').length;
+            document.getElementById('duplicateBtn').disabled = count === 0;
+            document.getElementById('printBtn').disabled = count === 0;
+            document.getElementById('deleteAllBtn').disabled = count === 0;
+            document.getElementById('requestBtn').disabled = count === 0;
+            document.getElementById('clearQuantityBtn').disabled = count === 0;
+            document.getElementById('syncPricesBtn').disabled = count === 0;
+        }
+
+        // Live search demo
+        const searchInput = document.getElementById('searchInput');
+        const allRows = document.querySelectorAll('#productsTableBody tr[data-product-id]');
+        const paginationContainer = document.getElementById('paginationContainer');
+
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            if (!term) {
+                allRows.forEach(row => row.style.display = '');
+                if (paginationContainer) paginationContainer.style.display = '';
+                return;
+            }
+            if (paginationContainer) paginationContainer.style.display = 'none';
+            let matchCount = 0;
+            allRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const matches = text.includes(term);
+                row.style.display = matches ? '' : 'none';
+                if (matches) matchCount++;
+            });
+        });
+
+        // Sort / shop / per-page: apply choice and remember across reloads
+        const sortSelect = document.getElementById('sortSelect');
+        const shopSelect = document.getElementById('shopSelect');
+        const perPageSelect = document.getElementById('perPageSelect');
+
+        function navigateWithParam(param, value) {
+            const url = new URL(window.location.href);
+            url.searchParams.set(param, value);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                navigateWithParam('sort', this.value);
             });
         }
-    });
-    
-    const datalist = document.getElementById('productOptionsList');
-    if (datalist) {
-        datalist.innerHTML = '';
-        allProductsList.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.displayText;
-            option.setAttribute('data-id', product.id);
-            option.setAttribute('data-name', product.name);
-            datalist.appendChild(option);
+
+        if (shopSelect) {
+            shopSelect.addEventListener('change', function() {
+                if (this.value) {
+                    navigateWithParam('shop', this.value);
+                }
+            });
+        }
+
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', function() {
+                navigateWithParam('per_page', this.value);
+            });
+        }
+
+        // Search: press Enter to send to server (keeps pagination/sort/shop intact)
+        if (searchInput) {
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    navigateWithParam('search', this.value.trim());
+                }
+            });
+        }
+
+        // Placeholder functions
+        function downloadReport() {
+            alert('Export report functionality would be here.');
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        // Wire up row action buttons: View, Offers, Delete
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        function postForm(action, data) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = action;
+            form.style.display = 'none';
+            Object.entries(data).forEach(([key, val]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = val;
+                form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        document.querySelectorAll('.action-icon-btn.view').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                postForm('/viewProduct', { product_id: productId, _token: csrfToken });
+            });
         });
-    }
-    
-    console.log('Loaded ' + allProductsList.length + ' products from current page only');
-}
 
-function setupProductSearch() {
-    const searchInput = document.getElementById('offerProductSearchInput');
-    const hiddenId = document.getElementById('offerProductIdHidden');
-    
-    if (!searchInput || !hiddenId) return;
-    
-    searchInput.addEventListener('input', function() {
-        const value = this.value;
-        const matchedProduct = allProductsList.find(p => 
-            p.displayText === value || 
-            p.name.toLowerCase() === value.toLowerCase() ||
-            p.id === value
-        );
-        
-        if (matchedProduct) {
-            hiddenId.value = matchedProduct.id;
-            this.style.borderColor = 'var(--emerald)';
-        } else {
-            if (value === '') {
-                hiddenId.value = '';
-                this.style.borderColor = 'var(--slate-200)';
-            } else {
-                this.style.borderColor = 'var(--rose)';
-            }
-        }
-    });
-    
-    searchInput.addEventListener('change', function() {
-        const value = this.value;
-        const matchedProduct = allProductsList.find(p => p.displayText === value);
-        if (matchedProduct) {
-            hiddenId.value = matchedProduct.id;
-            this.style.borderColor = 'var(--emerald)';
-        } else {
-            const nameMatch = allProductsList.find(p => p.name.toLowerCase() === value.toLowerCase());
-            if (nameMatch) {
-                hiddenId.value = nameMatch.id;
-                this.value = nameMatch.displayText;
-                this.style.borderColor = 'var(--emerald)';
-            }
-        }
-    });
-    
-    searchInput.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-}
-
-function openOfferModal(productId = null, productName = '') {
-    productId = productId || null;
-    productName = productName || '';
-    
-    currentOfferProductId = productId;
-    currentOfferId = null;
-    
-    if (allProductsList.length === 0) {
-        loadAllProductsForSearch();
-    }
-    
-    const searchInput = document.getElementById('offerProductSearchInput');
-    const hiddenId = document.getElementById('offerProductIdHidden');
-    if (searchInput) {
-        searchInput.value = '';
-        searchInput.style.borderColor = 'var(--slate-200)';
-    }
-    if (hiddenId) hiddenId.value = '';
-    
-    const productNameEl = document.getElementById('offerProductName');
-    const productIdEl = document.getElementById('offerProductId');
-    const productIdInput = document.getElementById('offerProductIdInput');
-    
-    if (productId) {
-        if (productNameEl) productNameEl.textContent = productName || 'Unknown Product';
-        if (productIdEl) productIdEl.textContent = 'ID: ' + productId;
-        if (productIdInput) productIdInput.value = productId;
-        document.getElementById('existingOffersSection').style.display = 'block';
-        loadOffersForProduct(productId);
-    } else {
-        if (productNameEl) productNameEl.textContent = 'Select a product first';
-        if (productIdEl) productIdEl.textContent = '—';
-        if (productIdInput) productIdInput.value = '';
-        document.getElementById('existingOffersSection').style.display = 'none';
-        const offersList = document.getElementById('offersList');
-        if (offersList) {
-            offersList.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_select_product_view_offers') }}</p>';
-        }
-    }
-    
-    const offerForm = document.getElementById('offerForm');
-    if (offerForm) offerForm.reset();
-    const requiredQty = document.getElementById('requiredQuantity');
-    const offerQty = document.getElementById('offerQuantity');
-    const isActive = document.getElementById('isActive');
-    if (requiredQty) requiredQty.value = '1';
-    if (offerQty) offerQty.value = '1';
-    if (isActive) isActive.checked = true;
-    
-    const messageDiv = document.getElementById('offerFormMessage');
-    if (messageDiv) messageDiv.innerHTML = '';
-    
-    const deleteSection = document.getElementById('deleteOfferSection');
-    if (deleteSection) deleteSection.style.display = 'none';
-    
-    const modalEl = document.getElementById('offerModal');
-    if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-        
-        modalEl.addEventListener('shown.bs.modal', function() {
-            if (searchInput) searchInput.focus();
-        }, { once: true });
-    }
-}
-
-function loadOffersForProduct(productId) {
-    $.ajax({
-        url: `/getOffers/${productId}`,
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            displayOffersList(response);
-        },
-        error: function(xhr) {
-            console.error('Error loading offers:', xhr);
-            const offersList = document.getElementById('offersList');
-            if (offersList) {
-                offersList.innerHTML = '<p style="text-align:center;color:var(--rose);padding:1rem;">Error loading offers</p>';
-            }
-        }
-    });
-}
-
-function displayOffersList(offers) {
-    const container = document.getElementById('offersList');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    if (!offers || offers.length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:var(--slate-400);padding:1rem;">{{ __('messages.products_no_active_offers') }}</p>';
-        return;
-    }
-    
-    offers.forEach(offer => {
-        const offerText = "{{ __('messages.products_buy') }}" + " " + offer.required_quantity + " × " + "{{ __('messages.products_get') }}" + " " + offer.offer_quantity + " × " + "{{ __('messages.products_free') }}";
-        const productName = offer.offeredProduct && offer.offeredProduct.name01 ? offer.offeredProduct.name01 : 'Product';
-        const displayText = offer.offeredProduct && offer.offeredProduct.name02 ? 
-            `${productName} (${offer.offeredProduct.name02})` : productName;
-        
-        const item = document.createElement('div');
-        item.className = 'selected-item';
-        item.setAttribute('data-offer-id', offer.id);
-        item.innerHTML = `
-            <div>
-                <div class="selected-item-name">${escapeHtml(offerText)}</div>
-                <div style="font-size:0.75rem;color:var(--slate-400);">
-                    {{ __('messages.products_free_product') }} ${escapeHtml(displayText)}
-                </div>
-            </div>
-            <button type="button" class="mbtn mbtn-outline" style="padding:0.25rem 0.5rem;font-size:0.75rem;"
-                     onclick="editOffer(${offer.id}, ${offer.required_quantity}, ${offer.offer_quantity})" title="{{ __('messages.products_edit') }}">
-                <i class="bi bi-pencil"></i>
-            </button>
-        `;
-        container.appendChild(item);
-    });
-}
-
-function editOffer(offerId, reqQty, offQty) {
-    const requiredQty = document.getElementById('requiredQuantity');
-    const offerQty = document.getElementById('offerQuantity');
-    if (requiredQty) requiredQty.value = reqQty;
-    if (offerQty) offerQty.value = offQty;
-    
-    currentOfferId = offerId;
-    
-    const deleteSection = document.getElementById('deleteOfferSection');
-    if (deleteSection) deleteSection.style.display = 'block';
-    
-    const messageDiv = document.getElementById('offerFormMessage');
-    if (messageDiv) {
-        messageDiv.innerHTML = '<div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;"><i class="bi bi-info-circle-fill"></i> {{ __('messages.products_editing_offer') }}</div>';
-    }
-    
-    const offerForm = document.getElementById('offerForm');
-    if (offerForm) {
-        offerForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-function deleteOffer() {
-    if (!currentOfferId) return;
-    
-    if (!confirm('{{ __('messages.products_are_you_sure_delete_offer') }}')) return;
-    
-    $.ajax({
-        url: "{{ route('deleteOffer') }}",
-        type: 'POST',
-        data: {
-            _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            offer_id: currentOfferId
-        },
-        success: function(response) {
-            const messageDiv = document.getElementById('offerFormMessage');
-            if (messageDiv) {
-                messageDiv.innerHTML = `
-                    <div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;">
-                            <i class="bi bi-check-circle-fill"></i> {{ __('messages.products_offer_deleted') }}
-                    </div>
-                `;
-            }
-            
-            if (currentOfferProductId) {
-                loadOffersForProduct(currentOfferProductId);
-            }
-            
-            const offerForm = document.getElementById('offerForm');
-            if (offerForm) offerForm.reset();
-            const requiredQty = document.getElementById('requiredQuantity');
-            const offerQty = document.getElementById('offerQuantity');
-            if (requiredQty) requiredQty.value = '1';
-            if (offerQty) offerQty.value = '1';
-            
-            const deleteSection = document.getElementById('deleteOfferSection');
-            if (deleteSection) deleteSection.style.display = 'none';
-            
-            currentOfferId = null;
-            
-            setTimeout(() => {
-                if (messageDiv) messageDiv.innerHTML = '';
-            }, 3000);
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || "{{ __('messages.products_error_deleting_offer') }}";
-            const messageDiv = document.getElementById('offerFormMessage');
-            if (messageDiv) {
-                messageDiv.innerHTML = `
-                    <div class="alert-box">
-                        <i class="bi bi-exclamation-triangle-fill"></i> ${errorMsg}
-                    </div>
-                `;
-            }
-        }
-    });
-}
-
-function updateOfferBadgeInTable(productId, hasOffer) {
-    const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-    if (!row) return;
-    
-    const nameCell = row.querySelector('.prod-name');
-    if (!nameCell) return;
-    
-    const existingTag = nameCell.querySelector('.offer-tag');
-    if (hasOffer) {
-        if (!existingTag) {
-            const tag = document.createElement('span');
-            tag.className = 'offer-tag';
-            tag.setAttribute('title', 'Active offer');
-            tag.innerHTML = '<i class="bi bi-gift-fill"></i> Offer';
-            nameCell.appendChild(tag);
-        }
-    } else {
-        if (existingTag) existingTag.remove();
-    }
-}
-
-// ============================================================
-// DOCUMENT READY
-// ============================================================
-
-$(document).ready(function() {
-    // Load products for search
-    setTimeout(function() {
-        loadAllProductsForSearch();
-        setupProductSearch();
-    }, 500);
-    
-    // Handle offer form submission via AJAX
-    $('#offerForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const targetProductId = document.getElementById('offerProductIdHidden').value;
-        if (!targetProductId) {
-            const messageDiv = document.getElementById('offerFormMessage');
-            if (messageDiv) {
-                messageDiv.innerHTML = `
-                    <div class="alert-box">
-                        <i class="bi bi-exclamation-triangle-fill"></i> {{ __('messages.products_select_valid_product') }}
-                    </div>
-                `;
-            }
-            return;
-        }
-        
-        $('input[name="offer_product_id"]').remove();
-        $(this).append(`<input type="hidden" name="offer_product_id" value="${targetProductId}">`);
-        
-        const formData = $(this).serialize();
-        const saveBtn = $('#saveOfferBtn');
-        saveBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Saving...');
-        
-        $.ajax({
-            url: $(this).attr('action'),
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                const messageDiv = document.getElementById('offerFormMessage');
-                if (messageDiv) {
-                    messageDiv.innerHTML = `
-                        <div class="alert-box" style="background:var(--emerald-pale);border-color:var(--emerald);color:#065F46;">
-                            <i class="bi bi-check-circle-fill"></i> {{ __('messages.products_offer_saved') }}
-                        </div>
-                    `;
-                }
-                
-                if (currentOfferProductId) {
-                    loadOffersForProduct(currentOfferProductId);
-                }
-                
-                if (!currentOfferId) {
-                    const offerForm = document.getElementById('offerForm');
-                    if (offerForm) offerForm.reset();
-                    const requiredQty = document.getElementById('requiredQuantity');
-                    const offerQty = document.getElementById('offerQuantity');
-                    const searchInput = document.getElementById('offerProductSearchInput');
-                    const hiddenId = document.getElementById('offerProductIdHidden');
-                    if (requiredQty) requiredQty.value = '1';
-                    if (offerQty) offerQty.value = '1';
-                    if (searchInput) searchInput.value = '';
-                    if (hiddenId) hiddenId.value = '';
-                }
-                
-                currentOfferId = null;
-                const deleteSection = document.getElementById('deleteOfferSection');
-                if (deleteSection) deleteSection.style.display = 'none';
-                
-                updateOfferBadgeInTable(currentOfferProductId, true);
-                
-                setTimeout(() => {
-                    if (messageDiv) messageDiv.innerHTML = '';
-                }, 3000);
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || "{{ __('messages.products_error_saving_offer') }}";
-                const messageDiv = document.getElementById('offerFormMessage');
-                if (messageDiv) {
-                    messageDiv.innerHTML = `
-                        <div class="alert-box">
-                            <i class="bi bi-exclamation-triangle-fill"></i> ${errorMsg}
-                        </div>
-                    `;
-                }
-            },
-            complete: function() {
-                saveBtn.prop('disabled', false).html('<i class="bi bi-check-lg"></i> Save Offer');
-            }
+        document.querySelectorAll('.action-icon-btn.offers').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                window.location.href = '/getOffers/' + productId;
+            });
         });
-    });
-    
-    $('#deleteOfferBtn').on('click', deleteOffer);
-});
 
-// ============================================================
-// HOVER IMAGE PREVIEW
-// ============================================================
-
-(function() {
-    const tooltip = document.getElementById('imagePreviewTooltip');
-    if (!tooltip) return;
-
-    const previewImg = tooltip.querySelector('img');
-
-    document.addEventListener('mouseover', function(e) {
-        const avatar = e.target.closest('.prod-avatar');
-        if (!avatar) return;
-
-        const img = avatar.querySelector('img');
-        if (!img) {
-            tooltip.style.display = 'none';
-            return;
-        }
-
-        previewImg.src = img.src;
-        previewImg.alt = img.alt || '';
-        tooltip.style.display = 'block';
-        moveTooltip(e);
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (tooltip.style.display === 'block') {
-            moveTooltip(e);
-        }
-    });
-
-    document.addEventListener('mouseout', function(e) {
-        const avatar = e.target.closest('.prod-avatar');
-        if (!avatar) return;
-
-        const related = e.relatedTarget;
-        if (avatar.contains(related)) return;
-        tooltip.style.display = 'none';
-    });
-
-    function moveTooltip(e) {
-        const offsetX = 18;
-        const offsetY = 24;
-        let left = e.clientX + offsetX;
-        let top = e.clientY + offsetY;
-
-        const rect = tooltip.getBoundingClientRect();
-        if (left + rect.width > window.innerWidth) {
-            left = e.clientX - rect.width - offsetX;
-        }
-        if (top + rect.height > window.innerHeight) {
-            top = e.clientY - rect.height - offsetY;
-        }
-
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-    }
-})();
-
-// Run comparison automatically on page load after a delay
-setTimeout(function() {
-    // Check if we should auto-run (you can enable this)
-    // runApiComparison();
-}, 3000);
-</script>
+        document.querySelectorAll('.action-icon-btn.delete').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                if (!confirm('Are you sure you want to delete this product?')) return;
+                postForm('/dltProduct', { product_id: productId, _token: csrfToken });
+            });
+        });
+    </script>
 </body>
 </html>

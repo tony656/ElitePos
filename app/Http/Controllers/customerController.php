@@ -24,9 +24,16 @@ class customerController extends Controller
         $user = Auth()->user();
         $account = $request->query('account');
         if(!empty($account))
-            {
+        {
+            if (!is_numeric($account)) {
+                $accountModel = accountModel::where('name', $account)->first();
+                $account = $accountModel ? $accountModel->id : null;
+            }
+
+            if ($account) {
                 session(['selected_shop_id' => $account]);
             }
+        }
         $accounts = getUserAccounts();
         
         // For admin: allow account filtering from request, otherwise use session account name

@@ -45,6 +45,12 @@ class AppServiceProvider extends ServiceProvider
         BankingChip::observe(TransactionObserver::class);
         cashSubmitModel::observe(TransactionObserver::class);
 
-        View::share('systemSettings', systemModel::first());
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('system')) {
+                View::share('systemSettings', systemModel::first());
+            }
+        } catch (\Throwable $e) {
+            // ignore if system table is not available
+        }
     }
 }

@@ -3,648 +3,615 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>@lang('messages.offered_products_report')</title>
     @include("links")
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --navy: #0B1E3D;
-            --navy-mid: #112952;
-            --navy-light: #1A3A6B;
-            --amber: var(--theme-primary);
-            --amber-pale: #FEF3C7;
-            --emerald: #059669;
-            --emerald-pale: #D1FAE5;
-            --rose: #E11D48;
-            --rose-pale: #FFE4E6;
-            --violet: #7C3AED;
-            --violet-pale: #EDE9FE;
-            --sky: #0284C7;
-            --sky-pale: #E0F2FE;
-            --slate-50: #F8FAFC;
-            --slate-100: #F1F5F9;
-            --slate-200: #E2E8F0;
-            --slate-300: #CBD5E1;
-            --slate-400: #94A3B8;
-            --slate-500: #64748B;
-            --slate-600: #475569;
-            --slate-700: #334155;
-            --slate-800: #1E293B;
-            --white: #FFFFFF;
-            --radius: 12px;
-            --shadow-sm: 0 1px 3px rgba(11,30,61,.06);
-            --shadow: 0 4px 20px rgba(11,30,61,.08);
-            --shadow-lg: 0 10px 40px rgba(11,30,61,.12);
-            --shadow-xl: 0 20px 60px rgba(11,30,61,.15);
+            --navy:         #084b87;
+            --navy-mid:     #0756a6;
+            --navy-light:   #0b66b2;
+            --amber:        #0b65b1;
+            --amber-pale:   #e8f2fc;
+            --emerald:      #07866b;
+            --emerald-pale: #e5f7f1;
+            --rose:         #e5485d;
+            --rose-pale:    #fff0f1;
+            --violet:       #7844d6;
+            --violet-pale:  #f1ebff;
+            --sky:          #0874c5;
+            --sky-pale:     #e8f3ff;
+            --fuchsia:      #c026a8;
+            --fuchsia-pale: #fceafa;
+            --slate-50:     #f5f9fd;
+            --slate-100:    #edf3f9;
+            --slate-200:    #dce7f1;
+            --slate-300:    #c5d5e5;
+            --slate-400:    #8da4bb;
+            --slate-500:    #607b96;
+            --slate-600:    #45627e;
+            --slate-700:    #2d4c69;
+            --slate-800:    #183a5a;
+            --white:        #ffffff;
+            --font:         'DM Sans', system-ui, sans-serif;
+            --radius:       8px;
+            --radius-sm:    6px;
+            --shadow-sm:    0 2px 8px rgba(8, 61, 108, .06);
+            --shadow-md:    0 5px 16px rgba(8, 61, 108, .09);
+            --shadow-lg:    0 10px 28px rgba(8, 61, 108, .13);
         }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--slate-50);
+            font-family: var(--font);
+            background: #f3f7fb;
             color: var(--slate-800);
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        .main-content {
-            padding: 1.5rem;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
-        /* ══ CARD ══ */
-        .card-modern {
-            background: var(--white);
-            border: none;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            transition: box-shadow 0.3s ease;
-        }
-        
-        .card-modern:hover {
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .card-header-modern {
-            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-            color: var(--white);
-            padding: 20px 28px;
-            border-bottom: none;
+        .wrap { padding: 1.1rem 1.25rem 1.5rem; max-width: 1800px; margin: 0 auto; }
+
+        /* ── Page header ── */
+        .pg-header {
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: .25rem 0 .9rem;
+            margin-bottom: .55rem;
+            box-shadow: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-        }
-        
-        .card-header-modern h5 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.15rem;
-            letter-spacing: -0.3px;
-        }
-        
-        .card-header-modern h5 i {
-            color: var(--amber);
-            margin-right: 10px;
-        }
-        
-        .card-body-modern {
-            padding: 28px;
-        }
-
-        /* ══ STATS GRID ══ */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-        
-        .stat-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            padding: 20px 24px;
-            border: 1px solid var(--slate-200);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 1rem;
             position: relative;
-            overflow: hidden;
-            cursor: default;
+            overflow: visible;
         }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
+        .pg-header::before, .pg-header::after { display: none; }
+        .pg-left { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+        .header-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
+            flex-shrink: 0;
         }
-        
-        .stat-card:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-lg);
+        .pg-title-text h1 { font-size: 1.42rem; font-weight: 700; color: #064b86; letter-spacing: -0.35px; margin: 0; display: flex; align-items: center; gap: 0.35rem; }
+        .pg-title-text h1 span { color: #0871c2; }
+        .pg-title-text p  { font-size: .78rem; color: #647f99; font-weight: 400; letter-spacing: 0.01em; margin-top: 1px; }
+        .pg-right { display: flex; gap: 8px; align-items: center; position: relative; z-index: 1; flex-wrap: wrap; }
+
+        /* ── Buttons ── */
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: .58rem 1rem;
+            font-size: .78rem;
+            font-weight: 600;
+            background: #0866b2;
+            color: #fff;
+            border: 1px solid #0866b2;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 3px 8px rgba(8, 102, 178, .18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.01em;
         }
-        
-        .stat-card.amber::before { background: linear-gradient(90deg, var(--amber), #d97706); }
-        .stat-card.emerald::before { background: linear-gradient(90deg, var(--emerald), #047857); }
-        .stat-card.violet::before { background: linear-gradient(90deg, var(--violet), #6d28d9); }
-        .stat-card.sky::before { background: linear-gradient(90deg, var(--sky), #0369a1); }
-        
-        .stat-card .stat-top {
+        .btn-header:hover { background: #064f91; border-color: #064f91; color: #fff; transform: translateY(-1px); }
+        .btn-header:active { transform: translateY(0); }
+
+        /* ── Filters ── */
+        .filters-card {
+            background: var(--white);
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            padding: .8rem .95rem;
+            margin-bottom: .8rem;
+        }
+        .filters-row {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
+            gap: .7rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
         }
-        
-        .stat-card .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+        .filter-group { flex: 1; min-width: 140px; }
+        .filter-label {
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
+        }
+        .filter-ctrl {
+            width: 100%;
+            font-family: var(--font);
+            font-size: .78rem;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            background: #fff;
+            color: var(--slate-800);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
+        }
+        .filter-ctrl:focus {
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
+        }
+        select.filter-ctrl {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding-bottom: 1px;
+            flex-shrink: 0;
+        }
+        .btn-filter {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .55rem .9rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+            background: #0866b2;
+            color: #fff;
+        }
+        .btn-filter:hover:not(:disabled) { background: #064f91; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(8,102,178,.25); }
+        .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-reset:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+
+        /* ── Panel / Table ── */
+        .panel {
+            background: var(--white);
+            border: 1px solid #dce7f1;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 2px 7px rgba(8, 61, 108, .045);
+            overflow: hidden;
+        }
+        .panel-head {
+            padding: .75rem .9rem;
+            background: #fff;
+            border-bottom: 1px solid #dce7f1;
+        }
+        .panel-head-left { display: flex; align-items: center; gap: .6rem; }
+        .panel-head-icon {
+            width: 30px; height: 30px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; background: rgba(8,75,135,0.08); color: var(--navy-light);
             flex-shrink: 0;
-            transition: transform 0.3s ease;
         }
-        
-        .stat-card:hover .stat-icon {
-            transform: scale(1.1) rotate(-5deg);
+        .panel-title { font-size: .96rem; font-weight: 700; color: #084b87; margin: 0; }
+        .panel-title::before {
+            content: '';
+            width: 3px; height: 17px;
+            background: #0b68b4;
+            border-radius: 2px;
+            display: inline-block;
+            margin-right: .4rem;
         }
-        
-        .stat-card .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--navy);
-            line-height: 1.2;
-            letter-spacing: -0.5px;
+
+        /* Table */
+        .tbl-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e5edf5;
         }
-        
-        .stat-card .stat-label {
-            font-size: 0.75rem;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .76rem;
+        }
+        thead th {
+            background: #07569b;
+            color: #fff;
+            font-size: .66rem;
             font-weight: 600;
-            color: var(--slate-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: .015em;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(255,255,255,.13);
+            white-space: nowrap;
+            text-align: left;
         }
-        
-        .stat-card .stat-trend {
-            margin-top: 8px;
-            font-size: 0.7rem;
-            font-weight: 600;
+        thead th:last-child { text-align: right; }
+        tbody td {
+            padding: .52rem .68rem;
+            border: 1px solid #e5edf5;
+            color: #244866;
+            font-size: .74rem;
+            vertical-align: middle;
+        }
+        tbody tr:nth-child(even) td { background: #f8fbfe; }
+        tbody tr:hover td { background: #edf6ff; }
+        td.text-right { text-align: right; }
+
+        .inv-badge {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 2px 10px;
+            padding: .22rem .55rem;
             border-radius: 20px;
-        }
-        
-        .stat-trend.up { color: var(--emerald); background: var(--emerald-pale); }
-        .stat-trend.down { color: var(--rose); background: var(--rose-pale); }
-        .stat-trend.neutral { color: var(--slate-500); background: var(--slate-100); }
-
-        /* ══ FILTER SECTION ══ */
-        .filter-section {
-            background: var(--slate-50);
-            padding: 20px 24px;
-            border-radius: var(--radius);
-            margin-bottom: 24px;
-            border: 1px solid var(--slate-200);
-        }
-        
-        .filter-section .form-label {
-            font-weight: 600;
-            color: var(--slate-600);
-            font-size: 0.8rem;
-            margin-bottom: 6px;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        
-        .filter-section .form-control {
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .filter-section .form-control:focus {
-            border-color: var(--amber);
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
-        }
-
-        /* ══ BUTTONS ══ */
-        .btn-primary-custom {
-            background: var(--amber);
-            border: none;
-            color: var(--navy);
+            background: var(--emerald-pale);
+            color: var(--emerald);
+            font-size: .68rem;
             font-weight: 700;
-            padding: 9px 24px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .btn-primary-custom:hover {
-            background: #d97706;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-            color: var(--navy);
-        }
-        
-        .btn-outline-secondary-custom {
-            border: 1.5px solid var(--slate-300);
-            color: var(--slate-600);
-            padding: 9px 24px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: transparent;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .btn-outline-secondary-custom:hover {
-            background: var(--slate-100);
-            border-color: var(--slate-400);
+            letter-spacing: .03em;
         }
 
-        .btn-light-custom {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: var(--white);
-            padding: 8px 18px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-size: 0.85rem;
+        /* Action buttons */
+        .action-cell { display: flex; gap: .28rem; justify-content: center; flex-wrap: wrap; }
+        .action-icon-btn {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            border: 0;
+            color: #fff !important;
+            background: #0870bd !important;
+            font-size: .75rem;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            text-decoration: none;
+            justify-content: center;
         }
-        
-        .btn-light-custom:hover {
-            background: rgba(255,255,255,0.25);
-            color: var(--white);
-        }
+        .action-icon-btn.view   { background: var(--sky) !important; }
+        .action-icon-btn.delete { background: var(--rose) !important; }
+        .action-icon-btn:hover { background: #064f91 !important; transform: translateY(-1px); }
+        .action-icon-btn.delete:hover { background: var(--rose) !important; }
+        .action-icon-btn.view:hover { background: #0756a6 !important; }
 
-        /* ══ TABLE ══ */
-        .table-modern {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        
-        .table-modern thead {
-            background: var(--navy);
-        }
-        
-        .table-modern thead th {
-            padding: 14px 18px;
-            text-align: left;
-            color: rgba(255,255,255,0.8);
-            font-weight: 600;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        
-        .table-modern tbody td {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--slate-100);
-            color: var(--slate-700);
-            vertical-align: middle;
-        }
-        
-        .table-modern tbody tr {
-            transition: background 0.2s ease;
-        }
-        
-        .table-modern tbody tr:hover {
-            background: var(--slate-50);
-        }
-        
-        .table-modern tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* ══ BADGES ══ */
-        .offer-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--amber-pale);
-            color: #92400e;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        
+        /* Status toggle badge */
         .badge-active {
             background: var(--emerald-pale);
             color: var(--emerald);
-            padding: 5px 14px;
+            padding: .22rem .55rem;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .03em;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
+            gap: .3rem;
         }
-        
-        .badge-active:hover {
-            transform: scale(1.05);
-        }
-        
         .badge-inactive {
             background: var(--rose-pale);
             color: var(--rose);
-            padding: 5px 14px;
+            padding: .22rem .55rem;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .badge-inactive:hover {
-            transform: scale(1.05);
-        }
-
-        /* ══ ACTION BUTTONS ══ */
-        .action-btns {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-edit {
-            background: var(--sky-pale);
-            color: var(--sky);
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .btn-edit:hover {
-            background: var(--sky);
-            color: var(--white);
-            transform: translateY(-1px);
-        }
-        
-        .btn-delete {
-            background: var(--rose-pale);
-            color: var(--rose);
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .btn-delete:hover {
-            background: var(--rose);
-            color: var(--white);
-            transform: translateY(-1px);
-        }
-
-        /* ══ EMPTY STATE ══ */
-        .empty-state {
-            padding: 80px 20px;
-            text-align: center;
-        }
-        
-        .empty-state i {
-            font-size: 4.5rem;
-            color: var(--slate-300);
-            margin-bottom: 16px;
-        }
-        
-        .empty-state h5 {
-            font-size: 1.1rem;
-            color: var(--slate-600);
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .empty-state p {
-            color: var(--slate-400);
-            font-size: 0.9rem;
-        }
-
-        /* ══ MODAL ══ */
-        .modal-content {
-            border-radius: var(--radius);
-            border: none;
-            box-shadow: var(--shadow-xl);
-        }
-        
-        .modal-header {
-            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-            color: var(--white);
-            border-bottom: none;
-            padding: 18px 24px;
-        }
-        
-        .modal-header .modal-title {
+            font-size: .68rem;
             font-weight: 700;
-            font-size: 1.1rem;
-        }
-        
-        .modal-header .modal-title i {
-            color: var(--amber);
-            margin-right: 8px;
-        }
-        
-        .modal-header .btn-close {
-            filter: brightness(0) invert(1);
-            opacity: 0.5;
-        }
-        
-        .modal-header .btn-close:hover {
-            opacity: 1;
-        }
-        
-        .modal-body {
-            padding: 28px;
-        }
-        
-        .modal-footer {
-            border-top: 1px solid var(--slate-200);
-            padding: 16px 24px;
-        }
-        
-        .modal .form-label {
-            font-weight: 600;
-            color: var(--slate-600);
-            font-size: 0.8rem;
-            margin-bottom: 6px;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        
-        .modal .form-control {
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .modal .form-control:focus {
-            border-color: var(--amber);
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
-        }
-        
-        .modal .form-check-input:checked {
-            background-color: var(--amber);
-            border-color: var(--amber);
-        }
-        
-        .modal .form-check-input:focus {
-            border-color: var(--amber);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+            letter-spacing: .03em;
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
         }
 
-        .modal .form-check-label {
-            color: var(--slate-600);
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            border: 1px dashed #c5d5e5;
+            border-radius: var(--radius-sm);
+            background: #f8fbfe;
+            margin: 1rem;
+        }
+        .empty-icon { font-size: 2.2rem; margin-bottom: .6rem; opacity: .35; color: var(--slate-400); }
+        .empty-state h4 { font-size: .9rem; font-weight: 600; color: var(--slate-600); margin-bottom: 4px; }
+        .empty-state p  { font-size: .78rem; color: var(--slate-400); }
+
+        /* ── Alerts ── */
+        .alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .7rem .9rem;
+            border-radius: var(--radius);
+            margin-bottom: .85rem;
+            font-size: .78rem;
             font-weight: 500;
         }
-
-        /* ══ OFFER PRODUCT SEARCH ══ */
-        .offer-search-wrap {
-            position: relative;
+        .alert-success { background: var(--emerald-pale); color: #056f58; border-left: 3px solid var(--emerald); }
+        .alert-danger  { background: var(--rose-pale);    color: #c9314a; border-left: 3px solid var(--rose); }
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            font-size: 1.05rem;
+            opacity: 0.6;
+            line-height: 1;
+            font-family: inherit;
         }
+        .close-btn:hover { opacity: 1; }
 
-        .offer-search-results {
+        /* ── Modal ── */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: 0 10px 28px rgba(8, 61, 108, .13);
+        }
+        .modal-header {
+            background: linear-gradient(120deg, #064b86, #0870bd);
+            color: #fff;
+            border-bottom: none;
+            padding: .75rem .9rem;
+        }
+        .modal-header .modal-title { font-size: .96rem; font-weight: 700; color: #fff; margin: 0; }
+        .modal-header .btn-close { filter: invert(1); opacity: .7; }
+        .modal-header .btn-close:hover { opacity: 1; }
+        .modal-body { padding: .9rem; font-size: .78rem; }
+        .modal-footer { border-top: 1px solid #dce7f1; padding: .75rem .9rem; background: #fff; }
+
+        .field { margin-bottom: 1rem; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label {
+            display: block;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--slate-500);
+            margin-bottom: .4rem;
+        }
+        .field-label .req { color: var(--rose); }
+        .field-input {
+            width: 100%;
+            padding: .58rem .8rem .58rem 2.35rem;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            font-family: inherit;
+        }
+        .field-input:focus {
+            border-color: #0b68b4;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(11,104,180,.09);
+        }
+        .field-input::placeholder { color: var(--slate-400); }
+        .field-input.readonly { background: #f8fbfe; color: var(--slate-500); }
+        select.field-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%238da4bb' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3E/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            padding-right: 2.25rem;
+            cursor: pointer;
+        }
+        textarea.field-input { resize: vertical; min-height: 72px; }
+
+        .modal-search-wrap { position: relative; }
+        .modal-search-wrap i {
             position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            z-index: 1050;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-400);
+            font-size: .85rem;
+            pointer-events: none;
+        }
+        .modal-search-wrap .field-input { padding-left: 2.35rem; }
+
+        .cust-results {
+            position: fixed;
+            z-index: 1000;
             background: var(--white);
-            border: 1.5px solid var(--slate-200);
-            border-radius: 8px;
-            margin-top: 4px;
-            max-height: 220px;
+            border: 1px solid #0b66b2;
+            border-radius: var(--radius);
+            max-height: 300px;
             overflow-y: auto;
             box-shadow: var(--shadow-lg);
+            display: none;
+            width: 340px;
         }
-
-        .offer-search-item {
-            padding: 10px 14px;
+        .cust-item {
+            padding: 0.6rem 0.9rem;
             cursor: pointer;
             border-bottom: 1px solid var(--slate-100);
             transition: background 0.15s;
-            font-size: 0.9rem;
         }
-
-        .offer-search-item:last-child {
-            border-bottom: none;
-        }
-
-        .offer-search-item:hover {
-            background: var(--slate-50);
-        }
-
-        .offer-search-item-name {
-            font-weight: 600;
-            color: var(--slate-800);
-            font-size: 0.875rem;
-        }
-
-        .offer-search-item-stock {
-            font-size: 0.75rem;
-            color: var(--slate-400);
-            margin-top: 2px;
-        }
-
-        /* ══ ALERTS ══ */
-        .alert {
-            border: none;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-weight: 500;
-        }
-        
-        .alert-success {
+        .cust-item:last-child { border-bottom: none; }
+        .cust-item:hover, .cust-item.selected { background: #edf6ff; border-left: 3px solid #0b68b4; padding-left: calc(0.9rem - 3px); }
+        .cust-item-name { font-size: .8rem; font-weight: 600; color: var(--navy); }
+        .cust-item-sub { font-size: .72rem; color: var(--slate-500); font-weight: 600; margin-top: 2px; }
+        .cust-item-none { padding: 1rem; text-align: center; font-size: .78rem; color: var(--slate-400); }
+        .selected-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
             background: var(--emerald-pale);
             color: var(--emerald);
-            border-left: 4px solid var(--emerald);
-        }
-        
-        .alert-danger {
-            background: var(--rose-pale);
-            color: var(--rose);
-            border-left: 4px solid var(--rose);
+            padding: .22rem .55rem;
+            border-radius: 20px;
+            font-size: .68rem;
+            font-weight: 700;
         }
 
-        /* ══ RESPONSIVE ══ */
-        @media (max-width: 1200px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .input-prefix-wrap {
+            display: flex;
+            border: 1px solid #d4e1ed;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
+        .input-prefix-wrap:focus-within { border-color: #0b68b4; box-shadow: 0 0 0 3px rgba(11,104,180,.09); }
+        .input-prefix {
+            background: var(--slate-100);
+            padding: .58rem .8rem;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            border-right: 1px solid #d4e1ed;
+            white-space: nowrap;
+        }
+        .input-prefix-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: .58rem .8rem;
+            font-family: inherit;
+            font-size: .78rem;
+            color: var(--slate-800);
+            background: transparent;
+        }
+
+        .modal-footer-custom {
+            padding: .75rem .9rem;
+            border-top: 1px solid #dce7f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
+        }
+        .btn-cancel {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: 1px solid #d4e1ed;
+            background: transparent;
+            font-size: .78rem;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+        .btn-cancel:hover { background: #eff6ff; border-color: #0b68b4; color: #0756a6; }
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .55rem .9rem;
+            border-radius: var(--radius);
+            border: none;
+            background: var(--emerald);
+            color: #fff;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+        .btn-submit:hover { background: #056f58; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(7,134,107,.28); }
+
+        /* Offer search results */
+        .offer-search-wrap { position: relative; }
+        .offer-search-results {
+            position: fixed;
+            z-index: 1000;
+            background: var(--white);
+            border: 1px solid #0b66b2;
+            border-radius: var(--radius);
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            width: 340px;
+        }
+        .offer-search-item {
+            padding: 0.6rem 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--slate-100);
+            transition: background 0.15s;
+        }
+        .offer-search-item:last-child { border-bottom: none; }
+        .offer-search-item:hover, .offer-search-item.selected { background: #edf6ff; border-left: 3px solid #0b68b4; padding-left: calc(0.9rem - 3px); }
+        .offer-search-item-name { font-size: .8rem; font-weight: 600; color: var(--navy); }
+        .offer-search-item-stock { font-size: .72rem; color: var(--slate-500); margin-top: 2px; }
+
+        /* Required items list */
+        .required-item-row {
+            display: flex;
+            gap: .4rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: .5rem;
+        }
+        .required-item-row .field { margin-bottom: 0; }
+        .required-item-row .field-label { margin-bottom: .25rem; font-size: .66rem; }
+
+        /* Required item remove button */
+        .btn-remove-req {
+            width: 28px;
+            height: 27px;
+            border-radius: 5px;
+            background: #fff0f1;
+            color: var(--rose);
+            border: 1px solid #f5b8c2;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .78rem;
+        }
+        .btn-remove-req:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+
         @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
-            }
-            
-            .card-body-modern {
-                padding: 16px;
-            }
-            
-            .card-header-modern {
-                padding: 16px 20px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            
-            .stat-card .stat-value {
-                font-size: 1.5rem;
-            }
-            
-            .card-header-modern {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .filter-section .row {
-                flex-direction: column;
-            }
-            
-            .modal-body {
-                padding: 16px;
-            }
-            
-            .action-btns {
-                flex-direction: column;
-                gap: 4px;
-            }
-            
-            .table-modern {
-                font-size: 0.8rem;
-            }
-            
-            .table-modern thead th,
-            .table-modern tbody td {
-                padding: 10px 12px;
-            }
-            
-            .btn-light-custom {
-                width: 100%;
-                justify-content: center;
-            }
+            .wrap { padding: .8rem; }
+            .pg-header { padding: .25rem 0 .7rem; }
+            .filters-row { flex-direction: column; align-items: stretch; }
+            .filter-actions { width: 100%; justify-content: flex-end; }
+            .table-wrap { max-height: none; }
         }
     </style>
 </head>
@@ -652,135 +619,169 @@
     @include("sidenav")
 
     <main class="main-content">
-        <div class="card-modern">
-            <!-- Header -->
-            <div class="card-header-modern">
-                <h5><i class="bi bi-gift"></i> @lang('messages.offered_products_report')</h5>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="btn-light-custom" data-bs-toggle="modal" data-bs-target="#createOfferModal">
-                        <i class="bi bi-plus-circle"></i> @lang('messages.create_offer')
+        {{-- ── Alerts ── --}}
+        @if(session('success'))
+        <div class="alert alert-success">
+            <span>{{ session('success') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert alert-danger">
+            <span>{{ session('error') }}</span>
+            <button class="close-btn" onclick="this.closest('.alert').remove()">×</button>
+        </div>
+        @endif
+
+        <div class="wrap">
+
+            {{-- Page header --}}
+            <div class="pg-header">
+                <div class="pg-left">
+                    <div class="header-icon"><i class="bi bi-gift"></i></div>
+                    <div class="pg-title-text">
+                        <h1>@lang('messages.offered_products_report')</h1>
+                        <p>Manage product offers — buy X get Y free</p>
+                    </div>
+                </div>
+                <div class="pg-right">
+                    <button class="btn-header" data-bs-toggle="modal" data-bs-target="#createOfferModal">
+                        <i class="bi bi-plus-lg"></i> @lang('messages.create_offer')
                     </button>
-                    <a href="{{ url('shopReport') }}" class="btn-light-custom">
+                    <a href="{{ url('shopReport') }}" class="btn-header" style="background:transparent; color:var(--slate-500); border-color:transparent; box-shadow:none;">
                         <i class="bi bi-arrow-left"></i> @lang('messages.back_to_reports')
                     </a>
                 </div>
             </div>
-            
-            <div class="card-body-modern">
-                <!-- Filter Section -->
-                <div class="filter-section">
-                    <form method="GET" action="{{ url('offers') }}" class="row g-3 align-items-end">
-                        <div class="col-md-6">
-                            <label class="form-label">@lang('messages.products_select_shop')</label>
-                            <select name="shop" id="offerShopSelect" class="form-control" onchange="this.form.submit()">
+
+            {{-- Filters --}}
+            <div class="filters-card">
+                <form method="GET" action="{{ url('offers') }}">
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">@lang('messages.products_select_shop')</label>
+                            <select name="shop" id="offerShopSelect" class="filter-ctrl" onchange="this.form.submit()">
                                 <option value="">-- @lang('messages.products_select_shop') --</option>
                                 @foreach($accounts as $shop)
-                                    <option value="{{ $shop['id'] }}" {{ $shop['id'] == getCurrentShopId() ? 'selected' : '' }}>{{ $shop['name'] }}</option>
+                                <option value="{{ $shop['id'] }}" {{ $shop['id'] == getCurrentShopId() ? 'selected' : '' }}>{{ $shop['name'] }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button type="submit" class="btn-primary-custom">
-                                    <i class="bi bi-filter"></i> @lang('messages.filter')
-                                </button>
-                                <a href="{{ url('offers') }}" class="btn-outline-secondary-custom">
-                                    <i class="bi bi-arrow-counterclockwise"></i> @lang('messages.reset')
-                                </a>
-                            </div>
+                        <div class="filter-actions">
+                            <button type="submit" class="btn-filter">
+                                <i class="bi bi-funnel"></i> @lang('messages.filter')
+                            </button>
+                            <a href="{{ url('offers') }}" class="btn-reset">
+                                <i class="bi bi-x"></i> @lang('messages.reset')
+                            </a>
                         </div>
-                    </form>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Offers table --}}
+            <div class="panel">
+                <div class="panel-head">
+                    <div class="panel-head-left">
+                        <div class="panel-head-icon"><i class="bi bi-gift"></i></div>
+                        <span class="panel-title">@lang('messages.offered_products_report')</span>
+                    </div>
                 </div>
 
-                <!-- Table -->
-                @if(isset($items) && count($items) > 0 || isset($offers) && count($offers) > 0)
-                    <div class="table-responsive">
-                        <table class="table-modern" id="offersTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th style="width: 20%;">@lang('messages.item_to_buy')</th>
-                                    <th style="width: 20%;">@lang('messages.item_to_give_free')</th>
-                                    <th style="width: 12%;">@lang('messages.products_required_quantity_buy')</th>
-                                    <th style="width: 12%;">@lang('messages.products_offer_quantity_get_free')</th>
-                                    <th style="width: 12%;">@lang('messages.status')</th>
-                                    <th style="width: 19%;">@lang('messages.actions')</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $offersList = isset($items) ? $items : (isset($offers) ? $offers : collect());
-                                @endphp
-                                @foreach($offersList as $item)
-                                @php
-                                    $firstReqItem = $item->requiredItems->first();
-                                    $firstReqQty = $firstReqItem ? $firstReqItem->required_quantity : 1;
-                                    $firstReqProductId = $firstReqItem ? $firstReqItem->product_id : $item->product_id;
-                                @endphp
-                                <tr data-id="{{ $item->id }}">
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>
+                @php
+                    $offersList = isset($items) ? $items : (isset($offers) ? $offers : collect());
+                @endphp
+
+                @if(count($offersList) > 0)
+                <div class="tbl-wrap">
+                    <table id="offersTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">#</th>
+                                <th style="width: 22%;">@lang('messages.item_to_buy')</th>
+                                <th style="width: 22%;">@lang('messages.item_to_give_free')</th>
+                                <th style="width: 14%;">@lang('messages.products_required_quantity_buy')</th>
+                                <th style="width: 14%;">@lang('messages.products_offer_quantity_get_free')</th>
+                                <th style="width: 12%;">@lang('messages.status')</th>
+                                <th style="width: 8%;" class="text-right">@lang('messages.actions')</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($offersList as $item)
+                            @php
+                                $firstReqItem = $item->requiredItems->first();
+                                $firstReqQty = $firstReqItem ? $firstReqItem->required_quantity : 1;
+                                $firstReqProductId = $firstReqItem ? $firstReqItem->product_id : $item->product_id;
+                            @endphp
+                            <tr data-id="{{ $item->id }}">
+                                <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    <div>
                                         <strong>{{ $products[$firstReqProductId] ?? __('messages.unknown_product') }}</strong>
-                                        <div style="font-size: 0.7rem; color: var(--slate-400);">ID: {{ $firstReqProductId }}</div>
-                                    </td>
-                                    <td>
-                                        {{ $products[$item->offer_product_id] ?? __('messages.unknown_product') }}
-                                        <div style="font-size: 0.7rem; color: var(--slate-400);">ID: {{ $item->offer_product_id }}</div>
-                                    </td>
-                                    <td>
-                                        <span class="offer-badge">
-                                            <i class="bi bi-gift"></i> {{ number_format($firstReqQty) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ number_format($item->offer_quantity) }}</td>
-                                    <td>
-                                        <button class="status-toggle" data-active="{{ $item->is_active ? '1' : '0' }}" data-id="{{ $item->id }}" title="@lang('messages.products_offer_active')">
-                                            @if($item->is_active)
-                                                <span class="badge-active"><i class="bi bi-check-circle-fill"></i> @lang('messages.active')</span>
-                                            @else
-                                                <span class="badge-inactive"><i class="bi bi-x-circle-fill"></i> @lang('messages.inactive')</span>
-                                            @endif
+                                        <div style="font-size: .68rem; color: var(--slate-400);">ID: {{ $firstReqProductId }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ $products[$item->offer_product_id] ?? __('messages.unknown_product') }}</strong>
+                                        <div style="font-size: .68rem; color: var(--slate-400);">ID: {{ $item->offer_product_id }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="inv-badge">
+                                        <i class="bi bi-gift"></i> {{ number_format($firstReqQty) }}
+                                    </span>
+                                </td>
+                                <td>{{ number_format($item->offer_quantity) }}</td>
+                                <td>
+                                    <button class="status-toggle" data-active="{{ $item->is_active ? '1' : '0' }}" data-id="{{ $item->id }}" title="@lang('messages.products_offer_active')" style="background:none; border:none; cursor:pointer; padding:0;">
+                                        @if($item->is_active)
+                                            <span class="badge-active"><i class="bi bi-check-circle-fill"></i> @lang('messages.active')</span>
+                                        @else
+                                            <span class="badge-inactive"><i class="bi bi-x-circle-fill"></i> @lang('messages.inactive')</span>
+                                        @endif
+                                    </button>
+                                </td>
+                                <td class="text-right">
+                                    <div class="action-cell">
+                                        <button class="action-icon-btn view edit-btn" title="Edit"
+                                            data-id="{{ $item->id }}"
+                                            data-product_id="{{ $firstReqProductId }}"
+                                            data-offer_product_id="{{ $item->offer_product_id }}"
+                                            data-required_quantity="{{ $firstReqQty }}"
+                                            data-offer_quantity="{{ $item->offer_quantity }}"
+                                            data-is_active="{{ $item->is_active ? '1' : '0' }}"
+                                            data-account="{{ $item->account }}"
+                                            data-required_items="{{ json_encode($item->requiredItems->map(function($ri) {
+                                                return ['product_id' => $ri->product_id, 'required_quantity' => $ri->required_quantity];
+                                            })->toArray()) }}">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                    </td>
-                                    <td>
-                                        <div class="action-btns">
-                                            <button class="btn-edit edit-btn"
-                                                data-id="{{ $item->id }}"
-                                                data-product_id="{{ $firstReqProductId }}"
-                                                data-offer_product_id="{{ $item->offer_product_id }}"
-                                                data-required_quantity="{{ $firstReqQty }}"
-                                                data-offer_quantity="{{ $item->offer_quantity }}"
-                                                data-is_active="{{ $item->is_active ? '1' : '0' }}"
-                                                data-account="{{ $item->account }}"
-                                                data-required_items="{{ json_encode($item->requiredItems->map(function($ri) {
-                                                    return ['product_id' => $ri->product_id, 'required_quantity' => $ri->required_quantity];
-                                                })->toArray()) }}">
-                                                <i class="bi bi-pencil"></i> Edit
-                                            </button>
-                                            <button class="btn-delete delete-btn" data-id="{{ $item->id }}">
-                                                <i class="bi bi-trash"></i> @lang('messages.delete')
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                        <button class="action-icon-btn delete delete-btn" title="@lang('messages.delete')" data-id="{{ $item->id }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 @else
-                    <div class="empty-state">
-                        <i class="bi bi-gift"></i>
-                        <h5>@lang('messages.no_offered_products_found')</h5>
-                        <p>@lang('messages.try_adjusting_date_range')</p>
-                    </div>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="bi bi-gift"></i></div>
+                    <h4>@lang('messages.no_offered_products_found')</h4>
+                    <p>@lang('messages.try_adjusting_date_range')</p>
+                </div>
                 @endif
             </div>
+
         </div>
     </main>
 
-    <!-- Create Offer Modal -->
+    {{-- Create Offer Modal --}}
     <div class="modal fade" id="createOfferModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
@@ -788,96 +789,71 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <form method="POST" action="{{ route('saveOffer') }}" id="createOfferForm">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_select_shop') <span class="req">*</span></label>
+                            <select name="account" id="offerShopSelectCreate" class="field-input" required>
+                                <option value="">-- @lang('messages.products_select_shop') --</option>
+                                @foreach($accounts as $shop)
+                                <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                    @endif
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="bi bi-exclamation-circle-fill me-2"></i>
-                            {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
-                    
-                    <form method="POST" action="{{ route('saveOffer') }}" id="createOfferForm">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">@lang('messages.products_select_shop')</label>
-                                <select name="account" id="offerShopSelectCreate" class="form-control" required>
-                                    <option value="">-- @lang('messages.products_select_shop') --</option>
-                                    @foreach($accounts as $shop)
-                                        <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 offer-search-wrap">
-                                <label class="form-label">@lang('messages.item_to_give_free')</label>
-                                <input type="text" id="freeProductSearch" class="form-control" placeholder="@lang('messages.type_product_name')" autocomplete="off">
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.item_to_give_free') <span class="req">*</span></label>
+                            <div class="offer-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="freeProductSearch" class="field-input" placeholder="@lang('messages.type_product_name')" autocomplete="off">
                                 <input type="hidden" name="offer_product_id" id="freeProductId">
-                                <div id="freeSearchResults" class="offer-search-results" style="display:none;"></div>
                             </div>
+                            <div class="offer-search-results" id="freeSearchResults"></div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_offer_quantity_get_free') <span class="req">*</span></label>
+                            <input type="number" name="offer_quantity" class="field-input" value="1" min="1" required>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.item_to_buy') <span class="req">*</span></label>
+                            <div class="offer-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="requiredProductSearch" class="field-input" placeholder="@lang('messages.type_product_name')" autocomplete="off">
+                                <input type="hidden" name="required_product_id" id="requiredProductId">
                             </div>
-                            <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">@lang('messages.products_offer_quantity_get_free')</label>
-                                <input type="number" name="offer_quantity" class="form-control" value="1" min="1" required>
-                            </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <div class="form-check" style="padding-bottom:0.5rem;">
-                                    <input type="checkbox" name="is_active" id="isActiveOffer" checked class="form-check-input">
-                                    <label class="form-check-label" for="isActiveOffer">@lang('messages.products_offer_active')</label>
-                                </div>
-                            </div>
-                            </div>
-                            <div class="row g-3">
-                            <div class="col-md-12">
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
-                                    <label class="form-label" style="margin-bottom:0;font-weight:700;">Required Items</label>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" id="addRequiredItemBtn" style="border-radius:8px;font-weight:600;">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </button>
-                                </div>
-                                <div id="requiredItemsList">
-                                    <div class="required-item-row" style="display:grid;grid-template-columns:1fr 100px 32px;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
-                                        <div class="offer-search-wrap">
-                                            <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">@lang('messages.item_to_buy')</label>
-                                            <input type="text" class="form-control req-item-search" placeholder="@lang('messages.type_product_name')" autocomplete="off">
-                                            <input type="hidden" name="required_items[0][product_id]" class="req-item-id">
-                                            <div class="offer-search-results req-item-results" style="display:none;"></div>
-                                        </div>
-                                        <div>
-                                            <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">@lang('messages.products_required_quantity_buy')</label>
-                                            <input type="number" name="required_items[0][required_quantity]" class="form-control req-item-qty" value="1" min="1" required>
-                                        </div>
-                                        <div>
-                                            <button type="button" class="btn btn-sm btn-outline-danger remove-req-item-btn" style="border-radius:8px;display:none;" title="Remove">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-12" style="margin-top:0.75rem;">
-                                <button type="submit" class="btn btn-primary w-100" style="border-radius:8px;font-weight:600;">
-                                    <i class="bi bi-check-lg"></i> @lang('messages.products_save_offer')
-                                </button>
+                            <div class="offer-search-results" id="requiredSearchResults"></div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_required_quantity_buy') <span class="req">*</span></label>
+                            <input type="number" name="required_quantity" class="field-input" value="1" min="1" required>
+                        </div>
+
+                        <div class="field">
+                            <div class="form-check" style="padding-bottom:0;">
+                                <input type="checkbox" name="is_active" id="isActiveOffer" checked class="form-check-input" style="width:1.1rem; height:1.1rem; margin-top:.05rem;">
+                                <label class="form-check-label" for="isActiveOffer" style="margin-left:.4rem; font-size:.78rem; font-weight:600; color:var(--slate-800); cursor:pointer;">@lang('messages.products_offer_active')</label>
                             </div>
                         </div>
-                    </form>
-                </div>
+
+                    </div>
+                    <div class="modal-footer-custom">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-lg"></i> @lang('messages.products_save_offer')
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Edit Offer Modal -->
+    {{-- Edit Offer Modal --}}
     <div class="modal fade" id="editOfferModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
@@ -886,75 +862,69 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="editOfferMessage" style="margin-bottom: 1rem;"></div>
+                    <div id="editOfferMessage" style="margin-bottom: .75rem;"></div>
                     <form method="POST" action="" id="editOfferForm">
                         @csrf
                         @method('PATCH')
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">@lang('messages.products_select_shop')</label>
-                                <select name="account" id="editOfferShopSelect" class="form-control" required>
-                                    @foreach($accounts as $shop)
-                                        <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 offer-search-wrap">
-                                <label class="form-label">@lang('messages.item_to_give_free')</label>
-                                <input type="text" id="editFreeProductSearch" class="form-control" placeholder="@lang('messages.type_product_name')" autocomplete="off">
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_select_shop') <span class="req">*</span></label>
+                            <select name="account" id="editOfferShopSelect" class="field-input" required>
+                                @foreach($accounts as $shop)
+                                <option value="{{ $shop['id'] }}">{{ $shop['name'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.item_to_give_free') <span class="req">*</span></label>
+                            <div class="offer-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="editFreeProductSearch" class="field-input" placeholder="@lang('messages.type_product_name')" autocomplete="off">
                                 <input type="hidden" name="offer_product_id" id="editFreeProductId">
-                                <div id="editFreeSearchResults" class="offer-search-results" style="display:none;"></div>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">@lang('messages.products_offer_quantity_get_free')</label>
-                                <input type="number" name="offer_quantity" id="editOfferQuantity" class="form-control" value="1" min="1" required>
+                            <div class="offer-search-results" id="editFreeSearchResults"></div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_offer_quantity_get_free') <span class="req">*</span></label>
+                            <input type="number" name="offer_quantity" id="editOfferQuantity" class="field-input" value="1" min="1" required>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.item_to_buy') <span class="req">*</span></label>
+                            <div class="offer-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="editRequiredProductSearch" class="field-input" placeholder="@lang('messages.type_product_name')" autocomplete="off">
+                                <input type="hidden" name="required_product_id" id="editRequiredProductId">
                             </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="form-check" style="padding-bottom:0.5rem;">
-                                    <input type="checkbox" name="is_active" id="editIsActiveOffer" class="form-check-input">
-                                    <label class="form-check-label" for="editIsActiveOffer">@lang('messages.products_offer_active')</label>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
-                                    <label class="form-label" style="margin-bottom:0;font-weight:700;">Required Items</label>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" id="editAddRequiredItemBtn" style="border-radius:8px;font-weight:600;">
-                                        <i class="bi bi-plus-lg"></i> Add
-                                    </button>
-                                </div>
-                                <div id="editRequiredItemsList">
-                                    <div class="required-item-row" style="display:grid;grid-template-columns:1fr 100px 32px;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
-                                        <div class="offer-search-wrap">
-                                            <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Item to Buy</label>
-                                            <input type="text" class="form-control edit-req-item-search" placeholder="Type product name" autocomplete="off">
-                                            <input type="hidden" name="required_items[0][product_id]" class="edit-req-item-id">
-                                            <div class="offer-search-results edit-req-item-results" style="display:none;"></div>
-                                        </div>
-                                        <div>
-                                            <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Qty</label>
-                                            <input type="number" name="required_items[0][required_quantity]" class="form-control edit-req-item-qty" value="1" min="1" required>
-                                        </div>
-                                        <div>
-                                            <button type="button" class="btn btn-sm btn-outline-danger edit-remove-req-item-btn" style="border-radius:8px;display:none;" title="Remove">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-12" style="margin-top:0.75rem;">
-                                <button type="submit" class="btn btn-primary w-100" style="border-radius:8px;font-weight:600;">
-                                    <i class="bi bi-check-lg"></i> Update Offer
-                                </button>
+                            <div class="offer-search-results" id="editRequiredSearchResults"></div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label">@lang('messages.products_required_quantity_buy') <span class="req">*</span></label>
+                            <input type="number" name="required_quantity" id="editRequiredQuantity" class="field-input" value="1" min="1" required>
+                        </div>
+
+                        <div class="field">
+                            <div class="form-check" style="padding-bottom:0;">
+                                <input type="checkbox" name="is_active" id="editIsActiveOffer" class="form-check-input" style="width:1.1rem; height:1.1rem; margin-top:.05rem;">
+                                <label class="form-check-label" for="editIsActiveOffer" style="margin-left:.4rem; font-size:.78rem; font-weight:600; color:var(--slate-800); cursor:pointer;">@lang('messages.products_offer_active')</label>
                             </div>
                         </div>
-                    </form>
-                </div>
+
+                    </div>
+                    <div class="modal-footer-custom">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-lg"></i> Update Offer
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    {{-- Delete Confirmation Modal --}}
     <div class="modal fade" id="deleteOfferModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -965,13 +935,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p style="font-size: 1rem; margin-bottom: 0;">
+                    <p style="font-size: .78rem; margin-bottom: 0;">
                         @lang('messages.products_are_you_sure_delete_offer')
                     </p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline-secondary-custom" data-bs-dismiss="modal">@lang('messages.cancel')</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteOfferBtn" style="padding: 9px 24px; border-radius: 8px; font-weight: 600;">
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">@lang('messages.cancel')</button>
+                    <button type="button" class="btn-submit" style="background:var(--rose);" id="confirmDeleteOfferBtn">
                         <i class="bi bi-trash"></i> @lang('messages.delete')
                     </button>
                 </div>
@@ -979,538 +949,322 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    let offerProductsCache = {};
+        let offerProductsCache = {};
 
-    function loadOfferProducts(accountId) {
-        if (!accountId) return Promise.resolve();
-        const cacheKey = 'shop_' + accountId;
-        if (offerProductsCache[cacheKey]) {
-            return Promise.resolve(offerProductsCache[cacheKey]);
-        }
-        return fetch('{{ url('search-products-for-offer') }}?account=' + accountId + '&q=')
-            .then(res => res.json())
-            .then(data => {
-                offerProductsCache[cacheKey] = data.results || [];
-                return offerProductsCache[cacheKey];
-            })
-            .catch(() => {
-                return [];
-            });
-    }
-
-    function setupOfferSearch(inputId, resultsId, hiddenId) {
-        const searchInput = document.getElementById(inputId);
-        const resultsDiv = document.getElementById(resultsId);
-        const hiddenInput = document.getElementById(hiddenId);
-        if (!searchInput || !resultsDiv || !hiddenInput) return;
-
-        let debounceTimer;
-
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            hiddenInput.value = '';
-
-            if (query.length < 1) {
-                resultsDiv.innerHTML = '';
-                resultsDiv.style.display = 'none';
-                return;
+        function loadOfferProducts(accountId) {
+            if (!accountId) return Promise.resolve();
+            const cacheKey = 'shop_' + accountId;
+            if (offerProductsCache[cacheKey]) {
+                return Promise.resolve(offerProductsCache[cacheKey]);
             }
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function() {
-                const shopSelect = document.getElementById('offerShopSelectCreate') || document.getElementById('editOfferShopSelect');
-                const shopId = shopSelect ? shopSelect.value : null;
-
-                if (!shopId) {
-                    resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">Please select a shop first</div>';
-                    resultsDiv.style.display = 'block';
-                    return;
-                }
-
-                const cacheKey = 'shop_' + shopId;
-                const products = offerProductsCache[cacheKey] || [];
-
-                const filtered = products.filter(function(p) {
-                    return p.name && p.name.toLowerCase().includes(query.toLowerCase());
-                });
-
-                if (filtered.length === 0) {
-                    resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">No matches found</div>';
-                } else {
-                    resultsDiv.innerHTML = filtered.map(function(p) {
-                        return '<div class="offer-search-item" data-id="' + p.id + '" data-name="' + p.name + '" data-stock="' + p.stock + '">' +
-                            '<div class="offer-search-item-name">' + p.name + '</div>' +
-                            '<div class="offer-search-item-stock">Stock: ' + p.stock + '</div>' +
-                            '</div>';
-                    }).join('');
-                }
-                resultsDiv.style.display = 'block';
-            }, 200);
-        });
-
-        searchInput.addEventListener('focus', function() {
-            if (this.value.trim().length >= 1) {
-                const evt = new Event('input');
-                this.dispatchEvent(evt);
-            }
-        });
-
-        resultsDiv.addEventListener('click', function(e) {
-            const item = e.target.closest('.offer-search-item');
-            if (!item) return;
-            const productId = item.getAttribute('data-id');
-            const productName = item.getAttribute('data-name');
-            const productStock = item.getAttribute('data-stock');
-            searchInput.value = productName + ' (Stock: ' + productStock + ')';
-            hiddenInput.value = productId;
-            resultsDiv.style.display = 'none';
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        let deleteOfferId = null;
-
-        // Create offer modal shop change
-        const createShopSelect = document.getElementById('offerShopSelectCreate');
-        if (createShopSelect) {
-            createShopSelect.addEventListener('change', function() {
-                loadOfferProducts(this.value).then(function() {
-                    const freeSearch = document.getElementById('freeProductSearch');
-                    const freeId = document.getElementById('freeProductId');
-                    if (freeSearch) { freeSearch.value = ''; }
-                    if (freeId) { freeId.value = ''; }
-                    document.getElementById('freeSearchResults').style.display = 'none';
-                });
-            });
-            if (createShopSelect.value) {
-                loadOfferProducts(createShopSelect.value);
-            }
-        }
-
-        // Edit offer modal setup
-        const editShopSelect = document.getElementById('editOfferShopSelect');
-        if (editShopSelect) {
-            editShopSelect.addEventListener('change', function() {
-                loadOfferProducts(this.value);
-            });
-        }
-
-        setupOfferSearch('freeProductSearch', 'freeSearchResults', 'freeProductId');
-        setupOfferSearch('editFreeProductSearch', 'editFreeSearchResults', 'editFreeProductId');
-
-        let reqItemCount = 1;
-        const reqItemsList = document.getElementById('requiredItemsList');
-        const addReqItemBtn = document.getElementById('addRequiredItemBtn');
-
-        function createRequiredItemRow(index) {
-            const div = document.createElement('div');
-            div.className = 'required-item-row';
-            div.style.cssText = 'display:grid;grid-template-columns:1fr 100px 32px;gap:0.5rem;align-items:end;margin-bottom:0.5rem;';
-            div.innerHTML = `
-                <div class="offer-search-wrap">
-                    <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Item to Buy</label>
-                    <input type="text" class="form-control req-item-search" placeholder="Type product name" autocomplete="off">
-                    <input type="hidden" name="required_items[${index}][product_id]" class="req-item-id">
-                    <div class="offer-search-results req-item-results" style="display:none;"></div>
-                </div>
-                <div>
-                    <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Qty</label>
-                    <input type="number" name="required_items[${index}][required_quantity]" class="form-control req-item-qty" value="1" min="1" required>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-req-item-btn" style="border-radius:8px;" title="Remove">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
-            return div;
-        }
-
-        function updateRequiredItemIndices() {
-            const rows = reqItemsList.querySelectorAll('.required-item-row');
-            rows.forEach((row, index) => {
-                row.querySelector('.req-item-id').name = `required_items[${index}][product_id]`;
-                row.querySelector('.req-item-qty').name = `required_items[${index}][required_quantity]`;
-            });
-            reqItemCount = rows.length;
-        }
-
-        if (addReqItemBtn && reqItemsList) {
-            addReqItemBtn.addEventListener('click', function() {
-                const newRow = createRequiredItemRow(reqItemCount);
-                reqItemsList.appendChild(newRow);
-                updateRequiredItemIndices();
-            });
-        }
-
-        reqItemsList.addEventListener('click', function(e) {
-            const removeBtn = e.target.closest('.remove-req-item-btn');
-            if (!removeBtn) return;
-            const row = removeBtn.closest('.required-item-row');
-            const rows = reqItemsList.querySelectorAll('.required-item-row');
-            if (rows.length > 1) {
-                row.remove();
-                updateRequiredItemIndices();
-            }
-        });
-
-        reqItemsList.addEventListener('input', function(e) {
-            const searchInput = e.target.closest('.req-item-search');
-            if (!searchInput) return;
-            const resultsDiv = searchInput.nextElementSibling?.nextElementSibling;
-            const hiddenInput = searchInput.nextElementSibling;
-            if (!resultsDiv || !hiddenInput) return;
-
-            const query = searchInput.value.trim();
-            hiddenInput.value = '';
-            if (query.length < 1) {
-                resultsDiv.innerHTML = '';
-                resultsDiv.style.display = 'none';
-                return;
-            }
-
-            const shopSelect = document.getElementById('offerShopSelectCreate') || document.getElementById('editOfferShopSelect');
-            const shopId = shopSelect ? shopSelect.value : null;
-            if (!shopId) {
-                resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">Please select a shop first</div>';
-                resultsDiv.style.display = 'block';
-                return;
-            }
-
-            const cacheKey = 'shop_' + shopId;
-            const products = offerProductsCache[cacheKey] || [];
-            const filtered = products.filter(function(p) {
-                return p.name && p.name.toLowerCase().includes(query.toLowerCase());
-            });
-
-            if (filtered.length === 0) {
-                resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">No matches found</div>';
-            } else {
-                resultsDiv.innerHTML = filtered.map(function(p) {
-                    return '<div class="offer-search-item" data-id="' + p.id + '" data-name="' + p.name + '" data-stock="' + p.stock + '">' +
-                        '<div class="offer-search-item-name">' + p.name + '</div>' +
-                        '<div class="offer-search-item-stock">Stock: ' + p.stock + '</div>' +
-                        '</div>';
-                }).join('');
-            }
-            resultsDiv.style.display = 'block';
-        });
-
-        reqItemsList.addEventListener('click', function(e) {
-            const item = e.target.closest('.offer-search-item');
-            if (!item) return;
-            const productId = item.getAttribute('data-id');
-            const productName = item.getAttribute('data-name');
-            const row = item.closest('.required-item-row');
-            const searchInput = row.querySelector('.req-item-search');
-            const hiddenInput = row.querySelector('.req-item-id');
-            const resultsDiv = row.querySelector('.req-item-results');
-            if (searchInput) searchInput.value = productName;
-            if (hiddenInput) hiddenInput.value = productId;
-            if (resultsDiv) resultsDiv.style.display = 'none';
-        });
-
-        // Close search dropdowns when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.offer-search-wrap')) {
-                document.querySelectorAll('.offer-search-results').forEach(function(div) { div.style.display = 'none'; });
-            }
-        });
-
-        // Status toggle
-        document.querySelectorAll('.status-toggle').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const offerId = this.dataset.id;
-                const isActive = this.dataset.active === '1';
-                const row = this.closest('tr');
-                const editBtn = row.querySelector('.edit-btn');
-                const requiredQty = editBtn.dataset.required_quantity;
-
-                fetch('{{ url("updateOffer") }}/' + offerId, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        offer_product_id: editBtn.dataset.offer_product_id,
-                        offer_quantity: editBtn.dataset.offer_quantity,
-                        required_quantity: requiredQty,
-                        product_id: editBtn.dataset.product_id,
-                        is_active: isActive ? '0' : '1',
-                    })
-                }).then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        this.dataset.active = isActive ? '0' : '1';
-                        if (isActive) {
-                            this.innerHTML = '<span class="badge-inactive"><i class="bi bi-x-circle-fill"></i> Inactive</span>';
-                        } else {
-                            this.innerHTML = '<span class="badge-active"><i class="bi bi-check-circle-fill"></i> @lang('messages.active')</span>';
-                        }
-                    } else {
-                        alert(data.message || 'Failed to update status');
-                    }
-                }).catch(err => {
-                    console.error(err);
-                    alert('Failed to update status');
-                });
-            });
-        });
-
-        // Edit button click
-        document.querySelectorAll('.edit-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const productId = this.dataset.product_id;
-                const offerProductId = this.dataset.offer_product_id;
-                const requiredQty = this.dataset.required_quantity;
-                const offerQty = this.dataset.offer_quantity;
-                const isActive = this.dataset.is_active;
-                const account = this.dataset.account;
-                let requiredItems = [];
-                try {
-                    requiredItems = JSON.parse(this.dataset.required_items || '[]');
-                } catch (e) {}
-
-                document.getElementById('editOfferForm').action = '{{ url("updateOffer") }}/' + id;
-                document.getElementById('editOfferQuantity').value = offerQty;
-                document.getElementById('editIsActiveOffer').checked = isActive === '1';
-                document.getElementById('editOfferShopSelect').value = account;
-
-                const editMessage = document.getElementById('editOfferMessage');
-                if (editMessage) editMessage.innerHTML = '';
-
-                const editReqList = document.getElementById('editRequiredItemsList');
-                if (editReqList) {
-                    editReqList.innerHTML = '';
-                    const itemsToShow = requiredItems.length > 0 ? requiredItems : [{ product_id: productId, required_quantity: requiredQty }];
-                    itemsToShow.forEach(function(item, index) {
-                        const row = createEditRequiredItemRow(index, item.product_id, item.required_quantity);
-                        editReqList.appendChild(row);
-                    });
-                }
-
-                const cacheKey = 'shop_' + account;
-                const setEditValues = function() {
-                    const products = offerProductsCache[cacheKey] || [];
-                    const freeProduct = products.find(function(p) { return p.id === offerProductId; });
-                    const freeSearch = document.getElementById('editFreeProductSearch');
-                    const freeId = document.getElementById('editFreeProductId');
-                    if (freeProduct) {
-                        if (freeSearch) freeSearch.value = freeProduct.name + ' (Stock: ' + freeProduct.stock + ')';
-                        if (freeId) freeId.value = freeProduct.id;
-                    } else {
-                        if (freeSearch) freeSearch.value = offerProductId;
-                        if (freeId) freeId.value = offerProductId;
-                    }
-                };
-
-                if (offerProductsCache[cacheKey] && offerProductsCache[cacheKey].length > 0) {
-                    setEditValues();
-                    new bootstrap.Modal(document.getElementById('editOfferModal')).show();
-                } else {
-                    loadOfferProducts(account).then(function() {
-                        setEditValues();
-                        new bootstrap.Modal(document.getElementById('editOfferModal')).show();
-                    }).catch(function() {
-                        const freeId = document.getElementById('editFreeProductId');
-                        if (freeId) freeId.value = offerProductId;
-                        new bootstrap.Modal(document.getElementById('editOfferModal')).show();
-                    });
-                }
-            });
-        });
-
-        // Edit form submit
-        const editForm = document.getElementById('editOfferForm');
-        if (editForm) {
-            editForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-                const actionUrl = this.action;
-                
-                fetch(actionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                    },
-                    body: formData
-                })
+            return fetch('{{ url('search-products-for-offer') }}?account=' + accountId + '&q=')
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i> Offer updated successfully!</div>';
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-circle-fill me-2"></i> ' + (data.message || 'Failed to update offer') + '</div>';
-                    }
+                    offerProductsCache[cacheKey] = data.results || [];
+                    return offerProductsCache[cacheKey];
                 })
-                .catch(err => {
-                    console.error(err);
-                    document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-circle-fill me-2"></i> Failed to update offer</div>';
+                .catch(() => {
+                    return [];
                 });
-            });
         }
 
-        // Delete button click
-        document.querySelectorAll('.delete-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                deleteOfferId = this.dataset.id;
-                new bootstrap.Modal(document.getElementById('deleteOfferModal')).show();
-            });
-        });
+        function setupOfferSearch(inputId, resultsId, hiddenId) {
+            const searchInput = document.getElementById(inputId);
+            const resultsDiv = document.getElementById(resultsId);
+            const hiddenInput = document.getElementById(hiddenId);
+            if (!searchInput || !resultsDiv || !hiddenInput) return;
 
-        // Confirm delete
-        const confirmDeleteBtn = document.getElementById('confirmDeleteOfferBtn');
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', function() {
-                if (!deleteOfferId) return;
+            let debounceTimer;
 
-                fetch('{{ url("deleteOffer") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ offer_id: deleteOfferId })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.message || 'Failed to delete offer');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Failed to delete offer');
-                });
-            });
-        }
-
-        function createEditRequiredItemRow(index, productId, quantity) {
-            const div = document.createElement('div');
-            div.className = 'required-item-row';
-            div.style.cssText = 'display:grid;grid-template-columns:1fr 100px 32px;gap:0.5rem;align-items:end;margin-bottom:0.5rem;';
-            const pid = productId || '';
-            const qty = quantity || 1;
-            div.innerHTML = `
-                <div class="offer-search-wrap">
-                    <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Item to Buy</label>
-                    <input type="text" class="form-control edit-req-item-search" placeholder="Type product name" autocomplete="off" value="${pid}">
-                    <input type="hidden" name="required_items[${index}][product_id]" class="edit-req-item-id" value="${pid}">
-                    <div class="offer-search-results edit-req-item-results" style="display:none;"></div>
-                </div>
-                <div>
-                    <label class="form-label" style="font-size:0.75rem;font-weight:700;color:var(--slate-600);text-transform:uppercase;letter-spacing:0.05em;">Qty</label>
-                    <input type="number" name="required_items[${index}][required_quantity]" class="form-control edit-req-item-qty" value="${qty}" min="1" required>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-danger edit-remove-req-item-btn" style="border-radius:8px;display:none;" title="Remove">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
-            return div;
-        }
-
-        const editReqItemsList = document.getElementById('editRequiredItemsList');
-        const editAddReqItemBtn = document.getElementById('editAddRequiredItemBtn');
-        let editReqItemCount = 0;
-
-        function updateEditRequiredItemIndices() {
-            const rows = editReqItemsList.querySelectorAll('.required-item-row');
-            rows.forEach((row, index) => {
-                row.querySelector('.edit-req-item-id').name = `required_items[${index}][product_id]`;
-                row.querySelector('.edit-req-item-qty').name = `required_items[${index}][required_quantity]`;
-            });
-            editReqItemCount = rows.length;
-        }
-
-        if (editAddReqItemBtn && editReqItemsList) {
-            editAddReqItemBtn.addEventListener('click', function() {
-                const newRow = createEditRequiredItemRow(editReqItemCount);
-                editReqItemsList.appendChild(newRow);
-                updateEditRequiredItemIndices();
-            });
-        }
-
-        if (editReqItemsList) {
-            editReqItemsList.addEventListener('click', function(e) {
-                const removeBtn = e.target.closest('.edit-remove-req-item-btn');
-                if (!removeBtn) return;
-                const row = removeBtn.closest('.required-item-row');
-                const rows = editReqItemsList.querySelectorAll('.required-item-row');
-                if (rows.length > 1) {
-                    row.remove();
-                    updateEditRequiredItemIndices();
-                }
-            });
-
-            editReqItemsList.addEventListener('input', function(e) {
-                const searchInput = e.target.closest('.edit-req-item-search');
-                if (!searchInput) return;
-                const resultsDiv = searchInput.nextElementSibling?.nextElementSibling;
-                const hiddenInput = searchInput.nextElementSibling;
-                if (!resultsDiv || !hiddenInput) return;
-
-                const query = searchInput.value.trim();
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
                 hiddenInput.value = '';
+
                 if (query.length < 1) {
                     resultsDiv.innerHTML = '';
                     resultsDiv.style.display = 'none';
                     return;
                 }
 
-                const shopId = document.getElementById('editOfferShopSelect')?.value || null;
-                if (!shopId) {
-                    resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">Please select a shop first</div>';
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    const shopSelect = document.getElementById('offerShopSelectCreate') || document.getElementById('editOfferShopSelect');
+                    const shopId = shopSelect ? shopSelect.value : null;
+
+                    if (!shopId) {
+                        resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">Please select a shop first</div>';
+                        resultsDiv.style.display = 'block';
+                        return;
+                    }
+
+                    const cacheKey = 'shop_' + shopId;
+                    const products = offerProductsCache[cacheKey] || [];
+
+                    const filtered = products.filter(function(p) {
+                        return p.name && p.name.toLowerCase().includes(query.toLowerCase());
+                    });
+
+                    if (filtered.length === 0) {
+                        resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">No matches found</div>';
+                    } else {
+                        resultsDiv.innerHTML = filtered.map(function(p) {
+                            return '<div class="offer-search-item" data-id="' + p.id + '" data-name="' + p.name + '" data-stock="' + p.stock + '">' +
+                                '<div class="offer-search-item-name">' + p.name + '</div>' +
+                                '<div class="offer-search-item-stock">Stock: ' + p.stock + '</div>' +
+                                '</div>';
+                        }).join('');
+                    }
                     resultsDiv.style.display = 'block';
-                    return;
-                }
-
-                const cacheKey = 'shop_' + shopId;
-                const products = offerProductsCache[cacheKey] || [];
-                const filtered = products.filter(function(p) {
-                    return p.name && p.name.toLowerCase().includes(query.toLowerCase());
-                });
-
-                if (filtered.length === 0) {
-                    resultsDiv.innerHTML = '<div class="offer-search-item" style="color:var(--slate-400);pointer-events:none;">No matches found</div>';
-                } else {
-                    resultsDiv.innerHTML = filtered.map(function(p) {
-                        return '<div class="offer-search-item" data-id="' + p.id + '" data-name="' + p.name + '" data-stock="' + p.stock + '">' +
-                            '<div class="offer-search-item-name">' + p.name + '</div>' +
-                            '<div class="offer-search-item-stock">Stock: ' + p.stock + '</div>' +
-                            '</div>';
-                    }).join('');
-                }
-                resultsDiv.style.display = 'block';
+                }, 200);
             });
 
-            editReqItemsList.addEventListener('click', function(e) {
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim().length >= 1) {
+                    const evt = new Event('input');
+                    this.dispatchEvent(evt);
+                }
+            });
+
+            resultsDiv.addEventListener('click', function(e) {
                 const item = e.target.closest('.offer-search-item');
                 if (!item) return;
                 const productId = item.getAttribute('data-id');
                 const productName = item.getAttribute('data-name');
-                const row = item.closest('.required-item-row');
-                const searchInput = row.querySelector('.edit-req-item-search');
-                const hiddenInput = row.querySelector('.edit-req-item-id');
-                const resultsDiv = row.querySelector('.edit-req-item-results');
-                if (searchInput) searchInput.value = productName;
-                if (hiddenInput) hiddenInput.value = productId;
-                if (resultsDiv) resultsDiv.style.display = 'none';
+                const productStock = item.getAttribute('data-stock');
+                searchInput.value = productName + ' (Stock: ' + productStock + ')';
+                hiddenInput.value = productId;
+                resultsDiv.style.display = 'none';
             });
         }
-    });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let deleteOfferId = null;
+
+            // Create offer modal shop change
+            const createShopSelect = document.getElementById('offerShopSelectCreate');
+            if (createShopSelect) {
+                createShopSelect.addEventListener('change', function() {
+                    loadOfferProducts(this.value).then(function() {
+                        const freeSearch = document.getElementById('freeProductSearch');
+                        const freeId = document.getElementById('freeProductId');
+                        if (freeSearch) { freeSearch.value = ''; }
+                        if (freeId) { freeId.value = ''; }
+                        document.getElementById('freeSearchResults').style.display = 'none';
+                        const reqSearch = document.getElementById('requiredProductSearch');
+                        const reqId = document.getElementById('requiredProductId');
+                        if (reqSearch) { reqSearch.value = ''; }
+                        if (reqId) { reqId.value = ''; }
+                        document.getElementById('requiredSearchResults').style.display = 'none';
+                    });
+                });
+                if (createShopSelect.value) {
+                    loadOfferProducts(createShopSelect.value);
+                }
+            }
+
+            // Edit offer modal setup
+            const editShopSelect = document.getElementById('editOfferShopSelect');
+            if (editShopSelect) {
+                editShopSelect.addEventListener('change', function() {
+                    loadOfferProducts(this.value);
+                });
+            }
+
+            setupOfferSearch('freeProductSearch', 'freeSearchResults', 'freeProductId');
+            setupOfferSearch('requiredProductSearch', 'requiredSearchResults', 'requiredProductId');
+            setupOfferSearch('editFreeProductSearch', 'editFreeSearchResults', 'editFreeProductId');
+            setupOfferSearch('editRequiredProductSearch', 'editRequiredSearchResults', 'editRequiredProductId');
+
+            // Status toggle
+            document.querySelectorAll('.status-toggle').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const offerId = this.dataset.id;
+                    const isActive = this.dataset.active === '1';
+                    const row = this.closest('tr');
+                    const editBtn = row.querySelector('.edit-btn');
+                    const requiredQty = editBtn.dataset.required_quantity;
+
+                    fetch('{{ url("updateOffer") }}/' + offerId, {
+                        method: 'PATCH',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            offer_product_id: editBtn.dataset.offer_product_id,
+                            offer_quantity: editBtn.dataset.offer_quantity,
+                            required_quantity: requiredQty,
+                            product_id: editBtn.dataset.product_id,
+                            is_active: isActive ? '0' : '1',
+                        })
+                    }).then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.dataset.active = isActive ? '0' : '1';
+                            if (isActive) {
+                                this.innerHTML = '<span class="badge-inactive"><i class="bi bi-x-circle-fill"></i> Inactive</span>';
+                            } else {
+                                this.innerHTML = '<span class="badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>';
+                            }
+                        } else {
+                            alert(data.message || 'Failed to update status');
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                        alert('Failed to update status');
+                    });
+                });
+            });
+
+            // Edit button click
+            document.querySelectorAll('.edit-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const productId = this.dataset.product_id;
+                    const offerProductId = this.dataset.offer_product_id;
+                    const requiredQty = this.dataset.required_quantity;
+                    const offerQty = this.dataset.offer_quantity;
+                    const isActive = this.dataset.is_active;
+                    const account = this.dataset.account;
+                    let requiredItems = [];
+                    try {
+                        requiredItems = JSON.parse(this.dataset.required_items || '[]');
+                    } catch (e) {}
+
+                    document.getElementById('editOfferForm').action = '{{ url("updateOffer") }}/' + id;
+                    document.getElementById('editOfferQuantity').value = offerQty;
+                    document.getElementById('editRequiredQuantity').value = requiredQty;
+                    document.getElementById('editIsActiveOffer').checked = isActive === '1';
+                    document.getElementById('editOfferShopSelect').value = account;
+
+                    const editMessage = document.getElementById('editOfferMessage');
+                    if (editMessage) editMessage.innerHTML = '';
+
+                    // Set required product
+                    const reqSearch = document.getElementById('editRequiredProductSearch');
+                    const reqId = document.getElementById('editRequiredProductId');
+                    const products = offerProductsCache['shop_' + account] || [];
+                    const reqProduct = products.find(function(p) { return p.id === productId; });
+                    if (reqProduct && reqSearch) {
+                        reqSearch.value = reqProduct.name + ' (Stock: ' + reqProduct.stock + ')';
+                    } else if (reqSearch) {
+                        reqSearch.value = productId;
+                    }
+                    if (reqId) reqId.value = productId;
+
+                    const cacheKey = 'shop_' + account;
+                    const setEditValues = function() {
+                        const prods = offerProductsCache[cacheKey] || [];
+                        const freeProduct = prods.find(function(p) { return p.id === offerProductId; });
+                        const freeSearch = document.getElementById('editFreeProductSearch');
+                        const freeId = document.getElementById('editFreeProductId');
+                        if (freeProduct) {
+                            if (freeSearch) freeSearch.value = freeProduct.name + ' (Stock: ' + freeProduct.stock + ')';
+                            if (freeId) freeId.value = freeProduct.id;
+                        } else {
+                            if (freeSearch) freeSearch.value = offerProductId;
+                            if (freeId) freeId.value = offerProductId;
+                        }
+                    };
+
+                    if (offerProductsCache[cacheKey] && offerProductsCache[cacheKey].length > 0) {
+                        setEditValues();
+                        new bootstrap.Modal(document.getElementById('editOfferModal')).show();
+                    } else {
+                        loadOfferProducts(account).then(function() {
+                            setEditValues();
+                            new bootstrap.Modal(document.getElementById('editOfferModal')).show();
+                        }).catch(function() {
+                            const freeId = document.getElementById('editFreeProductId');
+                            if (freeId) freeId.value = offerProductId;
+                            new bootstrap.Modal(document.getElementById('editOfferModal')).show();
+                        });
+                    }
+                });
+            });
+
+            // Edit form submit
+            const editForm = document.getElementById('editOfferForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const actionUrl = this.action;
+
+                    fetch(actionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i> Offer updated successfully!</div>';
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-circle-fill me-2"></i> ' + (data.message || 'Failed to update offer') + '</div>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.getElementById('editOfferMessage').innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-circle-fill me-2"></i> Failed to update offer</div>';
+                    });
+                });
+            }
+
+            // Delete button click
+            document.querySelectorAll('.delete-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    deleteOfferId = this.dataset.id;
+                    new bootstrap.Modal(document.getElementById('deleteOfferModal')).show();
+                });
+            });
+
+            // Confirm delete
+            const confirmDeleteBtn = document.getElementById('confirmDeleteOfferBtn');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    if (!deleteOfferId) return;
+
+                    fetch('{{ url("deleteOffer") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ offer_id: deleteOfferId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Failed to delete offer');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Failed to delete offer');
+                    });
+                });
+            }
+
+            // Close search dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.offer-search-wrap')) {
+                    document.querySelectorAll('.offer-search-results').forEach(function(div) { div.style.display = 'none'; });
+                }
+            });
+        });
     </script>
 </body>
 </html>

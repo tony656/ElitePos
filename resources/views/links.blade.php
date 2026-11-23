@@ -59,11 +59,34 @@
 
 @php
     $themeColor = $systemSettings->theme_color ?? 'var(--theme-primary)';
+    $themeNavy = $systemSettings->theme_navy ?? '#0B1E3D';
 @endphp
 <style>
     :root {
         --theme-primary: {{ $themeColor }};
+        --theme-navy: {{ $themeNavy }};
     }
+</style>
+
+<style>
+    /* Primary navy color overrides — applies to sidenav, headers, tables, etc. */
+    th,
+    .bg,
+    .color {
+        background: var(--theme-navy) !important;
+        color: #fff !important;
+    }
+    .text {
+        background: transparent !important;
+        color: var(--theme-navy) !important;
+    }
+    .border1 {
+        border-color: var(--theme-navy) !important;
+    }
+    .stylish-btn {
+        border-left-color: var(--theme-navy) !important;
+    }
+
 </style>
 
 <script>
@@ -158,6 +181,16 @@
         root.style.setProperty('--theme-primary-rgb', rgb.r + ', ' + rgb.g + ', ' + rgb.b);
         root.style.setProperty('--theme-primary-pale', 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 0.12)');
         root.style.setProperty('--theme-primary-dark', 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', 0.88)');
+    }
+
+    var themeNavy = '{{ $systemSettings->theme_navy ?? "#0B1E3D" }}';
+    root.style.setProperty('--theme-navy', themeNavy);
+
+    var navyRgb = hexToRgb(themeNavy);
+    if (navyRgb) {
+        root.style.setProperty('--theme-navy-rgb', navyRgb.r + ', ' + navyRgb.g + ', ' + navyRgb.b);
+        root.style.setProperty('--theme-navy-pale', 'rgba(' + navyRgb.r + ', ' + navyRgb.g + ', ' + navyRgb.b + ', 0.12)');
+        root.style.setProperty('--theme-navy-mid', 'rgba(' + navyRgb.r + ', ' + navyRgb.g + ', ' + navyRgb.b + ', 0.75)');
     }
 })();
 </script>

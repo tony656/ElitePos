@@ -170,16 +170,16 @@ class itemRequestController extends Controller
             $paidAmount = DB::table('madeni')
                 ->where('account', $shopId)  // CRITICAL: Filter by shop
                 ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
-                ->sum('amount_paid');
+                ->sum('amount');
         
         
         // If no receiving found, try using requestName directly
         if ($paidAmount == 0 && $requestName) {
             $paidAmount = DB::table('madeni')
-                ->where('receivings_id', $requestName)
+                ->where('receivingsId', $requestName)
                 ->where('account', $shopId)  // CRITICAL: Filter by shop
                 ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
-                ->sum('amount_paid');
+                ->sum('amount');
         }
 
         // 7. Get approved receivings for this shop and date

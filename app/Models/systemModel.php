@@ -31,6 +31,7 @@ class systemModel extends Model
         'business_profile_picture',
         'theme_color',
         'theme_colors',
+        'theme_navy',
     ];
 
 }

@@ -206,9 +206,9 @@ if (empty($served)) {
     $cPhone = '';
         $OrdersIds = Uuid::uuid4();
         $OrdersNames =
-    salsModel::distinct('sales_id')->count('sales_id')
-  + ordersModel::where('status', 'Suspended')->distinct('order_id')->count('order_id')
-  + 1;
+            salsModel::selectRaw('COUNT(DISTINCT sales_id) as c')->value('c')
+          + ordersModel::where('status', 'Suspended')->selectRaw('COUNT(DISTINCT order_id) as c')->value('c')
+          + 1;
 
     }
 
@@ -1173,6 +1173,8 @@ public function payout(Request $req)
         }
 
         // Create sales record - preserve the negative totalPrice and positive return_amount from cart
+        // NOTE: return records are dated when the return happens (now), NOT the backdated sale date,
+        // so they show up in the sales report for the day the return is processed.
         foreach ($orders as $order) {
             salsModel::create([
                 'sales_id'       => $order->order_id,
@@ -1629,7 +1631,7 @@ public function changeShop(Request $request)
         
         // Get all order items with this order_id
         $orders = ordersModel::where('account', getCurrentShopId())
-            ->where('order_id', $orderId)
+            ->where('orderName', $orderId)
             ->orWhere('orderName', $orderId)
             ->get();
             
@@ -1637,27 +1639,14 @@ public function changeShop(Request $request)
             return redirect()->back()->with('error', 'Order not found');
         }
         
-        // Begin transaction to ensure data consistency
-        DB::transaction(function () use ($orders, $orderId) {
-            foreach ($orders as $order) {
-                // Restore product quantity
-                $product = productsModel::where('account', getCurrentShopId())
-                    ->where('product_id', $order->productId)
-                    ->first();
-                if ($product) {
-                    $product->quantity += ($order->pQuantity ?? 0);
-                    $product->save();
-                }
-                
-                // Reverse stock update
-                $this->reverseStockUpdate($order);
-            }
-            
-            // Delete all order items
-            ordersModel::where('account', getCurrentShopId())
-                ->where('order_id', $orderId)
+       // Delete all order items
+            $delet = ordersModel::where('account', getCurrentShopId())
+                ->where('orderName', $orderId)
                 ->delete();
-        });
+
+            if (!$delet) {
+                return redirect()->back()->with('error', 'Id '.$orderId .' Failed to delete order');
+            }
         
         $create = new logModal();
         $create->title = 'Order Logs';

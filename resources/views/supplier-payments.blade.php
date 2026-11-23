@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{config("app.name")}} — @lang('messages.supplier_credit_management')</title>
+    <title>{{config("app.name")}} — Supplier Payments</title>
     @include("links")
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,8 +25,6 @@
             --rose-pale:    #FFE4E6;
             --violet:       #7C3AED;
             --violet-pale:  #EDE9FE;
-            --sky:          #0284C7;
-            --sky-pale:     #E0F2FE;
             --slate-50:     #F8FAFC;
             --slate-100:    #F1F5F9;
             --slate-200:    #E2E8F0;
@@ -54,16 +50,13 @@
         .au  { animation: fadeUp 0.38s ease both; }
         .au1 { animation-delay:0.04s; } .au2 { animation-delay:0.10s; }
         .au3 { animation-delay:0.16s; } .au4 { animation-delay:0.22s; }
-        .au5 { animation-delay:0.28s; }
 
-        /* ── Alerts ── */
         .alert { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1rem; border-radius:var(--r); margin-bottom:1rem; font-size:13px; font-weight:500; }
         .alert-success { background:var(--emerald-pale); color:var(--emerald); border-left:3px solid var(--emerald); }
         .alert-danger  { background:var(--rose-pale);    color:var(--rose);    border-left:3px solid var(--rose); }
         .close-btn { background:none; border:none; cursor:pointer; color:inherit; font-size:16px; opacity:.6; }
         .close-btn:hover { opacity:1; }
 
-        /* ══ PAGE HEADER ══ */
         .pg-header {
             background: var(--navy); border-radius: var(--r-xl);
             padding: 1.2rem 1.6rem; margin-bottom: 1.4rem;
@@ -73,15 +66,13 @@
         .pg-header::before { content:''; position:absolute; top:-50px; right:-30px; width:180px; height:180px; border-radius:50%; background:var(--navy-light); opacity:.45; pointer-events:none; }
         .pg-header::after  { content:''; position:absolute; bottom:-55px; right:100px; width:120px; height:120px; border-radius:50%; background:var(--amber); opacity:.07; pointer-events:none; }
         .pg-left { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
-        .header-icon { width:40px; height:40px; border-radius:var(--r); background:var(--amber); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--navy); flex-shrink:0; }
+        .header-icon { width:40px; height:40px; border-radius:var(--r); background:var(--emerald); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--white); flex-shrink:0; }
         .pg-title-text h1 { font-size:16px; font-weight:700; color:var(--white); letter-spacing:-.2px; }
         .pg-title-text p  { font-size:12px; color:rgba(255,255,255,.45); margin-top:1px; }
         .pg-right { display:flex; gap:8px; align-items:center; position:relative; z-index:1; flex-wrap:wrap; }
-
         .btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--r); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); color:rgba(255,255,255,.75); font-family:var(--font); font-size:12.5px; font-weight:500; cursor:pointer; transition:all .15s; }
         .btn-ghost:hover { background:rgba(255,255,255,.14); color:var(--white); }
 
-        /* ══ TOOLBAR ══ */
         .toolbar {
             background:var(--white); border:1.5px solid var(--slate-200);
             border-radius:var(--r-lg); padding:.9rem 1.2rem;
@@ -98,9 +89,6 @@
         .btn-clear-filter { display:inline-flex; align-items:center; gap:5px; padding:8px 12px; border-radius:var(--r); background:var(--rose-pale); color:var(--rose); border:none; font-family:var(--font); font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; transition:all .15s; white-space:nowrap; }
         .btn-clear-filter:hover { background:#fecdd3; color:var(--rose); }
 
-        .date-display { font-size:12px; color:var(--slate-400); font-family:var(--mono); margin-left:auto; }
-
-        /* ══ METRICS ══ */
         .metrics-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:1rem; margin-bottom:1.4rem; }
         @media(max-width:900px){ .metrics-grid { grid-template-columns:repeat(2,1fr); } }
         @media(max-width:480px){ .metrics-grid { grid-template-columns:1fr; } }
@@ -123,7 +111,6 @@
         .mv-red   { color:var(--rose); }
         .mv-green { color:var(--emerald); }
 
-        /* ══ PANEL / TABLE ══ */
         .panel { background:var(--white); border:1.5px solid var(--slate-200); border-radius:var(--r-xl); overflow:hidden; box-shadow:0 1px 4px rgba(11,30,61,.05); }
         .panel-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.4rem; border-bottom:1.5px solid var(--slate-200); background:var(--slate-50); gap:1rem; flex-wrap:wrap; }
         .panel-head-left { display:flex; align-items:center; gap:10px; }
@@ -131,12 +118,6 @@
         .panel-title { font-size:13.5px; font-weight:700; color:var(--navy); }
         .result-pill { font-size:11px; font-weight:600; font-family:var(--mono); background:var(--slate-200); color:var(--slate-600); padding:2px 9px; border-radius:20px; }
 
-        /* Date group header */
-        .date-group-row td { background:var(--slate-50); padding:8px 16px; border-top:1.5px solid var(--slate-200); border-bottom:1px solid var(--slate-200); }
-        .date-group-label { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.05em; }
-        .date-group-label i { color:var(--amber); }
-
-        /* Table */
         .tbl-wrap { overflow-x:auto; }
         table { width:100%; border-collapse:collapse; font-size:13px; }
         thead th { background:var(--navy); color:rgba(255,255,255,.65); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; padding:10px 16px; white-space:nowrap; border:none; text-align:left; }
@@ -147,7 +128,6 @@
         td { padding:11px 16px; vertical-align:middle; }
         td:last-child { text-align:right; }
 
-        /* Cell types */
         .idx-cell  { font-size:12px; color:var(--slate-400); font-family:var(--mono); }
         .sup-avatar { width:32px; height:32px; border-radius:50%; background:var(--navy-mid); color:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
         .sup-cell   { display:flex; align-items:center; gap:10px; }
@@ -158,72 +138,27 @@
         .paid-val   { color:var(--emerald); }
         .remaining-val { font-weight:700; }
 
-        /* Status badges */
         .badge-paid      { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:var(--emerald-pale); color:var(--emerald); }
         .badge-credit    { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:var(--rose-pale);    color:var(--rose); }
-        .badge-completed { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; background:var(--emerald-pale); color:var(--emerald); }
 
-        /* Action buttons */
         .action-btns { display:flex; gap:5px; justify-content:flex-end; flex-wrap:wrap; }
         .act-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:var(--r); font-family:var(--font); font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid; transition:all .15s; white-space:nowrap; background:transparent; }
         .ab-pay  { border-color:var(--emerald); color:var(--emerald); }
         .ab-pay:hover  { background:var(--emerald); color:var(--white); }
         .ab-view { border-color:var(--navy-light); color:var(--navy-light); }
         .ab-view:hover { background:var(--navy); color:var(--white); }
+        .ab-del  { border-color:var(--rose); color:var(--rose); }
+        .ab-del:hover  { background:var(--rose); color:var(--white); }
 
-        /* Empty state */
         .empty-state { text-align:center; padding:4rem 1.5rem; color:var(--slate-400); }
         .empty-state i  { font-size:2.5rem; display:block; margin-bottom:.75rem; opacity:.3; }
         .empty-state h4 { font-size:15px; font-weight:600; color:var(--slate-600); margin-bottom:5px; }
         .empty-state p  { font-size:13px; }
 
-        /* ══ MODAL ══ */
-        .modal-content { border:none; border-radius:var(--r-xl); overflow:hidden; box-shadow:0 20px 60px rgba(11,30,61,.2); }
-        .modal-top { background:var(--navy); padding:1.15rem 1.4rem; display:flex; align-items:center; justify-content:space-between; }
-        .modal-top-left { display:flex; align-items:center; gap:10px; }
-        .modal-top-icon { width:32px; height:32px; border-radius:var(--r); display:flex; align-items:center; justify-content:center; font-size:14px; }
-        .mti-amber   { background:var(--amber);   color:var(--navy); }
-        .mti-navy    { background:rgba(255,255,255,.12); color:var(--white); }
-        .mti-rose    { background:var(--rose);    color:var(--white); }
-        .modal-top h5 { font-size:15px; font-weight:700; color:var(--white); margin:0; }
-        .modal-top .btn-close { filter:invert(1) brightness(.75); }
-        .modal-body { padding:1.5rem 1.4rem; }
-
-        .field { margin-bottom:12px; }
-        .field:last-child { margin-bottom:0; }
-        .field-label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--slate-500); margin-bottom:5px; }
-        .field-label .req { color:var(--rose); }
-        .field-input { width:100%; font-family:var(--font); font-size:13.5px; padding:9px 12px; border:1.5px solid var(--slate-200); border-radius:var(--r); background:var(--white); color:var(--slate-800); outline:none; transition:border-color .18s, box-shadow .18s; }
-        .field-input:focus { border-color:var(--navy-light); box-shadow:0 0 0 3px rgba(26,58,107,.1); }
-        .field-input.readonly { background:var(--slate-50); color:var(--slate-500); cursor:default; }
-        .field-input::placeholder { color:var(--slate-400); }
-        .field-hint { font-size:11px; color:var(--slate-400); margin-top:4px; }
-
-        .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; background:var(--slate-50); border-radius:var(--r); padding:.9rem 1rem; margin-bottom:1rem; }
-        .info-item label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--slate-400); display:block; margin-bottom:3px; }
-        .info-item span  { font-size:14px; font-weight:600; font-family:var(--mono); color:var(--slate-800); }
-        .info-item.big span { font-size:18px; color:var(--rose); }
-
-        .modal-footer-custom { padding:1rem 1.4rem; border-top:1.5px solid var(--slate-200); display:flex; justify-content:flex-end; gap:8px; }
-        .btn-cancel { padding:9px 18px; border-radius:var(--r); border:1.5px solid var(--slate-200); background:transparent; font-family:var(--font); font-size:13px; color:var(--slate-600); cursor:pointer; transition:all .15s; }
-        .btn-cancel:hover { background:var(--slate-100); }
-        .btn-confirm-pay { padding:9px 20px; border-radius:var(--r); background:var(--emerald); color:var(--white); border:none; font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 14px rgba(5,150,105,.25); transition:all .18s; }
-        .btn-confirm-pay:hover { background:#047857; transform:translateY(-1px); }
-        .btn-confirm-del { padding:9px 20px; border-radius:var(--r); background:var(--rose); color:var(--white); border:none; font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .18s; }
-        .btn-confirm-del:hover { background:#be123c; transform:translateY(-1px); }
-
-        /* Products modal table */
-        .modal-tbl { width:100%; border-collapse:collapse; font-size:13px; }
-        .modal-tbl thead th { background:var(--navy); color:rgba(255,255,255,.65); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; padding:8px 14px; border:none; text-align:left; }
-        .modal-tbl tbody td { padding:10px 14px; border-bottom:1px solid var(--slate-100); vertical-align:middle; }
-        .modal-tbl tbody tr:last-child td { border-bottom:none; }
-        .modal-tbl tbody tr:hover td { background:var(--slate-50); }
-        .modal-tbl-wrap { overflow-x:auto; }
-
-        .modal-info-badge { display:inline-flex; align-items:center; gap:5px; margin-bottom:1rem; background:var(--navy-mid); color:rgba(255,255,255,.75); padding:5px 12px; border-radius:20px; font-size:12px; font-family:var(--mono); }
-
-        .loading-state { text-align:center; padding:2.5rem; color:var(--slate-400); }
-        .loading-state i { font-size:1.75rem; display:block; margin-bottom:.5rem; opacity:.4; }
+        .date-group-row td { background:var(--slate-50); padding:10px 16px; border-top:1.5px solid var(--slate-200); border-bottom:1px solid var(--slate-200); }
+        .date-group-label { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.05em; }
+        .date-group-label i { color:var(--amber); }
+        .date-group-label span { font-weight:400; color:var(--slate-400); margin-left:4px; font-family:var(--mono); font-size:11px; }
 
         @media(max-width:768px){ .wrap{padding:1rem;} .action-btns{flex-direction:column;} }
     </style>
@@ -236,7 +171,6 @@
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
             <div class="wrap">
 
-                {{-- Alerts --}}
                 @if(session('success'))
                 <div class="alert alert-success au au1">
                     <span><i class="bi bi-check-circle me-2"></i>{{ session('success') }}</span>
@@ -250,29 +184,23 @@
                 </div>
                 @endif
 
-                {{-- Page header --}}
                 <div class="pg-header au au1">
                     <div class="pg-left">
-                        <div class="header-icon"><i class="bi bi-people-fill"></i></div>
+                        <div class="header-icon"><i class="bi bi-cash-stack"></i></div>
                         <div class="pg-title-text">
-                            <h1>{{ __('messages.supplier_credit_management') }}</h1>
-                            <p>Track and manage outstanding supplier credits</p>
+                            <h1>Supplier Payments</h1>
+                            <p>View all supplier payment history</p>
                         </div>
                     </div>
                     <div class="pg-right">
                         <button class="btn-ghost" onclick="window.print()">
                             <i class="bi bi-printer"></i> Print
                         </button>
-                        <button class="btn-ghost">
-                            <i class="bi bi-download"></i> Export
-                        </button>
                     </div>
                 </div>
 
-                {{-- Toolbar with filters --}}
                 <div class="toolbar au au2">
                     <form method="GET" action="{{ url()->current() }}" style="display:contents;">
-                        {{-- Shop filter --}}
                         @if(isset($shops) && count($shops) > 0)
                         <div class="date-wrap" style="flex:0 0 200px;">
                             <i class="bi bi-shop"></i>
@@ -287,7 +215,6 @@
                         </div>
                         @endif
 
-                        {{-- Date range filter --}}
                         <div class="date-wrap" style="flex:0 0 320px;">
                             <i class="bi bi-calendar3"></i>
                             <input type="date" name="date_from"
@@ -301,7 +228,6 @@
                                    title="To date">
                         </div>
 
-                        {{-- Filter/Clear buttons --}}
                         @if(request('date_from') || request('date_to') || request('shop'))
                             <a href="{{ url()->current() }}" class="btn-clear-filter">
                                 <i class="bi bi-x-circle"></i> Clear all
@@ -313,18 +239,43 @@
                         @endif
                     </form>
                     <a href="/supplier-credit" class="btn btn-filter-sm">
-                                <i class="bi bi-money"></i> View Credits
+                        <i class="bi bi-arrow-left"></i> Back to Credits
                     </a>
                 </div>
 
+                <div class="metrics-grid au au3">
+                    <div class="metric-card mc-navy">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-navy"><i class="bi bi-receipt"></i></div>
+                            <div><div class="metric-label">Total Payments</div><div class="metric-value">{{ $query->flatten()->count() }}</div></div>
+                        </div>
+                    </div>
+                    <div class="metric-card mc-emerald">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-emerald"><i class="bi bi-cash-stack"></i></div>
+                            <div><div class="metric-label">Total Amount</div><div class="metric-value mv-green" style="font-size:16px;">{{ number_format($query->flatten()->sum('amount')) }}</div></div>
+                        </div>
+                    </div>
+                    <div class="metric-card mc-amber">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-amber"><i class="bi bi-shop"></i></div>
+                            <div><div class="metric-label">Suppliers</div><div class="metric-value">{{ $query->flatten()->pluck('supplier_name')->unique()->count() }}</div></div>
+                        </div>
+                    </div>
+                    <div class="metric-card mc-rose">
+                        <div class="metric-inner">
+                            <div class="metric-icon mi-rose"><i class="bi bi-calendar3"></i></div>
+                            <div><div class="metric-label">Date Range</div><div class="metric-value" style="font-size:14px;">{{ date('M j', strtotime(request('date_from', date('Y-m-d')) . ' UTC')) }} - {{ date('M j, Y', strtotime(request('date_to', date('Y-m-d')) . ' UTC')) }}</div></div>
+                        </div>
+                    </div>
+                </div>
 
-                {{-- Main table --}}
                 <div class="panel au au4">
                     <div class="panel-head">
                         <div class="panel-head-left">
                             <div class="panel-head-icon"><i class="bi bi-table"></i></div>
-                            <span class="panel-title">Payments</span>
-                            <span class="result-pill">{{ $query->count() }} records</span>
+                            <span class="panel-title">Payment History</span>
+                            <span class="result-pill">{{ $query->flatten()->count() }} records</span>
                         </div>
                     </div>
 
@@ -332,8 +283,8 @@
                         @if($query->isEmpty())
                         <div class="empty-state">
                             <i class="bi bi-inbox"></i>
-                            <h4>No Payments found</h4>
-                            <p>There are currently no outstanding supplier Payments orders</p>
+                            <h4>No payments found</h4>
+                            <p>There are no supplier payments in the selected date range</p>
                         </div>
                         @else
                         <table>
@@ -341,52 +292,50 @@
                                 <tr>
                                     <th width="4%">#</th>
                                     <th>Supplier</th>
-                                    <th>Total paid</th>
-                                    <th>Date</th>
+                                    <th>Shop</th>
+                                    <th>Amount Paid</th>
+                                    <th>Payment Date</th>
+                                    <th>Method</th>
                                     <th style="text-align:right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @php $rowIndex = 1; @endphp
-                                @foreach ($query as $date => $suppliers)
-                                    {{-- Date group row --}}
+                                @foreach ($query as $date => $payments)
                                     <tr class="date-group-row">
-                                        <td colspan="8">
+                                        <td colspan="7">
                                             <div class="date-group-label">
-                                           
-                                                <span style="font-weight:400; color:var(--slate-400); margin-left:4px; font-family:var(--mono); font-size:11px;">
-                                                    · {{ $suppliers->count() }} {{ Str::plural('order', $suppliers->count()) }}
-                                                </span>
+                                                <i class="bi bi-calendar3"></i>
+                                                {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
+                                                <span>· {{ $payments->count() }} {{ Str::plural('payment', $payments->count()) }}</span>
                                             </div>
                                         </td>
                                     </tr>
-                                    @foreach ($query as $order)
-                                    @php
-                                    $name = DB::table('accounts')->where('id', $order->account)->value('name');
-
-                                    @endphp
+                                    @foreach ($payments as $payment)
                                     <tr>
                                         <td class="idx-cell">{{ $rowIndex++ }}</td>
                                         <td>
                                             <div class="sup-cell">
-                                                <span class="sup-name">{{ $name }}</span>
+                                                <div class="sup-avatar">{{ strtoupper(substr($payment->supplier_name, 0, 1)) }}</div>
+                                                <span class="sup-name">{{ $payment->supplier_name }}</span>
                                             </div>
                                         </td>
-                                 
-                                        <td><span class="mono-val">{{ number_format($order->amount) }}</span></td>
+                                        <td><span class="mono-val">{{ $payment->shop_name ?: 'N/A' }}</span></td>
+                                        <td><span class="mono-val paid-val">{{ number_format($payment->amount, 2) }}</span></td>
+                                        <td><span class="mono-val">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('Y-m-d') : ($payment->created_at ? \Carbon\Carbon::parse($payment->created_at)->format('Y-m-d') : 'N/A') }}</span></td>
                                         <td>
-                                            {{ date('Y-m-d', $order->date) }}
+                                            <span style="text-transform:capitalize; font-size:12px; color:var(--slate-600);">
+                                                {{ $payment->payment_method ?: 'cash' }}
+                                            </span>
                                         </td>
                                         <td>
                                             <div class="action-btns">
-                                          
-                                                <form action="dltSupPay" method="post">
+                                                <form action="{{ url('dltSupPay') }}" method="post" onsubmit="return confirm('Are you sure you want to delete this payment?')">
                                                     @csrf
-                                                    <input type="hidden" name="id" value="{{ $order->id }}">
-                                                    <button type="submit" class="act-btn ab-view"
-                                                    >
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
+                                                    <input type="hidden" name="id" value="{{ $payment->id }}">
+                                                    <button type="submit" class="act-btn ab-del">
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </button>
                                                 </form>
                                             </div>
                                         </td>

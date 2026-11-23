@@ -47,4 +47,5 @@ $permissions = [
     "view_main_store_report",
     "manage_employees",
     "view_ads",
+    "add_debt_comments",
 ];
